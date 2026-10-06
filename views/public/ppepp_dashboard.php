@@ -28,19 +28,16 @@ require_once ROOT_PATH . '/views/layouts/header.php';
             <!-- Left Info -->
             <div class="col-lg-7 col-xl-8">
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                    <span class="badge bg-white bg-opacity-15 text-white border border-white border-opacity-25 fw-bold px-3 py-1.5 rounded-pill shadow-sm" style="font-size: 0.78rem; letter-spacing: 0.3px;">
-                        <?= htmlspecialchars($prodi['jenjang']) ?> &bull; <?= htmlspecialchars($prodi['kode_prodi']) ?>
-                    </span>
                     <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-20 px-3 py-1.5 rounded-pill" style="font-size: 0.78rem;">
                         <i class="fas fa-building-columns me-1 opacity-75"></i> <?= htmlspecialchars($prodi['nama_fakultas']) ?>
                     </span>
                     <span class="badge bg-primary bg-opacity-30 text-white border border-primary border-opacity-40 px-3 py-1.5 rounded-pill" style="font-size: 0.78rem;">
-                        <i class="fas fa-shield-check me-1 text-warning"></i> <?= $cycleStats['total'] ?> Dokumen Mutu Aktif
+                        <i class="fas fa-shield-check me-1 text-info"></i> <?= $cycleStats['total'] ?> Dokumen Mutu Aktif
                     </span>
                 </div>
 
                 <h1 class="fw-bold mb-2 text-white" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem); line-height: 1.25; letter-spacing: -0.5px;">
-                    Program Studi <span style="color: #FBBF24;"><?= htmlspecialchars($prodi['nama_prodi']) ?></span>
+                    Program Studi <?= htmlspecialchars($prodi['nama_prodi']) ?>
                 </h1>
                 
                 <p class="text-white-50 mb-0" style="max-width: 620px; font-size: 0.95rem; line-height: 1.6;">
@@ -88,13 +85,13 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     <div class="executive-meta-subpanel">
                         <div class="d-flex align-items-center justify-content-between mb-1.5">
                             <span class="text-white-50 d-flex align-items-center gap-1.5" style="font-size: 0.72rem; letter-spacing: 0.4px; text-transform: uppercase; font-weight: 600;">
-                                <i class="fas fa-graduation-cap text-warning"></i> Program Studi
+                                <i class="fas fa-graduation-cap text-info"></i> Program Studi
                             </span>
                             <span class="badge bg-white bg-opacity-10 text-white-50 border border-white border-opacity-15 px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
                                 <?= htmlspecialchars($prodi['jenjang']) ?>
                             </span>
                         </div>
-                        <div class="text-white fw-bold ps-2.5 border-start border-2 border-warning" style="font-size: 0.88rem; line-height: 1.35; word-break: break-word;">
+                        <div class="text-white fw-bold" style="font-size: 0.88rem; line-height: 1.35; word-break: break-word;">
                             <?= htmlspecialchars($prodi['nama_prodi']) ?>
                         </div>
                     </div>

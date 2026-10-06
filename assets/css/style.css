@@ -3461,8 +3461,8 @@ body.public-page>.scu-footer {
 }
 
 .unit-nav-pill.active .pill-badge {
-  background: #FBBF24 !important;
-  color: #0A192F !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
 }
 
 .unit-nav-pill:not(.active) .pill-badge {

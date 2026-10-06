@@ -24,8 +24,8 @@ $totalUnits   = count($navProdis) + 1; // Dekanat + Prodis
         <!-- Baris 1: Header Meta Bar & Tombol Aksi Ganti Fakultas -->
         <div class="unit-nav-header d-flex align-items-center justify-content-between py-2 border-bottom">
             <div class="d-flex align-items-center flex-wrap gap-2">
-                <span class="badge bg-dark-blue text-warning px-2.5 py-1.5 fw-bold" style="font-size: 0.74rem; letter-spacing: 0.4px;">
-                    <i class="fas fa-landmark me-1"></i> FAKULTAS <?= htmlspecialchars($navFakKode ?: 'FAKULTAS') ?>
+                <span class="badge bg-dark-blue text-white px-2.5 py-1.5 fw-bold" style="font-size: 0.74rem; letter-spacing: 0.4px;">
+                    <i class="fas fa-landmark me-1 text-info"></i> <?= htmlspecialchars($navFakNama) ?>
                 </span>
                 <span class="text-muted small d-none d-sm-inline" style="font-size: 0.8rem;">&bull;</span>
                 <span class="fw-bold text-dark-blue small d-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
@@ -63,7 +63,7 @@ $totalUnits   = count($navProdis) + 1; // Dekanat + Prodis
                    class="unit-nav-pill <?= $isFakActive ? 'active' : '' ?>"
                    <?= $isFakActive ? 'id="activeUnitPill"' : '' ?>
                    title="Buka Dokumen Mutu Dekanat <?= htmlspecialchars($navFakNama) ?>">
-                    <i class="fas fa-landmark <?= $isFakActive ? 'text-warning' : 'text-primary' ?>"></i>
+                    <i class="fas fa-landmark <?= $isFakActive ? 'text-info' : 'text-primary' ?>"></i>
                     <span class="unit-pill-title">Dokumen Dekanat Fakultas</span>
                     <span class="pill-badge"><?= $fakTotalDocs ?> Dok.</span>
                 </a>
@@ -75,7 +75,7 @@ $totalUnits   = count($navProdis) + 1; // Dekanat + Prodis
                        class="unit-nav-pill <?= $isPrActive ? 'active' : '' ?>"
                        <?= $isPrActive ? 'id="activeUnitPill"' : '' ?>
                        title="Buka Dokumen Mutu Program Studi <?= htmlspecialchars($pr['nama_prodi']) ?>">
-                        <i class="fas fa-graduation-cap <?= $isPrActive ? 'text-warning' : 'text-primary' ?>"></i>
+                        <i class="fas fa-graduation-cap <?= $isPrActive ? 'text-info' : 'text-primary' ?>"></i>
                         <span class="unit-pill-title">
                             <?= htmlspecialchars(!empty($pr['jenjang']) ? $pr['jenjang'] . ' ' : '') ?><?= htmlspecialchars($pr['nama_prodi']) ?>
                         </span>

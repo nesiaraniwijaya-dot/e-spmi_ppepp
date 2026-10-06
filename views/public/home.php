@@ -22,8 +22,7 @@ $totalDokumenSafe = max(1, $totalDokumen);
         <div class="row justify-content-center text-center">
             
             <div class="col-lg-10 col-xl-9">
-                <div class="hero-badge">
-                    <span class="hero-badge-dot"></span>
+                <div class="mb-3 text-white text-opacity-80 fw-semibold text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;">
                     <?= htmlspecialchars(get_landing_setting('hero_badge', 'Lembaga Penjaminan Mutu • UNIKA Soegijapranata')) ?>
                 </div>
 
@@ -94,9 +93,6 @@ $totalDokumenSafe = max(1, $totalDokumen);
 <section class="py-5 bg-light">
     <div class="container">
         <div class="text-center mb-5">
-            <span class="section-tag">
-                <i class="fas fa-arrows-spin me-1"></i> <?= htmlspecialchars(get_landing_setting('siklus_section_tag', 'ALUR PENJAMINAN MUTU')) ?>
-            </span>
             <h2 class="section-title"><?= htmlspecialchars(get_landing_setting('siklus_section_title', '5 Siklus Penjaminan Mutu Internal (PPEPP)')) ?></h2>
             <p class="section-desc mx-auto">
                 <?= htmlspecialchars(get_landing_setting('siklus_section_desc', 'Implementasi siklus berkelanjutan (Continuous Quality Improvement) sesuai pedoman Permendikbudristek No. 53 Tahun 2023 untuk mencapai akreditasi unggul institusi.')) ?>
@@ -197,29 +193,18 @@ $totalDokumenSafe = max(1, $totalDokumen);
         
         <!-- Section Header -->
         <div class="text-center mb-4">
-            <span class="section-tag">
-                <i class="fas fa-landmark me-1"></i> <?= htmlspecialchars(get_landing_setting('direktori_section_tag', 'DIREKTORI AKADEMIK')) ?>
-            </span>
             <h2 class="section-title"><?= htmlspecialchars(get_landing_setting('direktori_section_title', 'Fakultas & Program Studi')) ?></h2>
             <p class="section-desc mx-auto">
                 <?= htmlspecialchars(get_landing_setting('direktori_section_desc', 'Pilih fakultas di bawah untuk meninjau profil kepemimpinan, sebaran dokumen mutu 5 siklus PPEPP, dan status kepatuhan standar mutu masing-masing prodi.')) ?>
             </p>
         </div>
 
-        <!-- Interactive Search & Category Filter Toolbar -->
-        <div class="faculty-toolbar">
-            <div class="faculty-search-input-wrap">
+        <!-- Interactive Search Toolbar -->
+        <div class="faculty-toolbar justify-content-center mb-4">
+            <div class="faculty-search-input-wrap" style="max-width: 520px; width: 100%;">
                 <i class="fas fa-search"></i>
                 <input type="text" id="facultySearchInput" class="faculty-search-input" 
                        placeholder="Cari fakultas atau nama prodi..." autocomplete="off">
-            </div>
-
-            <div class="faculty-filter-pills" id="facultyFilterButtons">
-                <button type="button" class="filter-pill active" data-category="all">Semua Fakultas (<?= count($fakultasList) ?>)</button>
-                <button type="button" class="filter-pill" data-category="saintek">Sains &amp; Teknologi</button>
-                <button type="button" class="filter-pill" data-category="soshum">Sosial &amp; Humaniora</button>
-                <button type="button" class="filter-pill" data-category="kreatif">Kreatif &amp; Bisnis</button>
-                <button type="button" class="filter-pill" data-category="kesehatan">Kesehatan &amp; Pasca</button>
             </div>
         </div>
 
@@ -335,14 +320,11 @@ $totalDokumenSafe = max(1, $totalDokumen);
                         
                         <div class="card-fakultas-body">
                             
-                            <!-- Top: Icon & Abbreviation Tag -->
+                            <!-- Top: Icon -->
                             <div class="card-fakultas-top">
                                 <div class="card-fakultas-icon" style="background: <?= $conf['bg_icon'] ?>; color: <?= $conf['color'] ?>;">
                                     <i class="fas <?= $conf['icon'] ?>"></i>
                                 </div>
-                                <span class="card-fakultas-code-badge" style="background: <?= $conf['bg_icon'] ?>; color: <?= $conf['color'] ?>; border: 1px solid <?= $conf['color'] ?>33;">
-                                    <?= htmlspecialchars($fak['kode_fakultas']) ?>
-                                </span>
                             </div>
 
                             <!-- Title & Description -->
@@ -403,28 +385,23 @@ $totalDokumenSafe = max(1, $totalDokumen);
     </div>
 </section>
 
-<!-- Client-side Interactive Filter Script -->
+<!-- Client-side Interactive Search Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('facultySearchInput');
-    const filterButtons = document.querySelectorAll('#facultyFilterButtons .filter-pill');
     const facultyItems = document.querySelectorAll('.faculty-grid-item');
     const emptyState = document.getElementById('facultyEmptyState');
 
-    let activeCategory = 'all';
     let searchQuery = '';
 
     function filterFaculties() {
         let visibleCount = 0;
 
         facultyItems.forEach(item => {
-            const itemCategory = item.getAttribute('data-category');
             const itemKeywords = item.getAttribute('data-keywords') || '';
-
-            const matchesCategory = (activeCategory === 'all' || itemCategory === activeCategory);
             const matchesSearch = (!searchQuery || itemKeywords.includes(searchQuery));
 
-            if (matchesCategory && matchesSearch) {
+            if (matchesSearch) {
                 item.style.display = '';
                 visibleCount++;
             } else {
@@ -444,21 +421,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filterButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            activeCategory = this.getAttribute('data-category');
-            filterFaculties();
-        });
-    });
-
     window.resetFacultyFilter = function() {
         if (searchInput) searchInput.value = '';
         searchQuery = '';
-        activeCategory = 'all';
-        filterButtons.forEach(b => b.classList.remove('active'));
-        if (filterButtons[0]) filterButtons[0].classList.add('active');
         filterFaculties();
     };
 });

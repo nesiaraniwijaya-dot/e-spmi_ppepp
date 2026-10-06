@@ -20,9 +20,6 @@ $prodiCount = count($prodiList);
         </nav>
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
-                <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-20 text-warning small fw-bold mb-2">
-                    <i class="fas fa-landmark"></i> Fakultas <?= htmlspecialchars($fakultas['kode_fakultas']) ?>
-                </div>
                 <h1 class="page-banner-title mb-1"><?= htmlspecialchars($fakultas['nama_fakultas']) ?></h1>
                 <p class="text-light opacity-80 small mb-0" style="max-width: 700px;"><?= htmlspecialchars($fakultas['deskripsi']) ?></p>
             </div>
@@ -76,7 +73,6 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                                 <span class="badge rounded-pill px-2.5 py-1 fw-bold" style="background: rgba(107, 70, 193, 0.12); color: var(--purple); font-size: 0.72rem;">
                                     <i class="fas fa-landmark me-1"></i> TINGKAT FAKULTAS
                                 </span>
-                                <span class="badge bg-light text-secondary border" style="font-size: 0.72rem;">Kode: <?= htmlspecialchars($fakultas['kode_fakultas']) ?></span>
                             </div>
                             <h5 class="fw-bold text-dark-blue mb-0">
                                 Dokumen PPEPP Dekanat <?= htmlspecialchars($fakultas['nama_fakultas']) ?>
@@ -122,7 +118,7 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                     <div class="mt-auto pt-2">
                         <a href="<?= base_url('fakultas/' . $fakultas['id'] . '/ppepp') ?>" 
                            class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill bg-scu-blue border-0 d-flex align-items-center justify-content-center gap-2 shadow-sm">
-                            <i class="fas fa-chart-pie text-warning"></i> Buka Dashboard PPEPP Dekanat Fakultas
+                            <i class="fas fa-chart-pie text-info"></i> Buka Dashboard PPEPP Dekanat Fakultas
                             <i class="fas fa-chevron-right ms-auto"></i>
                         </a>
                     </div>
@@ -140,10 +136,9 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
                                     <div class="d-flex align-items-center gap-2 mb-1">
-                                        <span class="badge bg-dark-blue text-warning px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
-                                            <i class="fas fa-graduation-cap me-1"></i> <?= htmlspecialchars($p['jenjang']) ?>
+                                        <span class="badge bg-dark-blue text-white px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
+                                            <i class="fas fa-graduation-cap me-1 text-info"></i> <?= htmlspecialchars($p['jenjang']) ?>
                                         </span>
-                                        <span class="badge bg-light text-secondary border" style="font-size: 0.72rem;">Kode: <?= htmlspecialchars($p['kode_prodi']) ?></span>
                                     </div>
                                     <h5 class="fw-bold text-dark-blue mb-0">
                                         Program Studi <?= htmlspecialchars($p['nama_prodi']) ?>
@@ -186,7 +181,7 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                             <div class="mt-auto pt-2">
                                 <a href="<?= base_url('prodi/' . $p['id']) ?>" 
                                    class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill bg-scu-blue border-0 d-flex align-items-center justify-content-center gap-2 shadow-sm">
-                                    <i class="fas fa-chart-pie text-warning"></i> Buka Dashboard PPEPP Program Studi
+                                    <i class="fas fa-chart-pie text-info"></i> Buka Dashboard PPEPP Program Studi
                                     <i class="fas fa-chevron-right ms-auto"></i>
                                 </a>
                             </div>
