@@ -17,8 +17,8 @@
                 <!-- Modal Header -->
                 <div class="modal-header bg-navy text-white px-3 py-2.5 d-flex align-items-center justify-content-between border-0">
                     <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
-                        <div class="p-1.5 rounded-3 bg-white bg-opacity-10 text-warning flex-shrink-0">
-                            <i class="fas fa-file-pdf fa-lg"></i>
+                        <div class="p-1.5 rounded-3 bg-white bg-opacity-10 text-info flex-shrink-0" id="pdfModalHeaderIconWrap">
+                            <i class="fas fa-file-pdf fa-lg" id="pdfModalHeaderIcon"></i>
                         </div>
                         <div class="text-truncate">
                             <h5 class="modal-title fs-6 fw-bold mb-0 text-white text-truncate" id="pdfPreviewModalLabel">
@@ -77,28 +77,33 @@
                 <!-- PDF Viewer Canvas Container -->
                 <div class="modal-body p-0 position-relative" id="pdfViewerScrollArea" style="background:#525659; overflow-y:auto; height:calc(100% - 110px);">
                     <!-- Loading Spinner -->
-                    <div id="pdfLoadingIndicator" class="position-absolute top-50 start-50 translate-middle text-center text-white py-5">
-                        <div class="spinner-border text-warning mb-3" role="status" style="width:3rem; height:3rem;"></div>
+                    <div id="pdfLoadingIndicator" class="position-absolute top-50 start-50 translate-middle text-center text-white py-5" style="z-index: 10;">
+                        <div class="spinner-border text-info mb-3" role="status" style="width:3rem; height:3rem;"></div>
                         <div class="fw-bold fs-6">Memuat Dokumen Mutu...</div>
-                        <div class="text-white-50 small mt-1">Menyiapkan halaman dokumen untuk Anda</div>
+                        <div class="text-white-50 small mt-1">Menyiapkan dokumen untuk Anda</div>
                     </div>
 
-                    <!-- Canvases Container -->
+                    <!-- Canvases Container (Local PDF Documents) -->
                     <div id="pdfPagesContainer" class="d-flex flex-column align-items-center py-4 gap-4" style="min-height:100%;">
                         <!-- Pages will be rendered here dynamically -->
                     </div>
 
-                    <!-- Locked Preview Banner (Appears after max public pages if guest) -->
-                    <div id="pdfLockedBanner" class="p-4 mx-auto my-4 text-center rounded-4 shadow-lg" style="display:none; max-width:680px; background:linear-gradient(135deg, #0A192F 0%, #1E3E62 50%, #6B21A8 100%); border:2px solid rgba(245,158,11,0.4);">
-                        <div class="lock-icon-circle mx-auto mb-3 d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-20 text-warning rounded-circle" style="width:68px; height:68px;">
+                    <!-- Iframe Container (Google Drive / Cloud Link Documents) -->
+                    <div id="pdfIframeWrap" class="w-100 h-100" style="display:none; min-height:70vh;">
+                        <iframe id="pdfModalIframe" src="" class="w-100 h-100 border-0" allow="autoplay" allowfullscreen style="min-height:70vh;"></iframe>
+                    </div>
+
+                    <!-- Locked Preview Banner (Appears if access is restricted) -->
+                    <div id="pdfLockedBanner" class="p-4 mx-auto my-4 text-center rounded-4 shadow-lg" style="display:none; max-width:680px; background:linear-gradient(135deg, #0A192F 0%, #1E3E62 50%, #1E293B 100%); border:1px solid rgba(255,255,255,0.15);">
+                        <div class="lock-icon-circle mx-auto mb-3 d-inline-flex align-items-center justify-content-center bg-white bg-opacity-10 text-info rounded-circle" style="width:68px; height:68px;">
                             <i class="fas fa-shield-halved fa-2x"></i>
                         </div>
-                        <h4 class="fw-bold text-white mb-2" style="font-family:var(--font-heading);">Batas Pratinjau Publik Tercapai</h4>
+                        <h4 class="fw-bold text-white mb-2" style="font-family:var(--font-heading);">Akses Dokumen Terbatas</h4>
                         <p class="text-white text-opacity-75 mx-auto mb-3" style="max-width: 520px; font-size: 0.9rem; line-height:1.6;" id="pdfLockedMessage">
-                            Anda baru saja membaca pratinjau terbatas halaman awal dokumen mutu ini. Untuk mengakses seluruh lembar halaman secara lengkap dan mengunduh berkas resminya, silakan masuk ke sistem PETRA.
+                            Dokumen mutu ini memiliki pembatasan akses untuk publik. Silakan masuk sebagai pengguna terdaftar untuk membuka isi dokumen dan mengakses tautan resmi secara penuh.
                         </p>
                         <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
-                            <a href="<?= base_url('login') ?>" class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow-sm">
+                            <a href="<?= base_url('login') ?>" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-white shadow-sm bg-scu-blue border-0">
                                 <i class="fas fa-right-to-bracket me-1.5"></i> Masuk / Login ke Sistem
                             </a>
                             <button type="button" class="btn btn-outline-light rounded-pill px-3 py-2 fw-semibold" data-bs-dismiss="modal">

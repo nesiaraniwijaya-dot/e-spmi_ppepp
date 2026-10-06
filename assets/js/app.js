@@ -73,23 +73,47 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 3. Interactive PDF.js Viewer Handling (Public Page Limiting & Access Protection)
+    // 3. Interactive PDF.js & Cloud Link Viewer Handling (Fast Loading & Embed Preview)
     const pdfModal = document.getElementById('pdfPreviewModal');
     let currentPdfDoc = null;
     let currentScale = 1.25;
     let currentRenderLimit = 3;
+    let currentRenderTaskId = 0;
     let isUserLoggedIn = typeof window.IS_USER_LOGGED_IN !== 'undefined' ? !!window.IS_USER_LOGGED_IN : false;
+
+    // Helper: Convert Google Drive/Docs URL into embedded preview URL
+    function toEmbedPreviewUrl(rawUrl) {
+        if (!rawUrl) return '';
+        let url = rawUrl.trim();
+        const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (driveMatch && driveMatch[1]) {
+            return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+        }
+        const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (idMatch && idMatch[1]) {
+            return `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+        }
+        const docsMatch = url.match(/(https:\/\/docs\.google\.com\/(?:document|spreadsheets|presentation)\/d\/[a-zA-Z0-9_-]+)/);
+        if (docsMatch && docsMatch[1]) {
+            return `${docsMatch[1]}/preview`;
+        }
+        return url;
+    }
 
     if (pdfModal) {
         pdfModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             if (!button) return;
 
-            const pdfUrl = button.getAttribute('data-pdf-url');
+            const isLinkDoc = button.getAttribute('data-is-link') === '1';
+            const pdfUrl = button.getAttribute('data-pdf-url') || '';
+            const linkUrl = button.getAttribute('data-link-url') || '';
             const docTitle = button.getAttribute('data-doc-title') || 'Dokumen Mutu';
+            const docNarasi = button.getAttribute('data-doc-narasi') || '';
             const docStandar = button.getAttribute('data-doc-standar') || '';
             const publicLimit = parseInt(button.getAttribute('data-public-limit') || '1', 10);
             const canDownload = parseInt(button.getAttribute('data-can-download') || '0', 10);
+            const canAccess = parseInt(button.getAttribute('data-can-access') || '1', 10);
 
             const modalTitle = pdfModal.querySelector('.modal-title');
             const downloadContainer = document.getElementById('pdfDownloadBtnContainer');
@@ -97,12 +121,18 @@ document.addEventListener('DOMContentLoaded', function () {
             const totalInfo = document.getElementById('pdfTotalInfo');
             const loadingIndicator = document.getElementById('pdfLoadingIndicator');
             const pagesContainer = document.getElementById('pdfPagesContainer');
+            const iframeWrap = document.getElementById('pdfIframeWrap');
+            const iframeEl = document.getElementById('pdfModalIframe');
             const lockedBanner = document.getElementById('pdfLockedBanner');
+            const toolbar = pdfModal.querySelector('.pdf-viewer-toolbar');
             const zoomDisplay = document.getElementById('pdfZoomLevelDisplay');
             const narasiWrap = document.getElementById('pdfModalNarasiWrap');
             const narasiRow = document.getElementById('pdfModalNarasiRow');
             const narasiText = document.getElementById('pdfModalNarasiText');
             const standarWrap = document.getElementById('pdfModalStandarWrap');
+            const headerIcon = document.getElementById('pdfModalHeaderIcon');
+
+            currentRenderTaskId++; // Cancel any previous rendering tasks
 
             if (modalTitle) modalTitle.textContent = docTitle;
             if (pagesContainer) pagesContainer.innerHTML = '';
@@ -117,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (docStandar && docStandar.trim() !== '') {
                     standarWrap.innerHTML = `
                         <span class="small fw-semibold text-white-50 me-1" style="font-size:0.72rem;">
-                            <i class="fas fa-bookmark text-warning me-1"></i> Standar Mutu:
+                            <i class="fas fa-bookmark text-info me-1"></i> Standar Mutu:
                         </span>
                         ${docStandar}
                     `;
@@ -144,8 +174,95 @@ document.addEventListener('DOMContentLoaded', function () {
                 narasiWrap.style.display = hasRibbon ? 'block' : 'none';
             }
 
-            // Configure Download Button
+            // Case A: Cloud Link Document (Google Drive / Docs)
+            if (isLinkDoc) {
+                if (headerIcon) headerIcon.className = 'fab fa-google-drive fa-lg text-info';
+                if (toolbar) toolbar.style.display = 'none';
+                if (pagesContainer) pagesContainer.style.display = 'none';
+
+                const curPath = window.location.pathname + window.location.search;
+                const loginUrlWithReturn = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
+
+                // Download/External Link Button
+                if (downloadContainer) {
+                    if (isUserLoggedIn || canDownload === 1) {
+                        downloadContainer.innerHTML = `
+                            <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                                <i class="fas fa-arrow-up-right-from-square me-1"></i> Buka di Tab Baru
+                            </a>
+                        `;
+                    } else {
+                        downloadContainer.innerHTML = `
+                            <a href="${loginUrlWithReturn}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-white bg-scu-blue border-0" title="Masuk untuk membuka tautan resmi">
+                                <i class="fas fa-lock me-1"></i> Login untuk Akses
+                            </a>
+                        `;
+                    }
+                }
+
+                // Check access permission
+                if (isUserLoggedIn || canAccess === 1) {
+                    if (accessBadge) {
+                        if (isUserLoggedIn) {
+                            accessBadge.className = 'badge bg-success bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
+                            accessBadge.innerHTML = '<i class="fas fa-unlock me-1"></i> Akses Penuh (Tautan Cloud)';
+                        } else {
+                            accessBadge.className = 'badge bg-info bg-opacity-90 text-white rounded-pill px-2.5 py-1';
+                            accessBadge.innerHTML = '<i class="fab fa-google-drive me-1"></i> Dokumen Cloud Publik';
+                        }
+                    }
+                    if (totalInfo) totalInfo.textContent = 'Pratinjau Langsung Tautan Cloud';
+
+                    if (iframeWrap && iframeEl) {
+                        iframeWrap.style.display = 'block';
+                        iframeEl.src = toEmbedPreviewUrl(linkUrl);
+                        iframeEl.onload = function () {
+                            if (loadingIndicator) loadingIndicator.style.display = 'none';
+                        };
+                        // Fallback safety timeout in case cross-origin iframe onload does not fire
+                        setTimeout(() => {
+                            if (loadingIndicator) loadingIndicator.style.display = 'none';
+                        }, 1200);
+                    }
+                } else {
+                    // Guest user attempting to access a locked link document
+                    if (accessBadge) {
+                        accessBadge.className = 'badge bg-secondary text-white rounded-pill px-2.5 py-1';
+                        accessBadge.innerHTML = '<i class="fas fa-lock me-1"></i> Akses Terbatas';
+                    }
+                    if (totalInfo) totalInfo.textContent = 'Perlu Login Pengguna';
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    if (iframeWrap) iframeWrap.style.display = 'none';
+                    if (lockedBanner) {
+                        lockedBanner.style.display = 'block';
+                        const lockedMsg = document.getElementById('pdfLockedMessage');
+                        if (lockedMsg) {
+                            lockedMsg.innerHTML = `
+                                Tautan dokumen mutu ini memiliki pembatasan akses untuk publik. Silakan masuk sebagai pengguna terdaftar untuk membuka isi dokumen dan melihat berkas resmi secara lengkap.
+                            `;
+                        }
+                        const loginBtnInBanner = lockedBanner.querySelector('a.btn-primary');
+                        if (loginBtnInBanner) {
+                            loginBtnInBanner.href = loginUrlWithReturn;
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Case B: Local PDF File
+            if (headerIcon) headerIcon.className = 'fas fa-file-pdf fa-lg text-info';
+            if (toolbar) toolbar.style.display = 'flex';
+            if (pagesContainer) pagesContainer.style.display = 'flex';
+            if (iframeWrap) {
+                iframeWrap.style.display = 'none';
+                if (iframeEl) iframeEl.src = 'about:blank';
+            }
+
+            // Configure Download Button for PDF
             if (downloadContainer) {
+                const curPath = window.location.pathname + window.location.search;
+                const loginUrlWithReturn = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
                 if (isUserLoggedIn || canDownload === 1) {
                     downloadContainer.innerHTML = `
                         <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-outline-light rounded-pill px-3">
@@ -154,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                 } else {
                     downloadContainer.innerHTML = `
-                        <a href="${window.LOGIN_URL || '/login'}" class="btn btn-sm btn-warning rounded-pill px-3 fw-bold text-dark" title="Masuk ke sistem untuk mengunduh dokumen resmi">
+                        <a href="${loginUrlWithReturn}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-white bg-scu-blue border-0" title="Masuk ke sistem untuk mengunduh dokumen resmi">
                             <i class="fas fa-lock me-1"></i> Login untuk Unduh
                         </a>
                     `;
@@ -170,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     accessBadge.className = 'badge bg-success bg-opacity-75 text-white rounded-pill px-2.5 py-1';
                     accessBadge.innerHTML = '<i class="fas fa-eye me-1"></i> Semua Halaman';
                 } else {
-                    accessBadge.className = 'badge bg-warning bg-opacity-90 text-dark rounded-pill px-2.5 py-1 fw-bold';
+                    accessBadge.className = 'badge bg-light text-primary border rounded-pill px-2.5 py-1 fw-bold';
                     accessBadge.innerHTML = `<i class="fas fa-lock me-1"></i> Pratinjau Terbatas (${publicLimit} Hlm)`;
                 }
             }
@@ -188,12 +305,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Load Document via PDF.js
+            // Load Document via PDF.js with instant first-page response
             pdfjsLib.getDocument(pdfUrl).promise.then(function (pdfDoc) {
                 currentPdfDoc = pdfDoc;
                 const totalPages = pdfDoc.numPages;
 
-                // Determine pages to render: If user is logged in, unlock ALL pages!
                 if (!isUserLoggedIn && publicLimit > 0) {
                     currentRenderLimit = Math.min(totalPages, publicLimit);
                 } else {
@@ -211,16 +327,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     pageCounter.textContent = `1 - ${currentRenderLimit} / ${totalPages}`;
                 }
 
-                // Render all allowable pages sequentially
-                renderAllAllowablePages(pdfDoc, currentRenderLimit, totalPages, currentScale, publicLimit);
+                // Render with fast progressive streaming
+                renderAllAllowablePagesFast(pdfDoc, currentRenderLimit, totalPages, currentScale, publicLimit);
 
             }).catch(function (error) {
                 console.error('Error loading PDF:', error);
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
                 if (pagesContainer) {
                     pagesContainer.innerHTML = `
-                        <div class="alert alert-warning m-4 text-center">
-                            <i class="fas fa-exclamation-triangle fa-2x mb-2 d-block text-warning"></i>
+                        <div class="alert alert-light border m-4 text-center">
+                            <i class="fas fa-circle-exclamation fa-2x mb-2 d-block text-secondary"></i>
                             <strong>Tidak dapat menampilkan pratinjau dokumen.</strong><br>
                             <span class="small text-muted">${error.message || 'Format berkas tidak didukung atau berkas tidak ditemukan.'}</span>
                         </div>
@@ -230,8 +346,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         pdfModal.addEventListener('hidden.bs.modal', function () {
+            currentRenderTaskId++; // Cancel any running page renders
             const pagesContainer = document.getElementById('pdfPagesContainer');
             if (pagesContainer) pagesContainer.innerHTML = '';
+            const iframeWrap = document.getElementById('pdfIframeWrap');
+            const iframeEl = document.getElementById('pdfModalIframe');
+            if (iframeEl) iframeEl.src = 'about:blank';
+            if (iframeWrap) iframeWrap.style.display = 'none';
             const lockedBanner = document.getElementById('pdfLockedBanner');
             if (lockedBanner) lockedBanner.style.display = 'none';
             const narasiWrap = document.getElementById('pdfModalNarasiWrap');
@@ -275,7 +396,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function renderAllAllowablePages(pdfDoc, limit, totalPages, scale, publicLimit) {
+    /**
+     * Ultra-fast progressive rendering: Page 1 renders and displays instantly (<400ms),
+     * followed by background chunk rendering of subsequent pages.
+     */
+    function renderAllAllowablePagesFast(pdfDoc, limit, totalPages, scale, publicLimit) {
         const pagesContainer = document.getElementById('pdfPagesContainer');
         const loadingIndicator = document.getElementById('pdfLoadingIndicator');
         const lockedBanner = document.getElementById('pdfLockedBanner');
@@ -284,63 +409,78 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!pagesContainer) return;
         pagesContainer.innerHTML = '';
 
-        let renderChain = Promise.resolve();
+        const thisTaskId = ++currentRenderTaskId;
 
-        for (let pageNum = 1; pageNum <= limit; pageNum++) {
-            renderChain = renderChain.then(() => {
-                return pdfDoc.getPage(pageNum).then(function (page) {
-                    const viewport = page.getViewport({ scale: scale });
+        function renderSinglePage(pageNum) {
+            return pdfDoc.getPage(pageNum).then(function (page) {
+                if (currentRenderTaskId !== thisTaskId) return;
 
-                    const pageWrapper = document.createElement('div');
-                    pageWrapper.className = 'pdf-page-wrapper text-center position-relative';
-                    pageWrapper.style.marginBottom = '20px';
+                const viewport = page.getViewport({ scale: scale });
 
-                    const canvas = document.createElement('canvas');
-                    canvas.className = 'pdf-page-canvas rounded shadow-sm';
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
+                const pageWrapper = document.createElement('div');
+                pageWrapper.className = 'pdf-page-wrapper text-center position-relative';
+                pageWrapper.style.marginBottom = '20px';
 
-                    const pageBadge = document.createElement('div');
-                    pageBadge.className = 'badge bg-dark bg-opacity-75 text-white position-absolute top-0 start-0 m-2 px-2 py-1 small';
-                    pageBadge.textContent = `Halaman ${pageNum}`;
+                const canvas = document.createElement('canvas');
+                canvas.className = 'pdf-page-canvas rounded shadow-sm';
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
 
-                    pageWrapper.appendChild(canvas);
-                    pageWrapper.appendChild(pageBadge);
-                    pagesContainer.appendChild(pageWrapper);
+                const pageBadge = document.createElement('div');
+                pageBadge.className = 'badge bg-dark bg-opacity-75 text-white position-absolute top-0 start-0 m-2 px-2 py-1 small';
+                pageBadge.textContent = `Halaman ${pageNum}`;
 
-                    const renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    return page.render(renderContext).promise;
-                });
+                pageWrapper.appendChild(canvas);
+                pageWrapper.appendChild(pageBadge);
+                pagesContainer.appendChild(pageWrapper);
+
+                return page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
             });
         }
 
-        renderChain.then(() => {
+        // Render Page 1 first immediately
+        renderSinglePage(1).then(() => {
+            if (currentRenderTaskId !== thisTaskId) return;
+            // IMMEDIATELY HIDE SPINNER on Page 1 finish! User can begin reading immediately!
             if (loadingIndicator) loadingIndicator.style.display = 'none';
 
-            // If user is NOT logged in and document is limited, show locked preview banner with smart return_url
-            if (!isUserLoggedIn && publicLimit > 0 && totalPages > limit) {
-                if (lockedBanner) {
-                    lockedBanner.style.display = 'block';
-                    if (lockedMessage) {
-                        lockedMessage.innerHTML = `
-                            Anda baru saja membaca pratinjau terbatas <strong>${limit} dari total ${totalPages} halaman</strong> dokumen mutu ini. Untuk mengakses seluruh lembar halaman secara lengkap dan mengunduh berkas resminya, silakan masuk ke sistem PETRA sebagai pengguna terdaftar.
-                        `;
-                    }
-                    const loginBtnInBanner = lockedBanner.querySelector('a.btn-warning');
-                    if (loginBtnInBanner) {
-                        const curPath = window.location.pathname + window.location.search;
-                        loginBtnInBanner.href = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
-                    }
-                    pagesContainer.appendChild(lockedBanner);
-                }
-            } else if (lockedBanner) {
-                lockedBanner.style.display = 'none';
+            // Now render remaining pages in a sequential background queue
+            let chain = Promise.resolve();
+            for (let p = 2; p <= limit; p++) {
+                const nextP = p;
+                chain = chain.then(() => {
+                    if (currentRenderTaskId !== thisTaskId) return Promise.resolve();
+                    return renderSinglePage(nextP);
+                });
             }
-        }).catch((err) => {
+
+            return chain.then(() => {
+                if (currentRenderTaskId !== thisTaskId) return;
+                // Append locked banner at the end if user reached limit
+                if (!isUserLoggedIn && publicLimit > 0 && totalPages > limit) {
+                    if (lockedBanner) {
+                        lockedBanner.style.display = 'block';
+                        if (lockedMessage) {
+                            lockedMessage.innerHTML = `
+                                Anda baru saja membaca pratinjau terbatas <strong>${limit} dari total ${totalPages} halaman</strong> dokumen mutu ini. Untuk mengakses seluruh lembar halaman secara lengkap dan mengunduh berkas resminya, silakan masuk ke sistem PETRA sebagai pengguna terdaftar.
+                            `;
+                        }
+                        const loginBtnInBanner = lockedBanner.querySelector('a.btn-primary');
+                        if (loginBtnInBanner) {
+                            const curPath = window.location.pathname + window.location.search;
+                            loginBtnInBanner.href = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
+                        }
+                        pagesContainer.appendChild(lockedBanner);
+                    }
+                } else if (lockedBanner) {
+                    lockedBanner.style.display = 'none';
+                }
+            });
+        }).catch(err => {
             console.error('Error rendering page:', err);
             if (loadingIndicator) loadingIndicator.style.display = 'none';
         });
@@ -349,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function reRenderPages(pdfDoc, limit, scale) {
         if (!pdfDoc) return;
         const totalPages = pdfDoc.numPages;
-        renderAllAllowablePages(pdfDoc, limit, totalPages, scale);
+        renderAllAllowablePagesFast(pdfDoc, limit, totalPages, scale);
     }
 });
 

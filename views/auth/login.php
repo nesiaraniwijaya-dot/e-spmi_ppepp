@@ -33,21 +33,21 @@ require_once ROOT_PATH . '/views/layouts/header.php';
 
                             <div class="d-flex flex-column gap-2 mb-4">
                                 <div class="d-flex align-items-center gap-2 small text-light">
-                                    <i class="fas fa-check-circle text-warning"></i> Kontrol Hak Akses Berbasis Peran (RBAC)
+                                    <i class="fas fa-check-circle text-info"></i> Kontrol Hak Akses Berbasis Peran (RBAC)
                                 </div>
                                 <div class="d-flex align-items-center gap-2 small text-light">
-                                    <i class="fas fa-check-circle text-warning"></i> Rekam Jejak Audit Trail Terperinci
+                                    <i class="fas fa-check-circle text-info"></i> Rekam Jejak Audit Trail Terperinci
                                 </div>
                                 <div class="d-flex align-items-center gap-2 small text-light">
-                                    <i class="fas fa-check-circle text-warning"></i> Repositori &amp; Verifikasi Dokumen 5 Siklus
+                                    <i class="fas fa-check-circle text-info"></i> Repositori &amp; Verifikasi Dokumen 5 Siklus
                                 </div>
                             </div>
                         </div>
 
                         <!-- Institutional Quality Badge Card -->
                         <div class="p-3 bg-white bg-opacity-10 rounded-3 border border-white border-opacity-15 d-flex align-items-center gap-3 mt-4">
-                            <div class="rounded-circle bg-warning bg-opacity-20 text-warning d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
-                                <i class="fas fa-award fa-lg"></i>
+                            <div class="rounded-circle bg-white bg-opacity-15 text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+                                <i class="fas fa-award fa-lg text-info"></i>
                             </div>
                             <div>
                                 <div class="fw-bold text-white small" style="letter-spacing: 0.3px;">Terakreditasi UNGGUL &bull; BAN-PT</div>
@@ -123,7 +123,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
         <div class="modal-content">
             <div class="modal-header bg-dark-blue text-white">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="fas fa-key text-warning fa-lg"></i>
+                    <i class="fas fa-key text-info fa-lg"></i>
                     <h5 class="modal-title fs-6 fw-bold mb-0 text-white" id="forgotPasswordModalLabel">Bantuan Reset Kata Sandi</h5>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -142,7 +142,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     <div class="fw-bold text-dark mb-2">Silakan hubungi kontak resmi LPM:</div>
                     <div class="mb-1"><i class="fas fa-envelope text-primary me-2"></i> Email: <strong>lpm@unika.ac.id</strong></div>
                     <div class="mb-1"><i class="fas fa-phone text-success me-2"></i> Telepon: <strong>024-8441555 Ext 1473</strong></div>
-                    <div><i class="fas fa-building text-warning me-2"></i> Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Bendan Duwur</div>
+                    <div><i class="fas fa-building text-primary me-2"></i> Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Bendan Duwur</div>
                 </div>
             </div>
             <div class="modal-footer">
