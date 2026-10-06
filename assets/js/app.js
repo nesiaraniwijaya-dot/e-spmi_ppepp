@@ -530,13 +530,13 @@ function initDocumentTable(table) {
         filteredRows = allRows.filter(row => {
             const title = (row.getAttribute('data-title') || '').toLowerCase();
             const nomor = (row.getAttribute('data-nomor') || '').toLowerCase();
-            const bidang = row.getAttribute('data-bidang-id') || '';
+            const bidangIds = (row.getAttribute('data-bidang-id') || '').split(',').map(s => s.trim());
             const siklus = row.getAttribute('data-siklus') || '';
             const status = row.getAttribute('data-status-review') || '';
             const textContent = row.textContent.toLowerCase();
 
             const matchesSearch = !query || title.includes(query) || nomor.includes(query) || textContent.includes(query);
-            const matchesBidang = !selectedBidang || bidang === selectedBidang;
+            const matchesBidang = !selectedBidang || bidangIds.includes(selectedBidang);
             const matchesSiklus = !selectedCycle || siklus === selectedCycle;
             const matchesStatus = !selectedReviewStatus || status === selectedReviewStatus;
 

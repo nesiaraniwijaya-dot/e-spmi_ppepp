@@ -248,6 +248,182 @@ function render_sub_standar_badges($subIds = null, array $customMap = null): str
 }
 
 /**
+ * Analisis adaptif standar SPMI dan bidang untuk sebuah dokumen
+ * Mengumpulkan seluruh sub_bidang_ids dari file lampiran, link eksternal, atau dokumen induk
+ * dan mengembalikan HTML adaptif yang rapi agar tidak menumpuk di baris tabel.
+ */
+function get_doc_adaptive_standards_and_bidang(array $doc, array $subBidangMap = null): array {
+    $map = $subBidangMap ?? get_all_sub_bidang_map();
+    $files = $doc['files'] ?? [];
+    $gdriveLinks = parse_external_links($doc['external_link'] ?? '');
+    
+    $fileBreakdown = [];
+    $allSubIds = [];
+    $bidangIds = [];
+
+    if (!empty($doc['bidang_id'])) {
+        $bidangIds[] = (int)$doc['bidang_id'];
+    }
+
+    if (($doc['jenis_upload'] ?? '') === 'file' && !empty($files)) {
+        foreach ($files as $idx => $f) {
+            $fName = $f['file_name'] ?? ('Berkas ' . ($idx + 1));
+            $rawSubs = $f['sub_bidang_ids'] ?? null;
+            $subIds = [];
+            if (!empty($rawSubs)) {
+                $subIds = is_array($rawSubs) ? $rawSubs : json_decode($rawSubs, true);
+                if (!is_array($subIds)) $subIds = is_numeric($rawSubs) ? [(int)$rawSubs] : [];
+            }
+            $subIds = array_values(array_filter(array_map('intval', $subIds)));
+            if (empty($subIds) && !empty($doc['sub_bidang_id'])) {
+                $subIds = [(int)$doc['sub_bidang_id']];
+            }
+            $fileBreakdown[] = [
+                'type' => 'file',
+                'title' => $fName,
+                'sub_ids' => $subIds
+            ];
+            foreach ($subIds as $sid) {
+                $allSubIds[] = $sid;
+            }
+        }
+    } elseif (($doc['jenis_upload'] ?? '') === 'link' && !empty($gdriveLinks)) {
+        foreach ($gdriveLinks as $idx => $l) {
+            $lTitle = !empty($l['narasi']) ? $l['narasi'] : ('Tautan GDrive #' . ($idx + 1));
+            $subIds = $l['sub_bidang_ids'] ?? [];
+            if (!is_array($subIds)) $subIds = [];
+            $subIds = array_values(array_filter(array_map('intval', $subIds)));
+            if (empty($subIds) && !empty($doc['sub_bidang_id'])) {
+                $subIds = [(int)$doc['sub_bidang_id']];
+            }
+            $fileBreakdown[] = [
+                'type' => 'link',
+                'title' => $lTitle,
+                'sub_ids' => $subIds
+            ];
+            foreach ($subIds as $sid) {
+                $allSubIds[] = $sid;
+            }
+        }
+    } elseif (!empty($doc['sub_bidang_id'])) {
+        $sid = (int)$doc['sub_bidang_id'];
+        $allSubIds[] = $sid;
+        $fileBreakdown[] = [
+            'type' => 'doc',
+            'title' => $doc['nama_dokumen'] ?? 'Dokumen',
+            'sub_ids' => [$sid]
+        ];
+    }
+
+    $allSubIds = array_values(array_unique(array_filter($allSubIds)));
+
+    $uniqueStandards = [];
+    $uniqueBidangs = [];
+    foreach ($allSubIds as $sId) {
+        if (isset($map[$sId])) {
+            $sName = $map[$sId]['nama_sub_bidang'] ?? '';
+            $bName = $map[$sId]['nama_bidang'] ?? '';
+            $bId = (int)($map[$sId]['bidang_id'] ?? 0);
+            if ($sName) $uniqueStandards[$sId] = $sName;
+            if ($bName && !in_array($bName, $uniqueBidangs, true)) {
+                $uniqueBidangs[] = $bName;
+            }
+            if ($bId > 0 && !in_array($bId, $bidangIds, true)) {
+                $bidangIds[] = $bId;
+            }
+        }
+    }
+
+    if (empty($uniqueBidangs) && !empty($doc['nama_bidang'])) {
+        $uniqueBidangs[] = $doc['nama_bidang'];
+    }
+
+    // 1. Render Standards HTML (Adaptive Pill & Dropdown)
+    $standardsHtml = '';
+    $stdCount = count($uniqueStandards);
+    if ($stdCount === 1) {
+        $firstId = array_key_first($uniqueStandards);
+        $firstName = htmlspecialchars($uniqueStandards[$firstId]);
+        $standardsHtml = '<span class="badge rounded-pill px-2.5 py-1 d-inline-flex align-items-center border shadow-2xs me-1 mb-1" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE !important; font-size:0.74rem; font-weight:600; line-height:1.4;" title="' . $firstName . '"><i class="fas fa-bookmark text-primary opacity-75 me-1.5 flex-shrink-0" style="font-size:0.7rem;"></i><span class="text-truncate" style="max-width:240px;">' . $firstName . '</span></span>';
+    } elseif ($stdCount > 1) {
+        $firstId = array_key_first($uniqueStandards);
+        $firstName = htmlspecialchars($uniqueStandards[$firstId]);
+        $remainingCount = $stdCount - 1;
+
+        $dropdownItemsHtml = '';
+        foreach ($fileBreakdown as $fb) {
+            $fTitle = htmlspecialchars($fb['title']);
+            $fIcon = $fb['type'] === 'file' ? 'fa-file-pdf text-danger' : 'fa-link text-primary';
+            $fStdBadges = '';
+            if (!empty($fb['sub_ids'])) {
+                foreach ($fb['sub_ids'] as $sId) {
+                    if (isset($map[$sId])) {
+                        $fStdBadges .= '<span class="badge bg-light text-primary border me-1 mb-1" style="font-size:0.7rem;"><i class="fas fa-bookmark me-1 opacity-75"></i>' . htmlspecialchars($map[$sId]['nama_sub_bidang']) . '</span>';
+                    }
+                }
+            } else {
+                $fStdBadges = '<span class="badge bg-light text-muted border me-1 mb-1" style="font-size:0.7rem;">Standar Umum</span>';
+            }
+
+            $dropdownItemsHtml .= '<li class="mb-2 pb-2 border-bottom border-light">';
+            $dropdownItemsHtml .= '<div class="fw-semibold text-dark text-truncate mb-1" style="font-size:0.75rem;" title="' . $fTitle . '"><i class="fas ' . $fIcon . ' me-1"></i>' . $fTitle . '</div>';
+            $dropdownItemsHtml .= '<div class="d-flex flex-wrap align-items-center">' . $fStdBadges . '</div>';
+            $dropdownItemsHtml .= '</li>';
+        }
+
+        $standardsHtml = '<div class="d-inline-flex flex-wrap align-items-center gap-1 mt-1">';
+        $standardsHtml .= '<span class="badge rounded-pill px-2.5 py-1 d-inline-flex align-items-center border shadow-2xs me-0.5" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE !important; font-size:0.74rem; font-weight:600; line-height:1.4;" title="' . $firstName . '"><i class="fas fa-bookmark text-primary opacity-75 me-1.5 flex-shrink-0" style="font-size:0.7rem;"></i><span class="text-truncate" style="max-width:200px;">' . $firstName . '</span></span>';
+        $standardsHtml .= '<div class="dropdown d-inline-block">';
+        $standardsHtml .= '<button type="button" class="badge rounded-pill px-2.5 py-1 d-inline-flex align-items-center border shadow-2xs dropdown-toggle btn-link text-decoration-none" style="background:#F0FDF4; color:#15803D; border-color:#BBF7D0 !important; font-size:0.74rem; font-weight:600; cursor:pointer;" data-bs-toggle="dropdown" aria-expanded="false" title="Klik untuk melihat rincian standar per berkas">';
+        $standardsHtml .= '<i class="fas fa-layer-group me-1.5 text-success" style="font-size:0.7rem;"></i><span>+' . $remainingCount . ' Standar Berkas</span>';
+        $standardsHtml .= '</button>';
+        $standardsHtml .= '<ul class="dropdown-menu dropdown-menu-start shadow-lg border-0 p-2.5 rounded-3" style="min-width: 290px; max-width: min(92vw, 380px); font-size: 0.78rem;">';
+        $standardsHtml .= '<li class="dropdown-header text-muted fw-bold px-1 py-1" style="font-size: 0.68rem; letter-spacing: 0.4px;">RINCIAN STANDAR PER BERKAS:</li>';
+        $standardsHtml .= $dropdownItemsHtml;
+        $standardsHtml .= '</ul>';
+        $standardsHtml .= '</div>';
+        $standardsHtml .= '</div>';
+    }
+
+    // 2. Render Bidang HTML (Single vs Multi-Bidang Dropdown)
+    $bidangHtml = '';
+    $bCount = count($uniqueBidangs);
+    if ($bCount <= 1) {
+        $singleBidang = !empty($uniqueBidangs) ? $uniqueBidangs[0] : ($doc['nama_bidang'] ?: 'Umum / Lainnya');
+        $bidangHtml = '<div class="fw-semibold text-dark mb-0.5" style="font-size:0.85rem;">' . htmlspecialchars($singleBidang) . '</div>';
+    } else {
+        $bidangItemsHtml = '';
+        foreach ($uniqueBidangs as $bName) {
+            $bidangItemsHtml .= '<li class="px-2 py-1 text-dark fw-semibold d-flex align-items-center gap-2" style="font-size:0.76rem;"><i class="fas fa-check-circle text-success" style="font-size:0.7rem;"></i><span>' . htmlspecialchars($bName) . '</span></li>';
+        }
+
+        $bidangHtml = '<div class="d-flex flex-column align-items-start gap-1">';
+        $bidangHtml .= '<div class="dropdown d-inline-block">';
+        $bidangHtml .= '<button type="button" class="badge rounded-pill px-2.5 py-1 d-inline-flex align-items-center border shadow-2xs dropdown-toggle btn-link text-decoration-none" style="background:#F5F3FF; color:#6D28D9; border-color:#DDD6FE !important; font-size:0.74rem; font-weight:600; cursor:pointer;" data-bs-toggle="dropdown" aria-expanded="false" title="Klik untuk rincian bidang yang tercakup">';
+        $bidangHtml .= '<i class="fas fa-cubes me-1.5 text-purple" style="font-size:0.7rem;"></i><span>Multi-Bidang (' . $bCount . ')</span>';
+        $bidangHtml .= '</button>';
+        $bidangHtml .= '<ul class="dropdown-menu dropdown-menu-start shadow-lg border-0 p-2.5 rounded-3" style="min-width: 250px; font-size: 0.78rem;">';
+        $bidangHtml .= '<li class="dropdown-header text-muted fw-bold px-1 py-1" style="font-size: 0.68rem;">BIDANG TERCAKUP:</li>';
+        $bidangHtml .= $bidangItemsHtml;
+        $bidangHtml .= '</ul>';
+        $bidangHtml .= '</div>';
+        $bidangHtml .= '<div class="text-muted text-truncate" style="font-size: 0.72rem; max-width: 175px;" title="' . htmlspecialchars(implode(', ', $uniqueBidangs)) . '">' . htmlspecialchars(implode(', ', $uniqueBidangs)) . '</div>';
+        $bidangHtml .= '</div>';
+    }
+
+    return [
+        'standards_count' => $stdCount,
+        'bidang_count' => $bCount,
+        'standards_html' => $standardsHtml,
+        'bidang_html' => $bidangHtml,
+        'bidang_ids' => array_values(array_unique(array_filter($bidangIds))),
+        'standards_text' => implode(' ', $uniqueStandards),
+        'unique_standards' => $uniqueStandards,
+        'unique_bidangs' => $uniqueBidangs
+    ];
+}
+
+/**
  * Sinkronisasi sub bidang untuk berkas ppepp_document_files
  */
 function sync_file_sub_bidang(PDO $pdo, int $fileId, array $subBidangIds): void {

@@ -188,15 +188,17 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                 </td>
                             </tr>
                         <?php else: ?>
-                            <?php $no = 1; foreach ($allDocuments as $doc): ?>
+                            <?php $no = 1; foreach ($allDocuments as $doc): 
+                                $adaptive = get_doc_adaptive_standards_and_bidang($doc);
+                            ?>
                                 <tr class="doc-row" 
-                                    data-title="<?= htmlspecialchars(strtolower($doc['nama_dokumen'])) ?>" 
+                                    data-title="<?= htmlspecialchars(strtolower($doc['nama_dokumen'] . ' ' . $adaptive['standards_text'])) ?>" 
                                     data-nomor="<?= htmlspecialchars(strtolower($doc['nomor_dokumen'] ?? '')) ?>" 
                                     data-prodi="<?= htmlspecialchars(strtolower($doc['nama_prodi'] ?? '')) ?>"
                                     data-prodi-id="<?= $doc['prodi_id'] ?? '' ?>"
                                     data-fakultas-id="<?= $doc['computed_fakultas_id'] ?? $doc['fakultas_id'] ?? '' ?>"
                                     data-level="<?= $doc['level'] ?? '' ?>"
-                                    data-bidang-id="<?= $doc['bidang_id'] ?? '' ?>"
+                                    data-bidang-id="<?= htmlspecialchars(implode(',', $adaptive['bidang_ids'])) ?>"
                                     data-siklus="<?= htmlspecialchars(strtolower($doc['siklus'] ?? '')) ?>">
                                     <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
                                     <td>
@@ -204,23 +206,9 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                         <?php if (!empty($doc['nomor_dokumen'])): ?>
                                             <div class="small text-muted mb-1"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
                                         <?php endif; ?>
-                                        <?php 
-                                        $files = $doc['files'] ?? [];
-                                        $filesCount = count($files);
-                                        $gdriveLinks = parse_external_links($doc['external_link'] ?? '');
-                                        $linkCount = count($gdriveLinks);
-                                        $rowSubStandarHtml = '';
-                                        if ($doc['jenis_upload'] === 'file' && !empty($files) && count($files) === 1 && !empty($files[0]['sub_bidang_ids'])) {
-                                            $rowSubStandarHtml = render_sub_standar_badges($files[0]['sub_bidang_ids']);
-                                        } elseif ($doc['jenis_upload'] === 'link' && !empty($gdriveLinks) && count($gdriveLinks) === 1 && !empty($gdriveLinks[0]['sub_bidang_ids'])) {
-                                            $rowSubStandarHtml = render_sub_standar_badges($gdriveLinks[0]['sub_bidang_ids']);
-                                        } elseif (!empty($doc['sub_bidang_id'])) {
-                                            $rowSubStandarHtml = render_sub_standar_badges([$doc['sub_bidang_id']]);
-                                        }
-                                        ?>
-                                        <?php if (!empty($rowSubStandarHtml)): ?>
-                                            <div class="mt-1 d-flex flex-wrap align-items-center">
-                                                <?= $rowSubStandarHtml ?>
+                                        <?php if (!empty($adaptive['standards_html'])): ?>
+                                            <div class="mt-1">
+                                                <?= $adaptive['standards_html'] ?>
                                             </div>
                                         <?php endif; ?>
                                     </td>
@@ -232,9 +220,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                         <div class="text-muted" style="font-size: 0.72rem;"><?= htmlspecialchars($doc['nama_fakultas'] ?? '') ?></div>
                                     </td>
                                     <td>
-                                        <div class="fw-semibold text-dark mb-0.5">
-                                            <?= htmlspecialchars($doc['nama_bidang'] ?: 'Umum / Lainnya') ?>
-                                        </div>
+                                        <?= $adaptive['bidang_html'] ?>
                                     </td>
                                     <td><?= siklus_badge($doc['siklus']) ?></td>
                                     <td>
@@ -511,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const rowFakultasId = row.getAttribute('data-fakultas-id') || '';
             const rowLevel = row.getAttribute('data-level') || '';
             const rowSiklus = row.getAttribute('data-siklus') || '';
-            const rowBidang = row.getAttribute('data-bidang-id') || '';
+            const rowBidangIds = (row.getAttribute('data-bidang-id') || '').split(',').map(s => s.trim());
 
             const matchQuery = !query || title.includes(query) || nomor.includes(query) || prodi.includes(query);
             const matchSiklus = !currentPublicSiklus || rowSiklus === currentPublicSiklus;
@@ -524,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const matchProdi = !selectedProdi || rowProdiId === selectedProdi;
-            const matchBidang = !selectedBidang || rowBidang === selectedBidang;
+            const matchBidang = !selectedBidang || rowBidangIds.includes(selectedBidang);
 
             return matchQuery && matchSiklus && matchFakultas && matchProdi && matchBidang;
         });
