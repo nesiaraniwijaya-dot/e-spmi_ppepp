@@ -491,8 +491,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <!-- Reviewer Meta -->
                                 <div class="d-inline-flex flex-wrap align-items-center gap-2 text-muted px-2.5 py-1 rounded-pill bg-light border mt-1" style="font-size: 0.76rem;">
                                     <span class="d-inline-flex align-items-center gap-1.5">
-                                        <i class="fas fa-user-shield <?= $isPerlu ? 'text-danger' : 'text-primary' ?>"></i>
-                                        <span>Reviewer: <strong class="text-dark"><?= htmlspecialchars($item['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM') ?></strong></span>
+                                        <i class="fas fa-building-columns text-primary"></i>
+                                        <span><strong class="text-dark">Pusat Penjaminan Mutu LPM</strong></span>
                                     </span>
                                     <?php if (!empty($item['reviewed_at'])): ?>
                                         <span class="text-secondary opacity-50">&bull;</span>
@@ -512,24 +512,24 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     data-bs-toggle="modal" 
                                     data-bs-target="#modalCatatanEvaluator"
                                     data-nama="<?= htmlspecialchars($item['nama_dokumen']) ?>"
-                                    data-reviewer="<?= htmlspecialchars($item['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM') ?>"
+                                    data-reviewer="Pusat Penjaminan Mutu LPM"
                                     data-tanggal="<?= !empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : '-' ?>"
                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                     data-siklus="<?= htmlspecialchars($item['siklus'] ?? '') ?>"
                                     data-status="<?= $isPerlu ? 'perlu_perbaikan' : 'sudah_diperbaiki' ?>"
                                     data-edit-url="<?= base_url('gpm/dokumen/edit/' . $item['id']) ?>">
-                                <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?> me-1.5"></i>
+                                <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?> me-2"></i>
                                 <span>Lihat Catatan</span>
                             </button>
 
                             <?php if ($isPerlu): ?>
                                 <a href="<?= base_url('gpm/dokumen/edit/' . $item['id']) ?>" class="btn btn-danger btn-revision-action fw-bold shadow-xs">
-                                    <i class="fas fa-wrench me-1.5"></i>
+                                    <i class="fas fa-wrench me-2"></i>
                                     <span>Perbaiki</span>
                                 </a>
                             <?php else: ?>
                                 <span class="badge bg-light text-primary border border-primary-subtle btn-revision-action fw-semibold">
-                                    <i class="fas fa-hourglass-half text-primary me-1.5"></i>
+                                    <i class="fas fa-hourglass-half text-primary me-2"></i>
                                     <span>Dalam Antrean</span>
                                 </span>
                             <?php endif; ?>
@@ -648,19 +648,19 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 <div class="modal fade" id="modalCatatanEvaluator" tabindex="-1" aria-labelledby="modalCatatanLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-2.5">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white" id="evalModalIcon" style="width: 36px; height: 36px; font-size: 0.95rem; background: #DC2626;">
+            <div class="modal-header border-0 py-3.5 px-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #0A192F 0%, #1E3E62 100%) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm flex-shrink-0" id="evalModalIcon" style="width: 38px; height: 38px; font-size: 1rem; background: #DC2626;">
                         <i class="fas fa-comment-dots"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold text-dark-blue mb-0" id="modalCatatanLabel" style="font-size: 1.15rem;">
+                        <h5 class="modal-title fw-bold text-white mb-0.5" id="modalCatatanLabel" style="font-size: 1.1rem; letter-spacing: -0.2px;">
                             Catatan Evaluasi / Arahan LPM
                         </h5>
-                        <p class="text-muted small mb-0" style="font-size: 0.78rem;">Lembaga Penjaminan Mutu UNIKA Soegijapranata</p>
+                        <p class="text-white text-opacity-75 small mb-0" style="font-size: 0.78rem;">Lembaga Penjaminan Mutu UNIKA Soegijapranata</p>
                     </div>
                 </div>
-                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body px-4 py-3">
                 <div class="p-3 rounded-3 bg-light border mb-3">
@@ -671,12 +671,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         -
                     </div>
                     <div class="d-flex flex-wrap align-items-center gap-3 mt-2 pt-2 border-top text-muted small" style="font-size: 0.76rem;">
-                        <div>
-                            <i class="fas fa-user-shield text-danger me-1"></i>
-                            <span>Evaluator: <strong class="text-dark" id="evalModalReviewer">-</strong></span>
+                        <div class="d-flex align-items-center gap-1.5">
+                            <i class="fas fa-building-columns text-primary"></i>
+                            <span class="text-dark fw-bold">Pusat Penjaminan Mutu LPM</span>
                         </div>
-                        <div>
-                            <i class="far fa-calendar-check text-secondary me-1"></i>
+                        <div class="d-flex align-items-center gap-1.5">
+                            <i class="far fa-calendar-check text-secondary"></i>
                             <span>Waktu Review: <strong class="text-dark" id="evalModalTanggal">-</strong></span>
                         </div>
                     </div>
@@ -696,8 +696,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             </div>
             <div class="modal-footer border-top py-2.5 px-4 bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                <a href="#" id="evalModalEditBtn" class="btn btn-danger btn-sm rounded-pill px-4 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5">
-                    <i class="fas fa-wrench"></i>
+                <a href="#" id="evalModalEditBtn" class="btn btn-danger btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2">
+                    <i class="fas fa-wrench me-1"></i>
                     <span>Perbaiki Dokumen Sekarang</span>
                 </a>
             </div>
@@ -734,12 +734,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (editBtn) {
                 editBtn.href = editUrl;
                 if (status === 'sudah_diperbaiki') {
-                    editBtn.className = 'btn btn-outline-primary btn-sm rounded-pill px-4 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5';
-                    editBtn.innerHTML = '<i class="fas fa-pen-to-square"></i> <span>Ubah / Lengkapi Berkas</span>';
+                    editBtn.className = 'btn btn-outline-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
+                    editBtn.innerHTML = '<i class="fas fa-pen-to-square me-1"></i> <span>Ubah / Lengkapi Berkas</span>';
                     if (iconEl) iconEl.style.background = '#2563EB';
                 } else {
-                    editBtn.className = 'btn btn-danger btn-sm rounded-pill px-4 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5';
-                    editBtn.innerHTML = '<i class="fas fa-wrench"></i> <span>Perbaiki Dokumen Sekarang</span>';
+                    editBtn.className = 'btn btn-danger btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
+                    editBtn.innerHTML = '<i class="fas fa-wrench me-1"></i> <span>Perbaiki Dokumen Sekarang</span>';
                     if (iconEl) iconEl.style.background = '#DC2626';
                 }
             }

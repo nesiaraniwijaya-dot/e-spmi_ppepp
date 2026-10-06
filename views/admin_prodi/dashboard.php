@@ -267,16 +267,16 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     </a>
                                 </h6>
 
-                                <!-- Line 3: Reviewer Metadata Box with clean margin -->
+                                <!-- Reviewer Meta -->
                                 <div class="d-inline-flex flex-wrap align-items-center gap-2 text-muted px-2.5 py-1 rounded-pill bg-light border mt-1" style="font-size: 0.76rem;">
                                     <span class="d-inline-flex align-items-center gap-1.5">
-                                        <i class="fas fa-user-shield <?= $isPerlu ? 'text-danger' : 'text-primary' ?>"></i>
-                                        <span>Reviewer: <strong class="text-dark"><?= htmlspecialchars($item['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM') ?></strong></span>
+                                        <i class="fas fa-building-columns text-primary"></i>
+                                        <span><strong class="text-dark">Pusat Penjaminan Mutu LPM</strong></span>
                                     </span>
                                     <?php if (!empty($item['reviewed_at'])): ?>
                                         <span class="text-secondary opacity-50">&bull;</span>
                                         <span class="d-inline-flex align-items-center gap-1">
-                                            <i class="far fa-calendar-check text-secondary"></i>
+                                             <i class="far fa-calendar-check text-secondary"></i>
                                             <span><?= date('d M Y, H:i', strtotime($item['reviewed_at'])) ?> WIB</span>
                                         </span>
                                     <?php endif; ?>
@@ -291,24 +291,24 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     data-bs-toggle="modal" 
                                     data-bs-target="#modalCatatanEvaluator"
                                     data-nama="<?= htmlspecialchars($item['nama_dokumen']) ?>"
-                                    data-reviewer="<?= htmlspecialchars($item['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM') ?>"
+                                    data-reviewer="Pusat Penjaminan Mutu LPM"
                                     data-tanggal="<?= !empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : '-' ?>"
                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                     data-siklus="<?= htmlspecialchars($item['siklus'] ?? '') ?>"
                                     data-status="<?= $isPerlu ? 'perlu_perbaikan' : 'sudah_diperbaiki' ?>"
                                     data-edit-url="<?= base_url('prodi/dokumen/edit/' . $item['id']) ?>">
-                                <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?> me-1.5"></i>
+                                <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?> me-2"></i>
                                 <span>Lihat Catatan</span>
                             </button>
 
                             <?php if ($isPerlu): ?>
                                 <a href="<?= base_url('prodi/dokumen/edit/' . $item['id']) ?>" class="btn btn-danger btn-revision-action fw-bold shadow-xs">
-                                    <i class="fas fa-wrench me-1.5"></i>
+                                    <i class="fas fa-wrench me-2"></i>
                                     <span>Perbaiki</span>
                                 </a>
                             <?php else: ?>
                                 <span class="badge bg-light text-primary border border-primary-subtle btn-revision-action fw-semibold">
-                                    <i class="fas fa-hourglass-half text-primary me-1.5"></i>
+                                    <i class="fas fa-hourglass-half text-primary me-2"></i>
                                     <span>Dalam Antrean</span>
                                 </span>
                             <?php endif; ?>
@@ -462,50 +462,58 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     <!-- Modal Detail Catatan Evaluator LPM -->
     <div class="modal fade" id="modalCatatanEvaluator" tabindex="-1" aria-labelledby="modalCatatanLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header border-bottom py-3 px-4" style="background: #F8FAFC;">
-                    <div class="d-flex align-items-center gap-2.5">
-                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-2xs" id="evalModalIcon" style="width: 36px; height: 36px; background: #DC2626; font-size: 0.95rem;">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 py-3.5 px-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #0A192F 0%, #1E3E62 100%) !important;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm flex-shrink-0" id="evalModalIcon" style="width: 38px; height: 38px; font-size: 1rem; background: #DC2626;">
                             <i class="fas fa-comment-dots"></i>
                         </div>
                         <div>
-                            <h6 class="modal-title fw-bold text-dark mb-0" id="modalCatatanLabel" style="font-size: 0.95rem;">Catatan Evaluasi LPM</h6>
-                            <div class="text-muted small" style="font-size: 0.72rem;">Arahan perbaikan dari Tim Penjaminan Mutu</div>
+                            <h5 class="modal-title fw-bold text-white mb-0.5" id="modalCatatanLabel" style="font-size: 1.1rem; letter-spacing: -0.2px;">
+                                Catatan Evaluasi / Arahan LPM
+                            </h5>
+                            <p class="text-white text-opacity-75 small mb-0" style="font-size: 0.78rem;">Lembaga Penjaminan Mutu UNIKA Soegijapranata</p>
                         </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body px-4 py-3">
                     <!-- Info Dokumen -->
-                    <div class="mb-3">
-                        <div class="text-muted small text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Dokumen Mutu:</div>
-                        <h6 class="fw-bold text-dark-blue mb-1" id="evalModalDocTitle" style="font-size: 0.95rem; line-height: 1.45;">-</h6>
-                    </div>
-
-                    <!-- Info Reviewer -->
-                    <div class="p-2.5 px-3 rounded-3 mb-3 bg-light border d-flex align-items-center justify-content-between flex-wrap gap-2" style="font-size: 0.78rem;">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fas fa-user-shield text-danger"></i>
-                            <span class="text-dark fw-bold" id="evalModalReviewer">-</span>
+                    <div class="p-3 rounded-3 bg-light border mb-3">
+                        <div class="small text-muted mb-1" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
+                            Nama Dokumen
                         </div>
-                        <div class="text-muted" id="evalModalTanggal">-</div>
+                        <h6 class="fw-bold text-dark-blue mb-0" id="evalModalDocTitle" style="font-size: 0.98rem; line-height: 1.45;">-</h6>
+                        <div class="d-flex flex-wrap align-items-center gap-3 mt-2 pt-2 border-top text-muted small" style="font-size: 0.76rem;">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="fas fa-building-columns text-primary"></i>
+                                <span class="text-dark fw-bold">Pusat Penjaminan Mutu LPM</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="far fa-calendar-check text-secondary"></i>
+                                <span>Waktu Review: <strong class="text-dark" id="evalModalTanggal">-</strong></span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Isi Catatan Evaluator -->
                     <div>
-                        <div class="text-danger fw-bold small text-uppercase mb-1.5 d-flex align-items-center gap-1.5" style="font-size: 0.72rem;">
-                            <i class="fas fa-quote-left"></i> Catatan & Arahan Revisi:
-                        </div>
-                        <div class="p-3 rounded-3 border" style="background: #FFF1F2; border-color: #FECDD3 !important; border-left: 4px solid #DC2626 !important; font-size: 0.88rem; line-height: 1.6; color: #1E293B; white-space: pre-wrap;" id="evalModalCatatan">
+                        <label class="form-label fw-bold text-dark-blue d-flex align-items-center gap-1.5 mb-2" style="font-size: 0.86rem;">
+                            <i class="fas fa-file-lines text-warning"></i>
+                            <span>Uraian Catatan Evaluasi &amp; Poin Perbaikan:</span>
+                        </label>
+                        <div class="p-3.5 rounded-3 bg-white border border-danger-subtle shadow-2xs" 
+                             id="evalModalCatatan"
+                             style="background-color: #FFFDFD !important; font-size: 0.88rem; line-height: 1.6; color: #1E293B; max-height: 260px; overflow-y: auto; white-space: pre-wrap;">
                             -
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-top py-2.5 px-4 bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                    <a href="#" id="evalModalEditBtn" class="btn btn-danger btn-sm rounded-pill px-4 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5">
-                        <i class="fas fa-wrench"></i>
+                    <a href="#" id="evalModalEditBtn" class="btn btn-danger btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2">
+                        <i class="fas fa-wrench me-1"></i>
                         <span>Perbaiki Dokumen Sekarang</span>
                     </a>
                 </div>
@@ -543,12 +551,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (editBtn) {
                 editBtn.href = editUrl;
                 if (status === 'sudah_diperbaiki') {
-                    editBtn.className = 'btn btn-outline-primary btn-sm rounded-pill px-4 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5';
-                    editBtn.innerHTML = '<i class="fas fa-pen-to-square"></i> <span>Ubah / Lengkapi Berkas</span>';
+                    editBtn.className = 'btn btn-outline-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
+                    editBtn.innerHTML = '<i class="fas fa-pen-to-square me-1"></i> <span>Ubah / Lengkapi Berkas</span>';
                     if (iconEl) iconEl.style.background = '#2563EB';
                 } else {
-                    editBtn.className = 'btn btn-danger btn-sm rounded-pill px-4 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5';
-                    editBtn.innerHTML = '<i class="fas fa-wrench"></i> <span>Perbaiki Dokumen Sekarang</span>';
+                    editBtn.className = 'btn btn-danger btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
+                    editBtn.innerHTML = '<i class="fas fa-wrench me-1"></i> <span>Perbaiki Dokumen Sekarang</span>';
                     if (iconEl) iconEl.style.background = '#DC2626';
                 }
             }

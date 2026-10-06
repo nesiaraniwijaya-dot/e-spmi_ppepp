@@ -407,7 +407,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                         data-id="<?= $doc['id'] ?>"
                                                         data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                         data-notes="<?= htmlspecialchars($doc['catatan_review'] ?? '', ENT_QUOTES) ?>"
-                                                        data-reviewer="<?= htmlspecialchars($doc['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM', ENT_QUOTES) ?>"
+                                                        data-reviewer="Pusat Penjaminan Mutu LPM"
                                                         data-date="<?= !empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : '' ?>"
                                                         data-status="perlu_perbaikan"
                                                         data-edit-url="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>"
@@ -430,7 +430,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                             data-id="<?= $doc['id'] ?>"
                                                             data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                             data-notes="<?= htmlspecialchars($doc['catatan_review'] ?? '', ENT_QUOTES) ?>"
-                                                            data-reviewer="<?= htmlspecialchars($doc['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM', ENT_QUOTES) ?>"
+                                                            data-reviewer="Pusat Penjaminan Mutu LPM"
                                                             data-date="<?= !empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : '' ?>"
                                                             data-status="sudah_diperbaiki"
                                                             data-edit-url="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>"
@@ -629,7 +629,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div class="p-3 rounded-3 bg-white border border-danger border-opacity-25 text-dark" style="font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;" id="prodiNoteContent">-</div>
                 </div>
                 <div class="small text-muted d-flex align-items-center gap-2" id="prodiNoteMeta">
-                    <i class="fas fa-user-shield text-primary"></i> <span id="prodiNoteReviewer">-</span> &bull; <span id="prodiNoteDate">-</span>
+                    <i class="fas fa-building-columns text-primary"></i> <span id="prodiNoteReviewer">Pusat Penjaminan Mutu LPM</span> &bull; <span id="prodiNoteDate">-</span>
                 </div>
             </div>
             <div class="modal-footer bg-light px-4 py-3 d-flex justify-content-between">
@@ -709,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             document.getElementById('prodiNoteDocTitle').textContent = title;
             document.getElementById('prodiNoteContent').textContent = notes;
-            document.getElementById('prodiNoteReviewer').textContent = reviewer;
+            document.getElementById('prodiNoteReviewer').textContent = 'Pusat Penjaminan Mutu LPM';
             document.getElementById('prodiNoteDate').textContent = date;
             document.getElementById('prodiNoteEditBtn').setAttribute('href', editUrl);
 

@@ -106,9 +106,8 @@ $siklusDefinitions = [
                             </div>
                             <div class="d-flex flex-wrap align-items-center gap-2 small" style="font-size: 0.76rem;">
                                 <span class="d-inline-flex align-items-center gap-1.5 bg-white border border-danger-subtle rounded-pill px-3 py-1 text-dark shadow-2xs">
-                                    <i class="fas fa-user-shield text-danger"></i>
-                                    <span class="text-muted">Pengulas:</span>
-                                    <strong class="text-dark"><?= htmlspecialchars($doc['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM') ?></strong>
+                                    <i class="fas fa-building-columns text-primary"></i>
+                                    <strong class="text-dark">Pusat Penjaminan Mutu LPM</strong>
                                 </span>
                                 <?php if (!empty($doc['reviewed_at'])): ?>
                                     <span class="d-inline-flex align-items-center gap-1 bg-white border border-danger-subtle rounded-pill px-2.5 py-1 text-muted shadow-2xs">

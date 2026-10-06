@@ -221,7 +221,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                             // Status Review Data
                             $reviewStatus = $doc['status_review'] ?? 'belum_direview';
                             $reviewNotes = $doc['catatan_review'] ?? '';
-                            $reviewerName = $doc['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM';
+                            $reviewerName = 'Pusat Penjaminan Mutu LPM';
                             $isPerluPerbaikan = ($reviewStatus === 'perlu_perbaikan');
                         ?>
                             <tr class="doc-row <?= $isPerluPerbaikan ? 'table-row-revision' : '' ?>" 
@@ -622,7 +622,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                     <div class="fw-bold text-dark-blue p-2.5 rounded-3 bg-light border" id="modalNoteDocTitle">-</div>
                 </div>
                 <div class="d-flex align-items-center justify-content-between mb-3 text-muted small pb-2 border-bottom">
-                    <span><i class="fas fa-user-check text-primary me-1"></i> Reviewer: <strong id="modalNoteReviewer">Admin LPM</strong></span>
+                    <span><i class="fas fa-building-columns text-primary me-1"></i> <strong id="modalNoteReviewer">Pusat Penjaminan Mutu LPM</strong></span>
                     <span><i class="fas fa-calendar-alt text-warning me-1"></i> <span id="modalNoteDate">-</span></span>
                 </div>
                 <div class="mb-0">
@@ -778,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-view-review-notes').forEach(btn => {
         btn.addEventListener('click', function() {
             document.getElementById('modalNoteDocTitle').textContent = this.dataset.title;
-            document.getElementById('modalNoteReviewer').textContent = this.dataset.reviewer || 'Pusat Penjaminan Mutu LPM';
+            document.getElementById('modalNoteReviewer').textContent = 'Pusat Penjaminan Mutu LPM';
             document.getElementById('modalNoteDate').textContent = this.dataset.reviewedAt || 'Baru Saja';
             document.getElementById('modalNoteContent').textContent = this.dataset.notes || 'Tidak ada catatan tertulis.';
             const modal = new bootstrap.Modal(document.getElementById('fakultasViewNoteModal'));

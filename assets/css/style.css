@@ -3644,20 +3644,20 @@ body.public-page>.scu-footer {
 .dashboard-revision-actions {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 1.15rem !important;
   flex-shrink: 0;
   justify-content: flex-end;
 }
 
 @media (min-width: 992px) {
   .dashboard-revision-actions {
-    min-width: 290px;
+    min-width: 325px;
   }
 }
 
 .btn-revision-note {
-  width: 135px !important;
-  min-width: 135px !important;
+  width: 146px !important;
+  min-width: 146px !important;
   height: 38px !important;
   font-size: 0.82rem !important;
   display: inline-flex !important;
@@ -3665,11 +3665,12 @@ body.public-page>.scu-footer {
   justify-content: center !important;
   white-space: nowrap !important;
   border-radius: 50rem !important;
+  gap: 0.5rem !important;
 }
 
 .btn-revision-action {
-  width: 140px !important;
-  min-width: 140px !important;
+  width: 154px !important;
+  min-width: 154px !important;
   height: 38px !important;
   font-size: 0.82rem !important;
   display: inline-flex !important;
@@ -3677,6 +3678,52 @@ body.public-page>.scu-footer {
   justify-content: center !important;
   white-space: nowrap !important;
   border-radius: 50rem !important;
+  gap: 0.5rem !important;
+}
+
+.btn-revision-note i,
+.btn-revision-action i {
+  margin-right: 0.35rem !important;
+}
+
+/* Modal Catatan Evaluator LPM Header Polish */
+#modalCatatanEvaluator .modal-header {
+  background: linear-gradient(135deg, #0A192F 0%, #1E3E62 100%) !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+#modalCatatanEvaluator .modal-header .modal-title,
+#modalCatatanEvaluator .modal-header h5,
+#modalCatatanEvaluator .modal-header h6 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+#modalCatatanEvaluator .modal-header p,
+#modalCatatanEvaluator .modal-header .modal-subtitle,
+#modalCatatanEvaluator .modal-header .text-muted,
+#modalCatatanEvaluator .modal-header .small {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+#modalCatatanEvaluator .modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
+  opacity: 0.85;
+}
+
+#modalCatatanEvaluator .modal-header .btn-close:hover {
+  opacity: 1;
+}
+
+#evalModalEditBtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+#evalModalEditBtn i {
+  margin-right: 0.35rem !important;
 }
 
 /* 5. Modern Table Container & Header Spacing */
