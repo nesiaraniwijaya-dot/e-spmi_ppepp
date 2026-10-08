@@ -80,7 +80,7 @@ class Auth {
 
         $searchEmail = trim(strtolower($email));
         $altEmail = match($searchEmail) {
-            'admin.lpm@unika.ac.id' => 'lpm@unika.ac.id',
+            'admin.lpm@unika.ac.id', 'tu.lpm@unika.ac.id' => 'lpm@unika.ac.id',
             'lpm@unika.ac.id' => 'admin.lpm@unika.ac.id',
             default => $searchEmail
         };

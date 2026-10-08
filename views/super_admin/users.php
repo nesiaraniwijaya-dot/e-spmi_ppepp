@@ -252,10 +252,11 @@ function resetUserForm() {
     document.getElementById('user_name').value = '';
     document.getElementById('user_email').value = '';
     document.getElementById('user_password').value = '';
+    document.getElementById('user_password').placeholder = 'Kosongkan jika pengguna login via Google SSO';
     document.getElementById('user_password').type = 'password';
     document.getElementById('iconTogglePwdModal').className = 'fas fa-eye';
-    document.getElementById('user_password').required = true;
-    document.getElementById('pwdHelp').textContent = '*';
+    document.getElementById('user_password').required = false;
+    document.getElementById('pwdHelp').textContent = '';
     document.getElementById('user_role').value = 'kaprodi';
     document.getElementById('user_prodi_id').value = '';
     document.getElementById('user_fakultas_id').value = '';
@@ -268,7 +269,8 @@ function editUser(data) {
     document.getElementById('user_id').value = data.id;
     document.getElementById('user_name').value = data.name;
     document.getElementById('user_email').value = data.email;
-    document.getElementById('user_password').value = data.password_plain || '';
+    document.getElementById('user_password').value = '';
+    document.getElementById('user_password').placeholder = 'Kosongkan jika tidak ingin mengubah password';
     document.getElementById('user_password').type = 'password';
     document.getElementById('iconTogglePwdModal').className = 'fas fa-eye';
     document.getElementById('user_password').required = false;

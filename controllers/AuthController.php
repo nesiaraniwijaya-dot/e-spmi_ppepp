@@ -147,7 +147,8 @@ class AuthController extends Controller {
 
         // 3. Verifikasi & Login ke Sistem SPMI
         if (Auth::attemptGoogleLogin($googleEmail)) {
-            if ($googleEmail === 'nesiaraniwijaya@gmail.com' || Auth::userRole() === 'super_admin') {
+            $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com', 'lpm@unika.ac.id', 'tu.lpm@unika.ac.id', 'admin.lpm@unika.ac.id'];
+            if (in_array($googleEmail, $multiRoleEmails) || in_array(Auth::userRole(), ['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu'])) {
                 $_SESSION['is_multi_role_testing'] = true;
                 Auth::setFlash('info', 'Login Google SSO Berhasil! Silakan pilih peran yang ingin Anda gunakan untuk simulasi/pengujian.');
                 redirect('auth/select-role');
