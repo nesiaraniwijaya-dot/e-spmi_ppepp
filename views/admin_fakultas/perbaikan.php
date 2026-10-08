@@ -96,28 +96,30 @@ $totalDocs = count($documents);
 
     <!-- Filter & Navigation Bar -->
     <div class="card shadow-sm rounded-4 p-3 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-            <div class="nav nav-pills d-inline-flex flex-row flex-wrap align-items-center gap-2" id="perbaikanTabs" role="tablist">
-                <button class="nav-link rounded-pill active fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-perlu-btn" data-bs-toggle="pill" data-bs-target="#tab-perlu" type="button" role="tab" style="font-size: 0.84rem;">
+        <div class="d-flex flex-column flex-xxl-row justify-content-between align-items-start align-items-xxl-center gap-3">
+            <!-- Tabs (Horizontal single-row pill group) -->
+            <div class="nav nav-pills d-flex flex-nowrap align-items-center gap-2 overflow-x-auto w-100 w-xxl-auto pb-1 pb-xxl-0" id="perbaikanTabs" role="tablist">
+                <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-all-btn" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" style="font-size: 0.84rem;">
+                    <i class="fas fa-layer-group text-secondary"></i>
+                    <span>Semua (<?= $totalDocs ?>)</span>
+                </button>
+                <button class="nav-link rounded-pill active fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-perlu-btn" data-bs-toggle="pill" data-bs-target="#tab-perlu" type="button" role="tab" style="font-size: 0.84rem;">
                     <i class="fas fa-circle-exclamation text-danger"></i>
                     <span>Perlu Tindakan</span>
                     <span class="badge rounded-pill bg-danger text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= $perluCount ?></span>
                 </button>
-                <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
+                <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
                     <i class="fas fa-clock-rotate-left text-primary"></i>
                     <span>Menunggu Review LPM</span>
                     <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= $sudahCount ?></span>
                 </button>
-                <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-all-btn" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" style="font-size: 0.84rem;">
-                    <i class="fas fa-layer-group text-secondary"></i>
-                    <span>Semua (<?= $totalDocs ?>)</span>
-                </button>
             </div>
 
-            <div class="d-flex align-items-center gap-2.5 w-100 w-xl-auto justify-content-between justify-content-xl-end flex-wrap">
-                <div class="d-flex align-items-center gap-1.5">
+            <!-- Controls: Per Page + Live Search -->
+            <div class="d-flex align-items-center gap-2.5 w-100 w-xxl-auto justify-content-between justify-content-xxl-end flex-wrap flex-sm-nowrap">
+                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
                     <label for="perPagePerbaikanFakultas" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                    <select id="perPagePerbaikanFakultas" class="form-select form-select-sm shadow-none" style="width: auto; min-width: 82px; font-size: 0.8rem; border-color: #CBD5E1;">
+                    <select id="perPagePerbaikanFakultas" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 105px; font-size: 0.8rem; border-color: #CBD5E1;">
                         <option value="10" selected>10 data</option>
                         <option value="25">25 data</option>
                         <option value="50">50 data</option>
@@ -125,7 +127,7 @@ $totalDocs = count($documents);
                         <option value="all">Semua</option>
                     </select>
                 </div>
-                <div class="input-group input-group-sm" style="max-width: 280px;">
+                <div class="input-group input-group-sm" style="min-width: 240px; max-width: 320px;">
                     <span class="input-group-text bg-light text-muted border-end-0" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
                     <input type="text" class="form-control border-start-0 ps-1" id="searchPerbaikanInput" placeholder="Cari nama dokumen / catatan..." oninput="filterPerbaikanList()" style="border-color: #CBD5E1;">
                 </div>
@@ -264,8 +266,8 @@ $totalDocs = count($documents);
                                                     <span>1 Berkas</span>
                                                 </button>
                                             <?php else: ?>
-                                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning px-2.5 py-1 rounded-pill" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-triangle-exclamation text-warning me-1"></i> Belum Ada
+                                                <span class="badge rounded-pill px-2.5 py-1" style="background: #FEF3C7 !important; color: #92400E !important; border: 1px solid #FCD34D !important; font-size: 0.7rem; font-weight: 700;">
+                                                    <i class="fas fa-triangle-exclamation me-1" style="color: #D97706 !important;"></i> Belum Ada
                                                 </span>
                                             <?php endif; ?>
                                         </td>

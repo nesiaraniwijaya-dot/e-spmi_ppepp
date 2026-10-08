@@ -26,7 +26,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 </nav>
 
                 <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-20 text-info small fw-bold mb-3">
-                    <i class="fas fa-file-shield"></i> Repositori Mutu Institusional &bull; PETRA
+                    <i class="fas fa-file-shield"></i> Repositori Mutu Institusional &bull; MITRA
                 </div>
 
                 <h1 class="page-banner-title mb-2">Portal Dokumen Mutu Universitas</h1>
@@ -156,11 +156,11 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 <!-- Per Page Selector -->
                 <div class="col-lg-2 col-md-4 d-flex justify-content-md-end align-items-center gap-1.5">
                     <label for="tablePerPageSelect" class="form-label small text-muted text-nowrap mb-0">Tampilkan:</label>
-                    <select id="tablePerPageSelect" class="form-select form-select-sm bg-light" style="width: 82px;">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                        <option value="100" selected>100</option>
+                    <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 108px; width: auto;">
+                        <option value="10">10 data</option>
+                        <option value="20">20 data</option>
+                        <option value="50">50 data</option>
+                        <option value="100" selected>100 data</option>
                     </select>
                 </div>
             </div>
@@ -173,8 +173,8 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                             <th style="width: 50px;">No</th>
                             <th>Nama &amp; Nomor Dokumen</th>
                             <th>Program Studi</th>
-                            <th>Bidang</th>
-                            <th>Siklus</th>
+                            <th style="width: 130px;">Siklus PPEPP</th>
+                            <th>Bidang &amp; Standar</th>
                             <th>Jenis</th>
                             <th class="text-center">Aksi</th>
                         </tr>
@@ -206,11 +206,6 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                         <?php if (!empty($doc['nomor_dokumen'])): ?>
                                             <div class="small text-muted mb-1"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
                                         <?php endif; ?>
-                                        <?php if (!empty($adaptive['standards_html'])): ?>
-                                            <div class="mt-1">
-                                                <?= $adaptive['standards_html'] ?>
-                                            </div>
-                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if (!empty($doc['jenjang'])): ?>
@@ -219,160 +214,188 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                         <div class="small fw-semibold text-dark"><?= htmlspecialchars($doc['nama_prodi'] ?? 'Tingkat Fakultas') ?></div>
                                         <div class="text-muted" style="font-size: 0.72rem;"><?= htmlspecialchars($doc['nama_fakultas'] ?? '') ?></div>
                                     </td>
+                                    <td><?= siklus_badge($doc['siklus']) ?></td>
                                     <td>
                                         <?= $adaptive['bidang_html'] ?>
+                                        <?php if (!empty($adaptive['standards_html'])): ?>
+                                            <div class="mt-1">
+                                                <?= $adaptive['standards_html'] ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
-                                    <td><?= siklus_badge($doc['siklus']) ?></td>
                                     <td>
                                         <?php 
                                         $files = $doc['files'] ?? [];
                                         $filesCount = count($files);
                                         $gdriveLinks = parse_external_links($doc['external_link'] ?? '');
                                         $linkCount = count($gdriveLinks);
-                                        if ($doc['jenis_upload'] === 'file'): 
+                                        $hasFiles = ($filesCount > 0 || (!empty($doc['file_path']) && $doc['jenis_upload'] !== 'link'));
+                                        $hasLinks = ($linkCount > 0);
+                                        $isKombinasi = ($doc['jenis_upload'] === 'kombinasi') || ($hasFiles && $hasLinks);
+
+                                        if ($isKombinasi): 
                                         ?>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <span class="badge" style="background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE; font-size: 0.72rem;">
+                                                    <i class="fas fa-folder-open me-1"></i><?= $filesCount ?: 1 ?> File
+                                                </span>
+                                                <span class="badge badge-link" style="font-size: 0.72rem;">
+                                                    <i class="fab fa-google-drive me-1"></i><?= $linkCount ?> Drive
+                                                </span>
+                                            </div>
+                                        <?php elseif ($hasFiles): ?>
                                             <?php if ($filesCount > 1): ?>
                                                 <span class="badge badge-file"><i class="fas fa-folder-open me-1"></i> <?= $filesCount ?> File PDF</span>
                                             <?php else: ?>
                                                 <span class="badge badge-file"><i class="fas fa-file-pdf me-1"></i> File PDF</span>
                                             <?php endif; ?>
-                                        <?php elseif ($linkCount > 1): ?>
-                                            <span class="badge badge-link"><i class="fab fa-google-drive me-1"></i> <?= $linkCount ?> Link GDrive</span>
-                                        <?php else: ?>
-                                            <span class="badge badge-link"><i class="fab fa-google-drive me-1"></i> Link GDrive</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-center">
-                                        <?php if ($doc['jenis_upload'] === 'file'): ?>
-                                            <?php if ($filesCount > 1): ?>
-                                                <div class="dropdown d-inline-block">
-                                                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="fas fa-eye me-1"></i> Lihat (<?= $filesCount ?>)
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 300px; max-width: min(92vw, 440px); width: max-content; font-size: 0.78rem;">
-                                                        <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS DOKUMEN:</li>
-                                                        <?php foreach ($files as $fItem): 
-                                                            $fLimit = isset($fItem['is_page_limited']) && (int)$fItem['is_page_limited'] === 0 ? 0 : (int)($fItem['public_page_limit'] ?? 1);
-                                                            $fCanDl = (int)($fItem['can_download_public'] ?? 0);
-                                                        ?>
-                                                            <li class="mb-1.5">
-                                                                <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
-                                                                        data-bs-toggle="modal" 
-                                                                        data-bs-target="#pdfPreviewModal" 
-                                                                        data-pdf-url="<?= base_url($fItem['file_path']) ?>" 
-                                                                        data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
-                                                                        data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
-                                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
-                                                                        data-public-limit="<?= $fLimit ?>"
-                                                                        data-can-download="<?= $fCanDl ?>">
-                                                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                                                                        <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($fItem['file_name']) ?>">
-                                                                            <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
-                                                                            <span class="text-truncate" style="max-width: 220px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
-                                                                        </span>
-                                                                        <span class="badge bg-light text-muted border flex-shrink-0" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
-                                                                    </div>
-                                                                    <?= render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null) ?>
-                                                                    <?php if (!empty($fItem['narasi'])): ?>
-                                                                        <div class="small text-muted bg-light p-1.5 rounded border border-light-subtle" style="font-size: 0.72rem; line-height: 1.45; white-space: pre-line; word-break: break-word;">
-                                                                            <i class="fas fa-quote-left text-primary opacity-50 me-1"></i><?= htmlspecialchars($fItem['narasi']) ?>
-                                                                        </div>
-                                                                    <?php endif; ?>
-                                                                </button>
-                                                            </li>
-                                                        <?php endforeach; ?>
-                                                    </ul>
-                                                </div>
-                                            <?php else: ?>
-                                                <?php 
-                                                $singleFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => '']; 
-                                                $sLimit = isset($singleFile['is_page_limited']) && (int)$singleFile['is_page_limited'] === 0 ? 0 : (int)($singleFile['public_page_limit'] ?? $doc['public_page_limit'] ?? 1);
-                                                $sCanDl = (int)($singleFile['can_download_public'] ?? $doc['can_download_public'] ?? 0);
-                                                ?>
-                                                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#pdfPreviewModal" 
-                                                        data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
-                                                        data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
-                                                        data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
-                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
-                                                        data-public-limit="<?= $sLimit ?>"
-                                                        data-can-download="<?= $sCanDl ?>">
-                                                    <i class="fas fa-eye me-1"></i> Lihat
-                                                </button>
-                                            <?php endif; ?>
-                                        <?php elseif ($doc['jenis_upload'] === 'link' && $linkCount > 0): ?>
-                                            <?php 
-                                            $isLoggedIn = is_user_logged_in();
-                                            ?>
+                                        <?php elseif ($hasLinks): ?>
                                             <?php if ($linkCount > 1): ?>
-                                                <div class="dropdown d-inline-block">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 dropdown-toggle shadow-sm" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="fab fa-google-drive me-1"></i> Tautan (<?= $linkCount ?>)
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 300px; max-width: min(92vw, 440px); width: max-content; font-size: 0.78rem;">
-                                                        <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH TAUTAN DOKUMEN:</li>
-                                                        <?php foreach ($gdriveLinks as $lIdx => $linkObj): 
-                                                            $gUrl = $linkObj['url'];
-                                                            $gNarasi = $linkObj['narasi'];
-                                                            $gCanDl = (int)($linkObj['can_download_public'] ?? 0);
-                                                            $canAccessLink = $isLoggedIn || $gCanDl === 1;
-                                                        ?>
-                                                            <li class="mb-1.5">
-                                                                <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
-                                                                        data-bs-toggle="modal" 
-                                                                        data-bs-target="#pdfPreviewModal" 
-                                                                        data-is-link="1"
-                                                                        data-link-url="<?= htmlspecialchars($gUrl) ?>"
-                                                                        data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) . ' (Tautan #' . ($lIdx + 1) . ')' ?>"
-                                                                        data-doc-narasi="<?= htmlspecialchars($gNarasi) ?>"
-                                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null)) ?>"
-                                                                        data-can-access="<?= $canAccessLink ? 1 : 0 ?>"
-                                                                        data-can-download="<?= $gCanDl ?>">
-                                                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                                                                        <span class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
-                                                                            <i class="fab fa-google-drive flex-shrink-0"></i>
-                                                                            <span>Tautan GDrive #<?= $lIdx + 1 ?></span>
-                                                                        </span>
-                                                                        <?php if ($canAccessLink): ?>
-                                                                            <span class="badge bg-light text-primary border flex-shrink-0" style="font-size: 0.65rem;">Lihat</span>
-                                                                        <?php else: ?>
-                                                                            <span class="badge bg-secondary bg-opacity-10 text-secondary flex-shrink-0" style="font-size: 0.65rem;"><i class="fas fa-lock me-0.5"></i> Terbatas</span>
-                                                                        <?php endif; ?>
-                                                                    </div>
-                                                                    <?= render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null) ?>
-                                                                    <?php if (!empty($gNarasi)): ?>
-                                                                        <div class="small text-muted bg-light p-1.5 rounded border border-light-subtle" style="font-size: 0.72rem; line-height: 1.45; white-space: pre-line; word-break: break-word;">
-                                                                            <i class="fas fa-quote-left text-primary opacity-50 me-1"></i><?= htmlspecialchars($gNarasi) ?>
-                                                                        </div>
-                                                                    <?php endif; ?>
-                                                                </button>
-                                                            </li>
-                                                        <?php endforeach; ?>
-                                                    </ul>
-                                                </div>
-                                            <?php else: 
-                                                $singleLink = $gdriveLinks[0];
-                                                $sLinkCanDl = (int)($singleLink['can_download_public'] ?? 0);
-                                                $canAccessSingle = $isLoggedIn || $sLinkCanDl === 1;
-                                            ?>
-                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#pdfPreviewModal" 
-                                                        data-is-link="1"
-                                                        data-link-url="<?= htmlspecialchars($singleLink['url']) ?>" 
-                                                        data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
-                                                        data-doc-narasi="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>"
-                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null)) ?>"
-                                                        data-can-access="<?= $canAccessSingle ? 1 : 0 ?>"
-                                                        data-can-download="<?= $sLinkCanDl ?>"
-                                                        title="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>">
-                                                    <i class="fas fa-eye me-1"></i> Lihat
-                                                </button>
+                                                <span class="badge badge-link"><i class="fab fa-google-drive me-1"></i> <?= $linkCount ?> Link GDrive</span>
+                                            <?php else: ?>
+                                                <span class="badge badge-link"><i class="fab fa-google-drive me-1"></i> Link GDrive</span>
                                             <?php endif; ?>
                                         <?php else: ?>
                                             <span class="text-muted small">-</span>
                                         <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5 flex-wrap">
+                                            <?php if ($hasFiles): ?>
+                                                <?php if ($filesCount > 1): ?>
+                                                    <div class="dropdown d-inline-block">
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <i class="fas fa-eye me-1"></i> <?= $isKombinasi ? 'File (' . $filesCount . ')' : 'Lihat (' . $filesCount . ')' ?>
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 300px; max-width: min(92vw, 440px); width: max-content; font-size: 0.78rem;">
+                                                            <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS DOKUMEN:</li>
+                                                            <?php foreach ($files as $fItem): 
+                                                                $fLimit = isset($fItem['is_page_limited']) && (int)$fItem['is_page_limited'] === 0 ? 0 : (int)($fItem['public_page_limit'] ?? 1);
+                                                                $fCanDl = (int)($fItem['can_download_public'] ?? 0);
+                                                            ?>
+                                                                <li class="mb-1.5">
+                                                                    <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
+                                                                            data-bs-toggle="modal" 
+                                                                            data-bs-target="#pdfPreviewModal" 
+                                                                            data-pdf-url="<?= base_url($fItem['file_path']) ?>" 
+                                                                            data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
+                                                                            data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
+                                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
+                                                                            data-public-limit="<?= $fLimit ?>"
+                                                                            data-can-download="<?= $fCanDl ?>">
+                                                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                                                            <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($fItem['file_name']) ?>">
+                                                                                <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
+                                                                                <span class="text-truncate" style="max-width: 220px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
+                                                                            </span>
+                                                                            <span class="badge bg-light text-muted border flex-shrink-0" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
+                                                                        </div>
+                                                                        <?= render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null) ?>
+                                                                        <?php if (!empty($fItem['narasi'])): ?>
+                                                                            <div class="small text-muted bg-light p-1.5 rounded border border-light-subtle" style="font-size: 0.72rem; line-height: 1.45; white-space: pre-line; word-break: break-word;">
+                                                                                <i class="fas fa-quote-left text-primary opacity-50 me-1"></i><?= htmlspecialchars($fItem['narasi']) ?>
+                                                                            </div>
+                                                                        <?php endif; ?>
+                                                                    </button>
+                                                                </li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <?php 
+                                                    $singleFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => '']; 
+                                                    $sLimit = isset($singleFile['is_page_limited']) && (int)$singleFile['is_page_limited'] === 0 ? 0 : (int)($singleFile['public_page_limit'] ?? $doc['public_page_limit'] ?? 1);
+                                                    $sCanDl = (int)($singleFile['can_download_public'] ?? $doc['can_download_public'] ?? 0);
+                                                    ?>
+                                                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#pdfPreviewModal" 
+                                                            data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
+                                                            data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
+                                                            data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
+                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
+                                                            data-public-limit="<?= $sLimit ?>"
+                                                            data-can-download="<?= $sCanDl ?>">
+                                                        <i class="fas fa-eye me-1"></i> <?= $isKombinasi ? 'File PDF' : 'Lihat' ?>
+                                                    </button>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+
+                                            <?php if ($hasLinks): ?>
+                                                <?php 
+                                                $isLoggedIn = is_user_logged_in();
+                                                ?>
+                                                <?php if ($linkCount > 1): ?>
+                                                    <div class="dropdown d-inline-block">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 dropdown-toggle shadow-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <i class="fab fa-google-drive me-1"></i> <?= $isKombinasi ? 'Drive (' . $linkCount . ')' : 'Tautan (' . $linkCount . ')' ?>
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 300px; max-width: min(92vw, 440px); width: max-content; font-size: 0.78rem;">
+                                                            <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH TAUTAN DOKUMEN:</li>
+                                                            <?php foreach ($gdriveLinks as $lIdx => $linkObj): 
+                                                                $gUrl = $linkObj['url'];
+                                                                $gNarasi = $linkObj['narasi'];
+                                                                $gCanDl = (int)($linkObj['can_download_public'] ?? 0);
+                                                                $canAccessLink = $isLoggedIn || $gCanDl === 1;
+                                                            ?>
+                                                                <li class="mb-1.5">
+                                                                    <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
+                                                                            data-bs-toggle="modal" 
+                                                                            data-bs-target="#pdfPreviewModal" 
+                                                                            data-is-link="1"
+                                                                            data-link-url="<?= htmlspecialchars($gUrl) ?>"
+                                                                            data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) . ' (Tautan #' . ($lIdx + 1) . ')' ?>"
+                                                                            data-doc-narasi="<?= htmlspecialchars($gNarasi) ?>"
+                                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null)) ?>"
+                                                                            data-can-access="<?= $canAccessLink ? 1 : 0 ?>"
+                                                                            data-can-download="<?= $gCanDl ?>">
+                                                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                                                            <span class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
+                                                                                <i class="fab fa-google-drive flex-shrink-0"></i>
+                                                                                <span>Tautan GDrive #<?= $lIdx + 1 ?></span>
+                                                                            </span>
+                                                                            <?php if ($canAccessLink): ?>
+                                                                                <span class="badge bg-light text-primary border flex-shrink-0" style="font-size: 0.65rem;">Lihat</span>
+                                                                            <?php else: ?>
+                                                                                <span class="badge bg-secondary bg-opacity-10 text-secondary flex-shrink-0" style="font-size: 0.65rem;"><i class="fas fa-lock me-0.5"></i> Terbatas</span>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                        <?= render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null) ?>
+                                                                        <?php if (!empty($gNarasi)): ?>
+                                                                            <div class="small text-muted bg-light p-1.5 rounded border border-light-subtle" style="font-size: 0.72rem; line-height: 1.45; white-space: pre-line; word-break: break-word;">
+                                                                                <i class="fas fa-quote-left text-primary opacity-50 me-1"></i><?= htmlspecialchars($gNarasi) ?>
+                                                                            </div>
+                                                                        <?php endif; ?>
+                                                                    </button>
+                                                                </li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
+                                                    </div>
+                                                <?php else: 
+                                                    $singleLink = $gdriveLinks[0];
+                                                    $sLinkCanDl = (int)($singleLink['can_download_public'] ?? 0);
+                                                    $canAccessSingle = $isLoggedIn || $sLinkCanDl === 1;
+                                                ?>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#pdfPreviewModal" 
+                                                            data-is-link="1"
+                                                            data-link-url="<?= htmlspecialchars($singleLink['url']) ?>" 
+                                                            data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
+                                                            data-doc-narasi="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>"
+                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null)) ?>"
+                                                            data-can-access="<?= $canAccessSingle ? 1 : 0 ?>"
+                                                            data-can-download="<?= $sLinkCanDl ?>"
+                                                            title="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>">
+                                                        <i class="fab fa-google-drive me-1"></i> <?= $isKombinasi ? 'GDrive' : 'Lihat' ?>
+                                                    </button>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+
+                                            <?php if (!$hasFiles && !$hasLinks): ?>
+                                                <span class="text-muted small">-</span>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

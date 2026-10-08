@@ -331,14 +331,19 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     <?php endif; ?>
 
-    <!-- Recent Documents (Full Width) -->
+    <!-- Dokumen Diunggah Hari Ini (Full Width) -->
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm rounded-4 p-4">
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
-                    <h5 class="fw-bold text-dark-blue mb-0">
-                        <i class="fas fa-folder-open text-primary me-2"></i> Dokumen Terakhir Diunggah
-                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <h5 class="fw-bold text-dark-blue mb-0">
+                            <i class="fas fa-calendar-day text-primary me-2"></i> Dokumen Diunggah Hari Ini
+                        </h5>
+                        <span class="badge bg-light text-primary border px-2.5 py-1 rounded-pill small fw-semibold">
+                            <i class="far fa-calendar-check me-1"></i> <?= date('d M Y') ?>
+                        </span>
+                    </div>
                     <div class="d-flex align-items-center gap-2">
                         <a href="<?= base_url('prodi/dokumen/arsip') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3" style="font-size:0.75rem;">
                             <i class="fas fa-box-archive me-1"></i> <?= $cycleStats['arsip'] ?> Terarsip
@@ -352,103 +357,87 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
                         <thead class="table-light">
                             <tr>
-                                <th>Nama Dokumen Mutu</th>
-                                <th>Bidang</th>
-                                <th>Siklus PPEPP</th>
-                                <th>Tipe</th>
-                                <th>Diunggah</th>
-                                <th class="text-center">Aksi</th>
+                                <th style="width: 45px;" class="text-center">No</th>
+                                <th>Nama &amp; Nomor Dokumen</th>
+                                <th style="width: 140px;">Siklus PPEPP</th>
+                                <th>Bidang &amp; Standar</th>
+                                <th>Berkas</th>
+                                <th style="min-width: 160px;">Status Review LPM</th>
+                                <th class="text-center" style="width: 120px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($recentDocs)): ?>
-                                <tr><td colspan="6" class="text-center py-4 text-muted">Belum ada dokumen yang diunggah.</td></tr>
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="fas fa-calendar-check fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+                                        <h6 class="fw-bold text-dark mb-1">Belum Ada Dokumen yang Diunggah Hari Ini</h6>
+                                        <p class="small text-muted mb-0">Dokumen mutu yang diunggah pada hari ini (<?= date('d M Y') ?>) akan tampil secara otomatis di tabel ringkasan ini.</p>
+                                    </td>
+                                </tr>
                             <?php else: ?>
-                                <?php foreach ($recentDocs as $rd): ?>
+                                <?php $rdNo = 1; foreach ($recentDocs as $rd): 
+                                    $st = $rd['status_review'] ?? 'belum_direview';
+                                    $rdFiles = $rd['files'] ?? [];
+                                    $rdFilesCount = count($rdFiles);
+                                    $rdLinks = parse_external_links($rd['external_link'] ?? '');
+                                    $rdLinkCount = count($rdLinks);
+                                    $rdHasFiles = ($rdFilesCount > 0 || (!empty($rd['file_path']) && $rd['jenis_upload'] !== 'link'));
+                                    $rdHasLinks = ($rdLinkCount > 0);
+                                    $rdIsKombinasi = ($rd['jenis_upload'] === 'kombinasi') || ($rdHasFiles && $rdHasLinks);
+                                ?>
                                     <tr>
+                                        <td class="text-center text-muted fw-semibold"><?= $rdNo++ ?></td>
                                         <td>
-                                            <div class="fw-bold text-dark-blue"><?= htmlspecialchars($rd['nama_dokumen']) ?></div>
-                                            <?php if ($rd['tahun_akademik']): ?>
-                                                <span class="badge bg-light text-secondary border" style="font-size:0.68rem;">TA <?= htmlspecialchars($rd['tahun_akademik']) ?></span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <span class="text-secondary small"><?= htmlspecialchars($rd['nama_bidang'] ?: 'Standar Umum') ?></span>
+                                            <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($rd['nama_dokumen']) ?></div>
+                                            <div class="d-flex flex-wrap align-items-center gap-1.5">
+                                                <?php if ($rd['nomor_dokumen']): ?>
+                                                    <span class="text-muted small" style="font-size:0.72rem;"><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($rd['nomor_dokumen']) ?></span>
+                                                <?php endif; ?>
+                                                <?php if ($rd['tahun_akademik']): ?>
+                                                    <span class="badge bg-light text-secondary border" style="font-size:0.68rem;">TA <?= htmlspecialchars($rd['tahun_akademik']) ?></span>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                         <td><?= siklus_badge($rd['siklus']) ?></td>
                                         <td>
-                                            <?php if ($rd['jenis_upload'] === 'file'): ?>
-                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size:0.7rem;">
-                                                    <i class="fas fa-file-pdf me-1"></i> File
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25" style="font-size:0.7rem;">
-                                                    <i class="fas fa-link me-1"></i> Link
-                                                </span>
+                                            <div class="fw-semibold text-dark mb-0.5" style="font-size: 0.82rem;">
+                                                <?= htmlspecialchars($rd['nama_bidang'] ?: 'Umum / Lainnya') ?>
+                                            </div>
+                                            <?php if (!empty($rd['nama_sub_bidang'])): ?>
+                                                <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-turn-up fa-rotate-90 text-secondary opacity-50"></i>
+                                                    <span class="badge bg-light text-secondary border px-1.5 py-0.5"><?= htmlspecialchars($rd['nama_sub_bidang']) ?></span>
+                                                </div>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-muted text-nowrap small"><?= date('d M Y', strtotime($rd['created_at'])) ?></td>
+                                        <td>
+                                            <?php if ($rdIsKombinasi): ?>
+                                                <span class="badge" style="background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE; font-size:0.7rem;">
+                                                    <i class="fas fa-layer-group me-1"></i> Kombinasi
+                                                </span>
+                                            <?php elseif ($rdHasFiles): ?>
+                                                <span class="badge rounded-pill" style="background: #FEE2E2 !important; color: #991B1B !important; border: 1px solid #FCA5A5 !important; font-size:0.72rem; font-weight: 700;">
+                                                    <i class="fas fa-file-pdf me-1" style="color: #DC2626 !important;"></i> <?= $rdFilesCount > 1 ? $rdFilesCount . ' Berkas' : 'PDF' ?>
+                                                </span>
+                                            <?php elseif ($rdHasLinks): ?>
+                                                <span class="badge rounded-pill" style="background: #EFF6FF !important; color: #1E40AF !important; border: 1px solid #93C5FD !important; font-size:0.72rem; font-weight: 700;">
+                                                    <i class="fab fa-google-drive me-1" style="color: #2563EB !important;"></i> GDrive
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?= review_status_badge($st) ?>
+                                        </td>
                                         <td class="text-center">
-                                            <div class="d-flex justify-content-center gap-1">
-                                                <?php 
-                                                $rFile = !empty($rd['files']) ? $rd['files'][0] : ['file_path' => $rd['file_path'], 'file_name' => $rd['nama_dokumen'], 'narasi' => ''];
-                                                if ($rd['jenis_upload'] === 'file' && !empty($rFile['file_path'])): 
-                                                ?>
-                                                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1"
-                                                            data-bs-toggle="modal" data-bs-target="#pdfPreviewModal"
-                                                            data-pdf-url="<?= base_url($rFile['file_path']) ?>"
-                                                            data-doc-title="<?= htmlspecialchars($rFile['file_name']) ?>"
-                                                            data-doc-narasi="<?= htmlspecialchars($rFile['narasi'] ?? '') ?>"
-                                                            data-public-limit="0"
-                                                            data-can-download="1"
-                                                            title="Pratinjau Dokumen">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                                <?php 
-                                                $dashLinks = parse_external_links($rd['external_link'] ?? '');
-                                                $dLinkCount = count($dashLinks);
-                                                if ($dLinkCount === 1): 
-                                                    $dSingle = $dashLinks[0];
-                                                ?>
-                                                    <a href="<?= htmlspecialchars($dSingle['url']) ?>" target="_blank" rel="noopener noreferrer"
-                                                       class="btn btn-xs btn-outline-info rounded-pill px-2.5 py-1" title="<?= htmlspecialchars($dSingle['narasi'] ?: 'Buka Tautan Google Drive') ?>">
-                                                        <i class="fab fa-google-drive"></i>
-                                                    </a>
-                                                <?php elseif ($dLinkCount > 1): ?>
-                                                    <div class="dropdown d-inline-block">
-                                                        <button class="btn btn-xs btn-outline-info rounded-pill px-2 py-1 dropdown-toggle" 
-                                                                type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                                                title="<?= $dLinkCount ?> Tautan Google Drive">
-                                                            <i class="fab fa-google-drive me-1"></i><?= $dLinkCount ?>
-                                                        </button>
-                                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1.5" style="min-width: 260px; font-size: 0.8rem;">
-                                                            <li class="dropdown-header text-uppercase fw-bold text-muted px-2 py-1" style="font-size: 0.68rem;">
-                                                                <i class="fab fa-google-drive me-1 text-primary"></i>Link Dokumen (<?= $dLinkCount ?>)
-                                                            </li>
-                                                            <?php foreach ($dashLinks as $lIdx => $lItem): ?>
-                                                                <li>
-                                                                    <a class="dropdown-item py-1.5 px-2 rounded d-flex flex-column align-items-start" href="<?= htmlspecialchars($lItem['url']) ?>" target="_blank" rel="noopener noreferrer">
-                                                                        <div class="d-flex align-items-center gap-1.5 text-primary fw-semibold">
-                                                                            <i class="fab fa-google-drive"></i>
-                                                                            <span>Link <?= $lIdx + 1 ?></span>
-                                                                        </div>
-                                                                        <?= render_sub_standar_badges($lItem['sub_bidang_ids'] ?? null) ?>
-                                                                        <?php if (!empty($lItem['narasi'])): ?>
-                                                                            <div class="small text-muted text-truncate" style="max-width: 230px; font-size: 0.7rem;">
-                                                                                <?= htmlspecialchars($lItem['narasi']) ?>
-                                                                            </div>
-                                                                        <?php endif; ?>
-                                                                    </a>
-                                                                </li>
-                                                            <?php endforeach; ?>
-                                                        </ul>
-                                                    </div>
-                                                <?php endif; ?>
+                                            <div class="d-flex justify-content-center gap-1.5">
                                                 <a href="<?= base_url('prodi/dokumen/edit/' . $rd['id']) ?>"
-                                                   class="btn btn-xs btn-outline-warning rounded-pill px-2.5 py-1"
-                                                   title="Edit Dokumen">
-                                                    <i class="fas fa-edit"></i>
+                                                   class="btn btn-sm btn-outline-warning rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1"
+                                                   style="font-size: 0.75rem;"
+                                                   title="Ubah / Edit Dokumen">
+                                                    <i class="fas fa-pen"></i> Edit
                                                 </a>
                                             </div>
                                         </td>

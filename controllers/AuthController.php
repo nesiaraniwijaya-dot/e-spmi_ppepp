@@ -23,7 +23,7 @@ class AuthController extends Controller {
         }
 
         $this->render('auth/login', [
-            'pageTitle' => 'Masuk Portal PETRA',
+            'pageTitle' => 'Masuk Portal MITRA',
             'returnUrl' => $returnUrl
         ]);
     }

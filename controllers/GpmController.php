@@ -104,14 +104,15 @@ class GpmController extends Controller {
         $stmtRevisi->execute();
         $revisiDocs = $stmtRevisi->fetchAll();
 
-        // Dokumen terbaru yang diunggah
+        // Dokumen yang diunggah HARI INI
         $stmtRecent = $this->db->prepare("
-            SELECT d.*, b.nama_bidang, p.nama_prodi, p.jenjang 
+            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang 
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
+            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN prodis p ON d.prodi_id = p.id
-            WHERE {$scopeWhereAlias} AND d.deleted_at IS NULL 
-            ORDER BY d.created_at DESC LIMIT 8
+            WHERE {$scopeWhereAlias} AND d.deleted_at IS NULL AND DATE(d.created_at) = CURDATE()
+            ORDER BY d.created_at DESC
         ");
         $stmtRecent->execute();
         $recentDocs = $stmtRecent->fetchAll();
@@ -559,18 +560,30 @@ class GpmController extends Controller {
                     if (empty($siklus)) throw new \Exception("Kategori Siklus PPEPP pada Dokumen #{$docNumber} wajib dipilih.");
                     if (empty($bidangId)) throw new \Exception("Bidang standar mutu pada Dokumen #{$docNumber} wajib dipilih.");
 
+                    $hasFiles = !empty($uploadedFilesList);
+                    $hasLinks = !empty($rawLinks);
+
+                    if ($hasFiles && $hasLinks) {
+                        $jenisUpload = 'kombinasi';
+                    } elseif ($hasFiles) {
+                        $jenisUpload = 'file';
+                    } elseif ($hasLinks) {
+                        $jenisUpload = 'link';
+                    } else {
+                        $jenisUpload = trim($d['jenis_upload'] ?? 'file');
+                    }
+
                     // Validasi lampiran jika bukan draf
                     if (!$isDraft) {
-                        if ($jenisUpload === 'file' && empty($uploadedFilesList)) {
-                            throw new \Exception("Setidaknya 1 berkas dokumen pada Dokumen #{$docNumber} ({$namaDokumen}) wajib diunggah.");
-                        } elseif ($jenisUpload === 'link' && empty($rawLinks)) {
-                            throw new \Exception("Setidaknya 1 tautan Google Drive pada Dokumen #{$docNumber} ({$namaDokumen}) wajib diisi.");
+                        if (!$hasFiles && !$hasLinks) {
+                            throw new \Exception("Setidaknya 1 berkas dokumen atau tautan Google Drive pada Dokumen #{$docNumber} ({$namaDokumen}) wajib diunggah.");
                         }
                     }
 
-                    $primaryFilePath = !empty($uploadedFilesList) ? $uploadedFilesList[0]['path'] : null;
-                    $primaryFileSize = !empty($uploadedFilesList) ? $uploadedFilesList[0]['size'] : null;
-                    $primaryFileExt = !empty($uploadedFilesList) ? $uploadedFilesList[0]['ext'] : null;
+                    $primaryFilePath = $hasFiles ? $uploadedFilesList[0]['path'] : null;
+                    $primaryFileSize = $hasFiles ? $uploadedFilesList[0]['size'] : null;
+                    $primaryFileExt = $hasFiles ? $uploadedFilesList[0]['ext'] : null;
+                    $externalLink = $hasLinks ? json_encode($rawLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null;
                     $statusReview = $isDraft ? 'draft' : 'belum_direview';
 
                     // Insert ke tabel ppepp_documents
@@ -943,24 +956,28 @@ class GpmController extends Controller {
                 }
             }
 
-            if (!$isDraft) {
-                if ($jenisUpload === 'file') {
-                    if (empty($filePath)) {
-                        Auth::setFlash('danger', 'Dokumen aktif wajib memiliki minimal 1 berkas fisik yang diunggah.');
-                        redirect('gpm/dokumen/edit/' . $id);
-                        return;
-                    }
-                    $externalLink = null;
-                } else {
-                    if (empty($externalLink)) {
-                        Auth::setFlash('danger', 'Minimal 1 tautan Google Drive wajib diisi jika memilih metode Link.');
-                        redirect('gpm/dokumen/edit/' . $id);
-                        return;
-                    }
-                }
+            $hasFiles = !empty($filePath);
+            $hasLinks = !empty($rawLinks);
+
+            if ($hasFiles && $hasLinks) {
+                $jenisUpload = 'kombinasi';
+            } elseif ($hasFiles) {
+                $jenisUpload = 'file';
+                $externalLink = null;
+            } elseif ($hasLinks) {
+                $jenisUpload = 'link';
+                $filePath = null;
+                $fileSize = null;
+                $fileExt = null;
             } else {
-                if ($jenisUpload === 'file') {
-                    $externalLink = null;
+                $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
+            }
+
+            if (!$isDraft) {
+                if (!$hasFiles && !$hasLinks) {
+                    Auth::setFlash('danger', 'Dokumen aktif wajib memiliki minimal 1 berkas fisik yang diunggah atau tautan Google Drive.');
+                    redirect('gpm/dokumen/edit/' . $id);
+                    return;
                 }
             }
 

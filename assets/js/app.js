@@ -134,6 +134,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
             currentRenderTaskId++; // Cancel any previous rendering tasks
 
+            // Handle stacked modal (e.g. opened from docModal)
+            const openModals = document.querySelectorAll('.modal.show');
+            if (openModals.length > 0) {
+                pdfModal.style.zIndex = '1065';
+                setTimeout(() => {
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    if (backdrops.length > 1) {
+                        backdrops[backdrops.length - 1].style.zIndex = '1060';
+                    }
+                }, 10);
+            } else {
+                pdfModal.style.zIndex = '';
+            }
+
             if (modalTitle) modalTitle.textContent = docTitle;
             if (pagesContainer) pagesContainer.innerHTML = '';
             if (lockedBanner) lockedBanner.style.display = 'none';
@@ -360,6 +374,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (narasiWrap) narasiWrap.style.display = 'none';
             if (narasiText) narasiText.textContent = '';
             currentPdfDoc = null;
+            pdfModal.style.zIndex = '';
+
+            // If another modal is still visible (stacked modal), restore scrolling on body
+            if (document.querySelectorAll('.modal.show').length > 0) {
+                document.body.classList.add('modal-open');
+            }
         });
 
         // Zoom handlers
@@ -466,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         lockedBanner.style.display = 'block';
                         if (lockedMessage) {
                             lockedMessage.innerHTML = `
-                                Anda baru saja membaca pratinjau terbatas <strong>${limit} dari total ${totalPages} halaman</strong> dokumen mutu ini. Untuk mengakses seluruh lembar halaman secara lengkap dan mengunduh berkas resminya, silakan masuk ke sistem PETRA sebagai pengguna terdaftar.
+                                Anda baru saja membaca pratinjau terbatas <strong>${limit} dari total ${totalPages} halaman</strong> dokumen mutu ini. Untuk mengakses seluruh lembar halaman secara lengkap dan mengunduh berkas resminya, silakan masuk ke sistem MITRA sebagai pengguna terdaftar.
                             `;
                         }
                         const loginBtnInBanner = lockedBanner.querySelector('a.btn-primary');

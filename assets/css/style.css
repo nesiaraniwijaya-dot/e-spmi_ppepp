@@ -3089,12 +3089,12 @@ body.public-page>.scu-footer {
   background: #FFFFFF;
   border: 1.5px solid #E2E8F0 !important;
   border-radius: 14px !important;
-  padding: 0.85rem 1rem !important;
+  padding: 0.9rem 1.15rem !important;
   cursor: pointer;
   user-select: none;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  min-height: 66px;
+  min-height: 72px;
   display: flex;
   align-items: center;
 }
@@ -3119,12 +3119,31 @@ body.public-page>.scu-footer {
 
 .method-card .method-check-badge {
   position: absolute;
-  top: 9px;
-  right: 10px;
+  top: 10px;
+  right: 12px;
   display: none;
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1;
   color: #0284C7;
+  z-index: 2;
+}
+
+.access-setting-pill {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  transition: all 0.2s ease;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.access-setting-pill:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 .method-card-icon {
@@ -3861,4 +3880,279 @@ body.public-page>.scu-footer {
   border-color: #2563EB;
   box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.12);
   background-color: #FFFFFF;
+}
+
+/* ==========================================================================
+   UI/UX STANDARDIZATION SYSTEM (SPACING, CONTAINERS, TOUCH TARGETS, TYPOGRAPHY)
+   ========================================================================== */
+
+/* 1. Global Spacing & Container Standards */
+.admin-main {
+  max-width: 1440px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  padding: 2rem !important; /* 32px desktop padding */
+  min-height: calc(100vh - 72px);
+}
+
+@media (max-width: 991.98px) {
+  .admin-main {
+    padding: 1.5rem 1.25rem !important; /* 20px - 24px tablet padding */
+  }
+}
+
+@media (max-width: 575.98px) {
+  .admin-main {
+    padding: 1.25rem 1rem !important; /* 16px - 20px mobile padding */
+  }
+}
+
+/* Public Portal Max-Width & Horizontal Padding */
+.portal-container,
+.container-custom,
+.container,
+.container-lg,
+.container-xl,
+.container-xxl {
+  max-width: 1360px !important;
+  padding-left: 1.5rem !important; /* 24px mobile-tablet */
+  padding-right: 1.5rem !important;
+}
+
+@media (min-width: 1200px) {
+  .portal-container,
+  .container-custom,
+  .container,
+  .container-lg,
+  .container-xl,
+  .container-xxl {
+    padding-left: 2rem !important; /* 32px desktop */
+    padding-right: 2rem !important;
+  }
+}
+
+/* 2. Global Typography Standards */
+body {
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+}
+
+h1, .h1 { font-size: 1.75rem !important; /* 28px */ line-height: 1.3 !important; }
+h2, .h2 { font-size: 1.5rem !important; /* 24px */ line-height: 1.35 !important; }
+h3, .h3 { font-size: 1.3rem !important; /* 20.8px */ line-height: 1.4 !important; }
+h4, .h4 { font-size: 1.15rem !important; /* 18.4px */ line-height: 1.45 !important; }
+h5, .h5 { font-size: 1.05rem !important; /* 16.8px */ line-height: 1.5 !important; }
+h6, .h6 { font-size: 0.95rem !important; line-height: 1.5 !important; }
+
+/* 3. Input Text & Select Dropdown Standards (Touch target 42px - 46px) */
+.form-control,
+.form-select {
+  min-height: 42px !important;
+  padding: 0.55rem 1rem !important;
+  font-size: 0.9rem !important;
+  border-radius: 8px !important;
+  border: 1.5px solid #CBD5E1 !important;
+  color: #0F172A !important;
+  transition: all 0.2s ease !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+.form-control-sm,
+.form-select-sm {
+  min-height: 38px !important;
+  padding: 0.35rem 0.85rem !important;
+  font-size: 0.85rem !important;
+  border-radius: 6px !important;
+}
+
+/* 4. Button Standards (Touch target minimum 40px - 44px) */
+.btn {
+  min-height: 42px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-sm {
+  min-height: 36px !important;
+  padding: 0.35rem 0.95rem !important;
+  font-size: 0.825rem !important;
+  border-radius: 6px !important;
+  gap: 0.35rem !important;
+}
+
+.btn-xs {
+  min-height: 32px !important;
+  padding: 0.25rem 0.75rem !important;
+  font-size: 0.78rem !important;
+  border-radius: 6px !important;
+  gap: 0.3rem !important;
+}
+
+/* Standard Table Action Button (Uniform pill style with icon and label) */
+.table-action-pill {
+  min-height: 34px !important;
+  padding: 0.35rem 0.9rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 5. Table Readability Standards */
+.table > :not(caption) > * > * {
+  padding: 0.85rem 0.85rem !important;
+}
+.table thead th {
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  color: #475569 !important;
+  background-color: #F8FAFC !important;
+}
+.table tbody td {
+  font-size: 0.875rem !important;
+  color: #1E293B !important;
+}
+
+/* 6. High-Contrast Review Status Badges (WCAG AAA Compliant) */
+.badge-status-perbaikan {
+  background-color: #FEE2E2 !important;
+  color: #991B1B !important;
+  border: 1px solid #FCA5A5 !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  white-space: nowrap !important;
+}
+.badge-status-perbaikan i {
+  color: #DC2626 !important;
+}
+
+.badge-status-review-ulang,
+.badge-status-sudah-diperbaiki {
+  background-color: #FEF3C7 !important;
+  color: #92400E !important;
+  border: 1px solid #FCD34D !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  white-space: nowrap !important;
+}
+.badge-status-review-ulang i,
+.badge-status-sudah-diperbaiki i {
+  color: #D97706 !important;
+}
+
+.badge-status-sesuai {
+  background-color: #DCFCE7 !important;
+  color: #166534 !important;
+  border: 1px solid #86EFAC !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  white-space: nowrap !important;
+}
+.badge-status-sesuai i {
+  color: #15803D !important;
+}
+
+.badge-status-draft {
+  background-color: #F1F5F9 !important;
+  color: #334155 !important;
+  border: 1px solid #CBD5E1 !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  white-space: nowrap !important;
+}
+.badge-status-draft i {
+  color: #64748B !important;
+}
+
+.badge-status-belum,
+.badge-status-belum-direview {
+  background-color: #FFFBEB !important;
+  color: #92400E !important;
+  border: 1px solid #FDE68A !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  white-space: nowrap !important;
+}
+.badge-status-belum i,
+.badge-status-belum-direview i {
+  color: #D97706 !important;
+}
+
+/* 7. Clean Per-Page Select Dropdown (Guarantees comfortable spacing between number and down arrow across all levels) */
+.form-select-perpage,
+select.form-select[id*="Page"],
+select.form-select[id*="perPage"],
+select.form-select[id*="pageSize"],
+select.form-select-sm[id*="Page"],
+select.form-select-sm[id*="perPage"],
+select.form-select-sm[id*="pageSize"] {
+  min-width: 108px !important;
+  width: auto !important;
+  padding-left: 0.85rem !important;
+  padding-right: 2.35rem !important;
+  background-position: right 0.75rem center !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+/* 8. Modern Single-Row Status Filter Pills for Perbaikan Dokumen */
+#perbaikanTabs {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+#perbaikanTabs::-webkit-scrollbar {
+  height: 4px;
+}
+#perbaikanTabs::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+#perbaikanTabs .nav-link {
+  background: #F8FAFC;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+  transition: all 0.2s ease-in-out;
+}
+#perbaikanTabs .nav-link:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+#perbaikanTabs .nav-link.active {
+  background: #002B49 !important;
+  color: #FFFFFF !important;
+  border-color: #002B49 !important;
+  box-shadow: 0 2px 6px rgba(0, 43, 73, 0.2) !important;
+}
+#perbaikanTabs .nav-link.active i {
+  color: #FFFFFF !important;
 }

@@ -3,7 +3,7 @@
  * Login View
  * SPMI PPEPP UNIKA Soegijapranata
  */
-$pageTitle = 'Masuk Portal PETRA';
+$pageTitle = 'Masuk Portal MITRA';
 require_once ROOT_PATH . '/views/layouts/header.php';
 ?>
 
@@ -19,16 +19,16 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                             <div class="d-flex align-items-center gap-3 mb-4">
                                 <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35)); flex-shrink: 0;">
                                 <div>
-                                    <h3 class="fw-bold mb-0 text-white" style="letter-spacing: 0.5px; line-height: 1.2;">PETRA</h3>
-                                    <div class="small text-light opacity-90" style="font-size: 0.82rem; font-weight: 500;">PEmantauan Tahapan PPEPP &amp; Rencana Aksi</div>
+                                    <h3 class="fw-bold mb-0 text-white" style="letter-spacing: 0.5px; line-height: 1.2;">MITRA</h3>
+                                    <div class="small text-light opacity-90" style="font-size: 0.82rem; font-weight: 500;">Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
                                 </div>
                             </div>
 
                             <h3 class="fw-extrabold mb-3 text-white" style="font-weight: 800; line-height: 1.3;">
-                                PETRA &bull; Pengawal Mutu
+                                MITRA &bull; Pengawal Mutu
                             </h3>
                             <p class="text-light opacity-75 small mb-4" style="line-height: 1.7;">
-                                PETRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan di <?= INSTITUTION_NAME ?>.
+                                MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan di <?= INSTITUTION_NAME ?>.
                             </p>
 
                             <div class="d-flex flex-column gap-2 mb-4">
@@ -60,8 +60,8 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     <div class="col-lg-6 bg-white p-4 p-md-5 d-flex flex-column justify-content-center">
                         <div class="text-center mb-4">
                             <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width: 64px; height: 64px; object-fit: contain; margin-bottom: 0.65rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12));">
-                            <h4 class="fw-bold text-dark-blue mb-0" style="letter-spacing: 0.5px;">PETRA</h4>
-                            <div class="text-muted small fw-medium mb-3" style="font-size: 0.82rem;">PEmantauan Tahapan PPEPP &amp; Rencana Aksi</div>
+                            <h4 class="fw-bold text-dark-blue mb-0" style="letter-spacing: 0.5px;">MITRA</h4>
+                            <div class="text-muted small fw-medium mb-3" style="font-size: 0.82rem;">Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
                             <div class="border-top pt-2" style="border-color: #E2E8F0 !important;">
                                 <span class="text-secondary small">Masuk ke Akun Anda untuk Mengakses Portal</span>
                             </div>
@@ -90,7 +90,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                                 </div>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-lock"></i></span>
-                                    <input type="password" class="form-control bg-light border-start-0 border-end-0 ps-0" id="password" name="password" placeholder="••••••••" required>
+                                    <input type="password" class="form-control bg-light border-start-0 border-end-0 ps-0" id="password" name="password" placeholder="Masukkan kata sandi..." required>
                                     <button class="btn btn-light border border-start-0 text-muted" type="button" id="togglePasswordBtn">
                                         <i class="fas fa-eye" id="eyeIcon"></i>
                                     </button>

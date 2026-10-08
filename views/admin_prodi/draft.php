@@ -130,7 +130,7 @@ $totalDraft = $totalDraft ?? count($documents);
                     <div>
                         <div class="d-flex align-items-baseline gap-2 mb-1">
                             <span class="saas-stat-number" style="color: #D97706;"><?= $incompleteCount ?></span>
-                            <span class="badge rounded-pill bg-warning bg-opacity-15 text-warning-emphasis border border-warning border-opacity-25 px-2.5 py-0.5" style="font-size: 0.72rem;">Perlu Lampiran</span>
+                            <span class="badge rounded-pill px-2.5 py-0.5" style="background: #FEF3C7 !important; color: #92400E !important; border: 1px solid #FCD34D !important; font-size: 0.72rem; font-weight: 700;">Perlu Lampiran</span>
                         </div>
                         <div class="saas-stat-help">Memerlukan berkas dokumen atau tautan GDrive</div>
                     </div>
@@ -150,7 +150,7 @@ $totalDraft = $totalDraft ?? count($documents);
                 <div class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end flex-wrap">
                     <div class="d-flex align-items-center gap-1.5">
                         <label for="perPageDraftProdi" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                        <select id="perPageDraftProdi" class="form-select form-select-sm shadow-none" style="width: auto; min-width: 82px; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeDraftProdiPageSize(this.value)">
+                        <select id="perPageDraftProdi" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 108px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeDraftProdiPageSize(this.value)">
                             <option value="10" selected>10 data</option>
                             <option value="25">25 data</option>
                             <option value="50">50 data</option>
@@ -181,9 +181,12 @@ $totalDraft = $totalDraft ?? count($documents);
                     <tbody>
                         <?php foreach ($documents as $idx => $doc): 
                             $filesCount = count($doc['files'] ?? []);
-                            $hasLink = !empty($doc['external_link']);
-                            $hasLegacy = !empty($doc['file_path']);
-                            $hasAnyAttachment = ($filesCount > 0 || $hasLink || $hasLegacy);
+                            $gdriveLinks = parse_external_links($doc['external_link'] ?? '');
+                            $linkCount = count($gdriveLinks);
+                            $hasFiles = ($filesCount > 0 || (!empty($doc['file_path']) && $doc['jenis_upload'] !== 'link'));
+                            $hasLinks = ($linkCount > 0);
+                            $isKombinasi = ($doc['jenis_upload'] === 'kombinasi') || ($hasFiles && $hasLinks);
+                            $hasAnyAttachment = ($hasFiles || $hasLinks);
                         ?>
                             <tr class="draft-table-row" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? ''))) ?>" style="border-bottom: 1px solid #E2E8F0;">
                                 <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
@@ -215,17 +218,22 @@ $totalDraft = $totalDraft ?? count($documents);
                                     <?php endif; ?>
                                 </td>
                                 <td class="py-3.5 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
-                                    <?php if ($filesCount > 0): ?>
+                                    <?php if ($isKombinasi): ?>
+                                        <div class="d-flex flex-column align-items-center gap-1">
+                                            <span class="badge" style="background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE; font-size: 0.72rem;">
+                                                <i class="fas fa-layer-group me-1"></i> Kombinasi
+                                            </span>
+                                            <span class="text-muted" style="font-size: 0.68rem;">
+                                                <?= $filesCount ?: 1 ?> File + <?= $linkCount ?> GDrive
+                                            </span>
+                                        </div>
+                                    <?php elseif ($hasFiles): ?>
                                         <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">
-                                            <i class="fas fa-file-lines me-1"></i> <?= $filesCount ?> Berkas Terlampir
+                                            <i class="fas fa-file-lines me-1"></i> <?= $filesCount > 1 ? $filesCount . ' Berkas' : '1 Berkas' ?> Terlampir
                                         </span>
-                                    <?php elseif ($hasLink): ?>
+                                    <?php elseif ($hasLinks): ?>
                                         <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">
-                                            <i class="fab fa-google-drive me-1"></i> Tautan GDrive
-                                        </span>
-                                    <?php elseif ($hasLegacy): ?>
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">
-                                            <i class="fas fa-file-pdf me-1"></i> 1 Berkas Terlampir
+                                            <i class="fab fa-google-drive me-1"></i> <?= $linkCount > 1 ? $linkCount . ' Tautan GDrive' : 'Tautan GDrive' ?>
                                         </span>
                                     <?php else: ?>
                                         <span class="badge px-2.5 py-1 rounded-pill fw-semibold" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 0.72rem;">

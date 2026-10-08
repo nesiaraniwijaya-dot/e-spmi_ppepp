@@ -214,7 +214,7 @@ foreach ($draftDocs as $d) {
                 <div class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end flex-wrap">
                     <div class="d-flex align-items-center gap-1.5">
                         <label for="perPageDraftGpm" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                        <select id="perPageDraftGpm" class="form-select form-select-sm shadow-none" style="width: auto; min-width: 82px; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeDraftGpmPageSize(this.value)">
+                        <select id="perPageDraftGpm" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 108px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeDraftGpmPageSize(this.value)">
                             <option value="10" selected>10 data</option>
                             <option value="25">25 data</option>
                             <option value="50">50 data</option>

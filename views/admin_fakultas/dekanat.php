@@ -10,8 +10,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     <!-- Header Section with generous breathing room -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
-            <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-warning bg-opacity-15 text-dark small fw-bold mb-2">
-                <i class="fas fa-landmark text-warning"></i> Struktur Pimpinan Fakultas
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill small fw-bold mb-2" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D;">
+                <i class="fas fa-landmark" style="color:#D97706;"></i> Struktur Pimpinan Fakultas
             </div>
             <h3 class="fw-bold text-dark-blue mb-1">Pengaturan Profil Dekanat</h3>
             <p class="text-muted small mb-0">Informasi pimpinan Dekanat akan ditampilkan pada portal publik dan lembar pengesahan SPMI fakultas.</p>

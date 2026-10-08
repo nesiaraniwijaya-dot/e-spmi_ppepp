@@ -43,8 +43,8 @@ $currentUser = Auth::user();
                     <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" class="brand-logo-img">
                 </div>
                 <div class="brand-text-wrap">
-                    <div class="brand-title">PETRA</div>
-                    <div class="brand-subtitle">PEmantauan Tahapan PPEPP &amp; Rencana Aksi</div>
+                    <div class="brand-title">MITRA</div>
+                    <div class="brand-subtitle">Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
                 </div>
             </a>
 
@@ -105,7 +105,7 @@ $currentUser = Auth::user();
                                     <li class="px-3 py-2 border-bottom">
                                         <div style="font-weight:700;font-size:0.9rem;color:var(--navy);"><?= htmlspecialchars($currentUser['name']) ?></div>
                                         <div style="font-size:0.75rem;color:var(--text-muted);"><?= htmlspecialchars($currentUser['email']) ?></div>
-                                        <span class="badge <?= $currentUser['role'] === 'pengguna' ? 'bg-success' : 'bg-primary' ?> bg-opacity-15 <?= $currentUser['role'] === 'pengguna' ? 'text-success' : 'text-primary' ?> mt-1" style="font-size:0.7rem;">
+                                        <span class="badge rounded-pill mt-1" style="font-size:0.7rem; font-weight:700; <?= $currentUser['role'] === 'pengguna' ? 'background:#DCFCE7 !important; color:#166534 !important; border:1px solid #86EFAC !important;' : 'background:#EFF6FF !important; color:#1E40AF !important; border:1px solid #93C5FD !important;' ?>">
                                             <?= $currentUser['role'] === 'pengguna' ? 'PENGGUNA TERDAFTAR' : strtoupper(str_replace('_', ' ', $currentUser['role'])) ?>
                                         </span>
                                     </li>

@@ -135,12 +135,12 @@
                             <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;">
                         </div>
                         <div>
-                            <div class="footer-brand-title"><?= htmlspecialchars(get_landing_setting('footer_brand_title', 'PETRA')) ?></div>
-                            <div class="footer-brand-sub"><?= htmlspecialchars(get_landing_setting('footer_brand_sub', 'PEmantauan Tahapan PPEPP & Rencana Aksi')) ?></div>
+                            <div class="footer-brand-title"><?= htmlspecialchars(get_landing_setting('footer_brand_title', 'MITRA')) ?></div>
+                            <div class="footer-brand-sub"><?= htmlspecialchars(get_landing_setting('footer_brand_sub', 'Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi')) ?></div>
                         </div>
                     </div>
                     <p class="footer-desc">
-                        <?= htmlspecialchars(get_landing_setting('footer_desc', 'PETRA = PEmantauan Tahapan PPEPP & Rencana Aksi. PETRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.')) ?>
+                        <?= htmlspecialchars(get_landing_setting('footer_desc', 'MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.')) ?>
                     </p>
 
                     <!-- Real Data Structured Address Box -->
@@ -168,7 +168,7 @@
 
                 <!-- Column 2: 5 Siklus PPEPP Pathway (Sleek Luminous Cards) -->
                 <div class="col-lg-4 col-md-6">
-                    <h5>5 Siklus PPEPP PETRA</h5>
+                    <h5>5 Siklus PPEPP MITRA</h5>
                     <ul class="footer-cycle-list">
                         <li>
                             <a href="<?= base_url('dokumen?siklus=penetapan') ?>" class="footer-cycle-item cycle-p1">

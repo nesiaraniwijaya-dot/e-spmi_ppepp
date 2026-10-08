@@ -538,12 +538,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         <div class="d-flex align-items-center gap-2 mb-2">
                                             <div class="preview-footer-icon"><i class="fas fa-award text-warning"></i></div>
                                             <div>
-                                                <div class="fw-bold fs-5 text-white" id="previewFooterBrand"><?= htmlspecialchars($settings['footer_brand_title'] ?? 'PETRA') ?></div>
-                                                <div class="text-white-50 small" id="previewFooterSub"><?= htmlspecialchars($settings['footer_brand_sub'] ?? 'PEmantauan Tahapan PPEPP & Rencana Aksi') ?></div>
+                                                <div class="fw-bold fs-5 text-white" id="previewFooterBrand"><?= htmlspecialchars($settings['footer_brand_title'] ?? 'MITRA') ?></div>
+                                                <div class="text-white-50 small" id="previewFooterSub"><?= htmlspecialchars($settings['footer_brand_sub'] ?? 'Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi') ?></div>
                                             </div>
                                         </div>
                                         <p class="text-white-50 small mb-3" id="previewFooterDesc" style="line-height: 1.5;">
-                                            <?= htmlspecialchars($settings['footer_desc'] ?? 'PETRA = PEmantauan Tahapan PPEPP & Rencana Aksi. PETRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.') ?>
+                                            <?= htmlspecialchars($settings['footer_desc'] ?? 'MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.') ?>
                                         </p>
                                         <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #FCD34D; font-size: 0.75rem;">
                                             <i class="fas fa-certificate text-warning"></i>
@@ -589,12 +589,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                                     <div class="mb-3">
                                         <label class="form-label small fw-semibold text-secondary">Judul Brand Footer</label>
-                                        <input type="text" name="settings[footer_brand_title]" id="inputFooterBrand" class="form-control fw-bold" value="<?= htmlspecialchars($settings['footer_brand_title'] ?? '') ?>" placeholder="PETRA" required>
+                                        <input type="text" name="settings[footer_brand_title]" id="inputFooterBrand" class="form-control fw-bold" value="<?= htmlspecialchars($settings['footer_brand_title'] ?? '') ?>" placeholder="MITRA" required>
                                     </div>
 
                                     <div class="mb-3">
                                         <label class="form-label small fw-semibold text-secondary">Sub-Judul Brand Footer</label>
-                                        <input type="text" name="settings[footer_brand_sub]" id="inputFooterSub" class="form-control" value="<?= htmlspecialchars($settings['footer_brand_sub'] ?? '') ?>" placeholder="PEmantauan Tahapan PPEPP &amp; Rencana Aksi" required>
+                                        <input type="text" name="settings[footer_brand_sub]" id="inputFooterSub" class="form-control" value="<?= htmlspecialchars($settings['footer_brand_sub'] ?? '') ?>" placeholder="Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi" required>
                                     </div>
 
                                     <div>
@@ -852,7 +852,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 function confirmResetDefaults() {
     Swal.fire({
         title: 'Kembalikan ke Standar Awal?',
-        text: 'Seluruh teks beranda dan footer akan di-reset ke nilai default PETRA UNIKA Soegijapranata.',
+        text: 'Seluruh teks beranda dan footer akan di-reset ke nilai default MITRA UNIKA Soegijapranata.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
@@ -918,9 +918,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewFootPhone = document.getElementById('previewFooterPhone');
     const previewFootWeb = document.getElementById('previewFooterWeb');
 
-    if (inputFootBrand && previewFootBrand) inputFootBrand.addEventListener('input', e => previewFootBrand.textContent = e.target.value || 'PETRA');
-    if (inputFootSub && previewFootSub) inputFootSub.addEventListener('input', e => previewFootSub.textContent = e.target.value || 'PEmantauan Tahapan PPEPP & Rencana Aksi');
-    if (inputFootDesc && previewFootDesc) inputFootDesc.addEventListener('input', e => previewFootDesc.textContent = e.target.value || 'PETRA = PEmantauan Tahapan PPEPP & Rencana Aksi. PETRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.');
+    if (inputFootBrand && previewFootBrand) inputFootBrand.addEventListener('input', e => previewFootBrand.textContent = e.target.value || 'MITRA');
+    if (inputFootSub && previewFootSub) inputFootSub.addEventListener('input', e => previewFootSub.textContent = e.target.value || 'Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi');
+    if (inputFootDesc && previewFootDesc) inputFootDesc.addEventListener('input', e => previewFootDesc.textContent = e.target.value || 'MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.');
     if (inputFootAkreditasi && previewFootAkreditasi) inputFootAkreditasi.addEventListener('input', e => previewFootAkreditasi.textContent = e.target.value || 'Terakreditasi UNGGUL');
     if (inputFootAddr && previewFootAddr) inputFootAddr.addEventListener('input', e => previewFootAddr.textContent = e.target.value || 'Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234');
     if (inputFootEmail && previewFootEmail) inputFootEmail.addEventListener('input', e => previewFootEmail.textContent = e.target.value || 'lpm@unika.ac.id');

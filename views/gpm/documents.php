@@ -199,10 +199,7 @@ foreach ($documents as $d) {
             </div>
 
             <!-- Current Scope Status indicator -->
-            <div class="small text-muted d-flex align-items-center gap-2.5 ps-lg-3 border-start-lg">
-                <span class="badge rounded-circle p-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                    <i class="fas fa-info fa-sm"></i>
-                </span>
+            <div class="small text-muted d-flex align-items-center gap-2 ps-lg-3 border-start-lg">
                 <div style="line-height: 1.35;">
                     <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Cakupan Dokumen:</div>
                     <div class="fw-bold" style="font-size: 0.85rem;">
@@ -327,7 +324,7 @@ foreach ($documents as $d) {
             </div>
             <div class="d-flex align-items-center gap-2">
                 <label for="gpmPageSizeSelect" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                <select id="gpmPageSizeSelect" class="form-select form-select-sm shadow-none" style="width: auto; min-width: 82px; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeGpmPageSize(this.value)">
+                <select id="gpmPageSizeSelect" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 108px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeGpmPageSize(this.value)">
                     <option value="10" selected>10 data</option>
                     <option value="25">25 data</option>
                     <option value="50">50 data</option>
@@ -346,7 +343,7 @@ foreach ($documents as $d) {
                         <th class="py-3" style="width: 140px;">Unit Sasaran</th>
                         <th class="py-3" style="min-width: 250px;">Dokumen Mutu & Berkas</th>
                         <th class="py-3" style="width: 130px;">Siklus PPEPP</th>
-                        <th class="py-3" style="min-width: 170px;">Bidang</th>
+                        <th class="py-3" style="min-width: 170px;">Bidang &amp; Standar</th>
                         <th class="py-3" style="min-width: 180px;">Status Review LPM</th>
                         <th class="text-end pe-3 py-3" style="width: 140px;">Aksi</th>
                     </tr>
@@ -406,15 +403,103 @@ foreach ($documents as $d) {
                                         $links = parse_external_links($doc['external_link'] ?? '');
                                         ?>
                                         <?php if (!empty($files)): ?>
-                                            <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.72rem;">
-                                                <i class="fas fa-paperclip text-primary me-1"></i> <?= count($files) ?> Berkas
-                                            </span>
+                                            <?php if (count($files) === 1): 
+                                                $singleF = $files[0];
+                                            ?>
+                                                <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#pdfPreviewModal" 
+                                                        data-pdf-url="<?= base_url($singleF['file_path']) ?>" 
+                                                        data-doc-title="<?= htmlspecialchars($singleF['file_name']) ?>" 
+                                                        data-doc-narasi="<?= htmlspecialchars($singleF['narasi'] ?? '') ?>" 
+                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleF['sub_bidang_ids'] ?? null)) ?>" 
+                                                        data-public-limit="0" 
+                                                        data-can-download="1"
+                                                        data-can-access="1"
+                                                        style="font-size: 0.72rem;" title="Pratinjau Berkas PDF">
+                                                    <i class="fas fa-file-pdf"></i> PDF
+                                                </button>
+                                            <?php else: ?>
+                                                <div class="dropdown d-inline-block">
+                                                    <button class="btn btn-xs btn-outline-danger dropdown-toggle rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
+                                                            type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.72rem;">
+                                                        <i class="fas fa-file-pdf text-danger"></i> <?= count($files) ?> PDF
+                                                    </button>
+                                                    <ul class="dropdown-menu shadow-lg border-0 p-2 rounded-3" style="min-width: 260px; max-width: 360px; font-size: 0.78rem;">
+                                                        <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS PDF:</li>
+                                                        <?php foreach ($files as $fItem): ?>
+                                                            <li class="mb-1">
+                                                                <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
+                                                                        data-bs-toggle="modal" 
+                                                                        data-bs-target="#pdfPreviewModal" 
+                                                                        data-pdf-url="<?= base_url($fItem['file_path']) ?>" 
+                                                                        data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
+                                                                        data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
+                                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
+                                                                        data-public-limit="0"
+                                                                        data-can-download="1"
+                                                                        data-can-access="1">
+                                                                    <div class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate">
+                                                                        <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
+                                                                        <span class="text-truncate"><?= htmlspecialchars($fItem['file_name']) ?></span>
+                                                                    </div>
+                                                                </button>
+                                                            </li>
+                                                        <?php endforeach; ?>
+                                                    </ul>
+                                                </div>
+                                            <?php endif; ?>
                                         <?php endif; ?>
+
                                         <?php if (!empty($links)): ?>
-                                            <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.72rem;">
-                                                <i class="fab fa-google-drive text-success me-1"></i> <?= count($links) ?> Drive
-                                            </span>
+                                            <?php if (count($links) === 1): 
+                                                $singleL = $links[0];
+                                            ?>
+                                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#pdfPreviewModal" 
+                                                        data-is-link="1" 
+                                                        data-link-url="<?= htmlspecialchars($singleL['url']) ?>" 
+                                                        data-doc-title="<?= htmlspecialchars($singleL['narasi'] ?: $doc['nama_dokumen']) ?>" 
+                                                        data-doc-narasi="<?= htmlspecialchars($singleL['narasi'] ?? '') ?>" 
+                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleL['sub_bidang_ids'] ?? null)) ?>" 
+                                                        data-can-access="1" 
+                                                        data-can-download="1"
+                                                        style="font-size: 0.72rem;" title="Pratinjau Link GDrive">
+                                                    <i class="fab fa-google-drive"></i> GDrive
+                                                </button>
+                                            <?php else: ?>
+                                                <div class="dropdown d-inline-block">
+                                                    <button class="btn btn-xs btn-outline-primary dropdown-toggle rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
+                                                            type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.72rem;">
+                                                        <i class="fab fa-google-drive text-primary"></i> <?= count($links) ?> Drive
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 260px; max-width: 360px; font-size: 0.78rem;">
+                                                        <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH TAUTAN DRIVE:</li>
+                                                        <?php foreach ($links as $lIdx => $lItem): ?>
+                                                            <li class="mb-1">
+                                                                <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
+                                                                        data-bs-toggle="modal" 
+                                                                        data-bs-target="#pdfPreviewModal" 
+                                                                        data-is-link="1" 
+                                                                        data-link-url="<?= htmlspecialchars($lItem['url']) ?>" 
+                                                                        data-doc-title="<?= htmlspecialchars($lItem['narasi'] ?: ('Tautan GDrive #' . ($lIdx + 1))) ?>" 
+                                                                        data-doc-narasi="<?= htmlspecialchars($lItem['narasi'] ?? '') ?>" 
+                                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($lItem['sub_bidang_ids'] ?? null)) ?>" 
+                                                                        data-can-access="1" 
+                                                                        data-can-download="1">
+                                                                    <div class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
+                                                                        <i class="fab fa-google-drive"></i>
+                                                                        <span class="text-truncate"><?= htmlspecialchars($lItem['narasi'] ?: ('Tautan GDrive #' . ($lIdx + 1))) ?></span>
+                                                                    </div>
+                                                                </button>
+                                                            </li>
+                                                        <?php endforeach; ?>
+                                                    </ul>
+                                                </div>
+                                            <?php endif; ?>
                                         <?php endif; ?>
+
                                         <?php if (empty($files) && empty($links)): ?>
                                             <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">
                                                 <i class="fas fa-triangle-exclamation me-1"></i> Belum ada lampiran
@@ -498,20 +583,20 @@ foreach ($documents as $d) {
 
                                 <!-- Aksi -->
                                 <td class="pe-3 align-top text-end py-3">
-                                    <div class="d-inline-flex align-items-center gap-1">
+                                    <div class="d-inline-flex align-items-center gap-1.5">
                                         <!-- Detail Modal Trigger -->
-                                        <button type="button" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border" style="width: 32px; height: 32px;" title="Lihat Rincian" data-bs-toggle="modal" data-bs-target="#docModal<?= $doc['id'] ?>">
-                                            <i class="fas fa-eye text-secondary" style="font-size: 0.8rem;"></i>
+                                        <button type="button" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" style="width: 36px; height: 36px;" title="Lihat Rincian Dokumen" data-bs-toggle="modal" data-bs-target="#docModal<?= $doc['id'] ?>">
+                                            <i class="fas fa-eye text-primary" style="font-size: 0.85rem;"></i>
                                         </button>
 
                                         <!-- Edit -->
-                                        <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border" style="width: 32px; height: 32px;" title="Edit Dokumen">
-                                            <i class="fas fa-pen text-primary" style="font-size: 0.8rem;"></i>
+                                        <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" style="width: 36px; height: 36px;" title="Edit / Ubah Dokumen">
+                                            <i class="fas fa-pen text-warning" style="font-size: 0.85rem;"></i>
                                         </a>
 
                                         <!-- Delete Soft -->
-                                        <button type="button" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border" style="width: 32px; height: 32px;" title="Hapus Dokumen" data-bs-toggle="modal" data-bs-target="#delModal<?= $doc['id'] ?>">
-                                            <i class="fas fa-trash-can text-danger" style="font-size: 0.8rem;"></i>
+                                        <button type="button" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" style="width: 36px; height: 36px;" title="Hapus Dokumen" data-bs-toggle="modal" data-bs-target="#delModal<?= $doc['id'] ?>">
+                                            <i class="fas fa-trash-can text-danger" style="font-size: 0.85rem;"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -521,12 +606,17 @@ foreach ($documents as $d) {
                             <div class="modal fade" id="docModal<?= $doc['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered modal-lg">
                                     <div class="modal-content rounded-4 border-0 shadow">
-                                        <div class="modal-header border-bottom pb-3">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <i class="fas fa-file-lines text-primary fa-lg"></i>
-                                                <h6 class="modal-title fw-bold text-dark mb-0">Rincian Dokumen Mutu</h6>
+                                        <div class="modal-header border-0 px-4 py-3 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #0A192F 0%, #1E3E62 100%) !important;">
+                                            <div class="d-flex align-items-center gap-2.5">
+                                                <div class="p-2 rounded-3 bg-white bg-opacity-10 text-info d-flex align-items-center justify-content-center">
+                                                    <i class="fas fa-file-lines fa-lg"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="modal-title fw-bold text-white mb-0" style="font-size: 1.05rem; letter-spacing: -0.2px;">Rincian Dokumen Mutu</h6>
+                                                    <div class="text-white-50 small" style="font-size: 0.72rem;">Detail metadata dan berkas lampiran</div>
+                                                </div>
                                             </div>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body p-4">
                                             <div class="row g-3 mb-3">
@@ -593,56 +683,137 @@ foreach ($documents as $d) {
                                                 </div>
                                             <?php endif; ?>
 
-                                            <!-- Berkas Terlampir -->
-                                            <div class="p-3 rounded-3 bg-light border mb-3">
-                                                <div class="small fw-bold text-dark text-uppercase mb-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                                                    <i class="fas fa-paperclip text-primary me-1"></i> Berkas Lampiran Dokumen:
-                                                </div>
-                                                <?php if (empty($files)): ?>
-                                                    <p class="small text-muted mb-0">Tidak ada berkas fisik terlampir.</p>
-                                                <?php else: ?>
-                                                    <div class="d-flex flex-column gap-2">
-                                                        <?php foreach ($files as $f): ?>
-                                                            <div class="d-flex align-items-center justify-content-between p-2 rounded bg-white border">
-                                                                <div class="d-flex align-items-center gap-2 text-truncate me-2">
-                                                                    <i class="fas fa-file-pdf text-danger fa-lg"></i>
-                                                                    <div class="text-truncate">
-                                                                        <div class="small fw-semibold text-dark text-truncate"><?= htmlspecialchars($f['file_name']) ?></div>
-                                                                        <?= render_sub_standar_badges($f['sub_bidang_ids'] ?? null) ?>
-                                                                        <?php if (!empty($f['narasi'])): ?>
-                                                                            <div class="text-muted" style="font-size: 0.72rem;"><?= htmlspecialchars($f['narasi']) ?></div>
-                                                                        <?php endif; ?>
+                                            <!-- Berkas Lampiran Fisik (Hanya tampil jika ada berkas) -->
+                                            <?php if (!empty($files)): ?>
+                                                <div class="p-3.5 p-md-4 rounded-4 bg-light border mb-4">
+                                                    <div class="d-flex align-items-center justify-content-between pb-2.5 mb-3 border-bottom border-light-subtle">
+                                                        <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-2" style="font-size: 0.78rem; letter-spacing: 0.5px;">
+                                                            <i class="fas fa-paperclip text-primary"></i> Berkas Lampiran Dokumen (<?= count($files) ?>):
+                                                        </span>
+                                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2.5 py-1 rounded-pill fw-medium" style="font-size: 0.7rem;">PDF Interaktif</span>
+                                                    </div>
+                                                    <div class="d-flex flex-column gap-3">
+                                                        <?php foreach ($files as $f): 
+                                                            $subBadgesHtml = render_sub_standar_badges($f['sub_bidang_ids'] ?? null);
+                                                        ?>
+                                                            <div class="card border rounded-3 p-3.5 bg-white shadow-2xs">
+                                                                <div class="d-flex flex-column flex-sm-row sm-align-items-center justify-content-between gap-3">
+                                                                    <div class="d-flex align-items-start gap-3 me-sm-2">
+                                                                        <div class="p-2.5 rounded-3 bg-danger bg-opacity-10 text-danger flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                                                                            <i class="fas fa-file-pdf fa-xl"></i>
+                                                                        </div>
+                                                                        <div class="min-w-0">
+                                                                            <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; line-height: 1.35; word-break: break-word;">
+                                                                                <?= htmlspecialchars($f['file_name']) ?>
+                                                                            </div>
+                                                                            <?php if (!empty($f['file_size'])): ?>
+                                                                                <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                                                                    <?= htmlspecialchars($f['file_size']) ?>
+                                                                                </span>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-sm-center align-self-end">
+                                                                        <button type="button" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs fw-semibold"
+                                                                                data-bs-toggle="modal" 
+                                                                                data-bs-target="#pdfPreviewModal" 
+                                                                                data-pdf-url="<?= base_url($f['file_path']) ?>" 
+                                                                                data-doc-title="<?= htmlspecialchars($f['file_name']) ?>" 
+                                                                                data-doc-narasi="<?= htmlspecialchars($f['narasi'] ?? '') ?>" 
+                                                                                data-doc-standar="<?= htmlspecialchars($subBadgesHtml) ?>" 
+                                                                                data-public-limit="0" 
+                                                                                data-can-download="1"
+                                                                                data-can-access="1"
+                                                                                style="font-size: 0.78rem;">
+                                                                            <i class="fas fa-eye"></i> Pratinjau
+                                                                        </button>
+                                                                        <a href="<?= base_url($f['file_path']) ?>" target="_blank" download class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold" style="font-size: 0.78rem;">
+                                                                            <i class="fas fa-download"></i> Unduh
+                                                                        </a>
                                                                     </div>
                                                                 </div>
-                                                                <a href="<?= base_url($f['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 flex-shrink-0" style="font-size: 0.75rem;">
-                                                                    <i class="fas fa-download me-1"></i> Unduh
-                                                                </a>
-                                                            </div>
-                                                        <?php endforeach; ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
 
-                                            <!-- Tautan GDrive -->
-                                            <?php if (!empty($links)): ?>
-                                                <div class="p-3 rounded-3 bg-light border">
-                                                    <div class="small fw-bold text-dark text-uppercase mb-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                                                        <i class="fab fa-google-drive text-success me-1"></i> Tautan Google Drive Eksternal:
-                                                    </div>
-                                                    <div class="d-flex flex-column gap-2">
-                                                        <?php foreach ($links as $l): ?>
-                                                            <div class="d-flex align-items-center justify-content-between p-2 rounded bg-white border">
-                                                                <div class="text-truncate me-2">
-                                                                    <div class="small fw-semibold text-dark text-truncate"><?= htmlspecialchars($l['narasi'] ?: 'Tautan Google Drive') ?></div>
-                                                                    <?= render_sub_standar_badges($l['sub_bidang_ids'] ?? null) ?>
-                                                                    <div class="text-muted text-truncate" style="font-size: 0.72rem;"><?= htmlspecialchars($l['url']) ?></div>
-                                                                </div>
-                                                                <a href="<?= htmlspecialchars($l['url']) ?>" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 flex-shrink-0" style="font-size: 0.75rem;">
-                                                                    <i class="fas fa-arrow-up-right-from-square me-1"></i> Buka Link
-                                                                </a>
+                                                                <?php if (!empty($subBadgesHtml)): ?>
+                                                                    <div class="mt-2.5 pt-1 d-flex flex-wrap align-items-center gap-1.5">
+                                                                        <?= $subBadgesHtml ?>
+                                                                    </div>
+                                                                <?php endif; ?>
+
+                                                                <?php if (!empty($f['narasi'])): ?>
+                                                                    <div class="mt-2.5 p-2.5 px-3 rounded-3 bg-light-subtle border border-light-subtle text-secondary small d-flex align-items-start gap-2" style="font-size: 0.8rem; line-height: 1.5;">
+                                                                        <i class="fas fa-comment-dots text-primary mt-0.5 opacity-75 flex-shrink-0"></i>
+                                                                        <span class="text-break"><?= htmlspecialchars($f['narasi']) ?></span>
+                                                                    </div>
+                                                                <?php endif; ?>
                                                             </div>
                                                         <?php endforeach; ?>
                                                     </div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <!-- Tautan Google Drive Eksternal (Hanya tampil jika ada tautan) -->
+                                            <?php if (!empty($links)): ?>
+                                                <div class="p-3.5 p-md-4 rounded-4 bg-light border mb-4">
+                                                    <div class="d-flex align-items-center justify-content-between pb-2.5 mb-3 border-bottom border-light-subtle">
+                                                        <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-2" style="font-size: 0.78rem; letter-spacing: 0.5px;">
+                                                            <i class="fab fa-google-drive text-success"></i> Tautan Google Drive Eksternal (<?= count($links) ?>):
+                                                        </span>
+                                                        <span class="badge bg-success bg-opacity-10 text-success border px-2.5 py-1 rounded-pill fw-medium" style="font-size: 0.7rem;">Cloud Storage</span>
+                                                    </div>
+                                                    <div class="d-flex flex-column gap-3">
+                                                        <?php foreach ($links as $lIdx => $l): 
+                                                            $subBadgesHtml = render_sub_standar_badges($l['sub_bidang_ids'] ?? null);
+                                                        ?>
+                                                            <div class="card border rounded-3 p-3.5 bg-white shadow-2xs">
+                                                                <div class="d-flex flex-column flex-sm-row sm-align-items-center justify-content-between gap-3">
+                                                                    <div class="d-flex align-items-start gap-3 me-sm-2">
+                                                                        <div class="p-2.5 rounded-3 bg-success bg-opacity-10 text-success flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                                                                            <i class="fab fa-google-drive fa-xl"></i>
+                                                                        </div>
+                                                                        <div class="min-w-0">
+                                                                            <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; line-height: 1.35; word-break: break-word;">
+                                                                                <?= htmlspecialchars($l['narasi'] ?: ('Tautan Google Drive #' . ($lIdx + 1))) ?>
+                                                                            </div>
+                                                                            <div class="text-muted text-break small" style="font-size: 0.76rem;">
+                                                                                <i class="fas fa-link text-secondary me-1 opacity-75"></i><?= htmlspecialchars($l['url']) ?>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-sm-center align-self-end">
+                                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold"
+                                                                                data-bs-toggle="modal" 
+                                                                                data-bs-target="#pdfPreviewModal" 
+                                                                                data-is-link="1" 
+                                                                                data-link-url="<?= htmlspecialchars($l['url']) ?>" 
+                                                                                data-doc-title="<?= htmlspecialchars($l['narasi'] ?: $doc['nama_dokumen']) ?>" 
+                                                                                data-doc-narasi="<?= htmlspecialchars($l['narasi'] ?? '') ?>" 
+                                                                                data-doc-standar="<?= htmlspecialchars($subBadgesHtml) ?>" 
+                                                                                data-can-access="1" 
+                                                                                data-can-download="1"
+                                                                                style="font-size: 0.78rem;">
+                                                                            <i class="fas fa-eye"></i> Pratinjau
+                                                                        </button>
+                                                                        <a href="<?= htmlspecialchars($l['url']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold" style="font-size: 0.78rem;">
+                                                                            <i class="fas fa-arrow-up-right-from-square"></i> Buka Link
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+
+                                                                <?php if (!empty($subBadgesHtml)): ?>
+                                                                    <div class="mt-2.5 pt-1 d-flex flex-wrap align-items-center gap-1.5">
+                                                                        <?= $subBadgesHtml ?>
+                                                                    </div>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <!-- Jika tidak ada berkas maupun tautan sama sekali -->
+                                            <?php if (empty($files) && empty($links)): ?>
+                                                <div class="p-3 rounded-3 bg-light border text-center text-muted small mb-3">
+                                                    <i class="fas fa-circle-info text-secondary me-1"></i> Belum ada berkas fisik maupun tautan yang dilampirkan pada dokumen ini.
                                                 </div>
                                             <?php endif; ?>
                                         </div>

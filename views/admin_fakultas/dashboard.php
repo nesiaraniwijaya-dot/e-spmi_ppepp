@@ -333,9 +333,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <div>
-                        <h5 class="fw-bold text-dark-blue mb-0">Dokumen Mutu Fakultas Terbaru</h5>
-                        <p class="text-muted small mb-0">Dokumen kebijakan, standar, dan laporan tingkat fakultas</p>
+                    <div class="d-flex align-items-center gap-2">
+                        <h5 class="fw-bold text-dark-blue mb-0">
+                            <i class="fas fa-calendar-day text-primary me-1.5"></i> Dokumen Mutu Diunggah Hari Ini
+                        </h5>
+                        <span class="badge bg-light text-primary border px-2.5 py-1 rounded-pill small fw-semibold">
+                            <i class="far fa-calendar-check me-1"></i> <?= date('d M Y') ?>
+                        </span>
                     </div>
                     <a href="<?= base_url('fakultas/dokumen') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                         Lihat Semua (<?= $cycleStats['total'] ?>) <i class="fas fa-arrow-right ms-1"></i>
@@ -344,19 +348,21 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                 <?php if (empty($recentDocs)): ?>
                     <div class="text-center py-5 text-muted">
-                        <i class="fas fa-folder-open fa-3x mb-2 text-secondary opacity-50"></i>
-                        <p class="small mb-2">Belum ada dokumen mutu tingkat fakultas yang diunggah.</p>
-                        <a href="<?= base_url('fakultas/dokumen/create') ?>" class="btn btn-sm btn-primary rounded-pill px-3">
-                            <i class="fas fa-plus me-1"></i> Unggah Dokumen Pertama
+                        <i class="fas fa-calendar-check fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+                        <h6 class="fw-bold text-dark mb-1">Belum Ada Dokumen Mutu yang Diunggah Hari Ini</h6>
+                        <p class="small text-muted mb-3">Dokumen mutu tingkat fakultas yang diunggah pada hari ini (<?= date('d M Y') ?>) akan tampil secara otomatis di tabel ini.</p>
+                        <a href="<?= base_url('fakultas/dokumen/create') ?>" class="btn btn-sm btn-primary rounded-pill px-3.5 py-1.5">
+                            <i class="fas fa-plus me-1"></i> Unggah Dokumen Baru
                         </a>
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" style="font-size: 0.82rem;">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Nama Dokumen</th>
+                                    <th>Nama &amp; Nomor Dokumen</th>
                                     <th>Siklus</th>
+                                    <th>Bidang &amp; Standar</th>
                                     <th>Status LPM</th>
                                     <th class="text-end">Aksi</th>
                                 </tr>
@@ -365,40 +371,34 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <?php foreach ($recentDocs as $rd): ?>
                                     <tr>
                                         <td>
-                                            <div class="fw-semibold text-dark-blue"><?= htmlspecialchars($rd['nama_dokumen']) ?></div>
+                                            <div class="fw-semibold text-dark-blue mb-0.5"><?= htmlspecialchars($rd['nama_dokumen']) ?></div>
                                             <div class="text-muted small" style="font-size: 0.72rem;">
                                                 <?= htmlspecialchars($rd['nomor_dokumen'] ?: '-') ?> | TA <?= htmlspecialchars($rd['tahun_akademik']) ?>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge badge-<?= $rd['siklus'] ?>">
-                                                <?= ucfirst($rd['siklus']) ?>
-                                            </span>
+                                            <?= siklus_badge($rd['siklus']) ?>
                                         </td>
                                         <td>
-                                            <?php 
-                                            $st = $rd['status_review'] ?? 'belum_direview';
-                                            if ($st === 'sesuai'): ?>
-                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-0.5" style="font-size:0.7rem;">
-                                                    <i class="fas fa-check-circle me-0.5"></i> Sesuai
-                                                </span>
-                                            <?php elseif ($st === 'perlu_perbaikan'): ?>
-                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2 py-0.5" style="font-size:0.7rem;">
-                                                    <i class="fas fa-triangle-exclamation me-0.5"></i> Revisi
-                                                </span>
-                                            <?php elseif ($st === 'sudah_diperbaiki'): ?>
-                                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-2 py-0.5" style="font-size:0.7rem;">
-                                                    <i class="fas fa-rotate me-0.5"></i> Diperbaiki
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-0.5" style="font-size:0.7rem;">
-                                                    <i class="fas fa-clock me-0.5"></i> Belum Direview
-                                                </span>
+                                            <div class="fw-semibold text-dark mb-0.5" style="font-size: 0.82rem;">
+                                                <?= htmlspecialchars($rd['nama_bidang'] ?: 'Standar Umum') ?>
+                                            </div>
+                                            <?php if (!empty($rd['nama_sub_bidang'])): ?>
+                                                <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-turn-up fa-rotate-90 text-secondary opacity-50"></i>
+                                                    <span class="badge bg-light text-secondary border px-1.5 py-0.5"><?= htmlspecialchars($rd['nama_sub_bidang']) ?></span>
+                                                </div>
                                             <?php endif; ?>
                                         </td>
+                                        <td>
+                                            <?= review_status_badge($rd['status_review'] ?? 'belum_direview') ?>
+                                        </td>
                                         <td class="text-end">
-                                            <a href="<?= base_url('fakultas/dokumen/edit/' . $rd['id']) ?>" class="btn btn-xs btn-outline-warning rounded-pill px-2 py-1" title="Ubah Dokumen">
-                                                <i class="fas fa-pen"></i>
+                                            <a href="<?= base_url('fakultas/dokumen/edit/' . $rd['id']) ?>" 
+                                               class="btn btn-sm btn-outline-warning rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1" 
+                                               style="font-size: 0.75rem;" 
+                                               title="Ubah / Edit Dokumen">
+                                                <i class="fas fa-pen"></i> Edit
                                             </a>
                                         </td>
                                     </tr>
@@ -456,7 +456,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                title="Buka portal publik dokumen <?= htmlspecialchars($psm['jenjang'] . ' ' . $psm['nama_prodi']) ?> (<?= $psm['total_doc'] ?> Dokumen)">
                                 <div>
                                     <div class="fw-bold text-dark-blue small d-flex align-items-center gap-1.5 mb-0.5">
-                                        <span class="badge bg-secondary bg-opacity-15 text-dark" style="font-size:0.65rem;"><?= htmlspecialchars($psm['jenjang']) ?></span>
+                                        <span class="badge rounded-pill" style="background: #F1F5F9 !important; color: #334155 !important; border: 1px solid #CBD5E1 !important; font-size:0.68rem; font-weight:700;"><?= htmlspecialchars($psm['jenjang']) ?></span>
                                         <span class="prodi-title transition-all"><?= htmlspecialchars($psm['nama_prodi']) ?></span>
                                     </div>
                                     <div class="text-muted" style="font-size: 0.7rem;">

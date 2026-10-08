@@ -64,7 +64,7 @@ if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' : '' ?>Panel Admin - <?= APP_NAME ?></title>
-    <meta name="description" content="Panel Administrasi PETRA <?= INSTITUTION_NAME ?>">
+    <meta name="description" content="Panel Administrasi MITRA <?= INSTITUTION_NAME ?>">
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -104,7 +104,7 @@ if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
                 <div class="admin-topbar-title">
                     <?= isset($pageTitle) ? htmlspecialchars($pageTitle) : 'Dashboard' ?>
                 </div>
-                <div style="font-size:0.72rem;color:var(--text-muted);">PETRA &bull; PEmantauan Tahapan PPEPP &amp; Rencana Aksi</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">MITRA &bull; Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
             </div>
         </div>
 

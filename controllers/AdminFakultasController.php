@@ -61,13 +61,14 @@ class AdminFakultasController extends Controller {
         $stmtRevisi->execute([$this->fakultasId]);
         $revisiDocs = $stmtRevisi->fetchAll();
 
-        // Dokumen terbaru fakultas (hingga 8 dokumen)
+        // Dokumen mutu tingkat fakultas yang diunggah HARI INI
         $stmtRecent = $this->db->prepare("
-            SELECT d.*, b.nama_bidang 
+            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang 
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.deleted_at IS NULL 
-            ORDER BY d.created_at DESC LIMIT 8
+            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.deleted_at IS NULL AND DATE(d.created_at) = CURDATE()
+            ORDER BY d.created_at DESC
         ");
         $stmtRecent->execute([$this->fakultasId]);
         $recentDocs = $stmtRecent->fetchAll();
@@ -522,25 +523,39 @@ class AdminFakultasController extends Controller {
                     $fileSize = null;
                     $fileExt = null;
 
-                    if (!$isDraft) {
-                        if ($jenisUpload === 'file') {
-                            if (empty($uploadedFilesList)) {
-                                throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) wajib memiliki minimal 1 berkas file dokumen untuk diajukan ke LPM.");
-                            }
-                            $filePath = $uploadedFilesList[0]['file_path'];
-                            $fileSize = $uploadedFilesList[0]['file_size'];
-                            $fileExt = $uploadedFilesList[0]['file_extension'];
-                        } else {
-                            if (empty($rawLinks)) {
-                                throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) berjenis Link GDrive, minimal 1 URL Google Drive wajib diisi untuk diajukan ke LPM.");
-                            }
-                        }
+                    $hasFiles = !empty($uploadedFilesList);
+                    $hasLinks = !empty($rawLinks);
+
+                    if ($hasFiles && $hasLinks) {
+                        $jenisUpload = 'kombinasi';
+                    } elseif ($hasFiles) {
+                        $jenisUpload = 'file';
+                    } elseif ($hasLinks) {
+                        $jenisUpload = 'link';
                     } else {
-                        if ($jenisUpload === 'file' && !empty($uploadedFilesList)) {
-                            $filePath = $uploadedFilesList[0]['file_path'];
-                            $fileSize = $uploadedFilesList[0]['file_size'];
-                            $fileExt = $uploadedFilesList[0]['file_extension'];
+                        $jenisUpload = trim($d['jenis_upload'] ?? 'file');
+                    }
+
+                    if (!$isDraft) {
+                        if (!$hasFiles && !$hasLinks) {
+                            throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) wajib memiliki minimal 1 berkas fisik atau tautan Google Drive untuk diajukan ke LPM.");
                         }
+                    }
+
+                    if ($hasFiles) {
+                        $filePath = $uploadedFilesList[0]['file_path'];
+                        $fileSize = $uploadedFilesList[0]['file_size'];
+                        $fileExt = $uploadedFilesList[0]['file_extension'];
+                    } else {
+                        $filePath = null;
+                        $fileSize = null;
+                        $fileExt = null;
+                    }
+
+                    if ($hasLinks) {
+                        $externalLink = json_encode($rawLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                    } else {
+                        $externalLink = null;
                     }
 
                     $statusReview = $isDraft ? 'draft' : 'belum_direview';
@@ -906,24 +921,28 @@ class AdminFakultasController extends Controller {
                 }
             }
 
-            if (!$isDraft) {
-                if ($jenisUpload === 'file') {
-                    if (empty($filePath)) {
-                        Auth::setFlash('danger', 'Dokumen aktif wajib memiliki minimal 1 berkas fisik yang diunggah.');
-                        redirect('fakultas/dokumen/edit/' . $id);
-                        return;
-                    }
-                    $externalLink = null;
-                } else {
-                    if (empty($externalLink)) {
-                        Auth::setFlash('danger', 'Minimal 1 tautan Google Drive wajib diisi jika memilih metode Link.');
-                        redirect('fakultas/dokumen/edit/' . $id);
-                        return;
-                    }
-                }
+            $hasFiles = !empty($filePath);
+            $hasLinks = !empty($rawLinks);
+
+            if ($hasFiles && $hasLinks) {
+                $jenisUpload = 'kombinasi';
+            } elseif ($hasFiles) {
+                $jenisUpload = 'file';
+                $externalLink = null;
+            } elseif ($hasLinks) {
+                $jenisUpload = 'link';
+                $filePath = null;
+                $fileSize = null;
+                $fileExt = null;
             } else {
-                if ($jenisUpload === 'file') {
-                    $externalLink = null;
+                $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
+            }
+
+            if (!$isDraft) {
+                if (!$hasFiles && !$hasLinks) {
+                    Auth::setFlash('danger', 'Dokumen aktif wajib memiliki minimal 1 berkas fisik yang diunggah atau tautan Google Drive.');
+                    redirect('fakultas/dokumen/edit/' . $id);
+                    return;
                 }
             }
 

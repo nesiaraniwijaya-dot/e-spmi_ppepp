@@ -66,13 +66,14 @@ class AdminProdiController extends Controller {
         $stmtRevisi->execute([$this->prodiId]);
         $revisiDocs = $stmtRevisi->fetchAll();
 
-        // Recent documents for this prodi (up to 8)
+        // Dokumen yang diunggah HARI INI untuk prodi ini
         $stmtRecent = $this->db->prepare("
-            SELECT d.*, b.nama_bidang 
+            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang 
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
-            WHERE d.prodi_id = ? AND d.deleted_at IS NULL 
-            ORDER BY d.created_at DESC LIMIT 8
+            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
+            WHERE d.prodi_id = ? AND d.deleted_at IS NULL AND DATE(d.created_at) = CURDATE()
+            ORDER BY d.created_at DESC
         ");
         $stmtRecent->execute([$this->prodiId]);
         $recentDocs = $stmtRecent->fetchAll();
@@ -499,30 +500,40 @@ class AdminProdiController extends Controller {
                     $fileSize = null;
                     $fileExt = null;
 
-                    if (!$isDraft) {
-                        if ($jenisUpload === 'file') {
-                            if (empty($uploadedFilesList)) {
-                                throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) wajib memiliki minimal 1 berkas file dokumen untuk diajukan ke LPM.");
-                            }
-                            $primary = $uploadedFilesList[0];
-                            $filePath = $primary['file_path'];
-                            $fileSize = $primary['file_size'];
-                            $fileExt = $primary['file_extension'];
-                            $externalLink = null;
-                        } else {
-                            if (empty($externalLink)) {
-                                throw new \Exception("Minimal 1 tautan Google Drive pada Dokumen #{$docNumber} ({$namaDokumen}) wajib diisi untuk diajukan ke LPM.");
-                            }
-                        }
+                    $hasFiles = !empty($uploadedFilesList);
+                    $hasLinks = !empty($rawLinks);
+
+                    if ($hasFiles && $hasLinks) {
+                        $jenisUpload = 'kombinasi';
+                    } elseif ($hasFiles) {
+                        $jenisUpload = 'file';
+                    } elseif ($hasLinks) {
+                        $jenisUpload = 'link';
                     } else {
-                        // Jika mode draf, file boleh belum diunggah
-                        if ($jenisUpload === 'file' && !empty($uploadedFilesList)) {
-                            $primary = $uploadedFilesList[0];
-                            $filePath = $primary['file_path'];
-                            $fileSize = $primary['file_size'];
-                            $fileExt = $primary['file_extension'];
-                            $externalLink = null;
+                        $jenisUpload = trim($d['jenis_upload'] ?? 'file');
+                    }
+
+                    if (!$isDraft) {
+                        if (!$hasFiles && !$hasLinks) {
+                            throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) wajib memiliki minimal 1 berkas file dokumen atau tautan Google Drive untuk diajukan ke LPM.");
                         }
+                    }
+
+                    if ($hasFiles) {
+                        $primary = $uploadedFilesList[0];
+                        $filePath = $primary['file_path'];
+                        $fileSize = $primary['file_size'];
+                        $fileExt = $primary['file_extension'];
+                    } else {
+                        $filePath = null;
+                        $fileSize = null;
+                        $fileExt = null;
+                    }
+
+                    if ($hasLinks) {
+                        $externalLink = json_encode($rawLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                    } else {
+                        $externalLink = null;
                     }
 
                     $statusReview = $isDraft ? 'draft' : 'belum_direview';
@@ -977,24 +988,28 @@ class AdminProdiController extends Controller {
                 }
             }
 
-            if (!$isDraft) {
-                if ($jenisUpload === 'file') {
-                    if (empty($filePath)) {
-                        Auth::setFlash('danger', 'Dokumen aktif wajib memiliki minimal 1 berkas file dokumen untuk diajukan ke LPM.');
-                        redirect($redirectUrl);
-                        return;
-                    }
-                    $externalLink = null;
-                } else {
-                    if (empty($externalLink)) {
-                        Auth::setFlash('danger', 'Minimal 1 tautan Google Drive wajib diisi jika memilih metode Link.');
-                        redirect($redirectUrl);
-                        return;
-                    }
-                }
+            $hasFiles = !empty($filePath);
+            $hasLinks = !empty($rawSingleLinks);
+
+            if ($hasFiles && $hasLinks) {
+                $jenisUpload = 'kombinasi';
+            } elseif ($hasFiles) {
+                $jenisUpload = 'file';
+                $externalLink = null;
+            } elseif ($hasLinks) {
+                $jenisUpload = 'link';
+                $filePath = null;
+                $fileSize = null;
+                $fileExt = null;
             } else {
-                if ($jenisUpload === 'file') {
-                    $externalLink = null;
+                $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
+            }
+
+            if (!$isDraft) {
+                if (!$hasFiles && !$hasLinks) {
+                    Auth::setFlash('danger', 'Dokumen aktif wajib memiliki minimal 1 berkas file dokumen atau tautan Google Drive untuk diajukan ke LPM.');
+                    redirect($redirectUrl);
+                    return;
                 }
             }
 
@@ -1059,34 +1074,42 @@ class AdminProdiController extends Controller {
         // ==========================================
         // 5. MODE CREATE (SINGLE INSERT FALLBACK)
         // ==========================================
-        $filePath = null;
-        $fileSize = null;
-        $fileExt = null;
+        $hasFiles = !empty($uploadedFilesList);
+        $hasLinks = !empty($rawSingleLinks);
+
+        if ($hasFiles && $hasLinks) {
+            $jenisUpload = 'kombinasi';
+        } elseif ($hasFiles) {
+            $jenisUpload = 'file';
+        } elseif ($hasLinks) {
+            $jenisUpload = 'link';
+        } else {
+            $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
+        }
 
         if (!$isDraft) {
-            if ($jenisUpload === 'file') {
-                if (empty($uploadedFilesList)) {
-                    Auth::setFlash('danger', 'Harap pilih minimal 1 berkas file dokumen mutu.');
-                    redirect($redirectUrl);
-                }
-                $primary = $uploadedFilesList[0];
-                $filePath = $primary['file_path'];
-                $fileSize = $primary['file_size'];
-                $fileExt = $primary['file_extension'];
-                $externalLink = null;
-            } else {
-                if (empty($externalLink)) {
-                    Auth::setFlash('danger', 'Minimal 1 tautan Google Drive wajib diisi.');
-                    redirect($redirectUrl);
-                }
+            if (!$hasFiles && !$hasLinks) {
+                Auth::setFlash('danger', 'Harap unggah minimal 1 berkas file dokumen mutu atau masukkan tautan Google Drive.');
+                redirect($redirectUrl);
+                return;
             }
+        }
+
+        if ($hasFiles) {
+            $primary = $uploadedFilesList[0];
+            $filePath = $primary['file_path'];
+            $fileSize = $primary['file_size'];
+            $fileExt = $primary['file_extension'];
         } else {
-            if ($jenisUpload === 'file' && !empty($uploadedFilesList)) {
-                $primary = $uploadedFilesList[0];
-                $filePath = $primary['file_path'];
-                $fileSize = $primary['file_size'];
-                $fileExt = $primary['file_extension'];
-            }
+            $filePath = null;
+            $fileSize = null;
+            $fileExt = null;
+        }
+
+        if ($hasLinks) {
+            $externalLink = json_encode($rawSingleLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        } else {
+            $externalLink = null;
         }
 
         $statusReview = $isDraft ? 'draft' : 'belum_direview';
@@ -1106,28 +1129,39 @@ class AdminProdiController extends Controller {
         ]);
         $newId = (int)$this->db->lastInsertId();
 
-        // Save all uploaded files to ppepp_document_files
+        // Save all uploaded files to ppepp_document_files with sub_bidang_ids and pivot sync
         if (!empty($uploadedFilesList)) {
             $stmtInsF = $this->db->prepare("
-                INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, narasi, sort_order, is_page_limited, public_page_limit, can_download_public)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             $newIsLim = $_POST['new_file_is_limited'] ?? [];
             $newPLim = $_POST['new_file_page_limit'] ?? [];
             $newCanDl = $_POST['new_file_can_download'] ?? [];
+            $newSubs = $_POST['new_file_sub_bidang'] ?? [];
             $sortOrder = 1;
 
             foreach ($uploadedFilesList as $uIdx => $uFile) {
                 $fIsLimVal = isset($newIsLim[$uIdx]) ? (!empty($newIsLim[$uIdx]) ? 1 : 0) : ($isPageLimited ? 1 : 0);
                 $fPLimVal = isset($newPLim[$uIdx]) ? max(1, (int)$newPLim[$uIdx]) : ($isPageLimited ? $publicPageLimit : 1);
                 $fCanDlVal = isset($newCanDl[$uIdx]) ? (!empty($newCanDl[$uIdx]) ? 1 : 0) : $canDownloadPublic;
+                $fSubArray = !empty($newSubs[$uIdx]) && is_array($newSubs[$uIdx])
+                    ? array_values(array_filter(array_map('intval', $newSubs[$uIdx])))
+                    : ($subBidangId ? [(int)$subBidangId] : []);
+                $fSubsJson = json_encode($fSubArray);
 
                 $stmtInsF->execute([
-                    $newId, $uFile['file_name'], $uFile['file_path'], $uFile['file_size'], $uFile['file_extension'], $uFile['narasi'] ?? null, $sortOrder++,
+                    $newId, $uFile['file_name'], $uFile['file_path'], $uFile['file_size'], $uFile['file_extension'],
+                    $uFile['narasi'] ?? null, $fSubsJson, $sortOrder++,
                     $fIsLimVal, $fPLimVal, $fCanDlVal
                 ]);
+                $newFileId = (int)$this->db->lastInsertId();
+                sync_file_sub_bidang($this->db, $newFileId, $fSubArray);
             }
         }
+
+        // Sinkronisasi seluruh sub bidang ke dokumen induk
+        sync_document_sub_bidang($this->db, $newId, $allDocSubIds);
 
         AuditLogger::log('CREATE', 'Dokumen PPEPP', (string)$newId, $namaDokumen, null, [
             'nama' => $namaDokumen,

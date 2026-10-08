@@ -10,8 +10,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     <!-- Header -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-warning bg-opacity-15 text-dark small fw-bold mb-2">
-                <i class="fas fa-graduation-cap text-warning"></i> Struktur Pimpinan Program Studi
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill small fw-bold mb-2" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D;">
+                <i class="fas fa-graduation-cap" style="color:#D97706;"></i> Struktur Pimpinan Program Studi
             </div>
             <h3 class="fw-bold text-dark-blue mb-1">Pengaturan Ketua &amp; Sekretaris Program Studi</h3>
             <p class="text-muted small mb-0">Informasi Ketua Program Studi dan Sekretaris Program Studi yang mengelola penjaminan mutu di tingkat prodi.</p>

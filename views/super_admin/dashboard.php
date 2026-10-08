@@ -116,12 +116,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <!-- Belum Pernah Direview -->
             <div class="col-xl-3 col-sm-6">
                 <a href="<?= base_url('admin/review') ?>" class="text-decoration-none">
-                    <div class="card border-0 shadow-2xs rounded-3 p-3 bg-white h-100 border-start border-4 border-secondary">
+                    <div class="card border-0 shadow-2xs rounded-3 p-3 bg-white h-100 border-start border-4 border-warning">
                         <div class="d-flex align-items-center justify-content-between mb-1.5">
                             <span class="small fw-bold text-muted" style="font-size: 0.72rem; text-transform: uppercase;">Belum Direview</span>
-                            <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary p-1.5"><i class="fas fa-clock"></i></span>
+                            <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning p-1.5"><i class="fas fa-clock"></i></span>
                         </div>
-                        <div class="fs-3 fw-bolder text-dark"><?= $reviewStats['belum_direview'] ?></div>
+                        <div class="fs-3 fw-bolder text-warning"><?= $reviewStats['belum_direview'] ?></div>
                         <div class="small text-muted" style="font-size: 0.72rem;">Unggahan baru unit kerja</div>
                     </div>
                 </a>
@@ -262,8 +262,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <i class="fas fa-arrows-rotate text-warning me-1"></i> Revisi Masuk
                                         </span>
                                     <?php else: ?>
-                                        <span class="badge rounded-pill" style="background: #F3F4F6; color: #4B5563; border: 1px solid #D1D5DB; font-size: 0.72rem; font-weight: 600;">
-                                            <i class="fas fa-clock text-secondary me-1"></i> Belum Direview
+                                        <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
+                                            <i class="fas fa-clock text-warning"></i> Belum Direview
                                         </span>
                                     <?php endif; ?>
                                 </td>
@@ -351,13 +351,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 $rateBadgeClass = 'bg-light text-muted border';
                 $progressBarClass = 'bg-secondary';
                 if ($compliancePct >= 80) {
-                    $rateBadgeClass = 'bg-success bg-opacity-10 text-success border border-success border-opacity-25';
+                    $rateBadgeClass = 'badge-status-sesuai';
                     $progressBarClass = 'bg-success';
                 } elseif ($compliancePct >= 50) {
-                    $rateBadgeClass = 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25';
+                    $rateBadgeClass = 'bg-primary-subtle text-primary border border-primary-subtle';
                     $progressBarClass = 'bg-primary';
                 } elseif ($compliancePct > 0) {
-                    $rateBadgeClass = 'bg-warning bg-opacity-15 text-dark border border-warning border-opacity-40';
+                    $rateBadgeClass = 'badge-status-review-ulang';
                     $progressBarClass = 'bg-warning';
                 }
             ?>
@@ -552,7 +552,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <div class="flex-grow-1 min-w-0">
                                 <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                     <span class="text-muted fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Dokumen Yang Direvisi</span>
-                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 0.68rem;">Status: Perlu Revisi</span>
+                                    <span class="badge rounded-pill" style="background: #FEE2E2 !important; color: #991B1B !important; border: 1px solid #FCA5A5 !important; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">Status: Perlu Revisi</span>
                                 </div>
                                 <div class="fw-bold text-dark-blue fs-6 mb-0" id="dashRevDocTitle" style="line-height: 1.45;">-</div>
                             </div>

@@ -5,7 +5,7 @@
  */
 
 if (!defined('APP_NAME')) {
-    define('APP_NAME', 'PETRA');
+    define('APP_NAME', 'MITRA');
     define('APP_LONG_NAME', 'Sistem Informasi Penjaminan Mutu Internal (PPEPP)');
     define('INSTITUTION_NAME', 'Universitas Katolik Soegijapranata');
     define('INSTITUTION_SHORT', 'UNIKA Soegijapranata / SCU');
@@ -96,10 +96,11 @@ function siklus_badge(string $siklus): string {
 
 function review_status_badge(string $status): string {
     return match($status) {
-        'perlu_perbaikan' => '<span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-30 px-2.5 py-1 fw-semibold"><i class="fas fa-triangle-exclamation me-1"></i> Perlu Perbaikan</span>',
-        'sudah_diperbaiki' => '<span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-30 px-2.5 py-1 fw-semibold"><i class="fas fa-rotate me-1"></i> Perlu Review Ulang</span>',
-        'sesuai' => '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1 fw-semibold"><i class="fas fa-circle-check me-1"></i> Sesuai Standar</span>',
-        default => '<span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-30 px-2.5 py-1 fw-semibold"><i class="fas fa-clock me-1 text-warning"></i> Belum Direview</span>'
+        'perlu_perbaikan' => '<span class="badge rounded-pill badge-status-perbaikan px-2.5 py-1.5" style="background:#FEE2E2 !important; color:#991B1B !important; border:1px solid #FCA5A5 !important; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:0.35rem;"><i class="fas fa-triangle-exclamation" style="color:#DC2626 !important;"></i> Perlu Perbaikan</span>',
+        'sudah_diperbaiki' => '<span class="badge rounded-pill badge-status-review-ulang px-2.5 py-1.5" style="background:#FEF3C7 !important; color:#92400E !important; border:1px solid #FCD34D !important; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:0.35rem;"><i class="fas fa-rotate" style="color:#D97706 !important;"></i> Perlu Review Ulang</span>',
+        'sesuai' => '<span class="badge rounded-pill badge-status-sesuai px-2.5 py-1.5" style="background:#DCFCE7 !important; color:#166534 !important; border:1px solid #86EFAC !important; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:0.35rem;"><i class="fas fa-circle-check" style="color:#15803D !important;"></i> Sesuai Standar</span>',
+        'draft' => '<span class="badge rounded-pill badge-status-draft px-2.5 py-1.5" style="background:#F1F5F9 !important; color:#334155 !important; border:1px solid #CBD5E1 !important; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:0.35rem;"><i class="fas fa-pencil" style="color:#64748B !important;"></i> Draf Dokumen</span>',
+        default => '<span class="badge rounded-pill badge-status-belum px-2.5 py-1.5" style="background:#FFFBEB !important; color:#92400E !important; border:1px solid #FDE68A !important; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:0.35rem;"><i class="fas fa-clock" style="color:#D97706 !important;"></i> Belum Direview</span>'
     };
 }
 
@@ -265,7 +266,7 @@ function get_doc_adaptive_standards_and_bidang(array $doc, array $subBidangMap =
         $bidangIds[] = (int)$doc['bidang_id'];
     }
 
-    if (($doc['jenis_upload'] ?? '') === 'file' && !empty($files)) {
+    if (!empty($files)) {
         foreach ($files as $idx => $f) {
             $fName = $f['file_name'] ?? ('Berkas ' . ($idx + 1));
             $rawSubs = $f['sub_bidang_ids'] ?? null;
@@ -287,7 +288,9 @@ function get_doc_adaptive_standards_and_bidang(array $doc, array $subBidangMap =
                 $allSubIds[] = $sid;
             }
         }
-    } elseif (($doc['jenis_upload'] ?? '') === 'link' && !empty($gdriveLinks)) {
+    }
+
+    if (!empty($gdriveLinks)) {
         foreach ($gdriveLinks as $idx => $l) {
             $lTitle = !empty($l['narasi']) ? $l['narasi'] : ('Tautan GDrive #' . ($idx + 1));
             $subIds = $l['sub_bidang_ids'] ?? [];
@@ -305,7 +308,9 @@ function get_doc_adaptive_standards_and_bidang(array $doc, array $subBidangMap =
                 $allSubIds[] = $sid;
             }
         }
-    } elseif (!empty($doc['sub_bidang_id'])) {
+    }
+
+    if (empty($fileBreakdown) && !empty($doc['sub_bidang_id'])) {
         $sid = (int)$doc['sub_bidang_id'];
         $allSubIds[] = $sid;
         $fileBreakdown[] = [

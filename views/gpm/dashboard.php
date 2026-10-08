@@ -552,12 +552,17 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     <?php endif; ?>
 
-    <!-- Section: Dokumen Terbaru -->
+    <!-- Section: Dokumen Diunggah Hari Ini -->
     <div class="card bg-white border-0 shadow-sm rounded-4 p-4 mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold text-dark-blue mb-0 d-flex align-items-center gap-2">
-                <i class="fas fa-clock-rotate-left text-primary"></i> Dokumen Terakhir Diunggah
-            </h5>
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <h5 class="fw-bold text-dark-blue mb-0 d-flex align-items-center gap-2">
+                    <i class="fas fa-calendar-day text-primary"></i> Dokumen Diunggah Hari Ini
+                </h5>
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 rounded-pill" style="font-size: 0.75rem;">
+                    <?= date('d M Y') ?>
+                </span>
+            </div>
             <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                 Lihat Semua Dokumen <i class="fas fa-arrow-right ms-1"></i>
             </a>
@@ -565,25 +570,25 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
         <?php if (empty($recentDocs)): ?>
             <div class="text-center py-5 text-muted">
-                <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
-                <h6 class="fw-bold">Belum ada dokumen yang diunggah</h6>
-                <p class="small mb-3">Mulai unggah dokumen mutu PPEPP untuk tingkat fakultas atau program studi.</p>
-                <a href="<?= base_url('gpm/dokumen/create') ?>" class="btn btn-primary btn-sm rounded-pill px-3">
-                    <i class="fas fa-cloud-arrow-up me-1"></i> Unggah Dokumen Pertama
+                <i class="fas fa-calendar-xmark fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+                <h6 class="fw-bold text-dark">Tidak ada dokumen yang diunggah hari ini</h6>
+                <p class="small text-muted mb-3">Belum ada dokumen mutu yang diunggah pada hari ini (<?= date('d M Y') ?>). Daftar ini menampilkan dokumen yang diunggah pada hari yang sama dan otomatis berganti saat berganti hari.</p>
+                <a href="<?= base_url('gpm/dokumen/create') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5">
+                    <i class="fas fa-cloud-arrow-up me-1"></i> Unggah Dokumen Baru
                 </a>
             </div>
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-custom table-hover align-middle mb-0">
-                    <thead>
+                    <thead class="table-light text-uppercase small text-muted" style="font-size: 0.74rem;">
                         <tr>
-                            <th style="width: 50px;">No</th>
+                            <th style="width: 45px;" class="text-center">No</th>
                             <th>Nama &amp; Nomor Dokumen</th>
-                            <th>Unit Mutu</th>
-                            <th>Bidang</th>
-                            <th>Siklus</th>
+                            <th>Unit Sasaran</th>
+                            <th style="width: 130px;">Siklus PPEPP</th>
+                            <th>Bidang &amp; Standar</th>
                             <th>Status Review</th>
-                            <th class="text-center" style="width: 120px;">Aksi</th>
+                            <th class="text-center" style="width: 100px;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -592,47 +597,60 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
                                 <td>
                                     <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($rd['nama_dokumen']) ?></div>
-                                    <?php if ($rd['nomor_dokumen']): ?>
-                                        <div class="small text-muted"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($rd['nomor_dokumen']) ?></div>
-                                    <?php endif; ?>
+                                    <div class="d-flex align-items-center gap-2 small text-muted">
+                                        <?php if ($rd['nomor_dokumen']): ?>
+                                            <span><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($rd['nomor_dokumen']) ?></span>
+                                        <?php endif; ?>
+                                        <?php if (!empty($rd['tahun_akademik'])): ?>
+                                            <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size: 0.68rem;">TA <?= htmlspecialchars($rd['tahun_akademik']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td>
                                     <?php if ($rd['level'] === 'fakultas'): ?>
-                                        <span class="badge text-white px-2 py-1 rounded" style="background:#1e3a8a; font-size:0.72rem;">
-                                            <i class="fas fa-landmark me-1"></i> Fakultas
+                                        <span class="badge rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" style="background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE; font-size: 0.74rem;">
+                                            <i class="fas fa-landmark"></i> Fakultas
                                         </span>
                                     <?php else: ?>
-                                        <span class="badge bg-dark-blue text-warning px-2 py-1 rounded" style="font-size:0.72rem;">
-                                            <?= htmlspecialchars($rd['jenjang'] ?? 'S1') ?> &bull; <?= htmlspecialchars($rd['nama_prodi'] ?? 'Prodi') ?>
+                                        <span class="badge rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" style="background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; font-size: 0.74rem;">
+                                            <i class="fas fa-graduation-cap"></i> <?= htmlspecialchars($rd['jenjang'] ?? 'S1') ?> <?= htmlspecialchars($rd['nama_prodi'] ?? 'Prodi') ?>
                                         </span>
                                     <?php endif; ?>
                                 </td>
-                                <td>
-                                    <div class="small fw-semibold text-dark"><?= htmlspecialchars($rd['nama_bidang'] ?: 'Umum') ?></div>
-                                </td>
                                 <td><?= siklus_badge($rd['siklus']) ?></td>
+                                <td>
+                                    <div class="small fw-semibold text-dark"><?= htmlspecialchars($rd['nama_bidang'] ?: 'Umum / Lainnya') ?></div>
+                                    <?php if (!empty($rd['nama_sub_bidang'])): ?>
+                                        <div class="text-muted small d-flex align-items-center gap-1 mt-0.5" style="font-size: 0.7rem;">
+                                            <i class="fas fa-turn-up fa-rotate-90 text-primary opacity-60"></i>
+                                            <span class="badge bg-light text-secondary border text-truncate" style="max-width: 200px;" title="<?= htmlspecialchars($rd['nama_sub_bidang']) ?>">
+                                                <?= htmlspecialchars($rd['nama_sub_bidang']) ?>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php
                                     $stClass = match($rd['status_review']) {
-                                        'sesuai' => 'bg-success',
-                                        'perlu_perbaikan' => 'bg-danger',
-                                        'sudah_diperbaiki' => 'bg-warning text-dark',
-                                        'draft' => 'bg-secondary',
-                                        default => 'bg-info text-dark'
+                                        'sesuai' => 'background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;',
+                                        'perlu_perbaikan' => 'background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5;',
+                                        'sudah_diperbaiki' => 'background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D;',
+                                        'draft' => 'background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;',
+                                        default => 'background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;'
                                     };
                                     $stText = match($rd['status_review']) {
-                                        'sesuai' => 'Sesuai',
+                                        'sesuai' => 'Sesuai Standar',
                                         'perlu_perbaikan' => 'Perlu Perbaikan',
                                         'sudah_diperbaiki' => 'Sudah Diperbaiki',
-                                        'draft' => 'Draf',
+                                        'draft' => 'Draf Dokumen',
                                         default => 'Belum Direview'
                                     };
                                     ?>
-                                    <span class="badge <?= $stClass ?> rounded-pill" style="font-size:0.72rem;"><?= $stText ?></span>
+                                    <span class="badge rounded-pill px-2.5 py-1" style="<?= $stClass ?> font-size: 0.72rem; font-weight: 700;"><?= $stText ?></span>
                                 </td>
                                 <td class="text-center">
-                                    <a href="<?= base_url('gpm/dokumen/edit/' . $rd['id']) ?>" class="btn btn-sm btn-outline-primary rounded-pill px-2.5" title="Edit Dokumen">
-                                        <i class="fas fa-pen-to-square"></i>
+                                    <a href="<?= base_url('gpm/dokumen/edit/' . $rd['id']) ?>" class="btn btn-sm btn-outline-warning rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" title="Edit Dokumen">
+                                        <i class="fas fa-pen"></i> Edit
                                     </a>
                                 </td>
                             </tr>
