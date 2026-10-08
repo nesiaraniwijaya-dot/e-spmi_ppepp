@@ -52,6 +52,11 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
    - Kolom `narasi` (TEXT, menyimpan catatan naratif penjelasan berkas).
    - Kolom proteksi berkas: `is_page_limited`, `public_page_limit`, `can_download_public`.
 
+7. **Kolom Penyimpanan Kata Sandi Terkelola (`users.password_plain`)**:
+   - Ditambahkan kolom `password_plain` (VARCHAR(255) NULL) pada tabel `users`.
+   - Mengizinkan Administrator melihat/mengelola kata sandi akun pengguna pada modal edit tanpa perlu reset acak.
+   - Telah disinkronkan dan diisi nilai kata sandi default untuk seluruh akun pengguna yang ada.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
