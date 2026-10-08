@@ -1156,6 +1156,8 @@ class SuperAdminController extends Controller {
             'footer_desc' => ['MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.', 'footer'],
             'footer_address' => ['Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234', 'footer'],
             'footer_akreditasi' => ['Terakreditasi UNGGUL • BAN-PT', 'footer'],
+            'footer_siklus_heading' => ['5 Siklus PPEPP PETRA', 'footer'],
+            'footer_contact_title' => ['Layanan Bantuan LPM', 'footer'],
             'footer_email' => ['lpm@unika.ac.id', 'footer'],
             'footer_phone' => ['024-8441555 Ext 1473', 'footer'],
             'footer_website_url' => ['https://www.unika.ac.id', 'footer'],
@@ -1164,6 +1166,7 @@ class SuperAdminController extends Controller {
             'footer_website_lpm_text' => ['Website Resmi LPM', 'footer'],
             'footer_website_custom_url' => ['', 'footer'],
             'footer_website_custom_text' => ['', 'footer'],
+            'footer_copyright_text' => ['Universitas Katolik Soegijapranata', 'footer'],
         ];
 
         $stmtReset = $this->db->prepare("

@@ -105,8 +105,28 @@ $currentUser = Auth::user();
                                     <li class="px-3 py-2 border-bottom">
                                         <div style="font-weight:700;font-size:0.9rem;color:var(--navy);"><?= htmlspecialchars($currentUser['name']) ?></div>
                                         <div style="font-size:0.75rem;color:var(--text-muted);"><?= htmlspecialchars($currentUser['email']) ?></div>
-                                        <span class="badge rounded-pill mt-1" style="font-size:0.7rem; font-weight:700; <?= $currentUser['role'] === 'pengguna' ? 'background:#DCFCE7 !important; color:#166534 !important; border:1px solid #86EFAC !important;' : 'background:#EFF6FF !important; color:#1E40AF !important; border:1px solid #93C5FD !important;' ?>">
-                                            <?= $currentUser['role'] === 'pengguna' ? 'PENGGUNA TERDAFTAR' : strtoupper(str_replace('_', ' ', $currentUser['role'])) ?>
+                                        <?php
+                                        $pubRoleLabel = match($currentUser['role'] ?? '') {
+                                            'super_admin', 'admin_lpm' => 'Admin LPM',
+                                            'kepala_pusat_mutu'        => 'Ketua Pusat Mutu',
+                                            'kepala_lpm'               => 'Kepala LPM',
+                                            'dekan'                    => 'Dekan',
+                                            'wadek'                    => 'Wakil Dekan',
+                                            'gpm'                      => 'GPM Fakultas',
+                                            'kaprodi'                  => 'Kaprodi',
+                                            'sekprodi'                 => 'Sekprodi',
+                                            'pengguna'                 => 'Pengguna Terdaftar',
+                                            default                    => 'Pengguna'
+                                        };
+                                        $isPengguna = ($currentUser['role'] ?? '') === 'pengguna';
+                                        ?>
+                                        <span class="badge rounded-pill mt-1.5 px-2.5 py-1 d-inline-flex align-items-center gap-1 border"
+                                              style="background: <?= $isPengguna ? '#ECFDF5' : '#EFF6FF' ?>; 
+                                                     color: <?= $isPengguna ? '#047857' : '#1D4ED8' ?>; 
+                                                     border-color: <?= $isPengguna ? '#A7F3D0' : '#BFDBFE' ?> !important; 
+                                                     font-size: 0.72rem; font-weight: 600;">
+                                            <i class="fas <?= $isPengguna ? 'fa-user-check' : 'fa-shield-halved' ?> me-0.5"></i>
+                                            <?= $pubRoleLabel ?>
                                         </span>
                                     </li>
                                     <?php if ($currentUser['role'] !== 'pengguna'): ?>

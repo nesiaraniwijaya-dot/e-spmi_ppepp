@@ -145,17 +145,35 @@
 
                     <!-- Real Data Structured Address Box -->
                     <?php
-                    $rawAddress = get_landing_setting('footer_address', 'Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234');
+                    $rawAddress = get_landing_setting('footer_address', "Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234");
+                    $addressLines = preg_split('/\r\n|\r|\n/', trim($rawAddress));
+                    if (count($addressLines) === 1 && strpos($rawAddress, ',') !== false) {
+                        $parts = array_map('trim', explode(',', $rawAddress));
+                        if (count($parts) >= 3) {
+                            $addressLines = $parts;
+                        }
+                    }
                     ?>
                     <div class="footer-address-box">
                         <div class="footer-address-pin">
                             <i class="fas fa-location-dot"></i>
                         </div>
                         <div class="footer-address-details">
-                            <div class="footer-room-name">Ruang Lembaga Penjaminan Mutu (LPM)</div>
-                            <div class="footer-building-name">Gedung Thomas Aquinas Lantai 5</div>
-                            <div class="footer-campus-name">Kampus Universitas Katolik Soegijapranata</div>
-                            <div class="footer-street-name">Jl. Pawiyatan Luhur IV/1, Bendan Duwur, Semarang 50234</div>
+                            <?php if (count($addressLines) > 1): ?>
+                                <?php foreach ($addressLines as $idx => $line): ?>
+                                    <?php if ($idx === 0): ?>
+                                        <div class="footer-room-name"><?= htmlspecialchars($line) ?></div>
+                                    <?php elseif ($idx === 1): ?>
+                                        <div class="footer-building-name"><?= htmlspecialchars($line) ?></div>
+                                    <?php elseif ($idx === 2): ?>
+                                        <div class="footer-campus-name"><?= htmlspecialchars($line) ?></div>
+                                    <?php else: ?>
+                                        <div class="footer-street-name"><?= htmlspecialchars($line) ?></div>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="footer-street-name" style="color:#CBD5E1; line-height:1.55;"><?= nl2br(htmlspecialchars($rawAddress)) ?></div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -168,7 +186,7 @@
 
                 <!-- Column 2: 5 Siklus PPEPP Pathway (Sleek Luminous Cards) -->
                 <div class="col-lg-4 col-md-6">
-                    <h5>5 Siklus PPEPP MITRA</h5>
+                    <h5><?= htmlspecialchars(get_landing_setting('footer_siklus_heading', '5 Siklus PPEPP MITRA')) ?></h5>
                     <ul class="footer-cycle-list">
                         <li>
                             <a href="<?= base_url('dokumen?siklus=penetapan') ?>" class="footer-cycle-item cycle-p1">
@@ -288,7 +306,7 @@
                         <div class="footer-contact-title">
                             <span class="pulse-amber-dot"></span>
                             <i class="fas fa-headset text-warning"></i>
-                            <span>Layanan Bantuan LPM</span>
+                            <span><?= htmlspecialchars(get_landing_setting('footer_contact_title', 'Layanan Bantuan LPM')) ?></span>
                         </div>
                         <div class="footer-contact-row mb-2.5">
                             <div class="footer-contact-icon email">
@@ -322,7 +340,7 @@
         <div class="container">
             <div class="footer-bottom">
                 <div class="footer-copyright">
-                    &copy; <?= date('Y') ?> <strong><?= INSTITUTION_NAME ?></strong>. Seluruh Hak Cipta Dilindungi.
+                    &copy; <?= date('Y') ?> <strong><?= htmlspecialchars(get_landing_setting('footer_copyright_text', INSTITUTION_NAME)) ?></strong>. Seluruh Hak Cipta Dilindungi.
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <span class="footer-copyright d-none d-sm-inline">
