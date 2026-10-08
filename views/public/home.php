@@ -36,14 +36,20 @@ $totalDokumenSafe = max(1, $totalDokumen);
                 </p>
 
                 <div class="d-flex justify-content-center flex-wrap gap-3 pt-2">
-                    <a href="<?= htmlspecialchars(get_landing_setting('hero_btn1_url', '#direktoriFakultas')) ?>" class="btn btn-warning fw-bold px-4 py-2.5 rounded-pill shadow-sm" style="font-family:var(--font-heading);">
+                    <?php
+                        $btn1Url = get_landing_setting('hero_btn1_url', '#direktoriFakultas');
+                        $btn1IsExt = str_starts_with($btn1Url, 'http://') || str_starts_with($btn1Url, 'https://');
+                        $btn1Target = ($btn1IsExt || str_starts_with($btn1Url, '#')) ? $btn1Url : base_url($btn1Url);
+                    ?>
+                    <a href="<?= htmlspecialchars($btn1Target) ?>" <?= $btn1IsExt ? 'target="_blank" rel="noopener noreferrer"' : '' ?> class="btn btn-warning fw-bold px-4 py-2.5 rounded-pill shadow-sm" style="font-family:var(--font-heading);">
                         <i class="fas fa-landmark me-2"></i> <?= htmlspecialchars(get_landing_setting('hero_btn1_text', 'Jelajahi Direktori Fakultas')) ?>
                     </a>
                     <?php 
                         $btn2Url = get_landing_setting('hero_btn2_url', 'dokumen');
-                        $btn2Target = str_starts_with($btn2Url, 'http') ? $btn2Url : base_url($btn2Url);
+                        $btn2IsExt = str_starts_with($btn2Url, 'http://') || str_starts_with($btn2Url, 'https://');
+                        $btn2Target = ($btn2IsExt || str_starts_with($btn2Url, '#')) ? $btn2Url : base_url($btn2Url);
                     ?>
-                    <a href="<?= htmlspecialchars($btn2Target) ?>" class="btn btn-outline-light fw-semibold px-4 py-2.5 rounded-pill" style="font-family:var(--font-heading);">
+                    <a href="<?= htmlspecialchars($btn2Target) ?>" <?= $btn2IsExt ? 'target="_blank" rel="noopener noreferrer"' : '' ?> class="btn btn-outline-light fw-semibold px-4 py-2.5 rounded-pill" style="font-family:var(--font-heading);">
                         <i class="fas fa-file-shield me-2"></i> <?= htmlspecialchars(get_landing_setting('hero_btn2_text', 'Repositori Dokumen Mutu')) ?>
                     </a>
                 </div>

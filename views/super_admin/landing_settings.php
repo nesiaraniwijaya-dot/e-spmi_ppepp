@@ -193,14 +193,41 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 </div>
                             </div>
 
+                            <?php
+                            $btn1CurrentUrl = $settings['hero_btn1_url'] ?? '#direktoriFakultas';
+                            $btn2CurrentUrl = $settings['hero_btn2_url'] ?? 'dokumen';
+
+                            $predefinedUrls = [
+                                '#direktoriFakultas',
+                                '#alurMutu',
+                                'dokumen',
+                                'tentang',
+                                'login',
+                                'dokumen?siklus=penetapan',
+                                'dokumen?siklus=pelaksanaan',
+                                'dokumen?siklus=evaluasi',
+                                'dokumen?siklus=pengendalian',
+                                'dokumen?siklus=peningkatan',
+                            ];
+
+                            $isBtn1Custom = !in_array($btn1CurrentUrl, $predefinedUrls, true);
+                            $isBtn2Custom = !in_array($btn2CurrentUrl, $predefinedUrls, true);
+                            ?>
+
+                            <!-- Tombol Aksi Utama (Kuning) -->
                             <div class="col-md-6">
                                 <div class="form-group-card p-3 p-md-4 rounded-3 border bg-white h-100 shadow-2xs">
-                                    <div class="d-flex align-items-center gap-2 mb-3">
-                                        <div class="stat-mini-icon bg-warning text-dark rounded-circle"><i class="fas fa-hand-pointer"></i></div>
-                                        <div>
-                                            <h6 class="fw-bold mb-0 text-dark">Tombol Aksi Utama (Kuning)</h6>
-                                            <small class="text-muted">Tombol utama dengan aksen emas.</small>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="stat-mini-icon bg-warning text-dark rounded-circle"><i class="fas fa-hand-pointer"></i></div>
+                                            <div>
+                                                <h6 class="fw-bold mb-0 text-dark">Tombol Aksi Utama (Kuning)</h6>
+                                                <small class="text-muted">Tombol utama dengan aksen emas.</small>
+                                            </div>
                                         </div>
+                                        <span class="badge <?= $isBtn1Custom ? 'bg-info bg-opacity-10 text-info border border-info border-opacity-25' : 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25' ?> rounded-pill px-2.5 py-1 small" id="badgeHeroBtn1Type">
+                                            <i class="fas <?= $isBtn1Custom ? 'fa-globe' : 'fa-list-check' ?> me-1"></i> <?= $isBtn1Custom ? 'Link Eksternal' : 'Halaman Pilihan' ?>
+                                        </span>
                                     </div>
 
                                     <div class="mb-3">
@@ -209,24 +236,65 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     </div>
 
                                     <div>
-                                        <label class="form-label small fw-semibold text-secondary">URL / Anchor Tujuan</label>
+                                        <label class="form-label small fw-semibold text-secondary d-flex align-items-center justify-content-between mb-1.5">
+                                            <span>Pilih Halaman / Tautan Tujuan</span>
+                                            <small class="text-muted">Pilih halaman atau ketik link eksternal</small>
+                                        </label>
+                                        
+                                        <!-- Dropdown Halaman Tersedia -->
+                                        <select id="selectHeroBtn1" class="form-select mb-2 fw-medium">
+                                            <optgroup label="📌 Bagian Beranda (Scroll Halus / Anchor)">
+                                                <option value="#direktoriFakultas" <?= $btn1CurrentUrl === '#direktoriFakultas' ? 'selected' : '' ?>>Direktori Fakultas &amp; Prodi (#direktoriFakultas)</option>
+                                                <option value="#alurMutu" <?= $btn1CurrentUrl === '#alurMutu' ? 'selected' : '' ?>>Alur 5 Siklus PPEPP (#alurMutu)</option>
+                                            </optgroup>
+                                            <optgroup label="📄 Halaman Publik Sistem">
+                                                <option value="dokumen" <?= $btn1CurrentUrl === 'dokumen' ? 'selected' : '' ?>>Repositori Dokumen Mutu (dokumen)</option>
+                                                <option value="tentang" <?= $btn1CurrentUrl === 'tentang' ? 'selected' : '' ?>>Tentang SPMI &amp; PPEPP (tentang)</option>
+                                                <option value="login" <?= $btn1CurrentUrl === 'login' ? 'selected' : '' ?>>Portal Login Akun (login)</option>
+                                            </optgroup>
+                                            <optgroup label="📑 Dokumen Mutu Per Siklus PPEPP">
+                                                <option value="dokumen?siklus=penetapan" <?= $btn1CurrentUrl === 'dokumen?siklus=penetapan' ? 'selected' : '' ?>>Dokumen Mutu: Penetapan (P1)</option>
+                                                <option value="dokumen?siklus=pelaksanaan" <?= $btn1CurrentUrl === 'dokumen?siklus=pelaksanaan' ? 'selected' : '' ?>>Dokumen Mutu: Pelaksanaan (P2)</option>
+                                                <option value="dokumen?siklus=evaluasi" <?= $btn1CurrentUrl === 'dokumen?siklus=evaluasi' ? 'selected' : '' ?>>Dokumen Mutu: Evaluasi (E)</option>
+                                                <option value="dokumen?siklus=pengendalian" <?= $btn1CurrentUrl === 'dokumen?siklus=pengendalian' ? 'selected' : '' ?>>Dokumen Mutu: Pengendalian (P3)</option>
+                                                <option value="dokumen?siklus=peningkatan" <?= $btn1CurrentUrl === 'dokumen?siklus=peningkatan' ? 'selected' : '' ?>>Dokumen Mutu: Peningkatan (P4)</option>
+                                            </optgroup>
+                                            <optgroup label="🌐 Tautan Khusus">
+                                                <option value="__custom__" <?= $isBtn1Custom ? 'selected' : '' ?>>🔗 Link Eksternal / URL Kustom Lainnya (Ketik Manual...)</option>
+                                            </optgroup>
+                                        </select>
+
+                                        <!-- Input URL / Link Eksternal -->
                                         <div class="input-group">
-                                            <span class="input-group-text bg-light text-muted small"><i class="fas fa-link"></i></span>
-                                            <input type="text" name="settings[hero_btn1_url]" class="form-control" value="<?= htmlspecialchars($settings['hero_btn1_url'] ?? '') ?>" placeholder="#direktoriFakultas">
+                                            <span class="input-group-text bg-light text-muted small" id="iconHeroBtn1"><i class="fas <?= $isBtn1Custom ? 'fa-globe text-info' : 'fa-link' ?>"></i></span>
+                                            <input type="text" name="settings[hero_btn1_url]" id="inputHeroBtn1Url" class="form-control font-monospace small" value="<?= htmlspecialchars($btn1CurrentUrl) ?>" placeholder="#direktoriFakultas atau https://...">
+                                            <button type="button" class="btn btn-outline-secondary" id="btnTestHeroBtn1" title="Uji Coba Tautan" onclick="testHeroButtonLink('inputHeroBtn1Url')">
+                                                <i class="fas fa-arrow-up-right-from-square"></i>
+                                            </button>
                                         </div>
-                                        <div class="form-text small">Gunakan <code>#direktoriFakultas</code> untuk scroll halus ke direktori.</div>
+                                        <div class="form-text small" id="hintHeroBtn1">
+                                            <?= $isBtn1Custom 
+                                                ? '<span class="text-info"><i class="fas fa-globe me-1"></i> Mode Link Eksternal: Menggunakan URL eksternal (diawali <code>https://</code>).</span>' 
+                                                : 'Pilih halaman dari dropdown di atas atau ketik langsung URL tujuan (contoh: <code>#direktoriFakultas</code>, <code>dokumen</code>, atau <code>https://...</code>).' ?>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- Tombol Aksi Sekunder (Outline) -->
                             <div class="col-md-6">
                                 <div class="form-group-card p-3 p-md-4 rounded-3 border bg-white h-100 shadow-2xs">
-                                    <div class="d-flex align-items-center gap-2 mb-3">
-                                        <div class="stat-mini-icon bg-secondary text-white rounded-circle"><i class="fas fa-folder-open"></i></div>
-                                        <div>
-                                            <h6 class="fw-bold mb-0 text-dark">Tombol Aksi Sekunder (Outline)</h6>
-                                            <small class="text-muted">Tombol pendukung dengan border putih/outline.</small>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="stat-mini-icon bg-secondary text-white rounded-circle"><i class="fas fa-folder-open"></i></div>
+                                            <div>
+                                                <h6 class="fw-bold mb-0 text-dark">Tombol Aksi Sekunder (Outline)</h6>
+                                                <small class="text-muted">Tombol pendukung dengan border putih/outline.</small>
+                                            </div>
                                         </div>
+                                        <span class="badge <?= $isBtn2Custom ? 'bg-info bg-opacity-10 text-info border border-info border-opacity-25' : 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25' ?> rounded-pill px-2.5 py-1 small" id="badgeHeroBtn2Type">
+                                            <i class="fas <?= $isBtn2Custom ? 'fa-globe' : 'fa-list-check' ?> me-1"></i> <?= $isBtn2Custom ? 'Link Eksternal' : 'Halaman Pilihan' ?>
+                                        </span>
                                     </div>
 
                                     <div class="mb-3">
@@ -235,12 +303,47 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     </div>
 
                                     <div>
-                                        <label class="form-label small fw-semibold text-secondary">URL / Halaman Tujuan</label>
+                                        <label class="form-label small fw-semibold text-secondary d-flex align-items-center justify-content-between mb-1.5">
+                                            <span>Pilih Halaman / Tautan Tujuan</span>
+                                            <small class="text-muted">Pilih halaman atau ketik link eksternal</small>
+                                        </label>
+
+                                        <!-- Dropdown Halaman Tersedia -->
+                                        <select id="selectHeroBtn2" class="form-select mb-2 fw-medium">
+                                            <optgroup label="📌 Bagian Beranda (Scroll Halus / Anchor)">
+                                                <option value="#direktoriFakultas" <?= $btn2CurrentUrl === '#direktoriFakultas' ? 'selected' : '' ?>>Direktori Fakultas &amp; Prodi (#direktoriFakultas)</option>
+                                                <option value="#alurMutu" <?= $btn2CurrentUrl === '#alurMutu' ? 'selected' : '' ?>>Alur 5 Siklus PPEPP (#alurMutu)</option>
+                                            </optgroup>
+                                            <optgroup label="📄 Halaman Publik Sistem">
+                                                <option value="dokumen" <?= $btn2CurrentUrl === 'dokumen' ? 'selected' : '' ?>>Repositori Dokumen Mutu (dokumen)</option>
+                                                <option value="tentang" <?= $btn2CurrentUrl === 'tentang' ? 'selected' : '' ?>>Tentang SPMI &amp; PPEPP (tentang)</option>
+                                                <option value="login" <?= $btn2CurrentUrl === 'login' ? 'selected' : '' ?>>Portal Login Akun (login)</option>
+                                            </optgroup>
+                                            <optgroup label="📑 Dokumen Mutu Per Siklus PPEPP">
+                                                <option value="dokumen?siklus=penetapan" <?= $btn2CurrentUrl === 'dokumen?siklus=penetapan' ? 'selected' : '' ?>>Dokumen Mutu: Penetapan (P1)</option>
+                                                <option value="dokumen?siklus=pelaksanaan" <?= $btn2CurrentUrl === 'dokumen?siklus=pelaksanaan' ? 'selected' : '' ?>>Dokumen Mutu: Pelaksanaan (P2)</option>
+                                                <option value="dokumen?siklus=evaluasi" <?= $btn2CurrentUrl === 'dokumen?siklus=evaluasi' ? 'selected' : '' ?>>Dokumen Mutu: Evaluasi (E)</option>
+                                                <option value="dokumen?siklus=pengendalian" <?= $btn2CurrentUrl === 'dokumen?siklus=pengendalian' ? 'selected' : '' ?>>Dokumen Mutu: Pengendalian (P3)</option>
+                                                <option value="dokumen?siklus=peningkatan" <?= $btn2CurrentUrl === 'dokumen?siklus=peningkatan' ? 'selected' : '' ?>>Dokumen Mutu: Peningkatan (P4)</option>
+                                            </optgroup>
+                                            <optgroup label="🌐 Tautan Khusus">
+                                                <option value="__custom__" <?= $isBtn2Custom ? 'selected' : '' ?>>🔗 Link Eksternal / URL Kustom Lainnya (Ketik Manual...)</option>
+                                            </optgroup>
+                                        </select>
+
+                                        <!-- Input URL / Link Eksternal -->
                                         <div class="input-group">
-                                            <span class="input-group-text bg-light text-muted small"><i class="fas fa-link"></i></span>
-                                            <input type="text" name="settings[hero_btn2_url]" class="form-control" value="<?= htmlspecialchars($settings['hero_btn2_url'] ?? '') ?>" placeholder="dokumen">
+                                            <span class="input-group-text bg-light text-muted small" id="iconHeroBtn2"><i class="fas <?= $isBtn2Custom ? 'fa-globe text-info' : 'fa-link' ?>"></i></span>
+                                            <input type="text" name="settings[hero_btn2_url]" id="inputHeroBtn2Url" class="form-control font-monospace small" value="<?= htmlspecialchars($btn2CurrentUrl) ?>" placeholder="dokumen atau https://...">
+                                            <button type="button" class="btn btn-outline-secondary" id="btnTestHeroBtn2" title="Uji Coba Tautan" onclick="testHeroButtonLink('inputHeroBtn2Url')">
+                                                <i class="fas fa-arrow-up-right-from-square"></i>
+                                            </button>
                                         </div>
-                                        <div class="form-text small">Gunakan <code>dokumen</code> untuk membuka repositori dokumen publik.</div>
+                                        <div class="form-text small" id="hintHeroBtn2">
+                                            <?= $isBtn2Custom 
+                                                ? '<span class="text-info"><i class="fas fa-globe me-1"></i> Mode Link Eksternal: Menggunakan URL eksternal (diawali <code>https://</code>).</span>' 
+                                                : 'Pilih halaman dari dropdown di atas atau ketik langsung URL tujuan (contoh: <code>dokumen</code>, <code>login</code>, atau <code>https://...</code>).' ?>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1064,6 +1167,94 @@ function confirmResetDefaults() {
     });
 }
 
+// Uji coba tautan hero button
+function testHeroButtonLink(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input || !input.value.trim()) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Tautan Kosong',
+            text: 'Silakan pilih halaman dari dropdown atau masukkan URL terlebih dahulu.',
+            confirmButtonColor: '#0284C7'
+        });
+        return;
+    }
+    const val = input.value.trim();
+    if (val.startsWith('#')) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Tautan Bagian Beranda',
+            html: `Tautan <code>${val}</code> akan melakukan scroll halus ke bagian tersebut di beranda utama publik.`,
+            confirmButtonColor: '#0284C7'
+        });
+    } else if (val.startsWith('http://') || val.startsWith('https://')) {
+        window.open(val, '_blank');
+    } else {
+        const baseUrl = '<?= rtrim(base_url(), '/') ?>';
+        window.open(baseUrl + '/' + val.replace(/^\//, ''), '_blank');
+    }
+}
+
+// Handler sinkronisasi dua arah antara dropdown pilihan halaman dan input manual URL
+function bindButtonUrlDropdown(selectId, inputId, badgeId, iconId, hintId) {
+    const select = document.getElementById(selectId);
+    const input = document.getElementById(inputId);
+    const badge = document.getElementById(badgeId);
+    const icon = document.getElementById(iconId);
+    const hint = document.getElementById(hintId);
+
+    if (!select || !input) return;
+
+    const predefined = Array.from(select.options)
+        .map(opt => opt.value)
+        .filter(val => val && val !== '__custom__');
+
+    select.addEventListener('change', function() {
+        if (this.value === '__custom__') {
+            if (predefined.includes(input.value.trim())) {
+                input.value = '';
+            }
+            input.placeholder = 'https://example.com atau /halaman-kustom';
+            input.focus();
+            if (badge) {
+                badge.className = 'badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-2.5 py-1 small';
+                badge.innerHTML = '<i class="fas fa-globe me-1"></i> Link Eksternal';
+            }
+            if (icon) icon.innerHTML = '<i class="fas fa-globe text-info"></i>';
+            if (hint) hint.innerHTML = '<span class="text-info"><i class="fas fa-globe me-1"></i> Mode Link Eksternal: Masukkan tautan web lengkap (diawali <code>https://</code>).</span>';
+        } else {
+            input.value = this.value;
+            if (badge) {
+                badge.className = 'badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-2.5 py-1 small';
+                badge.innerHTML = '<i class="fas fa-list-check me-1"></i> Halaman Pilihan';
+            }
+            if (icon) icon.innerHTML = '<i class="fas fa-link"></i>';
+            if (hint) hint.textContent = 'Pilih halaman dari dropdown di atas atau ketik langsung URL tujuan (contoh: #direktoriFakultas, dokumen, atau https://...).';
+        }
+    });
+
+    input.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (predefined.includes(val)) {
+            select.value = val;
+            if (badge) {
+                badge.className = 'badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-2.5 py-1 small';
+                badge.innerHTML = '<i class="fas fa-list-check me-1"></i> Halaman Pilihan';
+            }
+            if (icon) icon.innerHTML = '<i class="fas fa-link"></i>';
+            if (hint) hint.textContent = 'Pilih halaman dari dropdown di atas atau ketik langsung URL tujuan yang diinginkan.';
+        } else {
+            select.value = '__custom__';
+            if (badge) {
+                badge.className = 'badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-2.5 py-1 small';
+                badge.innerHTML = '<i class="fas fa-globe me-1"></i> Link Eksternal';
+            }
+            if (icon) icon.innerHTML = '<i class="fas fa-globe text-info"></i>';
+            if (hint) hint.innerHTML = '<span class="text-info"><i class="fas fa-globe me-1"></i> Mode Link Eksternal: Masukkan tautan web lengkap (diawali <code>https://</code>).</span>';
+        }
+    });
+}
+
 // Interactive Real-Time Preview Binder
 document.addEventListener('DOMContentLoaded', function() {
     // Hero Elements
@@ -1087,6 +1278,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (inputDesc && previewDesc) inputDesc.addEventListener('input', e => previewDesc.textContent = e.target.value || 'Portal terpadu pengawasan...');
     if (inputBtn1 && previewBtn1) inputBtn1.addEventListener('input', e => previewBtn1.textContent = e.target.value || 'Jelajahi Direktori');
     if (inputBtn2 && previewBtn2) inputBtn2.addEventListener('input', e => previewBtn2.textContent = e.target.value || 'Repositori Dokumen');
+
+    // Inisialisasi Dropdown Link Cepat Hero Banner
+    bindButtonUrlDropdown('selectHeroBtn1', 'inputHeroBtn1Url', 'badgeHeroBtn1Type', 'iconHeroBtn1', 'hintHeroBtn1');
+    bindButtonUrlDropdown('selectHeroBtn2', 'inputHeroBtn2Url', 'badgeHeroBtn2Type', 'iconHeroBtn2', 'hintHeroBtn2');
 
     // Footer Elements & Real-Time Sync
     const inputFootBrand = document.getElementById('inputFooterBrand');
