@@ -125,28 +125,28 @@ $rolesOptions = [
                     <div class="row g-3">
                         <?php foreach ($rolesOptions as $r): ?>
                             <div class="col-md-6 col-xl-6">
-                                <form action="<?= base_url('auth/select-role') ?>" method="POST">
+                                <form action="<?= base_url('auth/select-role') ?>" method="POST" class="h-100">
                                     <input type="hidden" name="role" value="<?= $r['role'] ?>">
-                                    <button type="submit" class="w-100 text-start border-0 p-0 bg-transparent" style="cursor: pointer;">
-                                        <div class="card h-100 border-0 shadow-sm rounded-3 role-card hover-lift transition-all p-3 bg-white border-start border-4" style="border-left-color: <?= $r['color'] ?> !important;">
+                                    <button type="submit" class="w-100 h-100 text-start border-0 p-0 bg-transparent" style="cursor: pointer;">
+                                        <div class="card h-100 border-0 shadow-sm rounded-3 role-card hover-lift transition-all p-3 bg-white border-start border-4 overflow-hidden" style="border-left-color: <?= $r['color'] ?> !important;">
                                             <div class="d-flex align-items-start gap-3">
                                                 <div class="rounded-3 d-flex align-items-center justify-content-center text-white flex-shrink-0" style="width: 48px; height: 48px; background-color: <?= $r['color'] ?>;">
                                                     <i class="<?= $r['icon'] ?> fa-lg"></i>
                                                 </div>
-                                                <div class="flex-grow-1 min-w-0">
-                                                    <div class="d-flex align-items-center justify-content-between mb-1">
-                                                        <h6 class="fw-bold mb-0 text-dark text-truncate"><?= $r['title'] ?></h6>
-                                                        <span class="badge <?= $r['badge_bg'] ?> text-capitalize px-2 py-1" style="font-size: 0.7rem;"><?= $r['badge'] ?></span>
+                                                <div class="flex-grow-1" style="min-width: 0;">
+                                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                                        <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><?= $r['title'] ?></h6>
+                                                        <span class="badge <?= $r['badge_bg'] ?> text-capitalize px-2 py-1 flex-shrink-0" style="font-size: 0.68rem;"><?= $r['badge'] ?></span>
                                                     </div>
-                                                    <div class="small fw-semibold text-primary mb-1" style="font-size: 0.78rem;"><?= $r['subtitle'] ?></div>
+                                                    <div class="small fw-semibold text-primary mb-1 text-truncate" style="font-size: 0.78rem;"><?= $r['subtitle'] ?></div>
                                                     <p class="text-muted small mb-0 opacity-75" style="font-size: 0.75rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                                         <?= $r['desc'] ?>
                                                     </p>
                                                 </div>
                                             </div>
                                             <div class="mt-3 pt-2 border-top d-flex align-items-center justify-content-between text-primary small fw-bold">
-                                                <span>Masuk Sebagai <?= $r['title'] ?></span>
-                                                <i class="fas fa-arrow-right"></i>
+                                                <span class="text-truncate me-2">Masuk Sebagai <?= $r['title'] ?></span>
+                                                <i class="fas fa-arrow-right flex-shrink-0"></i>
                                             </div>
                                         </div>
                                     </button>

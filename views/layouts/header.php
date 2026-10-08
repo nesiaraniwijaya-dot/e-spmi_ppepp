@@ -190,11 +190,14 @@ $currentUser = Auth::user();
     <!-- /Navbar -->
 
     <!-- Flash Notification -->
-    <?php if ($flash = Auth::getFlash()): ?>
+    <?php 
+    $flashNotification = $flash ?? Auth::getFlash();
+    if ($flashNotification): 
+    ?>
         <div class="container mt-3">
-            <div class="alert-lpm alert-<?= $flash['type'] ?>" role="alert">
-                <i class="fas fa-<?= $flash['type'] === 'success' ? 'check-circle' : 'info-circle' ?>"></i>
-                <div class="flex-grow-1"><?= htmlspecialchars($flash['message']) ?></div>
+            <div class="alert-lpm alert-<?= $flashNotification['type'] ?>" role="alert">
+                <i class="fas fa-<?= $flashNotification['type'] === 'success' ? 'check-circle' : 'info-circle' ?>"></i>
+                <div class="flex-grow-1"><?= $flashNotification['message'] ?></div>
             </div>
         </div>
     <?php endif; ?>

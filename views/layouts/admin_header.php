@@ -344,14 +344,15 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     <div class="admin-main">
 
         <!-- Flash Message -->
-        <?php if ($flash = Auth::getFlash()): ?>
-            <?php
-            $alertType = $flash['type'];
+        <?php 
+        $flashNotification = $flash ?? Auth::getFlash();
+        if ($flashNotification): 
+            $alertType = $flashNotification['type'];
             $iconClass  = $alertType === 'success' ? 'fa-check-circle' : ($alertType === 'danger' ? 'fa-exclamation-circle' : 'fa-info-circle');
-            ?>
+        ?>
             <div class="alert-lpm alert-<?= $alertType ?>" role="alert">
                 <i class="fas <?= $iconClass ?>"></i>
-                <div><?= htmlspecialchars($flash['message']) ?></div>
+                <div><?= $flashNotification['message'] ?></div>
             </div>
         <?php endif; ?>
 
