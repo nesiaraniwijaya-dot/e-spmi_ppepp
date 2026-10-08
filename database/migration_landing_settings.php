@@ -70,6 +70,10 @@ try {
         'footer_phone' => ['(024) 8441555 ext. 1402', 'footer'],
         'footer_website_url' => ['https://www.unika.ac.id', 'footer'],
         'footer_website_text' => ['Website Utama SCU', 'footer'],
+        'footer_website_lpm_url' => ['https://lpm.unika.ac.id', 'footer'],
+        'footer_website_lpm_text' => ['Website Resmi LPM', 'footer'],
+        'footer_website_custom_url' => ['', 'footer'],
+        'footer_website_custom_text' => ['', 'footer'],
     ];
 
     $stmtInsert = $db->prepare("

@@ -100,16 +100,19 @@ function sidebarIsActive(string $currentUri, string $match): string {
 <aside class="admin-sidebar" id="adminSidebar">
 
     <!-- Sidebar Header / Brand -->
-    <div class="admin-sidebar-header">
-        <a href="<?= base_url(Auth::getDashboardRoute()) ?>" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+    <div class="admin-sidebar-header d-flex align-items-center justify-content-between">
+        <a href="<?= base_url(Auth::getDashboardRoute()) ?>" style="display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0;" class="flex-grow-1">
             <div class="brand-logo-wrap" style="width:40px;height:40px;flex-shrink:0;">
                 <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
             </div>
-            <div>
+            <div class="text-truncate">
                 <div class="brand-title" style="font-family:var(--font-heading);font-weight:800;font-size:0.95rem;color:#fff;line-height:1.2;">MITRA</div>
-                <div class="brand-subtitle" style="font-size:0.65rem;color:rgba(255,255,255,0.72);letter-spacing:0.2px;line-height:1.25;">Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
+                <div class="brand-subtitle text-truncate" style="font-size:0.65rem;color:rgba(255,255,255,0.72);letter-spacing:0.2px;line-height:1.25;">Monitoring &amp; Tahapan PPEPP</div>
             </div>
         </a>
+        <button type="button" class="btn btn-sm text-white-50 p-1 ms-2 d-flex align-items-center justify-content-center rounded-2 border-0 bg-transparent" onclick="toggleSidebar()" title="Tutup / Sembunyikan Menu" style="width:30px;height:30px;">
+            <i class="fas fa-chevron-left"></i>
+        </button>
     </div>
     <!-- /Sidebar Header -->
 
@@ -428,31 +431,56 @@ function sidebarIsActive(string $currentUri, string $match): string {
 
 </aside>
 
-<!-- Sidebar JS Toggle -->
+<!-- Sidebar JS Toggle with Desktop Collapse & LocalStorage State -->
 <script>
+(function() {
+    // Restore sidebar collapsed preference on desktop
+    if (window.innerWidth > 991.98) {
+        if (localStorage.getItem('admin_sidebar_collapsed') === 'true') {
+            document.body.classList.add('sidebar-collapsed');
+        }
+    }
+})();
+
 function toggleSidebar() {
-    const sidebar  = document.getElementById('adminSidebar');
-    const overlay  = document.getElementById('sidebarOverlay');
-    const isOpen   = sidebar.classList.contains('sidebar-open');
-    if (isOpen) {
-        sidebar.classList.remove('sidebar-open');
-        overlay.classList.remove('active');
-        document.body.style.overflow = '';
+    const sidebar = document.getElementById('adminSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const isMobile = window.innerWidth <= 991.98;
+
+    if (isMobile) {
+        const isOpen = sidebar.classList.contains('sidebar-open');
+        if (isOpen) {
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        } else {
+            sidebar.classList.add('sidebar-open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
     } else {
-        sidebar.classList.add('sidebar-open');
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        // Desktop collapse toggle
+        document.body.classList.toggle('sidebar-collapsed');
+        const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+        try {
+            localStorage.setItem('admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+        } catch(e) {}
     }
 }
 
-// Close sidebar on resize to desktop
+// Handle resize events smoothly
 window.addEventListener('resize', function() {
-    if (window.innerWidth > 991) {
+    if (window.innerWidth > 991.98) {
         const sidebar = document.getElementById('adminSidebar');
         const overlay = document.getElementById('sidebarOverlay');
-        sidebar.classList.remove('sidebar-open');
-        overlay.classList.remove('active');
+        if (sidebar) sidebar.classList.remove('sidebar-open');
+        if (overlay) overlay.classList.remove('active');
         document.body.style.overflow = '';
+        if (localStorage.getItem('admin_sidebar_collapsed') === 'true') {
+            document.body.classList.add('sidebar-collapsed');
+        } else {
+            document.body.classList.remove('sidebar-collapsed');
+        }
     }
 });
 </script>

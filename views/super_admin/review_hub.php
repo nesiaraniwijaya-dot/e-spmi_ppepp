@@ -189,8 +189,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                     <!-- Filter Fakultas -->
                     <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm" id="fakultasFilter" onchange="onFakultasChange()">
-                            <option value="">-- Semua Fakultas --</option>
+                        <select class="form-select form-select-sm filter-hub-select" id="fakultasFilter" onchange="onFakultasChange()">
+                            <option value="">Semua Fakultas</option>
                             <?php foreach ($fakultasList as $fak): ?>
                                 <option value="<?= $fak['id'] ?>"><?= htmlspecialchars($fak['nama_fakultas']) ?></option>
                             <?php endforeach; ?>
@@ -199,8 +199,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                     <!-- Filter Program Studi (Dynamic) -->
                     <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm" id="prodiFilter" onchange="filterHubTable()">
-                            <option value="">-- Semua Program Studi --</option>
+                        <select class="form-select form-select-sm filter-hub-select" id="prodiFilter" onchange="filterHubTable()">
+                            <option value="">Semua Program Studi</option>
                             <?php foreach ($prodiList as $prd): ?>
                                 <option value="<?= $prd['id'] ?>" data-fakultas-id="<?= $prd['fakultas_id'] ?>">
                                     <?= htmlspecialchars($prd['nama_prodi']) ?> (<?= $prd['jenjang'] ?>)
@@ -211,20 +211,20 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                     <!-- Filter Siklus PPEPP -->
                     <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm" id="siklusFilter" onchange="filterHubTable()">
-                            <option value="">-- Semua Siklus PPEPP --</option>
-                            <option value="penetapan">P - Penetapan</option>
-                            <option value="pelaksanaan">P - Pelaksanaan</option>
-                            <option value="evaluasi">E - Evaluasi</option>
-                            <option value="pengendalian">P - Pengendalian</option>
-                            <option value="peningkatan">P - Peningkatan</option>
+                        <select class="form-select form-select-sm filter-hub-select" id="siklusFilter" onchange="filterHubTable()">
+                            <option value="">Semua Siklus PPEPP</option>
+                            <option value="penetapan">Penetapan (P1)</option>
+                            <option value="pelaksanaan">Pelaksanaan (P2)</option>
+                            <option value="evaluasi">Evaluasi (E)</option>
+                            <option value="pengendalian">Pengendalian (P3)</option>
+                            <option value="peningkatan">Peningkatan (P4)</option>
                         </select>
                     </div>
 
                     <!-- Filter Bidang -->
                     <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm" id="bidangFilter" onchange="filterHubTable()">
-                            <option value="">-- Semua Bidang --</option>
+                        <select class="form-select form-select-sm filter-hub-select" id="bidangFilter" onchange="filterHubTable()">
+                            <option value="">Semua Bidang</option>
                             <?php foreach ($bidangList as $b): ?>
                                 <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
                             <?php endforeach; ?>

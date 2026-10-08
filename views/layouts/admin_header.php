@@ -79,9 +79,15 @@ if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
     <script>
         window.IS_USER_LOGGED_IN = <?= Auth::check() ? 'true' : 'false' ?>;
         window.LOGIN_URL = '<?= base_url("login") ?>';
+        if (window.innerWidth > 991.98 && localStorage.getItem('admin_sidebar_collapsed') === 'true') {
+            document.documentElement.classList.add('sidebar-collapsed');
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.classList.add('sidebar-collapsed');
+            });
+        }
     </script>
 </head>
-<body>
+<body class="<?= (isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] === '1') ? 'sidebar-collapsed' : '' ?>">
 
 <!-- Sidebar Overlay (Mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>

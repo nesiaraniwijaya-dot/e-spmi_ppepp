@@ -2078,9 +2078,15 @@ body.public-page>.scu-footer {
   display: flex;
   flex-direction: column;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
-  transition: var(--transition);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Desktop Collapsed Sidebar */
+html.sidebar-collapsed .admin-sidebar,
+body.sidebar-collapsed .admin-sidebar {
+  transform: translateX(-100%);
 }
 
 /* Custom scrollbar for sidebar */
@@ -2446,6 +2452,13 @@ body.public-page>.scu-footer {
   flex-direction: column;
   min-width: 0;
   max-width: calc(100vw - 260px);
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.sidebar-collapsed .admin-content,
+body.sidebar-collapsed .admin-content {
+  margin-left: 0 !important;
+  max-width: 100vw !important;
 }
 
 .admin-topbar {
@@ -2833,18 +2846,28 @@ body.public-page>.scu-footer {
   padding: 1rem 1.5rem;
 }
 
-/* --- SIDEBAR MOBILE TOGGLE --- */
+/* --- SIDEBAR TOGGLE (Desktop & Mobile) --- */
 .sidebar-toggle-btn {
-  display: none;
+  display: inline-flex !important;
   align-items: center;
-  gap: 6px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0.4rem 0.7rem;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 0;
   cursor: pointer;
   color: var(--navy);
-  font-size: 1rem;
+  font-size: 1.05rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--navy);
+  color: #FFFFFF;
+  border-color: var(--navy);
 }
 
 .sidebar-overlay {
@@ -4155,4 +4178,21 @@ select.form-select-sm[id*="pageSize"] {
 }
 #perbaikanTabs .nav-link.active i {
   color: #FFFFFF !important;
+}
+
+/* 9. Clean Horizontal Filter Bar Selects (Prevents arrow & text collision) */
+.form-select-filter,
+#fakultasFilter,
+#prodiFilter,
+#siklusFilter,
+#bidangFilter,
+#filterFakultas,
+#filterProdi,
+.filter-hub-select {
+  padding-right: 2.25rem !important;
+  background-position: right 0.65rem center !important;
+  font-size: 0.8rem !important;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

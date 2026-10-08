@@ -20,10 +20,13 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
 ---
 
 ### Ringkasan Pembaruan Database:
-1. **Rebranding MITRA (`landing_settings`)**:
+1. **Rebranding MITRA & Pengaturan Footer (`landing_settings`)**:
    - `footer_brand_title`: `MITRA`
    - `footer_brand_sub`: `Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi`
    - `footer_desc`: `MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.`
+   - `footer_website_lpm_url`: `https://lpm.unika.ac.id` (Tautan resmi Website Lembaga Penjaminan Mutu)
+   - `footer_website_lpm_text`: `Website Resmi LPM` (Label tombol/tautan footer)
+   - `footer_website_custom_url` & `footer_website_custom_text`: Opsi tautan kustom tambahan pada footer.
 
 2. **Perubahan Role Pengguna (`users.role`)**:
    - Ditambahkan opsi enum `'pengguna'`.

@@ -237,10 +237,42 @@
                 <div class="col-lg-3 col-md-6">
                     <h5>Tautan &amp; Akses</h5>
                     <div class="footer-quick-links mb-2">
-                        <a href="<?= htmlspecialchars(get_landing_setting('footer_website_url', 'https://www.unika.ac.id')) ?>" target="_blank" rel="noopener noreferrer" class="footer-nav-link">
+                        <?php 
+                        $scuUrl = get_landing_setting('footer_website_url', 'https://www.unika.ac.id');
+                        $scuText = get_landing_setting('footer_website_text', 'Website Utama SCU');
+                        if (!empty($scuUrl)):
+                            $hrefScu = (strpos($scuUrl, 'http://') === 0 || strpos($scuUrl, 'https://') === 0) ? $scuUrl : 'https://' . $scuUrl;
+                        ?>
+                        <a href="<?= htmlspecialchars($hrefScu) ?>" target="_blank" rel="noopener noreferrer" class="footer-nav-link">
                             <span class="footer-nav-icon"><i class="fas fa-arrow-up-right-from-square"></i></span>
-                            <span><?= htmlspecialchars(get_landing_setting('footer_website_text', 'Website Utama SCU')) ?></span>
+                            <span><?= htmlspecialchars($scuText) ?></span>
                         </a>
+                        <?php endif; ?>
+
+                        <?php 
+                        $lpmUrl = get_landing_setting('footer_website_lpm_url', 'https://lpm.unika.ac.id');
+                        $lpmText = get_landing_setting('footer_website_lpm_text', 'Website Resmi LPM');
+                        if (!empty($lpmUrl)): 
+                            $hrefLpm = (strpos($lpmUrl, 'http://') === 0 || strpos($lpmUrl, 'https://') === 0) ? $lpmUrl : 'https://' . $lpmUrl;
+                        ?>
+                        <a href="<?= htmlspecialchars($hrefLpm) ?>" target="_blank" rel="noopener noreferrer" class="footer-nav-link">
+                            <span class="footer-nav-icon"><i class="fas fa-shield-halved"></i></span>
+                            <span><?= htmlspecialchars($lpmText) ?></span>
+                        </a>
+                        <?php endif; ?>
+
+                        <?php 
+                        $customUrl = get_landing_setting('footer_website_custom_url', '');
+                        $customText = get_landing_setting('footer_website_custom_text', '');
+                        if (!empty($customUrl) && !empty($customText)): 
+                            $hrefCustom = (strpos($customUrl, 'http://') === 0 || strpos($customUrl, 'https://') === 0) ? $customUrl : 'https://' . $customUrl;
+                        ?>
+                        <a href="<?= htmlspecialchars($hrefCustom) ?>" target="_blank" rel="noopener noreferrer" class="footer-nav-link">
+                            <span class="footer-nav-icon"><i class="fas fa-link"></i></span>
+                            <span><?= htmlspecialchars($customText) ?></span>
+                        </a>
+                        <?php endif; ?>
+
                         <a href="<?= base_url('dokumen') ?>" class="footer-nav-link">
                             <span class="footer-nav-icon"><i class="fas fa-folder-open"></i></span>
                             <span>Repositori Dokumen Mutu</span>

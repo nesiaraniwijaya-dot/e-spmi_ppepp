@@ -564,9 +564,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                 <i class="fas fa-phone text-success"></i>
                                                 <span id="previewFooterPhone"><?= htmlspecialchars($settings['footer_phone'] ?? '024-8441555 Ext 1473') ?></span>
                                             </div>
-                                            <div class="mt-3">
+                                            <div class="mt-3 d-flex flex-wrap gap-2">
                                                 <span class="btn btn-outline-light btn-xs rounded-pill px-3 py-1 small" style="font-size:0.75rem;">
                                                     <i class="fas fa-globe me-1"></i> <span id="previewFooterWeb"><?= htmlspecialchars($settings['footer_website_text'] ?? 'Website Utama SCU') ?></span>
+                                                </span>
+                                                <span class="btn btn-outline-info btn-xs rounded-pill px-3 py-1 small" style="font-size:0.75rem;">
+                                                    <i class="fas fa-shield-halved me-1"></i> <span id="previewFooterWebLpm"><?= htmlspecialchars($settings['footer_website_lpm_text'] ?? 'Website Resmi LPM') ?></span>
                                                 </span>
                                             </div>
                                         </div>
@@ -600,8 +603,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <div>
                                         <label class="form-label small fw-semibold text-secondary">Badge Status Akreditasi Institusi</label>
                                         <div class="input-group">
-                                            <span class="input-group-text bg-dark border-end-0 text-warning"><i class="fas fa-certificate"></i></span>
-                                            <input type="text" name="settings[footer_akreditasi]" id="inputFooterAkreditasi" class="form-control border-start-0 ps-0 fw-bold text-warning" style="background: #0A192F;" value="<?= htmlspecialchars($settings['footer_akreditasi'] ?? '') ?>" placeholder="Terakreditasi UNGGUL • BAN-PT">
+                                            <span class="input-group-text bg-light text-warning border-end-0"><i class="fas fa-award fs-6"></i></span>
+                                            <input type="text" name="settings[footer_akreditasi]" id="inputFooterAkreditasi" class="form-control fw-semibold text-dark bg-white" value="<?= htmlspecialchars($settings['footer_akreditasi'] ?? '') ?>" placeholder="Terakreditasi UNGGUL • BAN-PT">
                                         </div>
                                         <div class="form-text small">Teks di dalam badge emas akreditasi BAN-PT.</div>
                                     </div>
@@ -614,7 +617,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         <div class="stat-mini-icon bg-success text-white rounded-circle"><i class="fas fa-address-book"></i></div>
                                         <div>
                                             <h6 class="fw-bold mb-0 text-dark">Kontak &amp; Tautan Resmi</h6>
-                                            <small class="text-muted">Email, telepon, dan portal universitas.</small>
+                                            <small class="text-muted">Email, telepon, dan portal universitas/LPM.</small>
                                         </div>
                                     </div>
 
@@ -634,14 +637,48 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         </div>
                                     </div>
 
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <label class="form-label small fw-semibold text-secondary">Label Tautan Web</label>
-                                            <input type="text" name="settings[footer_website_text]" id="inputFooterWeb" class="form-control form-control-sm" value="<?= htmlspecialchars($settings['footer_website_text'] ?? '') ?>" placeholder="Website Utama SCU">
+                                    <!-- Tautan Website Utama SCU -->
+                                    <div class="p-2.5 rounded-2 border bg-light-subtle mb-3">
+                                        <span class="badge bg-primary-subtle text-primary mb-1.5"><i class="fas fa-university me-1"></i> Tautan 1: Website Utama SCU</span>
+                                        <div class="row g-2">
+                                            <div class="col-sm-5">
+                                                <label class="form-label xs text-secondary mb-1">Label Tautan</label>
+                                                <input type="text" name="settings[footer_website_text]" id="inputFooterWeb" class="form-control form-control-sm" value="<?= htmlspecialchars($settings['footer_website_text'] ?? 'Website Utama SCU') ?>" placeholder="Website Utama SCU">
+                                            </div>
+                                            <div class="col-sm-7">
+                                                <label class="form-label xs text-secondary mb-1">URL Website SCU</label>
+                                                <input type="text" name="settings[footer_website_url]" class="form-control form-control-sm" value="<?= htmlspecialchars($settings['footer_website_url'] ?? 'https://www.unika.ac.id') ?>" placeholder="https://www.unika.ac.id">
+                                            </div>
                                         </div>
-                                        <div class="col-6">
-                                            <label class="form-label small fw-semibold text-secondary">URL Website SCU</label>
-                                            <input type="url" name="settings[footer_website_url]" class="form-control form-control-sm" value="<?= htmlspecialchars($settings['footer_website_url'] ?? '') ?>" placeholder="https://www.unika.ac.id">
+                                    </div>
+
+                                    <!-- Tautan Website Resmi LPM -->
+                                    <div class="p-2.5 rounded-2 border bg-light-subtle mb-3">
+                                        <span class="badge bg-success-subtle text-success mb-1.5"><i class="fas fa-shield-halved me-1"></i> Tautan 2: Website Lembaga Penjaminan Mutu (LPM)</span>
+                                        <div class="row g-2">
+                                            <div class="col-sm-5">
+                                                <label class="form-label xs text-secondary mb-1">Label Tautan</label>
+                                                <input type="text" name="settings[footer_website_lpm_text]" id="inputFooterWebLpm" class="form-control form-control-sm" value="<?= htmlspecialchars($settings['footer_website_lpm_text'] ?? 'Website Resmi LPM') ?>" placeholder="Website Resmi LPM">
+                                            </div>
+                                            <div class="col-sm-7">
+                                                <label class="form-label xs text-secondary mb-1">URL Website LPM</label>
+                                                <input type="text" name="settings[footer_website_lpm_url]" class="form-control form-control-sm" value="<?= htmlspecialchars($settings['footer_website_lpm_url'] ?? 'https://lpm.unika.ac.id') ?>" placeholder="https://lpm.unika.ac.id">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tautan Tambahan (Opsional) -->
+                                    <div class="p-2.5 rounded-2 border bg-light-subtle">
+                                        <span class="badge bg-secondary-subtle text-secondary mb-1.5"><i class="fas fa-link me-1"></i> Tautan 3: Website Tambahan / Eksternal (Opsional)</span>
+                                        <div class="row g-2">
+                                            <div class="col-sm-5">
+                                                <label class="form-label xs text-secondary mb-1">Label Tautan</label>
+                                                <input type="text" name="settings[footer_website_custom_text]" class="form-control form-control-sm" value="<?= htmlspecialchars($settings['footer_website_custom_text'] ?? '') ?>" placeholder="Misal: Portal SPMI Dikti">
+                                            </div>
+                                            <div class="col-sm-7">
+                                                <label class="form-label xs text-secondary mb-1">URL Website Tambahan</label>
+                                                <input type="text" name="settings[footer_website_custom_url]" class="form-control form-control-sm" value="<?= htmlspecialchars($settings['footer_website_custom_url'] ?? '') ?>" placeholder="https://...">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -908,6 +945,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputFootEmail = document.getElementById('inputFooterEmail');
     const inputFootPhone = document.getElementById('inputFooterPhone');
     const inputFootWeb = document.getElementById('inputFooterWeb');
+    const inputFootWebLpm = document.getElementById('inputFooterWebLpm');
 
     const previewFootBrand = document.getElementById('previewFooterBrand');
     const previewFootSub = document.getElementById('previewFooterSub');
@@ -917,6 +955,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewFootEmail = document.getElementById('previewFooterEmail');
     const previewFootPhone = document.getElementById('previewFooterPhone');
     const previewFootWeb = document.getElementById('previewFooterWeb');
+    const previewFootWebLpm = document.getElementById('previewFooterWebLpm');
 
     if (inputFootBrand && previewFootBrand) inputFootBrand.addEventListener('input', e => previewFootBrand.textContent = e.target.value || 'MITRA');
     if (inputFootSub && previewFootSub) inputFootSub.addEventListener('input', e => previewFootSub.textContent = e.target.value || 'Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi');
@@ -926,6 +965,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (inputFootEmail && previewFootEmail) inputFootEmail.addEventListener('input', e => previewFootEmail.textContent = e.target.value || 'lpm@unika.ac.id');
     if (inputFootPhone && previewFootPhone) inputFootPhone.addEventListener('input', e => previewFootPhone.textContent = e.target.value || '024-8441555 Ext 1473');
     if (inputFootWeb && previewFootWeb) inputFootWeb.addEventListener('input', e => previewFootWeb.textContent = e.target.value || 'Website Utama SCU');
+    if (inputFootWebLpm && previewFootWebLpm) inputFootWebLpm.addEventListener('input', e => previewFootWebLpm.textContent = e.target.value || 'Website Resmi LPM');
 
     // Tab state persistence via hash
     const hash = window.location.hash;

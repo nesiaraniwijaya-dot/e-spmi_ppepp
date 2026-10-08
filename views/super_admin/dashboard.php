@@ -362,7 +362,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 }
             ?>
                 <div class="col-xxl-3 col-xl-4 col-md-6">
-                    <div class="card border-0 shadow-xs rounded-4 p-4 h-100 bg-white faculty-matrix-card d-flex flex-column justify-content-between" style="border: 1px solid #E2E8F0 !important; min-height: 250px;">
+                    <div class="card border-0 shadow-xs rounded-4 p-3.5 h-100 bg-white faculty-matrix-card d-flex flex-column justify-content-between overflow-hidden" style="border: 1px solid #E2E8F0 !important; min-height: 250px;">
                         <div>
                             <!-- Header Bar: Kode Fakultas & Badge Persentase -->
                             <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
@@ -427,12 +427,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             </div>
                         </div>
 
-                        <!-- Card Footer dengan Border Bersih & Padding Nyaman -->
-                        <div class="d-flex align-items-center justify-content-between gap-2 pt-3 border-top mt-auto" style="border-color: #F1F5F9 !important;">
-                            <a href="<?= base_url('admin/review-fakultas/' . $fId) ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 0.75rem;">
-                                <i class="fas fa-landmark me-1"></i> Dokumen Dekanat
+                        <!-- Card Footer dengan Border Bersih & Responsif Tanpa Overflow -->
+                        <div class="d-flex align-items-center gap-1.5 pt-3 border-top mt-auto" style="border-color: #F1F5F9 !important;">
+                            <a href="<?= base_url('admin/review-fakultas/' . $fId) ?>" class="btn btn-sm btn-outline-secondary rounded-pill flex-fill py-1.5 px-2 fw-semibold text-truncate d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.74rem;" title="Buka Dokumen Dekanat <?= htmlspecialchars($fak['nama_fakultas']) ?>">
+                                <i class="fas fa-landmark"></i>
+                                <span class="text-truncate">Dekanat</span>
                             </a>
-                            <a href="<?= base_url('admin/review') ?>" class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1.5" style="font-size: 0.75rem;">
+                            <a href="<?= base_url('admin/review?fakultas=' . $fId) ?>" class="btn btn-sm btn-primary rounded-pill flex-shrink-0 py-1.5 px-2.5 fw-semibold shadow-2xs d-inline-flex align-items-center justify-content-center gap-1" style="font-size: 0.74rem;" title="Review Dokumen <?= htmlspecialchars($fak['nama_fakultas']) ?>">
                                 <span>Review</span>
                                 <i class="fas fa-arrow-right small"></i>
                             </a>
