@@ -512,8 +512,8 @@ class SuperAdminController extends Controller {
 
             if (!empty($password)) {
                 $hashed = password_hash($password, PASSWORD_BCRYPT);
-                $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, password = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
-                $stmt->execute([$name, $email, $hashed, $role, $prodiId, $fakultasId, $isActive, $id]);
+                $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, password = ?, password_plain = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
+                $stmt->execute([$name, $email, $hashed, $password, $role, $prodiId, $fakultasId, $isActive, $id]);
             } else {
                 $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
                 $stmt->execute([$name, $email, $role, $prodiId, $fakultasId, $isActive, $id]);
@@ -528,8 +528,8 @@ class SuperAdminController extends Controller {
             }
 
             $hashed = password_hash($password, PASSWORD_BCRYPT);
-            $stmt = $this->db->prepare("INSERT INTO users (name, email, password, role, prodi_id, fakultas_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $email, $hashed, $role, $prodiId, $fakultasId, $isActive]);
+            $stmt = $this->db->prepare("INSERT INTO users (name, email, password, password_plain, role, prodi_id, fakultas_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $email, $hashed, $password, $role, $prodiId, $fakultasId, $isActive]);
             $newId = $this->db->lastInsertId();
 
             AuditLogger::log('CREATE', 'Manajemen User', (string)$newId, $name, null, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId]);

@@ -56,13 +56,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 </td>
                                 <td>
                                     <button type="button" 
-                                            class="btn btn-sm btn-sub-toggle rounded-pill px-2.5 py-1 text-primary border bg-light d-inline-flex align-items-center gap-1.5 fw-semibold"
+                                            class="btn btn-sm btn-sub-toggle rounded-pill px-2.5 py-1 text-primary border bg-light d-inline-flex align-items-center gap-2 fw-semibold"
                                             data-bs-toggle="collapse" 
                                             data-bs-target="#subCollapse_<?= $b['id'] ?>" 
                                             aria-expanded="false" 
                                             aria-controls="subCollapse_<?= $b['id'] ?>"
                                             id="toggleBtn_<?= $b['id'] ?>">
-                                        <i class="fas fa-sitemap text-info"></i>
+                                        <i class="fas fa-sitemap text-info me-1"></i>
                                         <span><?= $b['total_sub'] ?> Standar</span>
                                         <i class="fas fa-chevron-down sub-chevron small ms-1 text-secondary"></i>
                                     </button>

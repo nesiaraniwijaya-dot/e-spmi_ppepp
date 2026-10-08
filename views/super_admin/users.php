@@ -141,8 +141,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </div>
 
                     <div class="mb-3">
-                        <label for="user_password" class="form-label fw-semibold small text-secondary">Kata Sandi (Password) <span id="pwdHelp" class="text-muted fw-normal"></span></label>
-                        <input type="password" class="form-control" id="user_password" name="password" placeholder="Minimal 6 karakter">
+                        <label for="user_password" class="form-label fw-semibold small text-secondary">
+                            Kata Sandi (Password) <span id="pwdHelp" class="text-muted fw-normal"></span>
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="user_password" name="password" placeholder="Minimal 6 karakter" autocomplete="new-password">
+                            <button class="btn btn-outline-secondary" type="button" id="btnTogglePwdModal" onclick="toggleModalPwdVisibility()" title="Lihat / Sembunyikan Password">
+                                <i class="fas fa-eye" id="iconTogglePwdModal"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -242,6 +249,8 @@ function resetUserForm() {
     document.getElementById('user_name').value = '';
     document.getElementById('user_email').value = '';
     document.getElementById('user_password').value = '';
+    document.getElementById('user_password').type = 'password';
+    document.getElementById('iconTogglePwdModal').className = 'fas fa-eye';
     document.getElementById('user_password').required = true;
     document.getElementById('pwdHelp').textContent = '*';
     document.getElementById('user_role').value = 'kaprodi';
@@ -256,15 +265,30 @@ function editUser(data) {
     document.getElementById('user_id').value = data.id;
     document.getElementById('user_name').value = data.name;
     document.getElementById('user_email').value = data.email;
-    document.getElementById('user_password').value = '';
+    document.getElementById('user_password').value = data.password_plain || '';
+    document.getElementById('user_password').type = 'password';
+    document.getElementById('iconTogglePwdModal').className = 'fas fa-eye';
     document.getElementById('user_password').required = false;
-    document.getElementById('pwdHelp').textContent = '(Kosongkan jika tidak ingin mengubah password)';
+    document.getElementById('pwdHelp').textContent = '';
     document.getElementById('user_role').value = data.role;
     document.getElementById('user_prodi_id').value = data.prodi_id || '';
     document.getElementById('user_fakultas_id').value = data.fakultas_id || data.resolved_fakultas_id || '';
     document.getElementById('user_is_active').checked = data.is_active == 1;
     handleRoleChange(data.role);
 }
+
+function toggleModalPwdVisibility() {
+    const input = document.getElementById('user_password');
+    const icon = document.getElementById('iconTogglePwdModal');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
 </script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

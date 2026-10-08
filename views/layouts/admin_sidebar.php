@@ -76,7 +76,13 @@ try {
 /**
  * Helper: determine if a nav link should be "active"
  */
-function sidebarIsActive(string $currentUri, string $match): string {
+function sidebarIsActive(string $currentUri, string|array $match): string {
+    if (is_array($match)) {
+        foreach ($match as $m) {
+            if (str_contains($currentUri, $m)) return 'active';
+        }
+        return '';
+    }
     return str_contains($currentUri, $match) ? 'active' : '';
 }
 ?>
@@ -130,7 +136,7 @@ function sidebarIsActive(string $currentUri, string $match): string {
                     <span>Dashboard Utama</span>
                 </a>
                 <a href="<?= base_url('admin/review') ?>"
-                   class="admin-nav-link <?= (sidebarIsActive($currentUri, 'admin/review') || sidebarIsActive($currentUri, 'admin/review-dokumen')) ?>">
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, ['admin/review', 'admin/review-dokumen', 'admin/review-prodi', 'admin/review-fakultas', 'admin/monitoring-dokumen']) ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-clipboard-check"></i></span>
                     <span>Pusat Review Dokumen</span>
                     <?php if ($sidebarPendingReviewCount > 0): ?>
