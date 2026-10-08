@@ -79,12 +79,28 @@ if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
     <script>
         window.IS_USER_LOGGED_IN = <?= Auth::check() ? 'true' : 'false' ?>;
         window.LOGIN_URL = '<?= base_url("login") ?>';
-        if (window.innerWidth > 991.98 && localStorage.getItem('admin_sidebar_collapsed') === 'true') {
-            document.documentElement.classList.add('sidebar-collapsed');
-            document.addEventListener('DOMContentLoaded', function() {
-                document.body.classList.add('sidebar-collapsed');
-            });
-        }
+        (function() {
+            var isDesktop = window.innerWidth > 991.98;
+            var storedCollapsed = localStorage.getItem('admin_sidebar_collapsed');
+            var isCollapsed = false;
+            if (storedCollapsed !== null) {
+                isCollapsed = storedCollapsed === 'true';
+            } else {
+                isCollapsed = <?= (isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] === '1') ? 'true' : 'false' ?>;
+            }
+
+            if (isDesktop && isCollapsed) {
+                document.documentElement.classList.add('sidebar-collapsed');
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (document.body) document.body.classList.add('sidebar-collapsed');
+                });
+            } else {
+                document.documentElement.classList.remove('sidebar-collapsed');
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (document.body) document.body.classList.remove('sidebar-collapsed');
+                });
+            }
+        })();
     </script>
 </head>
 <body class="<?= (isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] === '1') ? 'sidebar-collapsed' : '' ?>">
@@ -101,8 +117,8 @@ if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
     <!-- Admin Topbar -->
     <div class="admin-topbar">
         <div class="d-flex align-items-center gap-3">
-            <!-- Mobile Sidebar Toggle -->
-            <button class="sidebar-toggle-btn" onclick="toggleSidebar()" id="sidebarToggle" title="Buka/Tutup Menu">
+            <!-- Sidebar Toggle (Desktop Collapse & Mobile Drawer) -->
+            <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar()" id="sidebarToggle" title="Buka/Tutup Menu Sidebar" aria-label="Buka/Tutup Menu Sidebar">
                 <i class="fas fa-bars"></i>
             </button>
 

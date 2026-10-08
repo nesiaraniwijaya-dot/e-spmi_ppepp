@@ -2112,10 +2112,12 @@ body.public-page>.scu-footer {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Desktop Collapsed Sidebar */
-html.sidebar-collapsed .admin-sidebar,
-body.sidebar-collapsed .admin-sidebar {
-  transform: translateX(-100%);
+/* Desktop Collapsed Sidebar (>= 992px) */
+@media (min-width: 992px) {
+  html.sidebar-collapsed .admin-sidebar,
+  body.sidebar-collapsed .admin-sidebar {
+    transform: translateX(-100%) !important;
+  }
 }
 
 /* Custom scrollbar for sidebar */
@@ -2484,10 +2486,12 @@ body.sidebar-collapsed .admin-sidebar {
   transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-html.sidebar-collapsed .admin-content,
-body.sidebar-collapsed .admin-content {
-  margin-left: 0 !important;
-  max-width: 100vw !important;
+@media (min-width: 992px) {
+  html.sidebar-collapsed .admin-content,
+  body.sidebar-collapsed .admin-content {
+    margin-left: 0 !important;
+    max-width: 100vw !important;
+  }
 }
 
 .admin-topbar {
@@ -2982,19 +2986,23 @@ body.sidebar-collapsed .admin-content {
 /* --- RESPONSIVE --- */
 @media (max-width: 991.98px) {
   .admin-sidebar {
-    transform: translateX(-100%);
+    transform: translateX(-100%) !important;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    height: 100vh;
     z-index: 1010;
   }
 
   .admin-sidebar.sidebar-open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
 
   .admin-content {
-    margin-left: 0;
-    max-width: 100vw;
+    margin-left: 0 !important;
+    max-width: 100vw !important;
   }
 
   .admin-topbar {
@@ -3006,7 +3014,20 @@ body.sidebar-collapsed .admin-content {
   }
 
   .sidebar-toggle-btn {
-    display: flex;
+    display: inline-flex !important;
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1005;
+    backdrop-filter: blur(2px);
+  }
+
+  .sidebar-overlay.active {
+    display: block !important;
   }
 }
 
