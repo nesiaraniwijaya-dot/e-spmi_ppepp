@@ -153,16 +153,16 @@ $unitName = Auth::isProdi()
                             </div>
                         </div>
                     <?php else: ?>
-                        <!-- Informational Box for Admin Prodi Password Policy -->
+                        <!-- Informational Box for Google SSO & Password Policy -->
                         <div class="alert alert-light border rounded-3 p-3.5 mt-4 mb-4 bg-light">
                             <div class="d-flex align-items-start gap-3">
-                                <div class="rounded-circle bg-warning bg-opacity-15 text-warning d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
-                                    <i class="fas fa-shield-alt fa-lg"></i>
+                                <div class="rounded-circle bg-primary bg-opacity-15 text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                                    <i class="fab fa-google fa-lg"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.85rem;">Kebijakan Keamanan Akun Program Studi</div>
-                                    <div class="text-muted small" style="font-size: 0.76rem; line-height: 1.5;">
-                                        Pengubahan dan reset kata sandi untuk akun <strong>Admin Program Studi</strong> dikelola secara terpusat oleh <strong>Administrator LPM / SPMI Universitas</strong> melalui menu <em>Manajemen Pengguna</em>.
+                                    <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.85rem;">Keamanan Akun &amp; Pengelolaan Kata Sandi Google SSO</div>
+                                    <div class="text-muted small" style="font-size: 0.76rem; line-height: 1.6;">
+                                        Untuk akun pengguna yang masuk menggunakan <strong>Google SSO</strong>, keamanan dan perubahan kata sandi dikelola secara terpusat langsung melalui akun Google Anda. Pemulihan kata sandi dapat dilakukan di portal <a href="https://myaccount.google.com" target="_blank" class="text-primary fw-semibold">Akun Google Saya <i class="fas fa-external-link-alt ms-0.5"></i></a>.
                                     </div>
                                 </div>
                             </div>

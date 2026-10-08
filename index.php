@@ -30,6 +30,10 @@ $router->get('tentang', ['PublicController', 'about']);
 $router->get('login', ['AuthController', 'showLogin']);
 $router->post('login', ['AuthController', 'login']);
 $router->get('logout', ['AuthController', 'logout']);
+$router->get('auth/google', ['AuthController', 'redirectToGoogle']);
+$router->get('auth/google/callback', ['AuthController', 'handleGoogleCallback']);
+$router->get('auth/select-role', ['AuthController', 'showSelectRole']);
+$router->post('auth/select-role', ['AuthController', 'processSelectRole']);
 
 // ==========================================
 // 3. SUPER ADMIN / ADMIN LPM ROUTES

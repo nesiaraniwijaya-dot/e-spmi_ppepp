@@ -97,10 +97,28 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                                 </div>
                             </div>
 
-                            <div class="d-grid mb-4 pt-2">
+                            <div class="d-grid mb-3 pt-2">
                                 <button type="submit" class="btn btn-primary py-2.5 fw-bold rounded-3 shadow-sm bg-scu-blue border-0">
                                     <i class="fas fa-sign-in-alt me-2"></i> Masuk Sekarang
                                 </button>
+                            </div>
+
+                            <div class="d-flex align-items-center my-3">
+                                <div class="border-bottom flex-grow-1"></div>
+                                <span class="px-3 text-muted small fw-semibold">atau masuk dengan</span>
+                                <div class="border-bottom flex-grow-1"></div>
+                            </div>
+
+                            <div class="d-grid mb-4">
+                                <a href="<?= base_url('auth/google') ?>" class="btn btn-outline-dark py-2.5 fw-bold rounded-3 d-flex align-items-center justify-content-center gap-2" style="border-color: #CBD5E1; background: #FFFFFF; color: #1E293B;">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z" fill="#4285F4"/>
+                                        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                                        <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                                        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                                    </svg>
+                                    <span>Akun Google Institusi SSO</span>
+                                </a>
                             </div>
 
                             <div class="text-center">
@@ -133,9 +151,12 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     <div class="scu-brand-icon mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
                         <i class="fas fa-user-shield"></i>
                     </div>
-                    <h5 class="fw-bold text-dark-blue">Reset Sandi Melalui Admin LPM</h5>
+                    <h5 class="fw-bold text-dark-blue">Bantuan Sandi &amp; Akses Pengguna</h5>
                     <p class="text-muted small">
-                        Untuk menjaga integritas dan keamanan sistem penjaminan mutu internal, perubahan dan reset kata sandi akun dilakukan secara terpusat oleh <strong>Super Admin / Admin LPM UNIKA Soegijapranata</strong>.
+                        Jika Anda masuk menggunakan <strong>Akun Google SSO</strong>, pemulihan dan pengubahan kata sandi dilakukan secara mandiri melalui <a href="https://myaccount.google.com" target="_blank" class="fw-bold text-primary">Akun Google Anda <i class="fas fa-external-link-alt ms-0.5"></i></a>.
+                    </p>
+                    <p class="text-muted small mb-0">
+                        Untuk akun lokal standar, perubahan dan reset kata sandi dikelola secara terpusat oleh <strong>Super Admin / Admin LPM UNIKA Soegijapranata</strong>.
                     </p>
                 </div>
                 <div class="card bg-light border-0 p-3 text-start small">

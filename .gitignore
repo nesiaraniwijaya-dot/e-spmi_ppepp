@@ -1,0 +1,16 @@
+# Environment secret override (Local developer config)
+config/env.php
+
+# Uploaded files
+uploads/documents/*
+uploads/logos/*
+uploads/avatars/*
+!uploads/documents/.gitkeep
+!uploads/logos/.gitkeep
+!uploads/avatars/.gitkeep
+
+# OS / IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

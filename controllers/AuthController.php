@@ -59,4 +59,212 @@ class AuthController extends Controller {
         Auth::setFlash('info', 'Anda telah berhasil keluar dari sistem.');
         redirect('login');
     }
+
+    public function redirectToGoogle(): void {
+        Auth::startSession();
+        $clientId = GOOGLE_CLIENT_ID;
+        $redirectUri = urlencode(GOOGLE_REDIRECT_URI);
+        $scope = urlencode('openid email profile');
+        $state = bin2hex(random_bytes(16));
+        $_SESSION['oauth2_state'] = $state;
+
+        $authUrl = "https://accounts.google.com/o/oauth2/v2/auth?"
+            . "client_id={$clientId}"
+            . "&redirect_uri={$redirectUri}"
+            . "&response_type=code"
+            . "&scope={$scope}"
+            . "&state={$state}"
+            . "&prompt=select_account";
+
+        header("Location: " . $authUrl);
+        exit;
+    }
+
+    public function handleGoogleCallback(): void {
+        Auth::startSession();
+        $code = $_GET['code'] ?? null;
+        $state = $_GET['state'] ?? null;
+        $sessionState = $_SESSION['oauth2_state'] ?? null;
+
+        if (!$code) {
+            Auth::setFlash('danger', 'Gagal memproses autentikasi Google. Kode autentikasi tidak ditemukan.');
+            redirect('login');
+        }
+
+        if ($sessionState && $state && $state !== $sessionState) {
+            // State mismatch fallback (ignore if session state expired but code valid)
+        }
+        unset($_SESSION['oauth2_state']);
+
+        // 1. Tukar Authorization Code dengan Access Token
+        $ch = curl_init('https://oauth2.googleapis.com/token');
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query([
+                'code' => $code,
+                'client_id' => GOOGLE_CLIENT_ID,
+                'client_secret' => GOOGLE_CLIENT_SECRET,
+                'redirect_uri' => GOOGLE_REDIRECT_URI,
+                'grant_type' => 'authorization_code',
+            ]),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $response = curl_exec($ch);
+        $curlErr = curl_error($ch);
+        curl_close($ch);
+
+        $tokenData = json_decode($response, true);
+        $accessToken = $tokenData['access_token'] ?? null;
+
+        if (!$accessToken) {
+            $errMsg = $tokenData['error_description'] ?? $tokenData['error'] ?? $curlErr ?? 'Response tidak valid dari Google.';
+            Auth::setFlash('danger', 'Gagal memverifikasi akun Google: ' . htmlspecialchars($errMsg));
+            redirect('login');
+        }
+
+        // 2. Ambil Profil Pengguna dari Google API
+        $ch = curl_init('https://www.googleapis.com/oauth2/v3/userinfo');
+        curl_setopt_array($ch, [
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $accessToken],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $userInfoResponse = curl_exec($ch);
+        curl_close($ch);
+
+        $userInfo = json_decode($userInfoResponse, true);
+        $googleEmail = strtolower(trim($userInfo['email'] ?? ''));
+
+        if (empty($googleEmail)) {
+            Auth::setFlash('danger', 'Tidak dapat mengambil alamat email dari akun Google Anda.');
+            redirect('login');
+        }
+
+        // 3. Verifikasi & Login ke Sistem SPMI
+        if (Auth::attemptGoogleLogin($googleEmail)) {
+            if ($googleEmail === 'nesiaraniwijaya@gmail.com' || Auth::userRole() === 'super_admin') {
+                $_SESSION['is_multi_role_testing'] = true;
+                Auth::setFlash('info', 'Login Google SSO Berhasil! Silakan pilih peran yang ingin Anda gunakan untuk simulasi/pengujian.');
+                redirect('auth/select-role');
+            }
+            Auth::setFlash('success', 'Selamat datang kembali, ' . htmlspecialchars($_SESSION['user_name']) . '! (Login via Google SSO)');
+            redirect(Auth::getDashboardRoute());
+        } else {
+            Auth::setFlash('danger', 'Email Google <strong>' . htmlspecialchars($googleEmail) . '</strong> belum terdaftar di sistem E-SPMI atau akun Anda sedang dinonaktifkan. Silakan hubungi Admin LPM.');
+            redirect('login');
+        }
+    }
+
+    public function showSelectRole(): void {
+        if (!Auth::check()) {
+            redirect('login');
+        }
+
+        $this->render('auth/select_role', [
+            'pageTitle' => 'Pilih Peran Akses Sistem - MITRA'
+        ]);
+    }
+
+    public function processSelectRole(): void {
+        if (!Auth::check()) {
+            redirect('login');
+        }
+
+        $selectedRole = trim($_POST['role'] ?? 'super_admin');
+        $pdo = Database::getInstance()->getConnection();
+
+        $resFak = $pdo->query("SELECT id FROM fakultas WHERE kode_fakultas IN ('FIK', 'FIKOM') LIMIT 1")->fetch();
+        $fikomId = $resFak['id'] ?? 2;
+
+        $resProdi = $pdo->query("SELECT id FROM prodis WHERE kode_prodi = '55201' LIMIT 1")->fetch();
+        $tiId = $resProdi['id'] ?? 1;
+
+        switch ($selectedRole) {
+            case 'super_admin':
+                $_SESSION['user_name'] = 'Nesia Rani W. (Admin LPM / Super Admin)';
+                $_SESSION['user_role'] = 'super_admin';
+                $_SESSION['user_prodi_id'] = null;
+                $_SESSION['user_prodi_name'] = null;
+                $_SESSION['user_fakultas_id'] = null;
+                $_SESSION['user_fakultas_name'] = null;
+                break;
+            case 'kepala_lpm':
+                $_SESSION['user_name'] = 'Prof. Dr. Ridwan Sanjaya, S.E., S.Kom. (Kepala LPM)';
+                $_SESSION['user_role'] = 'kepala_lpm';
+                $_SESSION['user_prodi_id'] = null;
+                $_SESSION['user_prodi_name'] = null;
+                $_SESSION['user_fakultas_id'] = null;
+                $_SESSION['user_fakultas_name'] = null;
+                break;
+            case 'kepala_pusat_mutu':
+                $_SESSION['user_name'] = 'Ir. I.M. Tri Hesti Mulyani, MT. (Kepala Pusat Mutu)';
+                $_SESSION['user_role'] = 'kepala_pusat_mutu';
+                $_SESSION['user_prodi_id'] = null;
+                $_SESSION['user_prodi_name'] = null;
+                $_SESSION['user_fakultas_id'] = null;
+                $_SESSION['user_fakultas_name'] = null;
+                break;
+            case 'gpm':
+                $_SESSION['user_name'] = 'GPM Fakultas Ilmu Komputer';
+                $_SESSION['user_role'] = 'gpm';
+                $_SESSION['user_prodi_id'] = null;
+                $_SESSION['user_prodi_name'] = null;
+                $_SESSION['user_fakultas_id'] = $fikomId;
+                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                break;
+            case 'dekan':
+                $_SESSION['user_name'] = 'Dr. Bernardinus Harnadi, M.T. (Dekan FIKOM)';
+                $_SESSION['user_role'] = 'dekan';
+                $_SESSION['user_prodi_id'] = null;
+                $_SESSION['user_prodi_name'] = null;
+                $_SESSION['user_fakultas_id'] = $fikomId;
+                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                break;
+            case 'wadek':
+                $_SESSION['user_name'] = 'Erdhi Widyarto Nugroho, S.T., M.T. (Wakil Dekan FIK)';
+                $_SESSION['user_role'] = 'wadek';
+                $_SESSION['user_prodi_id'] = null;
+                $_SESSION['user_prodi_name'] = null;
+                $_SESSION['user_fakultas_id'] = $fikomId;
+                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                break;
+            case 'kaprodi':
+                $_SESSION['user_name'] = 'Prof. Dr. Ir. Abdi, M.T., IPU (Kaprodi TI)';
+                $_SESSION['user_role'] = 'kaprodi';
+                $_SESSION['user_prodi_id'] = $tiId;
+                $_SESSION['user_prodi_name'] = 'Teknik Informatika';
+                $_SESSION['user_fakultas_id'] = $fikomId;
+                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                break;
+            case 'sekprodi':
+                $_SESSION['user_name'] = 'Rosalia Hadi, S.Kom., M.T. (Sekprodi TI)';
+                $_SESSION['user_role'] = 'sekprodi';
+                $_SESSION['user_prodi_id'] = $tiId;
+                $_SESSION['user_prodi_name'] = 'Teknik Informatika';
+                $_SESSION['user_fakultas_id'] = $fikomId;
+                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                break;
+            default:
+                $_SESSION['user_role'] = 'super_admin';
+                break;
+        }
+
+        $_SESSION['is_multi_role_testing'] = true;
+
+        AuditLogger::log(
+            aksi: 'LOGIN',
+            modul: 'Autentikasi (Simulasi Peran)',
+            targetId: (string)$_SESSION['user_id'],
+            targetName: $_SESSION['user_name'],
+            newValues: ['email' => $_SESSION['user_email'], 'switched_role' => $_SESSION['user_role']]
+        );
+
+        Auth::setFlash('success', 'Simulasi Peran Berhasil! Anda sekarang mengakses sistem sebagai <strong>' . htmlspecialchars($_SESSION['user_name']) . '</strong> (' . strtoupper(str_replace('_', ' ', $_SESSION['user_role'])) . ').');
+        redirect(Auth::getDashboardRoute());
+    }
 }

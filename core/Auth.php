@@ -8,7 +8,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/AuditLogger.php';
 
 class Auth {
-    private static function startSession(): void {
+    public static function startSession(): void {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -65,7 +65,55 @@ class Auth {
                 modul: 'Autentikasi',
                 targetId: (string)$user['id'],
                 targetName: $user['name'],
-                newValues: ['email' => $user['email'], 'role' => $user['role']]
+                newValues: ['email' => $user['email'], 'role' => $user['role'], 'method' => 'Password']
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function attemptGoogleLogin(string $email): bool {
+        self::startSession();
+        $pdo = Database::getInstance()->getConnection();
+
+        $searchEmail = trim(strtolower($email));
+        $altEmail = match($searchEmail) {
+            'admin.lpm@unika.ac.id' => 'lpm@unika.ac.id',
+            'lpm@unika.ac.id' => 'admin.lpm@unika.ac.id',
+            default => $searchEmail
+        };
+
+        $stmt = $pdo->prepare("SELECT u.*, p.nama_prodi, p.kode_prodi, 
+                COALESCE(f_direct.nama_fakultas, f_prodi.nama_fakultas) as nama_fakultas,
+                COALESCE(u.fakultas_id, p.fakultas_id) as resolved_fakultas_id
+            FROM users u 
+            LEFT JOIN prodis p ON u.prodi_id = p.id 
+            LEFT JOIN fakultas f_prodi ON p.fakultas_id = f_prodi.id 
+            LEFT JOIN fakultas f_direct ON u.fakultas_id = f_direct.id
+            WHERE (LOWER(u.email) = ? OR LOWER(u.email) = ?) AND u.is_active = 1 LIMIT 1");
+        $stmt->execute([$searchEmail, $altEmail]);
+        $user = $stmt->fetch();
+
+        if ($user) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['name'];
+            $_SESSION['user_email'] = $user['email'];
+            $_SESSION['user_role'] = $user['role'];
+            $_SESSION['user_avatar'] = $user['avatar'] ?? null;
+            $_SESSION['user_prodi_id'] = $user['prodi_id'];
+            $_SESSION['user_prodi_name'] = $user['nama_prodi'] ?? null;
+            $_SESSION['user_fakultas_id'] = $user['resolved_fakultas_id'] ?? $user['fakultas_id'] ?? null;
+            $_SESSION['user_fakultas_name'] = $user['nama_fakultas'] ?? null;
+            $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
+
+            AuditLogger::log(
+                aksi: 'LOGIN',
+                modul: 'Autentikasi',
+                targetId: (string)$user['id'],
+                targetName: $user['name'],
+                newValues: ['email' => $user['email'], 'role' => $user['role'], 'method' => 'Google SSO']
             );
 
             return true;
@@ -158,6 +206,15 @@ class Auth {
     public static function role(): ?string {
         self::startSession();
         return $_SESSION['user_role'] ?? null;
+    }
+
+    public static function userRole(): ?string {
+        return self::role();
+    }
+
+    public static function userEmail(): ?string {
+        self::startSession();
+        return $_SESSION['user_email'] ?? null;
     }
 
     public static function prodiId(): ?int {

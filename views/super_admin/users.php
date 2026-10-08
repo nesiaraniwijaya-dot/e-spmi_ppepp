@@ -142,13 +142,16 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                     <div class="mb-3">
                         <label for="user_password" class="form-label fw-semibold small text-secondary">
-                            Kata Sandi (Password) <span id="pwdHelp" class="text-muted fw-normal"></span>
+                            Kata Sandi (Password) <span class="badge bg-light text-secondary border font-normal">Opsional (Google SSO)</span> <span id="pwdHelp" class="text-muted fw-normal"></span>
                         </label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="user_password" name="password" placeholder="Minimal 6 karakter" autocomplete="new-password">
+                        <div class="input-group mb-1">
+                            <input type="password" class="form-control" id="user_password" name="password" placeholder="Kosongkan jika pengguna login via Google SSO" autocomplete="new-password">
                             <button class="btn btn-outline-secondary" type="button" id="btnTogglePwdModal" onclick="toggleModalPwdVisibility()" title="Lihat / Sembunyikan Password">
                                 <i class="fas fa-eye" id="iconTogglePwdModal"></i>
                             </button>
+                        </div>
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                            <i class="fab fa-google text-primary me-1"></i> Pengguna yang login via <strong>Google SSO</strong> tidak memerlukan kata sandi lokal. Kata sandi dikelola secara terpusat oleh akun Google institusi pengguna.
                         </div>
                     </div>
 

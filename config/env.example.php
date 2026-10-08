@@ -19,4 +19,8 @@ return [
     'DB_DATABASE' => 'unaux_xxxxxxxx_spmi_ppepp', // Ganti dengan nama database di cPanel
     'DB_USERNAME' => 'unaux_xxxxxxxx',            // Ganti dengan username MySQL di cPanel
     'DB_PASSWORD' => 'PasswordHostingAnda',        // Ganti dengan password akun hosting
+
+    // Google SSO (OAuth 2.0)
+    'GOOGLE_CLIENT_ID'     => 'xxxxxxxxxxxx-xxxxxxxxxxxxxxxx.apps.googleusercontent.com',
+    'GOOGLE_CLIENT_SECRET' => 'GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx',
 ];

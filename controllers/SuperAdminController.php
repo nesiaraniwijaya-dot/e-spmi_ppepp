@@ -522,18 +522,16 @@ class SuperAdminController extends Controller {
             AuditLogger::log('UPDATE', 'Manajemen User', (string)$id, $name, $oldData, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId, 'is_active' => $isActive]);
             Auth::setFlash('success', "Akun pengguna '{$name}' berhasil diperbarui.");
         } else {
-            if (empty($password)) {
-                Auth::setFlash('danger', 'Password wajib diisi untuk pengguna baru.');
-                redirect('admin/users');
-            }
+            $plainPwd = !empty($password) ? $password : '-(Diatur via Google SSO)-';
+            $pwdToHash = !empty($password) ? $password : bin2hex(random_bytes(10));
+            $hashed = password_hash($pwdToHash, PASSWORD_BCRYPT);
 
-            $hashed = password_hash($password, PASSWORD_BCRYPT);
             $stmt = $this->db->prepare("INSERT INTO users (name, email, password, password_plain, role, prodi_id, fakultas_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $email, $hashed, $password, $role, $prodiId, $fakultasId, $isActive]);
+            $stmt->execute([$name, $email, $hashed, $plainPwd, $role, $prodiId, $fakultasId, $isActive]);
             $newId = $this->db->lastInsertId();
 
             AuditLogger::log('CREATE', 'Manajemen User', (string)$newId, $name, null, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId]);
-            Auth::setFlash('success', "Akun pengguna baru '{$name}' berhasil didaftarkan ke sistem.");
+            Auth::setFlash('success', "Akun pengguna baru '{$name}' ({$email}) berhasil didaftarkan ke sistem.");
         }
 
         redirect('admin/users');

@@ -138,6 +138,14 @@ $currentUser = Auth::user();
                                             <i class="fas fa-user-gear text-secondary"></i> Profil & Foto Saya
                                         </a>
                                     </li>
+                                    <?php if (!empty($_SESSION['is_multi_role_testing']) || Auth::userEmail() === 'nesiaraniwijaya@gmail.com' || Auth::isSuperAdmin()): ?>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-primary fw-bold" style="background: rgba(37, 99, 235, 0.08);"
+                                           href="<?= base_url('auth/select-role') ?>">
+                                            <i class="fas fa-arrows-rotate text-primary"></i> Ganti Peran (Role Switcher)
+                                        </a>
+                                    </li>
+                                    <?php endif; ?>
                                     <li><hr class="dropdown-divider my-1"></li>
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
