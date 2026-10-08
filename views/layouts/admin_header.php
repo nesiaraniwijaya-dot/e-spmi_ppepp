@@ -7,50 +7,56 @@
 $currentUser = Auth::user();
 $isAdminLayout = true;
 
-// Notification items for Admin Prodi (Perlu Perbaikan & Sudah Diperbaiki / Menunggu Verifikasi)
+// Notification items for Prodi, Fakultas, and GPM (Perlu Perbaikan & Sudah Diperbaiki / Menunggu Verifikasi LPM)
 $notificationItems = [];
 $notificationCount = 0;
-if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
+$headerProdiId = (int)($currentUser['prodi_id'] ?? Auth::prodiId());
+$headerFakultasId = (int)($currentUser['fakultas_id'] ?? Auth::fakultasId());
+
+if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
-        $headerDb = Database::getInstance();
-        $prodiId = (int)$currentUser['prodi_id'];
-        $notificationItems = $headerDb->query("
+        $headerDb = Database::getInstance()->getConnection();
+        $stmt = $headerDb->prepare("
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
             FROM ppepp_documents
-            WHERE prodi_id = {$prodiId} AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
+            WHERE prodi_id = ? AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
             ORDER BY FIELD(status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), updated_at DESC
-        ")->fetchAll() ?: [];
+        ");
+        $stmt->execute([$headerProdiId]);
+        $notificationItems = $stmt->fetchAll() ?: [];
         $notificationCount = count($notificationItems);
     } catch (\Throwable $e) {
         $notificationItems = [];
         $notificationCount = 0;
     }
-} elseif ($currentUser && Auth::isFakultas() && !empty($currentUser['fakultas_id'])) {
+} elseif ($currentUser && Auth::isFakultas() && $headerFakultasId > 0) {
     try {
-        $headerDb = Database::getInstance();
-        $fakultasId = (int)$currentUser['fakultas_id'];
-        $notificationItems = $headerDb->query("
+        $headerDb = Database::getInstance()->getConnection();
+        $stmt = $headerDb->prepare("
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
             FROM ppepp_documents
-            WHERE fakultas_id = {$fakultasId} AND level = 'fakultas' AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
+            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
             ORDER BY FIELD(status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), updated_at DESC
-        ")->fetchAll() ?: [];
+        ");
+        $stmt->execute([$headerFakultasId]);
+        $notificationItems = $stmt->fetchAll() ?: [];
         $notificationCount = count($notificationItems);
     } catch (\Throwable $e) {
         $notificationItems = [];
         $notificationCount = 0;
     }
-} elseif ($currentUser && $currentUser['role'] === 'gpm' && !empty($currentUser['fakultas_id'])) {
+} elseif ($currentUser && (Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm') && $headerFakultasId > 0) {
     try {
-        $headerDb = Database::getInstance();
-        $fakultasId = (int)$currentUser['fakultas_id'];
-        $notificationItems = $headerDb->query("
+        $headerDb = Database::getInstance()->getConnection();
+        $stmt = $headerDb->prepare("
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
             FROM ppepp_documents
-            WHERE (fakultas_id = {$fakultasId} OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = {$fakultasId}))
+            WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
               AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
             ORDER BY FIELD(status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), updated_at DESC
-        ")->fetchAll() ?: [];
+        ");
+        $stmt->execute([$headerFakultasId, $headerFakultasId]);
+        $notificationItems = $stmt->fetchAll() ?: [];
         $notificationCount = count($notificationItems);
     } catch (\Throwable $e) {
         $notificationItems = [];
@@ -139,30 +145,35 @@ if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
             </a>
 
             <!-- Notification Bell Icon (Revisi & Perbaikan Dokumen) -->
-            <?php if (Auth::isProdi() || Auth::isFakultas() || (isset($currentUser['role']) && $currentUser['role'] === 'gpm')): 
+            <?php if (Auth::isProdi() || Auth::isFakultas() || Auth::isGpm() || (isset($currentUser['role']) && $currentUser['role'] === 'gpm')): 
                 $perluActionCount = count(array_filter($notificationItems, fn($i) => ($i['status_review'] ?? '') === 'perlu_perbaikan'));
             ?>
                 <div class="dropdown">
                     <button class="btn btn-light rounded-circle position-relative d-flex align-items-center justify-content-center shadow-2xs border" 
                             type="button" data-bs-toggle="dropdown" aria-expanded="false" 
-                            style="width: 38px; height: 38px; color: <?= $perluActionCount > 0 ? '#DC2626' : ($notificationCount > 0 ? '#2563EB' : '#64748B') ?>; background: <?= $perluActionCount > 0 ? '#FEF2F2' : '#FFFFFF' ?>;" 
-                            title="<?= $perluActionCount > 0 ? $perluActionCount . ' dokumen butuh perbaikan segera' : ($notificationCount > 0 ? $notificationCount . ' dokumen dalam proses revisi' : 'Tidak ada pemberitahuan perbaikan') ?>">
+                            style="width: 38px; height: 38px; color: <?= $perluActionCount > 0 ? '#DC2626' : ($notificationCount > 0 ? '#2563EB' : '#64748B') ?>; background: <?= $perluActionCount > 0 ? '#FEF2F2' : '#FFFFFF' ?>; border-color: <?= $perluActionCount > 0 ? '#FCA5A5 !important' : '#E2E8F0' ?>;" 
+                            title="<?= $perluActionCount > 0 ? $perluActionCount . ' dokumen butuh perbaikan segera (catatan admin LPM)' : ($notificationCount > 0 ? $notificationCount . ' dokumen dalam proses revisi' : 'Tidak ada pemberitahuan perbaikan') ?>">
                         <i class="fas fa-bell <?= $perluActionCount > 0 ? 'fa-shake' : '' ?>"></i>
-                        <?php if ($notificationCount > 0): ?>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill <?= $perluActionCount > 0 ? 'bg-danger' : 'bg-primary' ?> border border-white" style="font-size: 0.65rem; padding: 0.3em 0.55em;">
+                        <?php if ($perluActionCount > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white shadow-sm pulse-red-badge" style="font-size: 0.65rem; padding: 0.3em 0.55em; z-index: 10;">
+                                <?= $perluActionCount ?>
+                            </span>
+                        <?php elseif ($notificationCount > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary border border-white shadow-sm" style="font-size: 0.65rem; padding: 0.3em 0.55em; z-index: 10;">
                                 <?= $notificationCount ?>
                             </span>
                         <?php endif; ?>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-0 rounded-4 overflow-hidden" style="min-width: 340px; max-width: 380px;">
-                        <li class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-0 rounded-4 overflow-hidden" style="min-width: 340px; max-width: 390px;">
+                        <li class="p-3 <?= $perluActionCount > 0 ? 'bg-danger-subtle' : 'bg-light' ?> border-bottom d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge <?= $perluActionCount > 0 ? 'bg-danger' : 'bg-primary' ?> rounded-pill p-1.5"><i class="fas fa-wrench text-white" style="font-size: 0.75rem;"></i></span>
-                                <h6 class="fw-bold text-dark-blue mb-0" style="font-size: 0.88rem;">Pemberitahuan Perbaikan</h6>
+                                <span class="badge <?= $perluActionCount > 0 ? 'bg-danger' : 'bg-primary' ?> rounded-pill p-1.5"><i class="fas <?= $perluActionCount > 0 ? 'fa-triangle-exclamation' : 'fa-bell' ?> text-white" style="font-size: 0.75rem;"></i></span>
+                                <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">Pemberitahuan Dokumen</h6>
                             </div>
                             <?php if ($perluActionCount > 0): ?>
-                                <span class="badge bg-danger text-white rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.7rem;">
-                                    <?= $perluActionCount ?> Butuh Revisi
+                                <span class="badge bg-danger text-white rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1.5" style="font-size: 0.7rem;">
+                                    <span class="sidebar-pulse-dot" style="background:#fff; width:6px; height:6px;"></span>
+                                    <?= $perluActionCount ?> Perlu Perbaikan
                                 </span>
                             <?php elseif ($notificationCount > 0): ?>
                                 <span class="badge bg-primary text-white rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
@@ -170,6 +181,12 @@ if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
                                 </span>
                             <?php endif; ?>
                         </li>
+                        <?php if ($perluActionCount > 0): ?>
+                            <li class="px-3 py-2 bg-danger bg-opacity-10 border-bottom d-flex align-items-center gap-2 text-danger" style="font-size:0.75rem;">
+                                <i class="fas fa-circle-exclamation flex-shrink-0"></i>
+                                <span>Ada dokumen dengan catatan evaluasi admin LPM yang perlu diperbaiki.</span>
+                            </li>
+                        <?php endif; ?>
                         <div style="max-height: 320px; overflow-y: auto;">
                             <?php if (empty($notificationItems)): ?>
                                 <div class="text-center py-4 px-3 text-muted">

@@ -4253,3 +4253,33 @@ select.form-select-sm[id*="pageSize"] {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ========================================================
+   ALERT & NOTIFIKASI PERBAIKAN DOKUMEN (PRODI, FAKULTAS, GPM)
+   ======================================================== */
+@keyframes pulseRedDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.18); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+@keyframes pulseRedBadge {
+  0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.65); }
+  70% { transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+  100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+.sidebar-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #EF4444;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulseRedDot 1.8s infinite;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.pulse-red-badge {
+  animation: pulseRedBadge 1.8s infinite;
+}
