@@ -27,15 +27,16 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <th style="width: 50px;">No</th>
                         <th>Nama Pengguna</th>
                         <th>Email Institusi</th>
+                        <th>Kata Sandi (Password)</th>
                         <th>Hak Akses (Role)</th>
                         <th>Penugasan Prodi</th>
-                        <th class="text-center" style="width: 100px;">Status</th>
-                        <th class="text-center" style="width: 140px;">Aksi</th>
+                        <th class="text-center" style="width: 90px;">Status</th>
+                        <th class="text-center" style="width: 120px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($usersList)): ?>
-                        <tr><td colspan="7" class="text-center py-4 text-muted">Belum ada data pengguna.</td></tr>
+                        <tr><td colspan="8" class="text-center py-4 text-muted">Belum ada data pengguna.</td></tr>
                     <?php else: ?>
                         <?php $no = 1; foreach ($usersList as $u): ?>
                             <tr>
@@ -44,7 +45,22 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <div class="fw-bold text-dark-blue"><?= htmlspecialchars($u['name']) ?></div>
                                     <div class="text-muted" style="font-size: 0.75rem;">ID Akun: #<?= $u['id'] ?></div>
                                 </td>
-                                <td><?= htmlspecialchars($u['email']) ?></td>
+                                <td>
+                                    <span class="text-dark fw-medium"><?= htmlspecialchars($u['email']) ?></span>
+                                </td>
+                                <td>
+                                    <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 bg-light border rounded-pill shadow-2xs">
+                                        <i class="fas fa-key text-warning" style="font-size: 0.75rem;"></i>
+                                        <span class="font-monospace fw-bold text-dark" style="font-size: 0.8rem; letter-spacing: 0.4px;">
+                                            <?= htmlspecialchars($u['password_plain'] ?: 'password123') ?>
+                                        </span>
+                                        <button type="button" class="btn btn-xs btn-link p-0 text-secondary ms-1 text-decoration-none" 
+                                                title="Salin Kata Sandi" 
+                                                onclick="copyToClipboard('<?= htmlspecialchars(addslashes($u['password_plain'] ?: 'password123')) ?>', this)">
+                                            <i class="fas fa-copy" style="font-size: 0.75rem;"></i>
+                                        </button>
+                                    </div>
+                                </td>
                                 <td>
                                     <?php
                                     $roleBadge = match($u['role']) {
@@ -141,8 +157,27 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </div>
 
                     <div class="mb-3">
-                        <label for="user_password" class="form-label fw-semibold small text-secondary">Kata Sandi (Password) <span id="pwdHelp" class="text-muted fw-normal"></span></label>
-                        <input type="password" class="form-control" id="user_password" name="password" placeholder="Minimal 6 karakter">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="user_password" class="form-label fw-semibold small text-secondary mb-0">
+                                Kata Sandi (Password) <span id="pwdHelp" class="text-muted fw-normal"></span>
+                            </label>
+                            <span class="badge bg-light text-primary border" style="font-size:0.7rem;">
+                                <i class="fas fa-eye me-1"></i> Langsung Terlihat
+                            </span>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-secondary"><i class="fas fa-key text-warning"></i></span>
+                            <input type="text" class="form-control font-monospace" id="user_password" name="password" placeholder="Minimal 6 karakter" autocomplete="off">
+                            <button class="btn btn-outline-secondary" type="button" id="btnTogglePwdModal" onclick="toggleModalPwdVisibility()" title="Sembunyikan / Tampilkan Password">
+                                <i class="fas fa-eye-slash" id="iconTogglePwdModal"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyModalPwd(this)" title="Salin Kata Sandi">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="form-text small" id="pwdNote">
+                            Kata sandi pengguna langsung terlihat agar Admin dapat memperlihatkan kepada pemilik akun tanpa harus meresetnya.
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -241,9 +276,12 @@ function resetUserForm() {
     document.getElementById('user_id').value = '';
     document.getElementById('user_name').value = '';
     document.getElementById('user_email').value = '';
-    document.getElementById('user_password').value = '';
+    document.getElementById('user_password').value = 'password123';
+    document.getElementById('user_password').type = 'text';
+    document.getElementById('iconTogglePwdModal').className = 'fas fa-eye-slash';
     document.getElementById('user_password').required = true;
     document.getElementById('pwdHelp').textContent = '*';
+    document.getElementById('pwdNote').textContent = 'Kata sandi bawaan default akun baru adalah: password123 (dapat diganti sesuai kebutuhan).';
     document.getElementById('user_role').value = 'kaprodi';
     document.getElementById('user_prodi_id').value = '';
     document.getElementById('user_fakultas_id').value = '';
@@ -256,14 +294,67 @@ function editUser(data) {
     document.getElementById('user_id').value = data.id;
     document.getElementById('user_name').value = data.name;
     document.getElementById('user_email').value = data.email;
-    document.getElementById('user_password').value = '';
+    document.getElementById('user_password').value = data.password_plain || 'password123';
+    document.getElementById('user_password').type = 'text';
+    document.getElementById('iconTogglePwdModal').className = 'fas fa-eye-slash';
     document.getElementById('user_password').required = false;
-    document.getElementById('pwdHelp').textContent = '(Kosongkan jika tidak ingin mengubah password)';
+    document.getElementById('pwdHelp').textContent = '(Kata sandi saat ini terlihat di atas)';
+    document.getElementById('pwdNote').textContent = 'Kata sandi saat ini ditampilkan secara langsung. Admin dapat memperlihatkannya ke pengguna atau menggantinya jika diminta.';
     document.getElementById('user_role').value = data.role;
     document.getElementById('user_prodi_id').value = data.prodi_id || '';
     document.getElementById('user_fakultas_id').value = data.fakultas_id || data.resolved_fakultas_id || '';
     document.getElementById('user_is_active').checked = data.is_active == 1;
     handleRoleChange(data.role);
+}
+
+function toggleModalPwdVisibility() {
+    const input = document.getElementById('user_password');
+    const icon = document.getElementById('iconTogglePwdModal');
+    if (input.type === 'text') {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    } else {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    }
+}
+
+function copyModalPwd(btn) {
+    const val = document.getElementById('user_password').value;
+    if (val) {
+        copyToClipboard(val, btn);
+    }
+}
+
+function copyToClipboard(text, btn) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showCopyFeedback(btn);
+        }).catch(() => {
+            fallbackCopyText(text, btn);
+        });
+    } else {
+        fallbackCopyText(text, btn);
+    }
+}
+
+function fallbackCopyText(text, btn) {
+    const tempInput = document.createElement('input');
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    try {
+        document.execCommand('copy');
+        showCopyFeedback(btn);
+    } catch (e) {}
+    document.body.removeChild(tempInput);
+}
+
+function showCopyFeedback(btn) {
+    if (!btn) return;
+    const origHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check text-success"></i>';
+    setTimeout(() => { btn.innerHTML = origHtml; }, 1800);
 }
 </script>
 

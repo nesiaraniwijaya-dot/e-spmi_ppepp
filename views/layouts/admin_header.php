@@ -111,8 +111,8 @@ if ($currentUser && Auth::isProdi() && !empty($currentUser['prodi_id'])) {
         <!-- Topbar Right: User Info & Actions -->
         <div class="d-flex align-items-center gap-2">
             <!-- Tombol Cepat Menuju Web Publik -->
-            <a href="<?= base_url() ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs text-decoration-none" title="Buka Portal Web Publik">
-                <i class="fas fa-globe"></i>
+            <a href="<?= base_url() ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-2 shadow-2xs text-decoration-none" title="Buka Portal Web Publik">
+                <i class="fas fa-globe me-1"></i>
                 <span class="d-none d-sm-inline fw-semibold" style="font-size: 0.78rem;">Lihat Web Publik</span>
             </a>
 

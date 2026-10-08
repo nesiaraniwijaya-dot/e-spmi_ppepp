@@ -51,8 +51,8 @@ $unitName = Auth::isProdi()
                 
                 <!-- Official Account Identity Badge -->
                 <div class="mb-3">
-                    <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1.5 bg-light border rounded-pill text-dark fw-semibold" style="font-size: 0.78rem;">
-                        <i class="<?= Auth::isProdi() ? 'fas fa-graduation-cap text-primary' : (Auth::isFakultas() ? 'fas fa-landmark text-info' : 'fas fa-award text-warning') ?>"></i>
+                    <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 bg-light border rounded-pill text-dark fw-semibold" style="font-size: 0.78rem;">
+                        <i class="<?= Auth::isProdi() ? 'fas fa-graduation-cap text-primary' : (Auth::isFakultas() ? 'fas fa-landmark text-info' : 'fas fa-award text-warning') ?> me-1"></i>
                         <span><?= htmlspecialchars($officialTitle) ?></span>
                     </div>
                 </div>

@@ -145,6 +145,35 @@ img {
   background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--navy-light) 100%) !important;
 }
 
+/* --- Fractional Utility Spacers (Bootstrap 5 Extensions) --- */
+.gap-0\.5, .gap-0-5 { gap: 0.25rem !important; }
+.gap-1\.5, .gap-1-5 { gap: 0.45rem !important; }
+.gap-2\.5, .gap-2-5 { gap: 0.75rem !important; }
+.gap-3\.5, .gap-3-5 { gap: 1.15rem !important; }
+
+.me-0\.5, .me-0-5 { margin-right: 0.25rem !important; }
+.me-1\.5, .me-1-5 { margin-right: 0.45rem !important; }
+.me-2\.5, .me-2-5 { margin-right: 0.75rem !important; }
+
+.ms-0\.5, .ms-0-5 { margin-left: 0.25rem !important; }
+.ms-1\.5, .ms-1-5 { margin-left: 0.45rem !important; }
+.ms-2\.5, .ms-2-5 { margin-left: 0.75rem !important; }
+
+.mb-0\.5, .mb-0-5 { margin-bottom: 0.25rem !important; }
+.mb-1\.5, .mb-1-5 { margin-bottom: 0.45rem !important; }
+.mb-2\.5, .mb-2-5 { margin-bottom: 0.75rem !important; }
+
+.mt-0\.5, .mt-0-5 { margin-top: 0.25rem !important; }
+.mt-1\.5, .mt-1-5 { margin-top: 0.45rem !important; }
+.mt-2\.5, .mt-2-5 { margin-top: 0.75rem !important; }
+
+.px-1\.5, .px-1-5 { padding-left: 0.45rem !important; padding-right: 0.45rem !important; }
+.px-2\.5, .px-2-5 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+.px-3\.5, .px-3-5 { padding-left: 1.15rem !important; padding-right: 1.15rem !important; }
+
+.py-1\.5, .py-1-5 { padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; }
+.py-2\.5, .py-2-5 { padding-top: 0.7rem !important; padding-bottom: 0.7rem !important; }
+
 /* Public Layout: Sticky footer support */
 body.public-page {
   display: flex;

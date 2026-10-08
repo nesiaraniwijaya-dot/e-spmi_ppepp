@@ -125,8 +125,13 @@ class ProfileController extends Controller {
         }
 
         // Update database
-        $stmtUpdate = $this->db->prepare("UPDATE users SET name = ?, avatar = ?, password = ? WHERE id = ?");
-        $stmtUpdate->execute([$name, $avatarPath, $passwordHash, $userId]);
+        if (!empty($newPassword)) {
+            $stmtUpdate = $this->db->prepare("UPDATE users SET name = ?, avatar = ?, password = ?, password_plain = ? WHERE id = ?");
+            $stmtUpdate->execute([$name, $avatarPath, $passwordHash, $newPassword, $userId]);
+        } else {
+            $stmtUpdate = $this->db->prepare("UPDATE users SET name = ?, avatar = ? WHERE id = ?");
+            $stmtUpdate->execute([$name, $avatarPath, $userId]);
+        }
 
         // Update active session
         Auth::updateProfileSession($name, $avatarPath);
