@@ -387,7 +387,7 @@ CREATE TABLE `users` (
   `email` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password_plain` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `role` enum('super_admin','admin_lpm','kepala_pusat_mutu','kepala_lpm','dekan','wadek','gpm','kaprodi','sekprodi','pengguna') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('super_admin','admin_lpm','kepala_pusat_mutu','kepala_lpm','dekan','wadek','gpm','kaprodi','sekprodi','pengguna','testing') COLLATE utf8mb4_unicode_ci NOT NULL,
   `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `prodi_id` int(11) DEFAULT NULL,
   `fakultas_id` int(11) DEFAULT NULL,

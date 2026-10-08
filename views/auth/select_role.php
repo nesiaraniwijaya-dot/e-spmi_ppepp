@@ -86,6 +86,16 @@ $rolesOptions = [
         'badge_bg' => 'bg-secondary',
         'icon' => 'fas fa-user-edit',
         'color' => '#7C3AED'
+    ],
+    [
+        'role' => 'pengguna',
+        'title' => 'Pengguna (Civitas Akademika)',
+        'subtitle' => 'Dosen / Mahasiswa / Civitas Terdaftar',
+        'desc' => 'Akses penuh ke seluruh dokumen publik institusi tanpa watermark atau pembatasan pratinjau.',
+        'badge' => 'Pengguna Publik',
+        'badge_bg' => 'bg-info text-dark',
+        'icon' => 'fas fa-user-check',
+        'color' => '#059669'
     ]
 ];
 ?>
@@ -102,11 +112,11 @@ $rolesOptions = [
                         </div>
                         <div>
                             <span class="badge bg-warning text-dark fw-bold px-3 py-1 mb-1 rounded-pill"><i class="fas fa-shield-halved me-1"></i> Mode Pengujian Multi-Role Google SSO</span>
-                            <h3 class="fw-bold mb-0 text-white">Selamat Datang, <?= htmlspecialchars($_SESSION['user_name'] ?? 'Nesia Rani Wijaya') ?>!</h3>
+                            <h3 class="fw-bold mb-0 text-white">Selamat Datang, <?= htmlspecialchars($_SESSION['user_real_name'] ?? $_SESSION['user_name'] ?? 'Pengguna Testing') ?>!</h3>
                         </div>
                     </div>
                     <p class="text-light opacity-90 mb-0 small" style="max-width: 750px; line-height: 1.6;">
-                        Akun Google SSO Anda (<strong><?= htmlspecialchars($_SESSION['user_email'] ?? 'nesiaraniwijaya@gmail.com') ?></strong>) memiliki wewenang khusus untuk melakukan simulasi dan pengujian di seluruh tingkatan peran sistem. Silakan pilih <strong>satu peran</strong> yang ingin Anda gunakan untuk sesi ini.
+                        Akun Google SSO Anda (<strong><?= htmlspecialchars($_SESSION['user_email'] ?? '') ?></strong>) memiliki wewenang khusus untuk melakukan simulasi dan pengujian di seluruh tingkatan peran sistem. Silakan pilih <strong>satu peran</strong> yang ingin Anda gunakan untuk sesi ini.
                     </p>
                 </div>
 

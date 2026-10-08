@@ -48,6 +48,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <td>
                                     <?php
                                     $roleBadge = match($u['role']) {
+                                        'testing'           => '<span class="badge text-white" style="background: linear-gradient(135deg, #4F46E5, #7C3AED);"><i class="fas fa-flask me-1"></i>Akun Testing (Multi-Role)</span>',
                                         'kepala_pusat_mutu' => '<span class="badge text-white" style="background:#4338CA;"><i class="fas fa-award me-1"></i>Ketua Pusat Mutu</span>',
                                         'kepala_lpm'        => '<span class="badge bg-warning text-dark"><i class="fas fa-user-tie me-1"></i>Kepala LPM</span>',
                                         'super_admin', 'admin_lpm' => '<span class="badge bg-danger"><i class="fas fa-user-shield me-1"></i>Admin LPM</span>',
@@ -57,13 +58,16 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         'kaprodi'           => '<span class="badge bg-success"><i class="fas fa-graduation-cap me-1"></i>Kaprodi</span>',
                                         'sekprodi'          => '<span class="badge text-white" style="background:#0D9488;"><i class="fas fa-signature me-1"></i>Sekprodi</span>',
                                         'pengguna'          => '<span class="badge text-white" style="background:#059669;"><i class="fas fa-user-check me-1"></i>Pengguna (Akses Penuh)</span>',
-                                        default             => '<span class="badge bg-secondary">User</span>'
+                                        default             => '<span class="badge bg-secondary">' . htmlspecialchars(ucfirst($u['role'])) . '</span>'
                                     };
                                     echo $roleBadge;
                                     ?>
                                 </td>
                                 <td>
-                                    <?php if (in_array($u['role'], ['kaprodi', 'sekprodi'])): ?>
+                                    <?php if ($u['role'] === 'testing'): ?>
+                                        <span class="badge bg-primary-subtle text-primary border"><i class="fas fa-arrows-split-up-and-left me-1"></i>Seluruh Unit &amp; Multi-Role</span>
+                                        <div class="text-muted" style="font-size: 0.72rem;">Dapat berganti &amp; akses seluruh peran</div>
+                                    <?php elseif (in_array($u['role'], ['kaprodi', 'sekprodi'])): ?>
                                         <?php if ($u['nama_prodi']): ?>
                                             <div class="small fw-semibold text-dark"><?= htmlspecialchars($u['nama_prodi']) ?> (<?= htmlspecialchars($u['jenjang']) ?>)</div>
                                             <div class="text-muted" style="font-size: 0.72rem;"><?= htmlspecialchars($u['nama_fakultas']) ?></div>
@@ -174,6 +178,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             </optgroup>
                             <optgroup label="Tingkat Pengguna / Publik">
                                 <option value="pengguna">Pengguna / Civitas (Akses Penuh Dokumen Web Publik)</option>
+                            </optgroup>
+                            <optgroup label="Tingkat Pengujian / Developer (Multi-Role)">
+                                <option value="testing">Akun Pengujian / Testing (Akses Seluruh Role)</option>
                             </optgroup>
                         </select>
                     </div>

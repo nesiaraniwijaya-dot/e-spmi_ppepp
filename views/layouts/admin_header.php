@@ -253,12 +253,19 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
             <?php
             $headerOfficialTitle = Auth::getOfficialTitle();
             $headerRoleIcon = match($currentUser['role'] ?? '') {
+                'testing'             => 'fas fa-flask text-purple',
                 'kaprodi', 'sekprodi' => 'fas fa-graduation-cap text-primary',
                 'dekan', 'wadek'      => 'fas fa-landmark text-info',
                 'gpm'                 => 'fas fa-shield-halved text-purple',
                 default               => 'fas fa-user-tie text-warning',
             };
             ?>
+            <?php if (Auth::isTesting() || !empty($_SESSION['is_multi_role_testing'])): ?>
+                <a href="<?= base_url('auth/select-role') ?>" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 d-none d-sm-inline-flex align-items-center gap-1.5 shadow-xs" title="Ganti Peran Pengujian">
+                    <i class="fas fa-arrows-rotate"></i>
+                    <span class="small fw-semibold" style="font-size: 0.76rem;">Ganti Peran</span>
+                </a>
+            <?php endif; ?>
             <div class="dropdown">
                 <button class="d-flex align-items-center gap-2 border-0 bg-transparent"
                         type="button" data-bs-toggle="dropdown" aria-expanded="false"
@@ -308,6 +315,14 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                             <i class="fas fa-user-gear text-primary"></i> Profil & Foto Saya
                         </a>
                     </li>
+                    <?php if (Auth::isTesting() || !empty($_SESSION['is_multi_role_testing'])): ?>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-primary fw-bold" style="background: rgba(37, 99, 235, 0.08);"
+                           href="<?= base_url('auth/select-role') ?>">
+                            <i class="fas fa-arrows-rotate text-primary"></i> Ganti Peran (Role Switcher)
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li>
                         <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="<?= base_url() ?>">
                             <i class="fas fa-globe text-secondary"></i> Buka Web Publik

@@ -39,6 +39,13 @@ class AuthController extends Controller {
         }
 
         if (Auth::attempt($email, $password)) {
+            $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com', 'lpm@unika.ac.id', 'tu.lpm@unika.ac.id', 'admin.lpm@unika.ac.id'];
+            if (in_array(strtolower($email), $multiRoleEmails) || Auth::role() === 'testing' || !empty($_SESSION['is_multi_role_testing'])) {
+                $_SESSION['is_multi_role_testing'] = true;
+                Auth::setFlash('info', 'Login Berhasil! Silakan pilih peran yang ingin Anda gunakan untuk simulasi/pengujian.');
+                redirect('auth/select-role');
+            }
+
             Auth::setFlash('success', 'Selamat datang kembali, ' . htmlspecialchars($_SESSION['user_name']) . '!');
             unset($_SESSION['return_url']);
 
@@ -148,7 +155,7 @@ class AuthController extends Controller {
         // 3. Verifikasi & Login ke Sistem SPMI
         if (Auth::attemptGoogleLogin($googleEmail)) {
             $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com', 'lpm@unika.ac.id', 'tu.lpm@unika.ac.id', 'admin.lpm@unika.ac.id'];
-            if (in_array($googleEmail, $multiRoleEmails) || in_array(Auth::userRole(), ['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu'])) {
+            if (in_array($googleEmail, $multiRoleEmails) || Auth::role() === 'testing' || in_array(Auth::role(), ['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu'])) {
                 $_SESSION['is_multi_role_testing'] = true;
                 Auth::setFlash('info', 'Login Google SSO Berhasil! Silakan pilih peran yang ingin Anda gunakan untuk simulasi/pengujian.');
                 redirect('auth/select-role');
@@ -185,9 +192,12 @@ class AuthController extends Controller {
         $resProdi = $pdo->query("SELECT id FROM prodis WHERE kode_prodi = '55201' LIMIT 1")->fetch();
         $tiId = $resProdi['id'] ?? 1;
 
+        $rawName = $_SESSION['user_real_name'] ?? $_SESSION['user_name'] ?? 'Pengguna Testing';
+        $cleanName = preg_replace('/\s*\(.*?\)$/', '', $rawName);
+
         switch ($selectedRole) {
             case 'super_admin':
-                $_SESSION['user_name'] = 'Nesia Rani W. (Admin LPM / Super Admin)';
+                $_SESSION['user_name'] = $cleanName . ' (Admin LPM / Super Admin)';
                 $_SESSION['user_role'] = 'super_admin';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
@@ -195,7 +205,7 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = null;
                 break;
             case 'kepala_lpm':
-                $_SESSION['user_name'] = 'Prof. Dr. Ridwan Sanjaya, S.E., S.Kom. (Kepala LPM)';
+                $_SESSION['user_name'] = $cleanName . ' (Kepala LPM)';
                 $_SESSION['user_role'] = 'kepala_lpm';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
@@ -203,7 +213,7 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = null;
                 break;
             case 'kepala_pusat_mutu':
-                $_SESSION['user_name'] = 'Ir. I.M. Tri Hesti Mulyani, MT. (Kepala Pusat Mutu)';
+                $_SESSION['user_name'] = $cleanName . ' (Kepala Pusat Mutu)';
                 $_SESSION['user_role'] = 'kepala_pusat_mutu';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
@@ -211,7 +221,7 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = null;
                 break;
             case 'gpm':
-                $_SESSION['user_name'] = 'GPM Fakultas Ilmu Komputer';
+                $_SESSION['user_name'] = $cleanName . ' (GPM FIKOM)';
                 $_SESSION['user_role'] = 'gpm';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
@@ -219,7 +229,7 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
                 break;
             case 'dekan':
-                $_SESSION['user_name'] = 'Dr. Bernardinus Harnadi, M.T. (Dekan FIKOM)';
+                $_SESSION['user_name'] = $cleanName . ' (Dekan FIKOM)';
                 $_SESSION['user_role'] = 'dekan';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
@@ -227,7 +237,7 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
                 break;
             case 'wadek':
-                $_SESSION['user_name'] = 'Erdhi Widyarto Nugroho, S.T., M.T. (Wakil Dekan FIK)';
+                $_SESSION['user_name'] = $cleanName . ' (Wakil Dekan FIKOM)';
                 $_SESSION['user_role'] = 'wadek';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
@@ -235,7 +245,7 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
                 break;
             case 'kaprodi':
-                $_SESSION['user_name'] = 'Prof. Dr. Ir. Abdi, M.T., IPU (Kaprodi TI)';
+                $_SESSION['user_name'] = $cleanName . ' (Kaprodi TI)';
                 $_SESSION['user_role'] = 'kaprodi';
                 $_SESSION['user_prodi_id'] = $tiId;
                 $_SESSION['user_prodi_name'] = 'Teknik Informatika';
@@ -243,12 +253,20 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
                 break;
             case 'sekprodi':
-                $_SESSION['user_name'] = 'Rosalia Hadi, S.Kom., M.T. (Sekprodi TI)';
+                $_SESSION['user_name'] = $cleanName . ' (Sekprodi TI)';
                 $_SESSION['user_role'] = 'sekprodi';
                 $_SESSION['user_prodi_id'] = $tiId;
                 $_SESSION['user_prodi_name'] = 'Teknik Informatika';
                 $_SESSION['user_fakultas_id'] = $fikomId;
                 $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                break;
+            case 'pengguna':
+                $_SESSION['user_name'] = $cleanName . ' (Civitas / Pengguna)';
+                $_SESSION['user_role'] = 'pengguna';
+                $_SESSION['user_prodi_id'] = null;
+                $_SESSION['user_prodi_name'] = null;
+                $_SESSION['user_fakultas_id'] = null;
+                $_SESSION['user_fakultas_name'] = null;
                 break;
             default:
                 $_SESSION['user_role'] = 'super_admin';

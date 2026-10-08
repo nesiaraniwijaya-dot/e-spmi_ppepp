@@ -50,14 +50,19 @@ class Auth {
             // Set session data
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
+            $_SESSION['user_real_name'] = $user['name'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_role'] = $user['role'];
+            $_SESSION['user_real_role'] = $user['role'];
             $_SESSION['user_avatar'] = $user['avatar'] ?? null;
             $_SESSION['user_prodi_id'] = $user['prodi_id'];
             $_SESSION['user_prodi_name'] = $user['nama_prodi'] ?? null;
             $_SESSION['user_fakultas_id'] = $user['resolved_fakultas_id'] ?? $user['fakultas_id'] ?? null;
             $_SESSION['user_fakultas_name'] = $user['nama_fakultas'] ?? null;
             $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
+            if ($user['role'] === 'testing') {
+                $_SESSION['is_multi_role_testing'] = true;
+            }
 
             // Log login event
             AuditLogger::log(
@@ -99,14 +104,19 @@ class Auth {
         if ($user) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
+            $_SESSION['user_real_name'] = $user['name'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_role'] = $user['role'];
+            $_SESSION['user_real_role'] = $user['role'];
             $_SESSION['user_avatar'] = $user['avatar'] ?? null;
             $_SESSION['user_prodi_id'] = $user['prodi_id'];
             $_SESSION['user_prodi_name'] = $user['nama_prodi'] ?? null;
             $_SESSION['user_fakultas_id'] = $user['resolved_fakultas_id'] ?? $user['fakultas_id'] ?? null;
             $_SESSION['user_fakultas_name'] = $user['nama_fakultas'] ?? null;
             $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
+            if ($user['role'] === 'testing') {
+                $_SESSION['is_multi_role_testing'] = true;
+            }
 
             AuditLogger::log(
                 aksi: 'LOGIN',
@@ -150,25 +160,31 @@ class Auth {
             $stmt->execute([$_SESSION['user_id']]);
             $dbUser = $stmt->fetch();
             if ($dbUser) {
-                $_SESSION['user_name'] = $dbUser['name'];
+                $isTestingMode = !empty($_SESSION['is_multi_role_testing']) || ($dbUser['role'] ?? '') === 'testing' || ($_SESSION['user_real_role'] ?? '') === 'testing';
+                
                 $_SESSION['user_email'] = $dbUser['email'];
-                $_SESSION['user_role'] = $dbUser['role'];
                 $_SESSION['user_avatar'] = $dbUser['avatar'] ?? null;
-                $_SESSION['user_prodi_id'] = $dbUser['prodi_id'];
-                $_SESSION['user_prodi_name'] = $dbUser['nama_prodi'] ?? null;
-                $_SESSION['user_fakultas_id'] = $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null;
-                $_SESSION['user_fakultas_name'] = $dbUser['nama_fakultas'] ?? null;
+
+                // Jangan timpa peran simulasi jika sedang dalam mode pengujian multi-role
+                if (!$isTestingMode || empty($_SESSION['user_role']) || $_SESSION['user_role'] === 'testing') {
+                    $_SESSION['user_name'] = $dbUser['name'];
+                    $_SESSION['user_role'] = $dbUser['role'];
+                    $_SESSION['user_prodi_id'] = $dbUser['prodi_id'];
+                    $_SESSION['user_prodi_name'] = $dbUser['nama_prodi'] ?? null;
+                    $_SESSION['user_fakultas_id'] = $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null;
+                    $_SESSION['user_fakultas_name'] = $dbUser['nama_fakultas'] ?? null;
+                }
 
                 self::$cachedUser = [
                     'id' => $dbUser['id'],
-                    'name' => $dbUser['name'],
+                    'name' => $_SESSION['user_name'] ?? $dbUser['name'],
                     'email' => $dbUser['email'],
-                    'role' => $dbUser['role'],
+                    'role' => $_SESSION['user_role'] ?? $dbUser['role'],
                     'avatar' => $dbUser['avatar'] ?? null,
-                    'prodi_id' => $dbUser['prodi_id'] ?? null,
-                    'prodi_name' => $dbUser['nama_prodi'] ?? null,
-                    'fakultas_id' => $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null,
-                    'fakultas_name' => $dbUser['nama_fakultas'] ?? null
+                    'prodi_id' => $_SESSION['user_prodi_id'] ?? $dbUser['prodi_id'] ?? null,
+                    'prodi_name' => $_SESSION['user_prodi_name'] ?? $dbUser['nama_prodi'] ?? null,
+                    'fakultas_id' => $_SESSION['user_fakultas_id'] ?? $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null,
+                    'fakultas_name' => $_SESSION['user_fakultas_name'] ?? $dbUser['nama_fakultas'] ?? null
                 ];
                 return self::$cachedUser;
             }
@@ -251,6 +267,10 @@ class Auth {
         return self::role() === 'pengguna';
     }
 
+    public static function isTesting(): bool {
+        return self::role() === 'testing' || !empty($_SESSION['is_multi_role_testing']);
+    }
+
     public static function getOfficialTitle(): string {
         self::startSession();
         $role = $_SESSION['user_role'] ?? '';
@@ -258,6 +278,7 @@ class Auth {
         $fakultasName = $_SESSION['user_fakultas_name'] ?? 'Fakultas';
 
         return match ($role) {
+            'testing'           => 'Akun Pengujian / Testing (Multi-Role)',
             'kepala_pusat_mutu' => 'Ketua Pusat Penjaminan Mutu',
             'kepala_lpm'        => 'Kepala Lembaga Penjamin Mutu (LPM)',
             'super_admin', 'admin_lpm' => 'Admin Lembaga Penjamin Mutu (LPM)',
@@ -274,6 +295,10 @@ class Auth {
     public static function hasRole($roles): bool {
         if (!self::check()) return false;
         $currentRole = self::role();
+        // Akun pengujian (testing) berhak mengakses seluruh peran/modul di sistem
+        if ($currentRole === 'testing') {
+            return true;
+        }
         if (is_array($roles)) {
             return in_array($currentRole, $roles);
         }
@@ -303,6 +328,7 @@ class Auth {
             'kaprodi', 'sekprodi' => 'prodi/dashboard',
             'dekan', 'wadek' => 'fakultas/dashboard',
             'gpm' => 'gpm/dashboard',
+            'testing' => 'auth/select-role',
             'pengguna' => 'dokumen',
             default => 'dokumen'
         };
