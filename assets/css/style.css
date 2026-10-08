@@ -1691,7 +1691,10 @@ body.public-page>.scu-footer {
   gap: 8px;
 }
 
-#main-footer h5::after {
+#main-footer h5::after,
+.scu-footer h5::after,
+.footer-heading::after,
+.footer-preview-box h5::after {
   content: '';
   flex-grow: 1;
   height: 1px;

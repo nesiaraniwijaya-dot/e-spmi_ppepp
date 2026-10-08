@@ -523,53 +523,207 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     ======================================================== -->
                     <div class="tab-pane fade" id="tab-footer" role="tabpanel" aria-labelledby="footer-tab">
                         
-                        <!-- LIVE FOOTER PREVIEW -->
+                        <!-- LIVE FOOTER PREVIEW (1:1 MIRROR DENGAN FOOTER PUBLIK AKTUAL) -->
                         <div class="mb-4">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
                                 <label class="small text-uppercase fw-bold text-muted d-flex align-items-center gap-1.5">
-                                    <i class="fas fa-eye text-info"></i> Pratinjau Interaktif Footer Publik
+                                    <i class="fas fa-eye text-info"></i> Pratinjau Interaktif Footer Publik (Susunan 1:1 Sesuai Tampilan Asli)
                                 </label>
-                                <span class="badge bg-info bg-opacity-10 text-info small">Format Bersih &amp; Halus (Smooth &amp; Clean)</span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary small border border-primary border-opacity-20">
+                                    <i class="fas fa-check-double me-1"></i> 3 Kolom Responsif + Bilah Hak Cipta
+                                </span>
                             </div>
 
-                            <div class="footer-preview-box rounded-4 p-4 text-white position-relative">
-                                <div class="row g-4 align-items-start">
-                                    <div class="col-lg-6">
-                                        <div class="d-flex align-items-center gap-2 mb-2">
-                                            <div class="preview-footer-icon"><i class="fas fa-award text-warning"></i></div>
+                            <div class="footer-preview-box rounded-4 p-4 p-lg-4 text-white position-relative" style="background: linear-gradient(180deg, #061224 0%, #030a14 100%); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);">
+                                <div class="row g-4 mb-2">
+
+                                    <!-- Kolom 1: Informasi Institusi & Kotak Alamat Berstruktur -->
+                                    <div class="col-lg-5 col-md-12">
+                                        <div class="footer-brand d-flex align-items-center gap-3 mb-3">
+                                            <div class="footer-logo-wrap" style="width:48px;height:48px;">
+                                                <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;">
+                                            </div>
                                             <div>
-                                                <div class="fw-bold fs-5 text-white" id="previewFooterBrand"><?= htmlspecialchars($settings['footer_brand_title'] ?? 'PETRA') ?></div>
-                                                <div class="text-white-50 small" id="previewFooterSub"><?= htmlspecialchars($settings['footer_brand_sub'] ?? 'PEmantauan Tahapan PPEPP & Rencana Aksi') ?></div>
+                                                <div class="footer-brand-title" id="previewFooterBrand"><?= htmlspecialchars($settings['footer_brand_title'] ?? 'PETRA') ?></div>
+                                                <div class="footer-brand-sub" id="previewFooterSub"><?= htmlspecialchars($settings['footer_brand_sub'] ?? 'PEmantauan Tahapan PPEPP & Rencana Aksi') ?></div>
                                             </div>
                                         </div>
-                                        <p class="text-white-50 small mb-3" id="previewFooterDesc" style="line-height: 1.5;">
+                                        <p class="footer-desc" id="previewFooterDesc" style="font-size:0.875rem; color:#94A3B8; line-height:1.75; margin-top:0.75rem; max-width:480px;">
                                             <?= htmlspecialchars($settings['footer_desc'] ?? 'PETRA = PEmantauan Tahapan PPEPP & Rencana Aksi. PETRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.') ?>
                                         </p>
-                                        <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #FCD34D; font-size: 0.75rem;">
-                                            <i class="fas fa-certificate text-warning"></i>
-                                            <span id="previewFooterAkreditasi"><?= htmlspecialchars($settings['footer_akreditasi'] ?? 'Terakreditasi UNGGUL • BAN-PT') ?></span>
+
+                                        <!-- Real Data Structured Address Box -->
+                                        <?php
+                                        $previewAddressRaw = $settings['footer_address'] ?? 'Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234';
+                                        $previewAddrLines = preg_split('/\r\n|\r|\n/', trim($previewAddressRaw));
+                                        if (count($previewAddrLines) === 1 && strpos($previewAddressRaw, ',') !== false) {
+                                            $pParts = array_map('trim', explode(',', $previewAddressRaw));
+                                            if (count($pParts) >= 3) {
+                                                $previewAddrLines = $pParts;
+                                            }
+                                        }
+                                        ?>
+                                        <div class="footer-address-box">
+                                            <div class="footer-address-pin">
+                                                <i class="fas fa-location-dot"></i>
+                                            </div>
+                                            <div class="footer-address-details" id="previewFooterAddressContainer">
+                                                <?php if (count($previewAddrLines) > 1): ?>
+                                                    <?php foreach ($previewAddrLines as $idx => $line): ?>
+                                                        <?php if ($idx === 0): ?>
+                                                            <div class="footer-room-name"><?= htmlspecialchars($line) ?></div>
+                                                        <?php elseif ($idx === 1): ?>
+                                                            <div class="footer-building-name"><?= htmlspecialchars($line) ?></div>
+                                                        <?php elseif ($idx === 2): ?>
+                                                            <div class="footer-campus-name"><?= htmlspecialchars($line) ?></div>
+                                                        <?php else: ?>
+                                                            <div class="footer-street-name"><?= htmlspecialchars($line) ?></div>
+                                                        <?php endif; ?>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <div class="footer-street-name" style="color:#CBD5E1; line-height:1.55;"><?= nl2br(htmlspecialchars($previewAddressRaw)) ?></div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div class="footer-akreditasi-pill">
+                                                <i class="fas fa-award"></i> <span id="previewFooterAkreditasi"><?= htmlspecialchars($settings['footer_akreditasi'] ?? 'Terakreditasi UNGGUL • BAN-PT') ?></span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-lg-6">
-                                        <div class="p-3 rounded-3" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);">
-                                            <div class="text-white-50 small mb-2 d-flex align-items-start gap-2">
-                                                <i class="fas fa-location-dot text-danger mt-1"></i>
-                                                <span id="previewFooterAddress"><?= htmlspecialchars($settings['footer_address'] ?? 'Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234') ?></span>
+
+                                    <!-- Kolom 2: 5 Siklus PPEPP Pathway -->
+                                    <div class="col-lg-4 col-md-6">
+                                        <h5 class="footer-heading" id="previewFooterSiklusHeading"><?= htmlspecialchars($settings['footer_siklus_heading'] ?? '5 Siklus PPEPP PETRA') ?></h5>
+                                        <ul class="footer-cycle-list">
+                                            <li>
+                                                <div class="footer-cycle-item cycle-p1">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <span class="footer-cycle-badge badge-p1">P1</span>
+                                                        <div>
+                                                            <strong class="footer-cycle-title"><?= htmlspecialchars($settings['siklus_p1_title'] ?? 'Penetapan') ?></strong>
+                                                            <span class="footer-cycle-subtitle">Standar, manual mutu &amp; kebijakan</span>
+                                                        </div>
+                                                    </div>
+                                                    <i class="fas fa-chevron-right footer-cycle-arrow"></i>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="footer-cycle-item cycle-p2">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <span class="footer-cycle-badge badge-p2">P2</span>
+                                                        <div>
+                                                            <strong class="footer-cycle-title"><?= htmlspecialchars($settings['siklus_p2_title'] ?? 'Pelaksanaan') ?></strong>
+                                                            <span class="footer-cycle-subtitle">Realisasi tridharma &amp; RPS</span>
+                                                        </div>
+                                                    </div>
+                                                    <i class="fas fa-chevron-right footer-cycle-arrow"></i>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="footer-cycle-item cycle-e">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <span class="footer-cycle-badge badge-e">E</span>
+                                                        <div>
+                                                            <strong class="footer-cycle-title"><?= htmlspecialchars($settings['siklus_e_title'] ?? 'Evaluasi') ?></strong>
+                                                            <span class="footer-cycle-subtitle">Audit Mutu Internal (AMI) &amp; monev</span>
+                                                        </div>
+                                                    </div>
+                                                    <i class="fas fa-chevron-right footer-cycle-arrow"></i>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="footer-cycle-item cycle-p3">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <span class="footer-cycle-badge badge-p3">P3</span>
+                                                        <div>
+                                                            <strong class="footer-cycle-title"><?= htmlspecialchars($settings['siklus_p3_title'] ?? 'Pengendalian') ?></strong>
+                                                            <span class="footer-cycle-subtitle">Tindakan koreksi &amp; RTM</span>
+                                                        </div>
+                                                    </div>
+                                                    <i class="fas fa-chevron-right footer-cycle-arrow"></i>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="footer-cycle-item cycle-p4">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <span class="footer-cycle-badge badge-p4">P4</span>
+                                                        <div>
+                                                            <strong class="footer-cycle-title"><?= htmlspecialchars($settings['siklus_p4_title'] ?? 'Peningkatan') ?></strong>
+                                                            <span class="footer-cycle-subtitle">Kaizen mutu melampaui SN-Dikti</span>
+                                                        </div>
+                                                    </div>
+                                                    <i class="fas fa-chevron-right footer-cycle-arrow"></i>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <!-- Kolom 3: Tautan Cepat & Frosted Contact Card -->
+                                    <div class="col-lg-3 col-md-6">
+                                        <h5 class="footer-heading">Tautan &amp; Akses</h5>
+                                        <div class="footer-quick-links mb-2">
+                                            <div class="footer-nav-link">
+                                                <span class="footer-nav-icon"><i class="fas fa-arrow-up-right-from-square"></i></span>
+                                                <span id="previewFooterWeb"><?= htmlspecialchars($settings['footer_website_text'] ?? 'Website Utama SCU') ?></span>
                                             </div>
-                                            <div class="text-white-50 small mb-2 d-flex align-items-center gap-2">
-                                                <i class="fas fa-envelope text-info"></i>
-                                                <span id="previewFooterEmail"><?= htmlspecialchars($settings['footer_email'] ?? 'lpm@unika.ac.id') ?></span>
+                                            <div class="footer-nav-link">
+                                                <span class="footer-nav-icon"><i class="fas fa-folder-open"></i></span>
+                                                <span>Repositori Dokumen Mutu</span>
                                             </div>
-                                            <div class="text-white-50 small mb-2 d-flex align-items-center gap-2">
-                                                <i class="fas fa-phone text-success"></i>
-                                                <span id="previewFooterPhone"><?= htmlspecialchars($settings['footer_phone'] ?? '024-8441555 Ext 1473') ?></span>
-                                            </div>
-                                            <div class="mt-3">
-                                                <span class="btn btn-outline-light btn-xs rounded-pill px-3 py-1 small" style="font-size:0.75rem;">
-                                                    <i class="fas fa-globe me-1"></i> <span id="previewFooterWeb"><?= htmlspecialchars($settings['footer_website_text'] ?? 'Website Utama SCU') ?></span>
-                                                </span>
+                                            <div class="footer-nav-link">
+                                                <span class="footer-nav-icon"><i class="fas fa-right-to-bracket"></i></span>
+                                                <span>Portal Login Akun</span>
                                             </div>
                                         </div>
+
+                                        <!-- Contact Box - Frosted Glass & Real LPM Contact Data -->
+                                        <div class="footer-contact-card">
+                                            <div class="footer-contact-title">
+                                                <span class="pulse-amber-dot"></span>
+                                                <i class="fas fa-headset text-warning"></i>
+                                                <span id="previewFooterContactTitle"><?= htmlspecialchars($settings['footer_contact_title'] ?? 'Layanan Bantuan LPM') ?></span>
+                                            </div>
+                                            <div class="footer-contact-row mb-2.5">
+                                                <div class="footer-contact-icon email">
+                                                    <i class="fas fa-envelope"></i>
+                                                </div>
+                                                <div class="footer-contact-info">
+                                                    <span class="footer-contact-lbl">Email Resmi Layanan:</span>
+                                                    <span class="footer-contact-val email-link" id="previewFooterEmail">
+                                                        <?= htmlspecialchars($settings['footer_email'] ?? 'lpm@unika.ac.id') ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="footer-contact-row">
+                                                <div class="footer-contact-icon phone">
+                                                    <i class="fas fa-phone"></i>
+                                                </div>
+                                                <div class="footer-contact-info">
+                                                    <span class="footer-contact-lbl">Telepon Kantor / Hotline:</span>
+                                                    <span class="footer-contact-val" id="previewFooterPhone">
+                                                        <?= htmlspecialchars($settings['footer_phone'] ?? '024-8441555 Ext 1473') ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- Footer Bottom Bar di Preview -->
+                                <div class="footer-bottom mt-4 pt-3" style="border-top:1px solid rgba(255,255,255,0.08); margin-top:2rem !important; padding-top:1.25rem !important;">
+                                    <div class="footer-copyright">
+                                        &copy; <?= date('Y') ?> <strong id="previewFooterCopyright" class="text-white"><?= htmlspecialchars($settings['footer_copyright_text'] ?? INSTITUTION_NAME) ?></strong>. Seluruh Hak Cipta Dilindungi.
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="footer-copyright d-none d-sm-inline">
+                                            LPM SCU &bull; v<?= APP_VERSION ?>
+                                        </span>
+                                        <span class="footer-back-to-top" style="cursor:default;">
+                                            <i class="fas fa-arrow-up"></i> Ke Atas
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -577,27 +731,28 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                         <!-- Footer Inputs Form -->
                         <div class="row g-4">
+                            <!-- Card 1: Brand & Identitas Footer -->
                             <div class="col-md-6">
                                 <div class="form-group-card p-3 p-md-4 rounded-3 border bg-white h-100 shadow-2xs">
                                     <div class="d-flex align-items-center gap-2 mb-3">
                                         <div class="stat-mini-icon bg-info text-white rounded-circle"><i class="fas fa-building-columns"></i></div>
                                         <div>
                                             <h6 class="fw-bold mb-0 text-dark">Brand &amp; Identitas Footer</h6>
-                                            <small class="text-muted">Nama sistem dan sub-judul institusi.</small>
+                                            <small class="text-muted">Nama sistem, sub-judul, akreditasi, dan teks hak cipta.</small>
                                         </div>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-semibold text-secondary">Judul Brand Footer</label>
+                                        <label class="form-label small fw-semibold text-secondary">Judul Brand Footer (Kolom 1)</label>
                                         <input type="text" name="settings[footer_brand_title]" id="inputFooterBrand" class="form-control fw-bold" value="<?= htmlspecialchars($settings['footer_brand_title'] ?? '') ?>" placeholder="PETRA" required>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-semibold text-secondary">Sub-Judul Brand Footer</label>
+                                        <label class="form-label small fw-semibold text-secondary">Sub-Judul Brand Footer (Kolom 1)</label>
                                         <input type="text" name="settings[footer_brand_sub]" id="inputFooterSub" class="form-control" value="<?= htmlspecialchars($settings['footer_brand_sub'] ?? '') ?>" placeholder="PEmantauan Tahapan PPEPP &amp; Rencana Aksi" required>
                                     </div>
 
-                                    <div>
+                                    <div class="mb-3">
                                         <label class="form-label small fw-semibold text-secondary">Badge Status Akreditasi Institusi</label>
                                         <div class="input-group">
                                             <span class="input-group-text bg-dark border-end-0 text-warning"><i class="fas fa-certificate"></i></span>
@@ -605,16 +760,34 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         </div>
                                         <div class="form-text small">Teks di dalam badge emas akreditasi BAN-PT.</div>
                                     </div>
+
+                                    <div>
+                                        <label class="form-label small fw-semibold text-secondary">Teks Hak Cipta / Institusi di Bilah Bawah</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light text-muted"><i class="fas fa-copyright"></i></span>
+                                            <input type="text" name="settings[footer_copyright_text]" id="inputFooterCopyright" class="form-control" value="<?= htmlspecialchars($settings['footer_copyright_text'] ?? INSTITUTION_NAME) ?>" placeholder="<?= INSTITUTION_NAME ?>">
+                                        </div>
+                                        <div class="form-text small">Ditampilkan di footer bawah: &copy; <?= date('Y') ?> [Teks ini]. Seluruh Hak Cipta Dilindungi.</div>
+                                    </div>
                                 </div>
                             </div>
 
+                            <!-- Card 2: Kontak & Tautan Resmi -->
                             <div class="col-md-6">
                                 <div class="form-group-card p-3 p-md-4 rounded-3 border bg-white h-100 shadow-2xs">
                                     <div class="d-flex align-items-center gap-2 mb-3">
                                         <div class="stat-mini-icon bg-success text-white rounded-circle"><i class="fas fa-address-book"></i></div>
                                         <div>
-                                            <h6 class="fw-bold mb-0 text-dark">Kontak &amp; Tautan Resmi</h6>
-                                            <small class="text-muted">Email, telepon, dan portal universitas.</small>
+                                            <h6 class="fw-bold mb-0 text-dark">Kontak &amp; Tautan Resmi (Kolom 3)</h6>
+                                            <small class="text-muted">Email, telepon, portal bantuan, dan tautan universitas.</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold text-secondary">Judul Kotak Bantuan Kontak</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white text-muted"><i class="fas fa-headset text-warning"></i></span>
+                                            <input type="text" name="settings[footer_contact_title]" id="inputFooterContactTitle" class="form-control fw-bold" value="<?= htmlspecialchars($settings['footer_contact_title'] ?? 'Layanan Bantuan LPM') ?>" placeholder="Layanan Bantuan LPM">
                                         </div>
                                     </div>
 
@@ -647,16 +820,32 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 </div>
                             </div>
 
+                            <!-- Card 3: Uraian, Judul Kolom Siklus & Alamat Lengkap -->
                             <div class="col-12">
                                 <div class="form-group-card p-3 p-md-4 rounded-3 border bg-light-subtle">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-bold text-dark">Uraian / Deskripsi Penjaminan Mutu Footer</label>
-                                            <textarea name="settings[footer_desc]" id="inputFooterDesc" class="form-control" rows="3" placeholder="Sistem Informasi Manajemen Siklus PPEPP mendukung transparansi penjaminan mutu..."><?= htmlspecialchars($settings['footer_desc'] ?? '') ?></textarea>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold text-dark">Uraian / Deskripsi Penjaminan Mutu Footer (Kolom 1)</label>
+                                                <textarea name="settings[footer_desc]" id="inputFooterDesc" class="form-control" rows="3" placeholder="Sistem Informasi Manajemen Siklus PPEPP mendukung transparansi penjaminan mutu..."><?= htmlspecialchars($settings['footer_desc'] ?? '') ?></textarea>
+                                            </div>
+
+                                            <div>
+                                                <label class="form-label small fw-bold text-dark">Judul Kolom Alur PPEPP (Kolom 2)</label>
+                                                <input type="text" name="settings[footer_siklus_heading]" id="inputFooterSiklusHeading" class="form-control" value="<?= htmlspecialchars($settings['footer_siklus_heading'] ?? '5 Siklus PPEPP PETRA') ?>" placeholder="5 Siklus PPEPP PETRA">
+                                                <div class="form-text small">Judul bagian alur penetapan, pelaksanaan, evaluasi, pengendalian, peningkatan.</div>
+                                            </div>
                                         </div>
+
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-bold text-dark">Alamat Lengkap &amp; Lokasi Kantor LPM</label>
-                                            <textarea name="settings[footer_address]" id="inputFooterAddress" class="form-control" rows="3" placeholder="Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234"><?= htmlspecialchars($settings['footer_address'] ?? '') ?></textarea>
+                                            <label class="form-label small fw-bold text-dark d-flex align-items-center justify-content-between">
+                                                <span>Alamat Lengkap &amp; Lokasi Kantor LPM (Kolom 1)</span>
+                                                <span class="badge bg-secondary bg-opacity-25 text-dark fw-normal small">Dukungan Multi-Baris</span>
+                                            </label>
+                                            <textarea name="settings[footer_address]" id="inputFooterAddress" class="form-control" rows="5" placeholder="Ruang Lembaga Penjaminan Mutu (LPM)&#10;Gedung Thomas Aquinas Lantai 5&#10;Kampus Universitas Katolik Soegijapranata&#10;Jl. Pawiyatan Luhur IV/1, Bendan Duwur, Semarang 50234"><?= htmlspecialchars($settings['footer_address'] ?? '') ?></textarea>
+                                            <div class="form-text small mt-1.5 text-muted">
+                                                <i class="fas fa-circle-info text-info me-1"></i> Format: Gunakan <strong>Enter (baris baru)</strong> atau koma untuk memisahkan bagian ruangan, gedung, kampus, dan jalan kota. Tampilan akan otomatis terstruktur rapi pada footer.
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -899,33 +1088,79 @@ document.addEventListener('DOMContentLoaded', function() {
     if (inputBtn1 && previewBtn1) inputBtn1.addEventListener('input', e => previewBtn1.textContent = e.target.value || 'Jelajahi Direktori');
     if (inputBtn2 && previewBtn2) inputBtn2.addEventListener('input', e => previewBtn2.textContent = e.target.value || 'Repositori Dokumen');
 
-    // Footer Elements
+    // Footer Elements & Real-Time Sync
     const inputFootBrand = document.getElementById('inputFooterBrand');
     const inputFootSub = document.getElementById('inputFooterSub');
     const inputFootDesc = document.getElementById('inputFooterDesc');
     const inputFootAkreditasi = document.getElementById('inputFooterAkreditasi');
     const inputFootAddr = document.getElementById('inputFooterAddress');
+    const inputFootSiklus = document.getElementById('inputFooterSiklusHeading');
+    const inputFootContactTitle = document.getElementById('inputFooterContactTitle');
     const inputFootEmail = document.getElementById('inputFooterEmail');
     const inputFootPhone = document.getElementById('inputFooterPhone');
     const inputFootWeb = document.getElementById('inputFooterWeb');
+    const inputFootCopyright = document.getElementById('inputFooterCopyright');
 
     const previewFootBrand = document.getElementById('previewFooterBrand');
     const previewFootSub = document.getElementById('previewFooterSub');
     const previewFootDesc = document.getElementById('previewFooterDesc');
     const previewFootAkreditasi = document.getElementById('previewFooterAkreditasi');
-    const previewFootAddr = document.getElementById('previewFooterAddress');
+    const previewFootSiklus = document.getElementById('previewFooterSiklusHeading');
+    const previewFootContactTitle = document.getElementById('previewFooterContactTitle');
     const previewFootEmail = document.getElementById('previewFooterEmail');
     const previewFootPhone = document.getElementById('previewFooterPhone');
     const previewFootWeb = document.getElementById('previewFooterWeb');
+    const previewFootCopyright = document.getElementById('previewFooterCopyright');
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    function renderFooterAddressPreview(text) {
+        const container = document.getElementById('previewFooterAddressContainer');
+        if (!container) return;
+        const trimmed = (text || '').trim();
+        if (!trimmed) {
+            container.innerHTML = '<div class="footer-street-name" style="color:#CBD5E1;">Ruang Lembaga Penjaminan Mutu, Semarang</div>';
+            return;
+        }
+
+        let lines = trimmed.split(/\r\n|\r|\n/).map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length === 1 && trimmed.indexOf(',') !== -1) {
+            const parts = trimmed.split(',').map(p => p.trim()).filter(p => p.length > 0);
+            if (parts.length >= 3) {
+                lines = parts;
+            }
+        }
+
+        if (lines.length > 1) {
+            let html = '';
+            lines.forEach((line, idx) => {
+                if (idx === 0) html += `<div class="footer-room-name">${escapeHtml(line)}</div>`;
+                else if (idx === 1) html += `<div class="footer-building-name">${escapeHtml(line)}</div>`;
+                else if (idx === 2) html += `<div class="footer-campus-name">${escapeHtml(line)}</div>`;
+                else html += `<div class="footer-street-name">${escapeHtml(line)}</div>`;
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `<div class="footer-street-name" style="color:#CBD5E1; line-height:1.55;">${escapeHtml(trimmed).replace(/\n/g, '<br>')}</div>`;
+        }
+    }
 
     if (inputFootBrand && previewFootBrand) inputFootBrand.addEventListener('input', e => previewFootBrand.textContent = e.target.value || 'PETRA');
     if (inputFootSub && previewFootSub) inputFootSub.addEventListener('input', e => previewFootSub.textContent = e.target.value || 'PEmantauan Tahapan PPEPP & Rencana Aksi');
-    if (inputFootDesc && previewFootDesc) inputFootDesc.addEventListener('input', e => previewFootDesc.textContent = e.target.value || 'PETRA = PEmantauan Tahapan PPEPP & Rencana Aksi. PETRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.');
-    if (inputFootAkreditasi && previewFootAkreditasi) inputFootAkreditasi.addEventListener('input', e => previewFootAkreditasi.textContent = e.target.value || 'Terakreditasi UNGGUL');
-    if (inputFootAddr && previewFootAddr) inputFootAddr.addEventListener('input', e => previewFootAddr.textContent = e.target.value || 'Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234');
+    if (inputFootDesc && previewFootDesc) inputFootDesc.addEventListener('input', e => previewFootDesc.textContent = e.target.value || 'PETRA = PEmantauan Tahapan PPEPP & Rencana Aksi.');
+    if (inputFootAkreditasi && previewFootAkreditasi) inputFootAkreditasi.addEventListener('input', e => previewFootAkreditasi.textContent = e.target.value || 'Terakreditasi UNGGUL • BAN-PT');
+    if (inputFootSiklus && previewFootSiklus) inputFootSiklus.addEventListener('input', e => previewFootSiklus.textContent = e.target.value || '5 Siklus PPEPP PETRA');
+    if (inputFootContactTitle && previewFootContactTitle) inputFootContactTitle.addEventListener('input', e => previewFootContactTitle.textContent = e.target.value || 'Layanan Bantuan LPM');
+    if (inputFootAddr) inputFootAddr.addEventListener('input', e => renderFooterAddressPreview(e.target.value));
     if (inputFootEmail && previewFootEmail) inputFootEmail.addEventListener('input', e => previewFootEmail.textContent = e.target.value || 'lpm@unika.ac.id');
     if (inputFootPhone && previewFootPhone) inputFootPhone.addEventListener('input', e => previewFootPhone.textContent = e.target.value || '024-8441555 Ext 1473');
     if (inputFootWeb && previewFootWeb) inputFootWeb.addEventListener('input', e => previewFootWeb.textContent = e.target.value || 'Website Utama SCU');
+    if (inputFootCopyright && previewFootCopyright) inputFootCopyright.addEventListener('input', e => previewFootCopyright.textContent = e.target.value || 'Universitas Katolik Soegijapranata');
 
     // Tab state persistence via hash
     const hash = window.location.hash;
