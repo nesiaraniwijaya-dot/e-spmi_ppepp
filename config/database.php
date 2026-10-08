@@ -68,4 +68,24 @@ class Database {
     public function getConnection(): PDO {
         return $this->pdo;
     }
+
+    public function query(...$args) {
+        return $this->pdo->query(...$args);
+    }
+
+    public function prepare(...$args) {
+        return $this->pdo->prepare(...$args);
+    }
+
+    public function exec(...$args) {
+        return $this->pdo->exec(...$args);
+    }
+
+    public function lastInsertId(?string $name = null): string {
+        return $this->pdo->lastInsertId($name);
+    }
+
+    public function __call(string $name, array $arguments) {
+        return $this->pdo->$name(...$arguments);
+    }
 }

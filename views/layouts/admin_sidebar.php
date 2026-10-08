@@ -14,57 +14,82 @@ $sidebarPerluPerbaikanCount = 0;
 $sidebarPendingReviewCount = 0;
 $sidebarDraftCount = 0;
 try {
-    $sidebarDb = Database::getInstance();
-    if (Auth::isProdi() && !empty($currentUser['prodi_id'])) {
-        $sidebarProdiId = (int)$currentUser['prodi_id'];
-        $sidebarRevisiCount = (int)$sidebarDb->query("
+    $sidebarDb = Database::getInstance()->getConnection();
+    $sidebarProdiId = (int)($currentUser['prodi_id'] ?? Auth::prodiId());
+    $sidebarFakultasId = (int)($currentUser['fakultas_id'] ?? Auth::fakultasId());
+
+    if (Auth::isProdi() && $sidebarProdiId > 0) {
+        $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE prodi_id = {$sidebarProdiId} AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
-        ")->fetchColumn();
-        $sidebarPerluPerbaikanCount = (int)$sidebarDb->query("
+            WHERE prodi_id = ? AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
+        ");
+        $stmtRevisi->execute([$sidebarProdiId]);
+        $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();
+
+        $stmtPerlu = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE prodi_id = {$sidebarProdiId} AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL
-        ")->fetchColumn();
-        $sidebarDraftCount = (int)$sidebarDb->query("
+            WHERE prodi_id = ? AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL
+        ");
+        $stmtPerlu->execute([$sidebarProdiId]);
+        $sidebarPerluPerbaikanCount = (int)$stmtPerlu->fetchColumn();
+
+        $stmtDraft = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE prodi_id = {$sidebarProdiId} AND status_review = 'draft' AND deleted_at IS NULL
-        ")->fetchColumn();
-    } elseif (Auth::isFakultas() && !empty($currentUser['fakultas_id'])) {
-        $sidebarFakultasId = (int)$currentUser['fakultas_id'];
-        $sidebarRevisiCount = (int)$sidebarDb->query("
+            WHERE prodi_id = ? AND status_review = 'draft' AND deleted_at IS NULL
+        ");
+        $stmtDraft->execute([$sidebarProdiId]);
+        $sidebarDraftCount = (int)$stmtDraft->fetchColumn();
+    } elseif (Auth::isFakultas() && $sidebarFakultasId > 0) {
+        $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE fakultas_id = {$sidebarFakultasId} AND level = 'fakultas' AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
-        ")->fetchColumn();
-        $sidebarPerluPerbaikanCount = (int)$sidebarDb->query("
+            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
+        ");
+        $stmtRevisi->execute([$sidebarFakultasId]);
+        $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();
+
+        $stmtPerlu = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE fakultas_id = {$sidebarFakultasId} AND level = 'fakultas' AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL
-        ")->fetchColumn();
-        $sidebarDraftCount = (int)$sidebarDb->query("
+            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL
+        ");
+        $stmtPerlu->execute([$sidebarFakultasId]);
+        $sidebarPerluPerbaikanCount = (int)$stmtPerlu->fetchColumn();
+
+        $stmtDraft = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE fakultas_id = {$sidebarFakultasId} AND level = 'fakultas' AND status_review = 'draft' AND deleted_at IS NULL
-        ")->fetchColumn();
-    } elseif ($role === 'gpm' && !empty($currentUser['fakultas_id'])) {
-        $sidebarFakultasId = (int)$currentUser['fakultas_id'];
-        $sidebarRevisiCount = (int)$sidebarDb->query("
+            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review = 'draft' AND deleted_at IS NULL
+        ");
+        $stmtDraft->execute([$sidebarFakultasId]);
+        $sidebarDraftCount = (int)$stmtDraft->fetchColumn();
+    } elseif (($role === 'gpm' || Auth::isGpm()) && $sidebarFakultasId > 0) {
+        $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE (fakultas_id = {$sidebarFakultasId} OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = {$sidebarFakultasId}))
+            WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
               AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
-        ")->fetchColumn();
-        $sidebarPerluPerbaikanCount = (int)$sidebarDb->query("
+        ");
+        $stmtRevisi->execute([$sidebarFakultasId, $sidebarFakultasId]);
+        $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();
+
+        $stmtPerlu = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE (fakultas_id = {$sidebarFakultasId} OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = {$sidebarFakultasId}))
+            WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
               AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL
-        ")->fetchColumn();
-        $sidebarDraftCount = (int)$sidebarDb->query("
+        ");
+        $stmtPerlu->execute([$sidebarFakultasId, $sidebarFakultasId]);
+        $sidebarPerluPerbaikanCount = (int)$stmtPerlu->fetchColumn();
+
+        $stmtDraft = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE (fakultas_id = {$sidebarFakultasId} OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = {$sidebarFakultasId}))
+            WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
               AND status_review = 'draft' AND deleted_at IS NULL
-        ")->fetchColumn();
+        ");
+        $stmtDraft->execute([$sidebarFakultasId, $sidebarFakultasId]);
+        $sidebarDraftCount = (int)$stmtDraft->fetchColumn();
     } elseif (Auth::isLpm()) {
-        $sidebarPendingReviewCount = (int)$sidebarDb->query("
+        $stmtPending = $sidebarDb->query("
             SELECT COUNT(*) FROM ppepp_documents 
             WHERE status_review IN ('belum_direview', 'sudah_diperbaiki') AND deleted_at IS NULL
-        ")->fetchColumn();
+        ");
+        $sidebarPendingReviewCount = (int)$stmtPending->fetchColumn();
     }
 } catch (\Throwable $e) {
     $sidebarRevisiCount = 0;
@@ -210,9 +235,9 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <span class="nav-icon-wrap"><i class="fas fa-wrench"></i></span>
                     <span>Perbaikan Dokumen</span>
                     <?php if ($sidebarPerluPerbaikanCount > 0): ?>
-                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPerluPerbaikanCount ?> dokumen perlu perbaikan">
+                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPerluPerbaikanCount ?> dokumen perlu perbaikan segera">
                             <span class="sidebar-pulse-dot"></span>
-                            <span class="badge bg-danger rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold shadow-xs" style="width: 20px; height: 20px; font-size: 0.68rem; padding: 0;"><?= $sidebarPerluPerbaikanCount ?></span>
+                            <span class="badge bg-danger rounded-pill px-2 py-0.5 text-white fw-bold shadow-xs" style="font-size: 0.68rem; letter-spacing: 0.2px;"><?= $sidebarPerluPerbaikanCount ?></span>
                         </span>
                     <?php elseif ($sidebarRevisiCount > 0): ?>
                         <span class="ms-auto badge bg-secondary rounded-pill px-2 py-0.5" style="font-size:0.65rem;"><?= $sidebarRevisiCount ?></span>
@@ -281,9 +306,9 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <span class="nav-icon-wrap"><i class="fas fa-wrench"></i></span>
                     <span>Perbaikan Dokumen</span>
                     <?php if ($sidebarPerluPerbaikanCount > 0): ?>
-                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPerluPerbaikanCount ?> dokumen perlu perbaikan">
+                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPerluPerbaikanCount ?> dokumen perlu perbaikan segera">
                             <span class="sidebar-pulse-dot"></span>
-                            <span class="badge bg-danger rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold shadow-xs" style="width: 20px; height: 20px; font-size: 0.68rem; padding: 0;"><?= $sidebarPerluPerbaikanCount ?></span>
+                            <span class="badge bg-danger rounded-pill px-2 py-0.5 text-white fw-bold shadow-xs" style="font-size: 0.68rem; letter-spacing: 0.2px;"><?= $sidebarPerluPerbaikanCount ?></span>
                         </span>
                     <?php elseif ($sidebarRevisiCount > 0): ?>
                         <span class="ms-auto badge bg-secondary rounded-pill px-2 py-0.5" style="font-size:0.65rem;"><?= $sidebarRevisiCount ?></span>
@@ -357,9 +382,9 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <span class="nav-icon-wrap"><i class="fas fa-wrench"></i></span>
                     <span>Perbaikan Dokumen</span>
                     <?php if ($sidebarPerluPerbaikanCount > 0): ?>
-                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPerluPerbaikanCount ?> dokumen perlu perbaikan">
+                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPerluPerbaikanCount ?> dokumen perlu perbaikan segera">
                             <span class="sidebar-pulse-dot"></span>
-                            <span class="badge bg-danger rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold shadow-xs" style="width: 20px; height: 20px; font-size: 0.68rem; padding: 0;"><?= $sidebarPerluPerbaikanCount ?></span>
+                            <span class="badge bg-danger rounded-pill px-2 py-0.5 text-white fw-bold shadow-xs" style="font-size: 0.68rem; letter-spacing: 0.2px;"><?= $sidebarPerluPerbaikanCount ?></span>
                         </span>
                     <?php elseif ($sidebarRevisiCount > 0): ?>
                         <span class="ms-auto badge bg-secondary rounded-pill px-2 py-0.5" style="font-size:0.65rem;"><?= $sidebarRevisiCount ?></span>
