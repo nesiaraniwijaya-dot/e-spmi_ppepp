@@ -40,8 +40,8 @@ if (!defined('APP_NAME')) {
     $envConfig = file_exists(__DIR__ . '/env.php') ? (require __DIR__ . '/env.php') : [];
 
     // Google SSO (OAuth 2.0) Configuration
-    define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: ($envConfig['GOOGLE_CLIENT_ID'] ?? '41384927279-ahnag1d48433i1jech7diiop923ra0g8.apps.googleusercontent.com'));
-    define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: ($envConfig['GOOGLE_CLIENT_SECRET'] ?? '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'));
+    define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: ($envConfig['GOOGLE_CLIENT_ID'] ?? ''));
+    define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: ($envConfig['GOOGLE_CLIENT_SECRET'] ?? ''));
     define('GOOGLE_REDIRECT_URI', BASE_URL . '/auth/google/callback');
 }
 
