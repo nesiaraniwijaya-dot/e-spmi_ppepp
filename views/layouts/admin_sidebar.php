@@ -349,11 +349,6 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                         <span class="ms-auto sidebar-pulse-dot" title="<?= $sidebarPendingGpmCount ?> dokumen menunggu review GPM"></span>
                     <?php endif; ?>
                 </a>
-                <a href="<?= base_url('gpm/rekapitulasi') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/rekapitulasi') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-chart-pie text-info"></i></span>
-                    <span>Rekapitulasi Unit</span>
-                </a>
             </div>
 
             <!-- GPM: Telaah & Review Dokumen Mutu -->

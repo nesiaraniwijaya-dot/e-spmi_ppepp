@@ -1017,24 +1017,42 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                                     foreach ($stageMap as $stKey => $stMeta):
                                                                                         $stInfo = $stages[$stKey] ?? ['exists' => false, 'status' => 'belum_diisi', 'score' => 0];
                                                                                         $isAcc = ($stInfo['status'] === 'sesuai');
-                                                                                        $isRevisi = ($stInfo['status'] === 'perlu_perbaikan');
-                                                                                        $isReview = in_array($stInfo['status'], ['belum_direview', 'sudah_diperbaiki']);
+                                                                                        $isRevisi = in_array($stInfo['status'], ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']);
+                                                                                        $isReviewLpm = in_array($stInfo['status'], ['menunggu_review_lpm', 'sudah_diperbaiki']);
+                                                                                        $isReviewGpm = in_array($stInfo['status'], ['menunggu_review_gpm', 'belum_direview']);
                                                                                         $isExists = !empty($stInfo['exists']);
                                                                                         $docItem = $stInfo['doc'] ?? null;
+
+                                                                                        $badgeClass = 'bg-light text-muted border';
+                                                                                        $badgeTitle = $stMeta[1] . ': Belum Diisi';
+                                                                                        $iconHtml = '';
+
+                                                                                        if ($isAcc) {
+                                                                                            $badgeClass = 'bg-success text-white shadow-xs';
+                                                                                            $badgeTitle = $stMeta[1] . ': Disetujui (Sesuai Mutu)';
+                                                                                            $iconHtml = '<i class="fas fa-check-circle me-0.5"></i>';
+                                                                                        } elseif ($isRevisi) {
+                                                                                            $badgeClass = 'bg-warning text-dark border border-warning';
+                                                                                            $revNote = ($stInfo['status'] === 'revisi_gpm') ? ' (GPM)' : (($stInfo['status'] === 'revisi_lpm') ? ' (LPM)' : '');
+                                                                                            $badgeTitle = $stMeta[1] . ': Perlu Revisi' . $revNote;
+                                                                                            $iconHtml = '<i class="fas fa-exclamation-triangle me-0.5"></i>';
+                                                                                        } elseif ($isReviewLpm) {
+                                                                                            $badgeClass = 'bg-primary text-white shadow-xs';
+                                                                                            $badgeTitle = $stMeta[1] . ': Menunggu Review LPM';
+                                                                                            $iconHtml = '<i class="fas fa-clock me-0.5"></i>';
+                                                                                        } elseif ($isReviewGpm) {
+                                                                                            $badgeClass = 'bg-info bg-opacity-25 text-info-emphasis border border-info border-opacity-50';
+                                                                                            $badgeTitle = $stMeta[1] . ': Menunggu Telaah GPM';
+                                                                                            $iconHtml = '<i class="fas fa-hourglass-half me-0.5"></i>';
+                                                                                        }
                                                                                     ?>
-                                                                                        <span class="badge rounded-pill px-2 py-1 <?= $isAcc ? 'bg-success text-white' : ($isRevisi ? 'bg-warning text-dark' : ($isReview ? 'bg-info text-dark' : 'bg-light text-muted border')) ?>" 
+                                                                                        <span class="badge rounded-pill px-2 py-1 <?= $badgeClass ?>" 
                                                                                               style="font-size: 0.68rem; cursor: <?= $docItem ? 'pointer' : 'default' ?>;"
-                                                                                              title="<?= $stMeta[1] ?>: <?= $isAcc ? 'Disetujui' : ($isRevisi ? 'Perlu Revisi' : ($isReview ? 'Menunggu Review' : 'Belum Diisi')) ?>"
+                                                                                              title="<?= $badgeTitle ?>"
                                                                                               <?php if ($docItem): ?>
                                                                                                   onclick="openDocReviewHistory(<?= $docItem['id'] ?>)"
                                                                                               <?php endif; ?>>
-                                                                                            <?php if ($isAcc): ?>
-                                                                                                <i class="fas fa-check-circle me-0.5"></i>
-                                                                                            <?php elseif ($isRevisi): ?>
-                                                                                                <i class="fas fa-exclamation-triangle me-0.5"></i>
-                                                                                            <?php elseif ($isReview): ?>
-                                                                                                <i class="fas fa-clock me-0.5"></i>
-                                                                                            <?php endif; ?>
+                                                                                            <?= $iconHtml ?>
                                                                                             <?= $stMeta[0] ?>
                                                                                         </span>
                                                                                     <?php endforeach; ?>

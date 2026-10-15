@@ -324,9 +324,6 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <p class="text-muted small mb-0">Tabel komparasi kepatuhan dan status review dokumen PPEPP khusus di bawah naungan <?= htmlspecialchars($fakultas['nama_fakultas']) ?>.</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="<?= base_url('gpm/rekapitulasi') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
-                            <i class="fas fa-up-right-from-square me-1"></i> Buka Halaman Lengkap
-                        </a>
                         <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm bg-scu-blue border-0">
                             Lihat Semua Dokumen <i class="fas fa-arrow-right ms-1"></i>
                         </a>

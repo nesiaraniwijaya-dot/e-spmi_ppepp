@@ -171,19 +171,10 @@ class GpmController extends Controller {
     }
 
     /**
-     * Halaman Khusus Rekapitulasi Status Dokumen per Unit (Dekanat & Program Studi)
+     * Halaman Khusus Rekapitulasi Status Dokumen per Unit (Dialihkan ke Review Dokumen Mutu)
      */
     public function rekapitulasi(): void {
-        $rekapData = $this->getRekapitulasiData();
-
-        $this->render('gpm/rekapitulasi', [
-            'pageTitle'       => 'Rekapitulasi Status Dokumen per Unit - GPM ' . $this->fakultas['nama_fakultas'],
-            'activeNav'       => 'gpm_rekapitulasi',
-            'fakultas'        => $this->fakultas,
-            'prodisList'      => $this->prodisList,
-            'fakultasSummary' => $rekapData['fakultasSummary'],
-            'prodiSummaries'  => $rekapData['prodiSummaries']
-        ]);
+        redirect('gpm/dokumen');
     }
 
     /**

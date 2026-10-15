@@ -57,9 +57,6 @@ foreach ($documents as $d) {
             </p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="<?= base_url('gpm/rekapitulasi') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 py-2 shadow-2xs fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.84rem;">
-                <i class="fas fa-chart-pie"></i> Rekapitulasi Unit
-            </a>
             <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-outline-danger btn-sm rounded-pill px-3.5 py-2 shadow-2xs fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.84rem;">
                 <i class="fas fa-wrench"></i> Monitoring Revisi
                 <?php if ($revisiCount > 0): ?>

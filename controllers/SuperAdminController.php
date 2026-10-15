@@ -789,7 +789,7 @@ class SuperAdminController extends Controller {
                    SUM(CASE WHEN (d.status_review = 'menunggu_review_lpm' OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')) AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as perlu_review_count,
                    SUM(CASE WHEN d.status_review = 'menunggu_review_lpm' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as belum_direview_count,
                    SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sudah_diperbaiki_count,
-                   SUM(CASE WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
+                   SUM(CASE WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm', 'revisi_gpm') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
                    SUM(CASE WHEN d.status_review = 'sesuai' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sesuai_count
             FROM prodis p
             JOIN fakultas f ON p.fakultas_id = f.id
@@ -837,7 +837,7 @@ class SuperAdminController extends Controller {
                 try {
                     $stmtDocs = $this->db->prepare("
                         SELECT id, nama_dokumen, nomor_dokumen, siklus, status_review, catatan_review, reviewed_by, reviewed_at,
-                               file_path, external_link, created_at, updated_at
+                               file_path, external_link, created_at, updated_at, tahap_review
                         FROM ppepp_documents
                         WHERE cycle_id = ? AND deleted_at IS NULL
                         ORDER BY id ASC
@@ -870,9 +870,13 @@ class SuperAdminController extends Controller {
                         if ($d['status_review'] === 'sesuai') {
                             $stages[$cy]['score'] = 20;
                             $fakSesuai++;
-                        } elseif ($d['status_review'] === 'perlu_perbaikan') {
+                        } elseif (in_array($d['status_review'], ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])) {
                             $fakPerluRevisi++;
-                        } elseif (in_array($d['status_review'], ['belum_direview', 'sudah_diperbaiki'])) {
+                        } elseif (
+                            $d['status_review'] === 'menunggu_review_lpm' ||
+                            ($d['status_review'] === 'sudah_diperbaiki' && ($d['tahap_review'] ?? 'lpm') === 'lpm') ||
+                            $d['status_review'] === 'belum_direview'
+                        ) {
                             $fakPerluReview++;
                         }
                     }
