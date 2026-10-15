@@ -479,11 +479,13 @@
                     const isLpm = (item.reviewer_role === 'lpm' || item.reviewer_role === 'super_admin' || item.reviewer_role === 'kepala_lpm');
                     const isResubmit = (item.tahap === 'resubmission');
 
-                    const roleBadge = isGpm 
-                        ? '<span class="badge rounded-pill px-2.5 py-1" style="background:#F3E8FF; color:#7E22CE; border:1px solid #E9D5FF;"><i class="fas fa-shield-halved me-1"></i> GPM Fakultas</span>'
-                        : (isLpm 
-                            ? '<span class="badge rounded-pill px-2.5 py-1" style="background:#DBEAFE; color:#1E40AF; border:1px solid #BFDBFE;"><i class="fas fa-award me-1"></i> Lembaga Penjaminan Mutu (LPM)</span>'
-                            : '<span class="badge rounded-pill px-2.5 py-1 bg-secondary text-white"><i class="fas fa-cloud-arrow-up me-1"></i> Pengunggah</span>');
+                    const roleBadge = isResubmit
+                        ? '<span class="badge rounded-pill px-2.5 py-1" style="background:#E0F2FE; color:#0369A1; border:1px solid #BAE6FD;"><i class="fas fa-rotate-left me-1"></i> Perbaikan Unit</span>'
+                        : (isGpm 
+                            ? '<span class="badge rounded-pill px-2.5 py-1" style="background:#F3E8FF; color:#7E22CE; border:1px solid #E9D5FF;"><i class="fas fa-shield-halved me-1"></i> GPM Fakultas</span>'
+                            : (isLpm 
+                                ? '<span class="badge rounded-pill px-2.5 py-1" style="background:#DBEAFE; color:#1E40AF; border:1px solid #BFDBFE;"><i class="fas fa-award me-1"></i> Lembaga Penjaminan Mutu (LPM)</span>'
+                                : '<span class="badge rounded-pill px-2.5 py-1 bg-secondary text-white"><i class="fas fa-cloud-arrow-up me-1"></i> Pengunggah</span>'));
 
                     let statusBadge = '';
                     if (item.status_hasil === 'revisi_gpm') {
@@ -492,6 +494,8 @@
                         statusBadge = '<span class="badge bg-primary rounded-pill px-2.5 py-1 text-white"><i class="fas fa-paper-plane me-1"></i> Diteruskan ke LPM</span>';
                     } else if (item.status_hasil === 'revisi_lpm' || item.status_hasil === 'perlu_perbaikan') {
                         statusBadge = '<span class="badge bg-danger rounded-pill px-2.5 py-1 text-white"><i class="fas fa-triangle-exclamation me-1"></i> Minta Perbaikan (LPM)</span>';
+                    } else if (item.status_hasil === 'sudah_diperbaiki') {
+                        statusBadge = '<span class="badge rounded-pill px-2.5 py-1 text-white" style="background:#0284C7;"><i class="fas fa-paper-plane me-1"></i> Diajukan ke GPM</span>';
                     } else if (item.status_hasil === 'sesuai') {
                         statusBadge = '<span class="badge bg-success rounded-pill px-2.5 py-1 text-white"><i class="fas fa-circle-check me-1"></i> Disetujui LPM</span>';
                     } else {

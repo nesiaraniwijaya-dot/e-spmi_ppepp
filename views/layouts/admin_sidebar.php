@@ -53,7 +53,7 @@ try {
         $stmtPendingGpm = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
             WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
-              AND status_review IN ('menunggu_review_gpm', 'belum_direview') AND deleted_at IS NULL
+              AND status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL
         ");
         $stmtPendingGpm->execute([$sidebarFakultasId, $sidebarFakultasId]);
         $sidebarPendingGpmCount = (int)$stmtPendingGpm->fetchColumn();
@@ -71,7 +71,7 @@ try {
     } elseif (Auth::isLpm()) {
         $stmtPending = $sidebarDb->query("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE status_review IN ('menunggu_review_lpm', 'sudah_diperbaiki') AND deleted_at IS NULL
+            WHERE status_review = 'menunggu_review_lpm' AND deleted_at IS NULL
         ");
         $sidebarPendingReviewCount = (int)$stmtPending->fetchColumn();
     }

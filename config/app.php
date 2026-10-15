@@ -625,8 +625,9 @@ function render_review_status_badge(string $status, string $extraClasses = ''): 
     return match($status) {
         'draft' => '<span class="badge rounded-pill bg-secondary text-white ' . $extraClasses . '" style="font-size:0.75rem;"><i class="fas fa-file-pen me-1"></i> Draf</span>',
         'menunggu_review_gpm', 'belum_direview' => '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Menunggu Telaah GPM</span>',
+        'sudah_diperbaiki' => '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#E0F2FE; color:#0369A1; border-color:#BAE6FD !important; font-size:0.75rem;"><i class="fas fa-clock-rotate-left text-primary me-1"></i> Sudah Diperbaiki (Telaah GPM)</span>',
         'revisi_gpm' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#EF4444; border-color:#DC2626 !important; font-size:0.75rem;"><i class="fas fa-wrench me-1"></i> Perlu Revisi (GPM)</span>',
-        'menunggu_review_lpm', 'sudah_diperbaiki' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#2563EB; border-color:#1D4ED8 !important; font-size:0.75rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan ke LPM</span>',
+        'menunggu_review_lpm' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#2563EB; border-color:#1D4ED8 !important; font-size:0.75rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan ke LPM</span>',
         'revisi_lpm', 'perlu_perbaikan' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#DC2626; border-color:#B91C1C !important; font-size:0.75rem;"><i class="fas fa-triangle-exclamation me-1"></i> Perlu Revisi (LPM)</span>',
         'sesuai' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#16A34A; border-color:#15803D !important; font-size:0.75rem;"><i class="fas fa-circle-check me-1"></i> Disetujui LPM</span>',
         default => '<span class="badge rounded-pill bg-light text-dark border ' . $extraClasses . '" style="font-size:0.75rem;">' . htmlspecialchars($status) . '</span>'
@@ -640,8 +641,9 @@ function get_review_status_label(string $status): string {
     return match($status) {
         'draft' => 'Draf',
         'menunggu_review_gpm', 'belum_direview' => 'Menunggu Telaah GPM',
+        'sudah_diperbaiki' => 'Sudah Diperbaiki (Telaah GPM)',
         'revisi_gpm' => 'Perlu Revisi (GPM)',
-        'menunggu_review_lpm', 'sudah_diperbaiki' => 'Diteruskan ke LPM',
+        'menunggu_review_lpm' => 'Diteruskan ke LPM',
         'revisi_lpm', 'perlu_perbaikan' => 'Perlu Revisi (LPM)',
         'sesuai' => 'Disetujui LPM',
         default => ucfirst(str_replace('_', ' ', $status))

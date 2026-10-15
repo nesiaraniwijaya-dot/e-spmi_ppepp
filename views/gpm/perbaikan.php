@@ -198,7 +198,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                 </button>
                 <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
                     <i class="fas fa-clock-rotate-left text-primary"></i>
-                    <span>Menunggu Review LPM</span>
+                    <span>Sudah Diperbaiki (Telaah GPM)</span>
                     <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($sudahDocs) ?></span>
                 </button>
             </div>
@@ -504,10 +504,10 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                             <?php endif; ?>
                                         </td>
 
-                                        <!-- Status Review LPM -->
+                                        <!-- Status Review & Tahap -->
                                         <td class="py-3 px-3" style="border-end: 1px solid #F1F5F9;">
-                                            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
-                                                <i class="fas fa-hourglass-half"></i> Dalam Antrean LPM
+                                            <span class="badge rounded-pill border px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" style="background: #E0F2FE; color: #0369A1; border-color: #BAE6FD !important; font-size: 0.72rem;">
+                                                <i class="fas fa-clock-rotate-left"></i> Telaah GPM
                                             </span>
                                             <div class="text-muted small mt-1" style="font-size: 0.72rem;">
                                                 <i class="far fa-clock text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($doc['updated_at'])) ?> WIB
@@ -553,8 +553,8 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                         <!-- Aksi -->
                                         <td class="pe-4 py-3 text-center">
                                             <div class="d-inline-flex align-items-center gap-1.5">
-                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                                                    <i class="fas fa-eye"></i> Tinjau
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1 text-white" style="font-size: 0.78rem;">
+                                                    <i class="fas fa-clipboard-check"></i> Review
                                                 </a>
                                                 <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
                                                     <i class="fas fa-history text-secondary"></i>
@@ -696,8 +696,8 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                         <!-- Aksi -->
                                         <td class="pe-4 py-3 text-center">
                                             <div class="d-inline-flex align-items-center gap-1.5">
-                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                                                    <i class="fas fa-eye"></i> Detail
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1 text-white" style="font-size: 0.78rem;">
+                                                    <i class="fas fa-clipboard-check"></i> Review
                                                 </a>
                                                 <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
                                                     <i class="fas fa-history text-secondary"></i>

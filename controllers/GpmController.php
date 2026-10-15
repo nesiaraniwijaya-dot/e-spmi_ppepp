@@ -63,7 +63,7 @@ class GpmController extends Controller {
         $cycleStats['total'] = $cycleStats['penetapan'] + $cycleStats['pelaksanaan'] + $cycleStats['evaluasi'] + $cycleStats['pengendalian'] + $cycleStats['peningkatan'];
 
         // Statistik per status review (Mendukung alur bertingkat GPM -> LPM)
-        $menungguGpmCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('menunggu_review_gpm', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
+        $menungguGpmCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
         $menungguLpmCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'menunggu_review_lpm' AND deleted_at IS NULL")->fetchColumn();
         $revisiGpmCount   = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'revisi_gpm' AND deleted_at IS NULL")->fetchColumn();
         $revisiLpmCount   = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
@@ -91,7 +91,7 @@ class GpmController extends Controller {
             SELECT p.*, 
                    COUNT(DISTINCT CASE WHEN d.deleted_at IS NULL THEN d.id END) as total_doc,
                    COUNT(DISTINCT CASE WHEN d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND d.deleted_at IS NULL THEN d.id END) as perbaikan_doc,
-                   COUNT(DISTINCT CASE WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview') AND d.deleted_at IS NULL THEN d.id END) as pending_review_doc,
+                   COUNT(DISTINCT CASE WHEN d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND d.deleted_at IS NULL THEN d.id END) as pending_review_doc,
                    COUNT(DISTINCT CASE WHEN d.status_review = 'draft' AND d.deleted_at IS NULL THEN d.id END) as draft_doc
             FROM prodis p 
             LEFT JOIN ppepp_documents d ON p.id = d.prodi_id 
@@ -111,8 +111,8 @@ class GpmController extends Controller {
             LEFT JOIN prodis p ON d.prodi_id = p.id
             LEFT JOIN fakultas f ON d.fakultas_id = f.id
             LEFT JOIN users u ON d.user_id = u.id
-            WHERE {$scopeWhereAlias} AND d.status_review IN ('menunggu_review_gpm', 'belum_direview') AND d.deleted_at IS NULL 
-            ORDER BY d.created_at ASC 
+            WHERE {$scopeWhereAlias} AND d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND d.deleted_at IS NULL 
+            ORDER BY FIELD(d.status_review, 'sudah_diperbaiki', 'menunggu_review_gpm', 'belum_direview'), d.updated_at DESC 
             LIMIT 10
         ");
         $stmtPending->execute();
@@ -322,7 +322,7 @@ class GpmController extends Controller {
         // Urutan: Prioritaskan dokumen yang Menunggu Review GPM terlebih dahulu, lalu revisi, lalu menunggu LPM, lalu lainnya
         $sql .= " ORDER BY 
             CASE 
-                WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview') THEN 0
+                WHEN d.status_review IN ('sudah_diperbaiki', 'menunggu_review_gpm', 'belum_direview') THEN 0
                 WHEN d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') THEN 1
                 WHEN d.status_review = 'menunggu_review_lpm' THEN 2
                 ELSE 3
@@ -338,7 +338,7 @@ class GpmController extends Controller {
 
         // Hitung dokumen notifikasi aksi dalam lingkup GPM
         $scopeWhereSimple = "( (fakultas_id = {$this->fakultasId} AND level = 'fakultas') OR prodi_id IN ({$prodiIdPlaceholder}) )";
-        $gpmPendingReviewCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('menunggu_review_gpm', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
+        $gpmPendingReviewCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
         $gpmWaitingLpmCount    = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'menunggu_review_lpm' AND deleted_at IS NULL")->fetchColumn();
         $gpmRevisiGpmCount     = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'revisi_gpm' AND deleted_at IS NULL")->fetchColumn();
         $gpmRevisiLpmCount     = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();

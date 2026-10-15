@@ -542,13 +542,9 @@ foreach ($documents as $d) {
                                         </button>
 
                                         <!-- Review Button -->
-                                        <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview'])): ?>
+                                        <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])): ?>
                                             <button type="button" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs text-white" title="Telaah & Review Dokumen Ini" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.78rem; font-weight: 600;">
                                                 <i class="fas fa-clipboard-check"></i> Review
-                                            </button>
-                                        <?php elseif (in_array($doc['status_review'], ['revisi_lpm', 'perlu_perbaikan'])): ?>
-                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1 shadow-2xs" title="Tinjau Catatan Revisi LPM" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.75rem; font-weight: 600;">
-                                                <i class="fas fa-clipboard-list text-danger"></i> Tinjau
                                             </button>
                                         <?php elseif ($doc['status_review'] === 'menunggu_review_lpm'): ?>
                                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1 shadow-2xs" title="Tinjau Status di Antrean LPM" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.75rem;">
@@ -801,7 +797,7 @@ foreach ($documents as $d) {
                             <div class="modal-footer border-top pt-3">
                                 <button type="button" class="btn btn-light rounded-pill px-3.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
                                 <button type="button" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>">
-                                    <i class="fas fa-clipboard-check me-1.5"></i> <?= in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview']) ? 'Review Dokumen' : 'Tinjau Review' ?>
+                                    <i class="fas fa-clipboard-check me-1.5"></i> <?= in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'Review Dokumen' : 'Tinjau Review' ?>
                                 </button>
                             </div>
                         </div>
@@ -819,7 +815,7 @@ foreach ($documents as $d) {
                                     </div>
                                     <div>
                                         <h6 class="modal-title fw-bold text-white mb-0" style="font-size: 1.05rem;">
-                                            <?= in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview']) ? 'Review Dokumen Mutu (GPM)' : 'Status & Catatan Review Dokumen' ?>
+                                            <?= in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'Review Dokumen Mutu (GPM)' : 'Status & Catatan Review Dokumen' ?>
                                         </h6>
                                         <div class="text-white-50 small" style="font-size: 0.72rem;">Gugus Penjaminan Mutu &bull; Penilaian Tingkat Fakultas</div>
                                     </div>
@@ -847,15 +843,32 @@ foreach ($documents as $d) {
                                     </div>
                                 </div>
 
-                                <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview'])): ?>
+                                <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])): ?>
                                     <!-- FORM TELAAH AKTIF OLEH GPM -->
                                     <?php if ($doc['status_review'] === 'sudah_diperbaiki'): ?>
                                         <div class="alert alert-info border-info border-opacity-25 rounded-3 mb-3 d-flex align-items-start gap-2.5">
                                             <i class="fas fa-clock-rotate-left text-primary mt-1"></i>
                                             <div class="small">
                                                 <strong>Dokumen Telah Diperbaiki oleh Unit Sasaran:</strong>
-                                                <div class="text-muted mt-0.5">Unit telah mengunggah revisi terbaru berdasarkan evaluasi sebelumnya. Silakan periksa berkas/link dokumen sebelum menyetujui atau meminta perbaikan lanjutan.</div>
+                                                <div class="text-muted mt-0.5">Unit telah mengunggah revisi terbaru berdasarkan evaluasi sebelumnya. Silakan periksa berkas/link dokumen sebelum menyetujui untuk diteruskan ke LPM atau meminta perbaikan lanjutan.</div>
                                             </div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <!-- Catatan Evaluasi Sebelumnya (LPM / GPM) jika ada -->
+                                    <?php if (!empty($doc['catatan_review'])): ?>
+                                        <div class="p-3 rounded-3 mb-3 border border-warning-subtle bg-warning bg-opacity-10">
+                                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1.5">
+                                                <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
+                                                    <i class="fas fa-comment-dots text-warning"></i> Catatan Evaluasi Reviewer Sebelumnya:
+                                                </span>
+                                                <?php if (!empty($doc['lpm_reviewed_at']) || !empty($doc['reviewed_at']) || !empty($doc['gpm_reviewed_at'])): ?>
+                                                    <span class="badge bg-white text-secondary border px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                                        <i class="far fa-clock me-1 text-secondary opacity-75"></i><?= date('d M Y, H:i', strtotime($doc['lpm_reviewed_at'] ?? $doc['reviewed_at'] ?? $doc['gpm_reviewed_at'])) ?> WIB
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="bg-white p-3 rounded-3 border border-warning border-opacity-25 small text-dark" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($doc['catatan_review']) ?></div>
                                         </div>
                                     <?php endif; ?>
 
@@ -872,7 +885,7 @@ foreach ($documents as $d) {
                                             <div class="row g-2">
                                                 <div class="col-md-6">
                                                     <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
-                                                        <input type="radio" name="status_review" value="menunggu_review_lpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= (!in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan'])) ? 'checked' : '' ?> required>
+                                                        <input type="radio" name="status_review" value="menunggu_review_lpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= (!in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan', 'revisi_lpm'])) ? 'checked' : '' ?> required>
                                                         <div class="d-flex align-items-center gap-2.5 mb-1.5">
                                                             <div class="rounded-circle p-2 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                                                 <i class="fas fa-check"></i>
@@ -886,7 +899,7 @@ foreach ($documents as $d) {
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
-                                                        <input type="radio" name="status_review" value="revisi_gpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan']) ? 'checked' : '' ?> required>
+                                                        <input type="radio" name="status_review" value="revisi_gpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan', 'revisi_lpm']) ? 'checked' : '' ?> required>
                                                         <div class="d-flex align-items-center gap-2.5 mb-1.5">
                                                             <div class="rounded-circle p-2 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                                                 <i class="fas fa-triangle-exclamation"></i>
@@ -923,41 +936,6 @@ foreach ($documents as $d) {
                                             </div>
                                         </div>
                                     </form>
-
-                                <?php elseif (in_array($doc['status_review'], ['revisi_lpm', 'perlu_perbaikan'])): ?>
-                                    <!-- TAMPILAN INFORMASI DOKUMEN PERLU REVISI LPM -->
-                                    <div class="p-3.5 rounded-3 mb-3 border border-danger-subtle bg-danger bg-opacity-10">
-                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                            <span class="small fw-bold text-danger text-uppercase d-flex align-items-center gap-1.5">
-                                                <i class="fas fa-triangle-exclamation"></i> Catatan Evaluasi Reviewer LPM:
-                                            </span>
-                                            <span class="badge bg-danger text-white px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">
-                                                Perlu Revisi (LPM)
-                                            </span>
-                                        </div>
-                                        <div class="bg-white p-3 rounded-3 border border-danger border-opacity-25 small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.86rem;"><?= htmlspecialchars($doc['catatan_review'] ?? 'Tidak ada catatan tertulis.') ?></div>
-                                        <div class="small text-muted d-flex align-items-center gap-2 pt-1" style="font-size: 0.72rem;">
-                                            <span><i class="fas fa-building-columns text-primary me-1"></i>Pusat Penjaminan Mutu LPM</span>
-                                            <?php if (!empty($doc['reviewed_at']) || !empty($doc['lpm_reviewed_at'])): ?>
-                                                <span>&bull;</span>
-                                                <span><i class="far fa-clock text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($doc['lpm_reviewed_at'] ?? $doc['reviewed_at'])) ?> WIB</span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-
-                                    <div class="alert alert-light border rounded-3 p-3 mb-3">
-                                        <div class="fw-bold text-dark small mb-1"><i class="fas fa-info-circle text-primary me-1"></i> Status Dokumen: Menunggu Perbaikan Unit</div>
-                                        <p class="small text-muted mb-0" style="line-height: 1.5; font-size: 0.78rem;">
-                                            Dokumen ini dikembalikan oleh Pusat Penjaminan Mutu LPM untuk diperbaiki oleh unit sasaran (<strong><?= ($doc['level'] === 'fakultas') ? 'Dekanat Fakultas' : ('Prodi ' . htmlspecialchars($doc['nama_prodi'] ?? '')) ?></strong>). GPM bertugas memantau proses perbaikan. Setelah unit mengunggah revisi terbaru, Anda dapat menelaah kembali dokumen tersebut sebelum diteruskan ulang ke LPM.
-                                        </p>
-                                    </div>
-
-                                    <div class="d-flex align-items-center justify-content-between pt-3 border-top">
-                                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 btn-sm btn-review-history d-inline-flex align-items-center gap-1.5" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>">
-                                            <i class="fas fa-history"></i> Buka Riwayat Review Lengkap
-                                        </button>
-                                        <button type="button" class="btn btn-light rounded-pill px-4 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                                    </div>
 
                                 <?php elseif ($doc['status_review'] === 'menunggu_review_lpm'): ?>
                                     <!-- TAMPILAN DOKUMEN DALAM ANTREAN LPM -->

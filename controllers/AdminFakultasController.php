@@ -979,7 +979,7 @@ class AdminFakultasController extends Controller {
                 $newTahapReview  = null;
             } else {
                 if (in_array($newStatusReview, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'])) {
-                    $newStatusReview = 'menunggu_review_gpm';
+                    $newStatusReview = 'sudah_diperbaiki';
                     $newTahapReview  = 'gpm';
                 } elseif (in_array($newStatusReview, ['draft', 'belum_direview'])) {
                     $newStatusReview = 'menunggu_review_gpm';
@@ -1006,7 +1006,7 @@ class AdminFakultasController extends Controller {
             // Sinkronisasi seluruh sub bidang ke dokumen induk
             sync_document_sub_bidang($this->db, (int)$id, $allDocSubIds);
 
-            // Jika statusnya adalah perbaikan atas revisi yang diminta, catat ke riwayat revisi
+            // Jika statusnya adalah perbaikan atas revisi yang diminta, catat ke riwayat revisi dan reviews
             if ($newStatusReview === 'sudah_diperbaiki') {
                 $curUser = Auth::user();
                 $uploaderName = ($curUser['name'] ?? 'Admin Fakultas') . ' (Dekanat ' . ($this->fakultas['nama_fakultas'] ?? 'Fakultas') . ')';
@@ -1021,6 +1021,19 @@ class AdminFakultasController extends Controller {
                     $uploaderName,
                     Auth::role(),
                     $id
+                ]);
+
+                // Catat log pengajuan ulang revisi ke ppepp_document_reviews agar tercatat di Riwayat Review
+                $stmtRevLog = $this->db->prepare("
+                    INSERT INTO ppepp_document_reviews 
+                    (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
+                    VALUES (?, ?, 'admin_fakultas', ?, 'resubmission', ?, 'sudah_diperbaiki', 'Dokumen hasil revisi telah diunggah oleh Dekanat Fakultas dan diajukan kembali ke GPM untuk ditelaah.', NOW())
+                ");
+                $stmtRevLog->execute([
+                    $id,
+                    Auth::id(),
+                    $uploaderName,
+                    $existing['status_review'] ?? 'perlu_perbaikan'
                 ]);
             }
 
@@ -1040,7 +1053,7 @@ class AdminFakultasController extends Controller {
             }
 
             $msg = in_array($existing['status_review'], ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])
-                ? "Dokumen '{$namaDokumen}' berhasil diperbaiki dan statusnya kini 'Menunggu Review GPM' untuk ditinjau oleh Gugus Penjaminan Mutu Fakultas."
+                ? "Dokumen '{$namaDokumen}' berhasil diperbaiki dan statusnya kini 'Sudah Diperbaiki' untuk ditinjau kembali oleh Gugus Penjaminan Mutu (GPM) Fakultas sebelum diteruskan ke LPM."
                 : (($existing['status_review'] === 'draft')
                     ? "Dokumen '{$namaDokumen}' berhasil diajukan ke GPM Fakultas untuk direview."
                     : "Dokumen mutu fakultas berhasil diperbarui.");

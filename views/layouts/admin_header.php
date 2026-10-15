@@ -52,8 +52,8 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
             FROM ppepp_documents
             WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
-              AND status_review IN ('menunggu_review_gpm', 'belum_direview', 'revisi_lpm') AND deleted_at IS NULL
-            ORDER BY FIELD(status_review, 'menunggu_review_gpm', 'belum_direview', 'revisi_lpm'), updated_at DESC
+              AND status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL
+            ORDER BY FIELD(status_review, 'sudah_diperbaiki', 'menunggu_review_gpm', 'belum_direview'), updated_at DESC
         ");
         $stmt->execute([$headerFakultasId, $headerFakultasId]);
         $notificationItems = $stmt->fetchAll() ?: [];
@@ -68,7 +68,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
         $stmt = $headerDb->query("
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
             FROM ppepp_documents
-            WHERE status_review IN ('menunggu_review_lpm', 'sudah_diperbaiki') AND deleted_at IS NULL
+            WHERE status_review = 'menunggu_review_lpm' AND deleted_at IS NULL
             ORDER BY updated_at DESC
             LIMIT 15
         ");

@@ -621,10 +621,10 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <span>Riwayat</span>
                             </button>
 
-                            <!-- Tombol Pantau ke Halaman Perbaikan -->
-                            <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-light border btn-revision-action fw-semibold shadow-2xs d-inline-flex align-items-center gap-1.5 text-primary">
-                                <i class="fas fa-eye"></i>
-                                <span>Pantau</span>
+                            <!-- Tombol Review Langsung -->
+                            <a href="<?= base_url('gpm/dokumen?search=' . urlencode($item['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1.5 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1.5 text-white" style="font-size: 0.78rem;">
+                                <i class="fas fa-clipboard-check"></i>
+                                <span>Review</span>
                             </a>
                         </div>
                     </div>
