@@ -1114,6 +1114,19 @@ function goToGpmPage(page) {
 document.addEventListener('DOMContentLoaded', function() {
     renderGpmPagination();
 });
+
+// Explicit Bootstrap Modal Show Handler to guarantee opening upon click
+document.addEventListener('click', function(e) {
+    const trigger = e.target.closest('[data-bs-target^="#gpmReviewModal"], [data-bs-target^="#docModal"]');
+    if (!trigger) return;
+    const targetSelector = trigger.getAttribute('data-bs-target');
+    if (!targetSelector) return;
+    const modalEl = document.querySelector(targetSelector);
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+});
 </script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

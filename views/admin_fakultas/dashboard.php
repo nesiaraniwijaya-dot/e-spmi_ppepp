@@ -8,11 +8,22 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
 <div class="container-fluid p-0 admin-container">
     <!-- Header Banner -->
+    <?php 
+    $perluTindakanDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
+    $menungguVerifikasiDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
+    $totalRevisiCount = count($perluTindakanDocs) + count($menungguVerifikasiDocs);
+    $perluCount = count($perluTindakanDocs);
+    ?>
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1.5">
                 <span class="badge bg-dark-blue text-warning px-3 py-1">Fakultas <?= htmlspecialchars($fakultas['kode_fakultas']) ?></span>
                 <span class="badge bg-light text-secondary border">SPMI PPEPP Tingkat Fakultas</span>
+                <?php if ($perluCount > 0): ?>
+                    <a href="#sectionPerbaikanFakultas" class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 text-decoration-none fw-semibold shadow-2xs d-inline-flex align-items-center gap-1.5">
+                        <i class="fas fa-circle-exclamation"></i> <?= $perluCount ?> Dokumen Butuh Revisi
+                    </a>
+                <?php endif; ?>
             </div>
             <h3 class="fw-bold text-dark-blue mb-0">Panel Admin: <?= htmlspecialchars($fakultas['nama_fakultas']) ?></h3>
         </div>
@@ -25,41 +36,6 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             </a>
         </div>
     </div>
-
-    <!-- Alert Banner Perlu Perbaikan (Jika Ada Dokumen Direvisi LPM) -->
-    <?php 
-    $perluTindakanList = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
-    $perluCount = count($perluTindakanList);
-    if ($perluCount > 0): 
-    ?>
-        <div class="alert alert-danger border-danger border-2 rounded-4 p-3.5 mb-4 shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" 
-             style="background: linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%);">
-            <div class="d-flex align-items-center gap-3.5">
-                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; font-size: 1.25rem;">
-                    <i class="fas fa-triangle-exclamation fa-beat"></i>
-                </div>
-                <div>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge bg-danger rounded-pill px-2.5 py-0.5 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Tindakan Diperlukan</span>
-                        <span class="text-danger fw-bold small">&bull; <?= $perluCount ?> Dokumen Butuh Revisi</span>
-                    </div>
-                    <h6 class="fw-bold text-dark-blue mb-1" style="font-size: 1.02rem;">
-                        Pemberitahuan: Terdapat <?= $perluCount ?> dokumen tingkat fakultas yang memerlukan perbaikan dari LPM!
-                    </h6>
-                    <p class="text-muted small mb-0" style="font-size: 0.82rem;">
-                        Lembaga Penjaminan Mutu telah memberikan catatan evaluasi. Harap segera periksa dan perbarui berkas dokumen fakultas agar dapat disahkan.
-                    </p>
-                </div>
-            </div>
-            <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-end align-self-md-center">
-                <a href="<?= base_url('fakultas/perbaikan') ?>" class="btn btn-danger btn-sm rounded-pill px-4 py-2.5 fw-bold shadow-xs d-inline-flex align-items-center gap-2 text-nowrap" style="font-size: 0.84rem;">
-                    <i class="fas fa-wrench"></i>
-                    <span>Tindak Lanjuti Perbaikan</span>
-                    <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-        </div>
-    <?php endif; ?>
 
     <!-- Dekanat Profile Card -->
     <div class="card bg-white border-0 shadow-sm rounded-4 p-3.5 mb-4">
@@ -171,54 +147,37 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     </div>
 
-    <!-- Pusat Notifikasi & Ringkasan Perbaikan Dokumen dari LPM -->
-    <?php 
-    $perluTindakanDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
-    $menungguVerifikasiDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
-    $totalRevisiCount = count($perluTindakanDocs) + count($menungguVerifikasiDocs);
-    if ($totalRevisiCount > 0): 
-    ?>
-        <div class="dashboard-revision-box mb-4 shadow-sm" style="border-color: <?= !empty($perluTindakanDocs) ? '#FECACA' : '#BFDBFE' ?> !important;">
-            <!-- Header Ringkasan Beruang Bernapas -->
-            <div class="dashboard-revision-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3" 
-                 style="background: <?= !empty($perluTindakanDocs) ? 'linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%)' : 'linear-gradient(135deg, #EFF6FF 0%, #F8FAFC 100%)' ?>; border-bottom: 1px solid <?= !empty($perluTindakanDocs) ? '#FEE2E2' : '#DBEAFE' ?>;">
-                <div class="d-flex align-items-center gap-3.5">
-                    <div class="rounded-3 text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-2xs" 
-                         style="width: 48px; height: 48px; font-size: 1.25rem; background: <?= !empty($perluTindakanDocs) ? '#DC2626' : '#2563EB' ?>;">
+    <!-- Ringkasan Perbaikan Dokumen dari LPM (Minimalis & Ringkas) -->
+    <?php if ($totalRevisiCount > 0): ?>
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" id="sectionPerbaikanFakultas">
+            <!-- Header Ringkas & Elegan -->
+            <div class="px-4 py-3 bg-white border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center <?= !empty($perluTindakanDocs) ? 'bg-danger bg-opacity-10 text-danger' : 'bg-primary bg-opacity-10 text-primary' ?>" style="width: 40px; height: 40px; font-size: 1.1rem;">
                         <i class="fas <?= !empty($perluTindakanDocs) ? 'fa-wrench' : 'fa-clock-rotate-left' ?>"></i>
                     </div>
                     <div>
-                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1.5">
-                            <h6 class="fw-bold <?= !empty($perluTindakanDocs) ? 'text-danger' : 'text-primary' ?> mb-0" style="font-size: 1.05rem; letter-spacing: -0.2px;">
-                                Dokumen Fakultas Memerlukan Revisi Evaluasi LPM
+                        <div class="d-flex align-items-center gap-2 mb-0.5">
+                            <h6 class="fw-bold text-dark-blue mb-0" style="font-size: 0.98rem;">
+                                <?= !empty($perluTindakanDocs) ? 'Dokumen Fakultas Perlu Revisi' : 'Dokumen Menunggu Verifikasi LPM' ?>
                             </h6>
-                            <?php if (!empty($perluTindakanDocs)): ?>
-                                <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
-                                    <?= count($perluTindakanDocs) ?> Perlu Tindakan Segera
-                                </span>
-                            <?php endif; ?>
-                            <?php if (!empty($menungguVerifikasiDocs)): ?>
-                                <span class="badge rounded-pill bg-primary text-white px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
-                                    <?= count($menungguVerifikasiDocs) ?> Sedang Ditinjau LPM
-                                </span>
-                            <?php endif; ?>
+                            <span class="badge rounded-pill <?= !empty($perluTindakanDocs) ? 'bg-danger' : 'bg-primary' ?> text-white px-2 py-0.5 fw-bold" style="font-size: 0.7rem;">
+                                <?= count($perluTindakanDocs) ?: count($menungguVerifikasiDocs) ?> Dokumen
+                            </span>
                         </div>
-                        <p class="text-muted small mb-0" style="font-size: 0.83rem; line-height: 1.55;">
-                            <?= !empty($perluTindakanDocs) ? 'Terdapat catatan evaluasi LPM untuk dokumen tingkat fakultas yang harus segera disesuaikan.' : 'Berkas fakultas yang telah diperbaiki sedang dalam antrean verifikasi ulang tim LPM.' ?>
-                        </p>
+                        <div class="text-muted small" style="font-size: 0.78rem;">
+                            <?= !empty($perluTindakanDocs) ? 'Periksa catatan evaluasi LPM dan perbarui berkas dokumen mutu.' : 'Berkas perbaikan sedang dalam proses verifikasi tim LPM.' ?>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Right Action Button -->
-                <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                    <a href="<?= base_url('fakultas/perbaikan') ?>" class="btn <?= !empty($perluTindakanDocs) ? 'btn-danger' : 'btn-primary' ?> btn-sm rounded-pill px-4 py-2.5 fw-bold shadow-xs d-inline-flex align-items-center gap-2" style="font-size: 0.84rem;">
-                        <i class="fas fa-arrow-up-right-from-square"></i>
-                        <span>Buka Ruang Kerja Perbaikan</span>
-                    </a>
-                </div>
+                <a href="<?= base_url('fakultas/perbaikan') ?>" class="btn btn-outline-danger btn-sm rounded-pill px-3.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 align-self-start align-self-sm-center" style="font-size: 0.82rem;">
+                    <span>Buka Ruang Kerja Perbaikan</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
             </div>
 
-            <!-- List Ringkasan Maksimal 3 Dokumen Terkini (Spacious Breathing Room) -->
+            <!-- List Ringkasan Maksimal 3 Dokumen Terkini -->
             <div class="p-0 bg-white">
                 <?php 
                 $displayDocs = array_slice(array_merge($perluTindakanDocs, $menungguVerifikasiDocs), 0, 3);
@@ -229,61 +188,44 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         $noteExcerpt = $isPerlu ? 'Silakan periksa dan sesuaikan berkas dokumen tingkat fakultas.' : 'Menunggu review ulang LPM.';
                     }
                 ?>
-                    <div class="dashboard-revision-item d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3 gap-lg-4">
-                        <!-- Left: Status Icon, Title, and Badges with Generous Margins -->
-                        <div class="d-flex align-items-start gap-3.5 flex-grow-1" style="min-width: 0;">
-                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 mt-1 shadow-2xs" 
-                                 style="width: 44px; height: 44px; font-size: 1.15rem; background: <?= $isPerlu ? '#FEE2E2; color: #DC2626; border: 1px solid #FECACA;' : '#EFF6FF; color: #2563EB; border: 1px solid #BFDBFE;' ?>">
-                                <i class="fas <?= $isPerlu ? 'fa-triangle-exclamation' : 'fa-clock-rotate-left' ?>"></i>
+                    <div class="p-3 px-4 border-bottom d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3">
+                        <div class="d-flex align-items-start gap-3 flex-grow-1" style="min-width: 0;">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 mt-1" 
+                                 style="width: 38px; height: 38px; font-size: 1rem; background: <?= $isPerlu ? '#FEE2E2; color: #DC2626;' : '#EFF6FF; color: #2563EB;' ?>">
+                                <i class="fas <?= $isPerlu ? 'fa-circle-exclamation' : 'fa-clock-rotate-left' ?>"></i>
                             </div>
                             <div style="min-width: 0;" class="flex-grow-1">
-                                <!-- Line 1: Badges with margin bottom -->
-                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                                    <?php if ($isPerlu): ?>
-                                        <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.02em;">
-                                            <i class="fas fa-circle-exclamation me-1"></i> Perlu Tindakan
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge rounded-pill bg-primary text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.02em;">
-                                            <i class="fas fa-clock-rotate-left me-1"></i> Menunggu Review
-                                        </span>
-                                    <?php endif; ?>
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                    <span class="badge rounded-pill <?= $isPerlu ? 'bg-danger text-white' : 'bg-primary text-white' ?> px-2 py-0.5 fw-bold" style="font-size: 0.68rem;">
+                                        <?= $isPerlu ? 'Perlu Tindakan' : 'Menunggu Review' ?>
+                                    </span>
                                     <?= siklus_badge($item['siklus']) ?>
                                     <?php if (!empty($item['nomor_dokumen'])): ?>
-                                        <span class="badge bg-light text-secondary border px-2.5 py-1" style="font-size: 0.7rem;">
+                                        <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.68rem;">
                                             <i class="fas fa-hashtag me-0.5 opacity-75"></i><?= htmlspecialchars($item['nomor_dokumen']) ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
 
-                                <!-- Line 2: Document Title with comfortable breathing room -->
-                                <h6 class="mb-2 fw-bold" style="font-size: 1rem; line-height: 1.55;">
+                                <h6 class="mb-1 fw-bold" style="font-size: 0.95rem; line-height: 1.45;">
                                     <a href="<?= base_url('fakultas/dokumen/edit/' . $item['id']) ?>" class="text-dark-blue text-decoration-none hover-primary">
                                         <?= htmlspecialchars($item['nama_dokumen']) ?>
                                     </a>
                                 </h6>
 
-                                <!-- Reviewer Meta -->
-                                <div class="d-inline-flex flex-wrap align-items-center gap-2 text-muted px-2.5 py-1 rounded-pill bg-light border mt-1" style="font-size: 0.76rem;">
-                                    <span class="d-inline-flex align-items-center gap-1.5">
-                                        <i class="fas fa-building-columns text-primary"></i>
-                                        <span><strong class="text-dark">Pusat Penjaminan Mutu LPM</strong></span>
-                                    </span>
+                                <div class="d-inline-flex flex-wrap align-items-center gap-2 text-muted" style="font-size: 0.74rem;">
+                                    <span><i class="fas fa-building-columns text-primary me-1"></i>Pusat Penjaminan Mutu LPM</span>
                                     <?php if (!empty($item['reviewed_at'])): ?>
-                                        <span class="text-secondary opacity-50">&bull;</span>
-                                        <span class="d-inline-flex align-items-center gap-1">
-                                             <i class="far fa-calendar-check text-secondary"></i>
-                                            <span><?= date('d M Y, H:i', strtotime($item['reviewed_at'])) ?> WIB</span>
-                                        </span>
+                                        <span>&bull;</span>
+                                        <span><i class="far fa-calendar-check text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($item['reviewed_at'])) ?> WIB</span>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right: Action Buttons Symmetrically Aligned -->
-                        <div class="dashboard-revision-actions align-self-start align-self-lg-center pt-2 pt-lg-0">
-                            <!-- Tombol Lihat Catatan Evaluator (Modal Popup) -->
-                            <button type="button" class="btn btn-outline-secondary btn-revision-note shadow-2xs fw-semibold"
+                        <!-- Right Actions -->
+                        <div class="d-inline-flex align-items-center gap-2 align-self-start align-self-lg-center flex-shrink-0">
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1.5"
                                     data-bs-toggle="modal" 
                                     data-bs-target="#modalCatatanEvaluator"
                                     data-nama="<?= htmlspecialchars($item['nama_dokumen']) ?>"
@@ -292,35 +234,31 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                     data-siklus="<?= htmlspecialchars($item['siklus'] ?? '') ?>"
                                     data-status="<?= $isPerlu ? 'perlu_perbaikan' : 'sudah_diperbaiki' ?>"
-                                    data-edit-url="<?= base_url('fakultas/dokumen/edit/' . $item['id']) ?>">
-                                <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?> me-2"></i>
+                                    data-edit-url="<?= base_url('fakultas/dokumen/edit/' . $item['id']) ?>"
+                                    style="font-size: 0.8rem;">
+                                <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?>"></i>
                                 <span>Lihat Catatan</span>
                             </button>
 
                             <?php if ($isPerlu): ?>
-                                <a href="<?= base_url('fakultas/dokumen/edit/' . $item['id']) ?>" class="btn btn-danger btn-revision-action fw-bold shadow-xs">
-                                    <i class="fas fa-wrench me-2"></i>
+                                <a href="<?= base_url('fakultas/dokumen/edit/' . $item['id']) ?>" class="btn btn-danger btn-sm rounded-pill px-3.5 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
+                                    <i class="fas fa-wrench"></i>
                                     <span>Perbaiki</span>
                                 </a>
                             <?php else: ?>
-                                <span class="badge bg-light text-primary border border-primary-subtle btn-revision-action fw-semibold">
-                                    <i class="fas fa-hourglass-half text-primary me-2"></i>
-                                    <span>Dalam Antrean</span>
+                                <span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 0.78rem;">
+                                    <i class="fas fa-hourglass-half me-1"></i> Dalam Antrean
                                 </span>
                             <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
 
-                <!-- Footer Tautan ke Ruang Kerja Perbaikan dengan Ruang Lega -->
-                <div class="dashboard-revision-footer d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2.5">
-                    <span class="text-muted d-flex align-items-center gap-1.5">
-                        <i class="fas fa-list-check text-secondary"></i>
-                        <span>Menampilkan <strong><?= count($displayDocs) ?></strong> dari total <strong><?= $totalRevisiCount ?></strong> dokumen perbaikan.</span>
-                    </span>
-                    <a href="<?= base_url('fakultas/perbaikan') ?>" class="text-danger fw-bold text-decoration-none hover-underline d-inline-flex align-items-center gap-1.5">
-                        <span>Buka Menu Perbaikan Dokumen Lengkap</span>
-                        <i class="fas fa-arrow-right"></i>
+                <!-- Footer Minimalis -->
+                <div class="px-4 py-2.5 bg-light bg-opacity-50 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 small text-muted" style="font-size: 0.78rem;">
+                    <span>Menampilkan <strong><?= count($displayDocs) ?></strong> dari total <strong><?= $totalRevisiCount ?></strong> dokumen perbaikan</span>
+                    <a href="<?= base_url('fakultas/perbaikan') ?>" class="text-danger fw-semibold text-decoration-none">
+                        Lihat Seluruh Dokumen Perbaikan <i class="fas fa-arrow-right ms-1"></i>
                     </a>
                 </div>
             </div>
