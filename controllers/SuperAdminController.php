@@ -791,15 +791,21 @@ class SuperAdminController extends Controller {
             $fakId = (int)$fak['id'];
 
             // Ambil seluruh cycle di fakultas ini (baik level fakultas maupun prodi di bawahnya)
-            $stmtCycles = $this->db->prepare("
-                SELECT c.*, p.nama_prodi, p.jenjang
-                FROM ppepp_cycles c
-                LEFT JOIN prodis p ON c.prodi_id = p.id
-                WHERE (c.fakultas_id = ? OR p.fakultas_id = ?) AND c.deleted_at IS NULL
-                ORDER BY c.created_at DESC
-            ");
-            $stmtCycles->execute([$fakId, $fakId]);
-            $cycles = $stmtCycles->fetchAll();
+            $cycles = [];
+            try {
+                $stmtCycles = $this->db->prepare("
+                    SELECT c.*, p.nama_prodi, p.jenjang
+                    FROM ppepp_cycles c
+                    LEFT JOIN prodis p ON c.prodi_id = p.id
+                    WHERE (c.fakultas_id = ? OR p.fakultas_id = ?) AND c.deleted_at IS NULL
+                    ORDER BY c.created_at DESC
+                ");
+                $stmtCycles->execute([$fakId, $fakId]);
+                $cycles = $stmtCycles->fetchAll();
+            } catch (\PDOException $e) {
+                // Defensive fallback jika tabel ppepp_cycles belum siap / sedang dimigrasi
+                $cycles = [];
+            }
 
             $totalFakultasPct = 0;
             $totalFakultasDocs = 0;
@@ -811,15 +817,20 @@ class SuperAdminController extends Controller {
             foreach ($cycles as $c) {
                 $cycleId = (int)$c['id'];
 
-                $stmtDocs = $this->db->prepare("
-                    SELECT id, nama_dokumen, nomor_dokumen, siklus, status_review, catatan_review, reviewed_by, reviewed_at,
-                           file_path, external_link, created_at, updated_at
-                    FROM ppepp_documents
-                    WHERE cycle_id = ? AND deleted_at IS NULL
-                    ORDER BY id ASC
-                ");
-                $stmtDocs->execute([$cycleId]);
-                $docs = $stmtDocs->fetchAll();
+                $docs = [];
+                try {
+                    $stmtDocs = $this->db->prepare("
+                        SELECT id, nama_dokumen, nomor_dokumen, siklus, status_review, catatan_review, reviewed_by, reviewed_at,
+                               file_path, external_link, created_at, updated_at
+                        FROM ppepp_documents
+                        WHERE cycle_id = ? AND deleted_at IS NULL
+                        ORDER BY id ASC
+                    ");
+                    $stmtDocs->execute([$cycleId]);
+                    $docs = $stmtDocs->fetchAll();
+                } catch (\PDOException $e) {
+                    $docs = [];
+                }
 
                 $stages = [
                     'penetapan'    => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],

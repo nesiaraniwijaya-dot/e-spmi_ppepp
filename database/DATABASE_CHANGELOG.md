@@ -73,6 +73,18 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
      - `lpm_reviewed_by`, `lpm_reviewed_at`, `lpm_catatan`.
    - Skrip migrasi terpasang: `database/migration_gpm_review_workflow.php`.
 
+9. **Penyesuaian Siklus PPEPP (`ppepp_cycles`), Pembersihan Data Review Lama LPM, dan Reset Dokumen ke Telaah GPM (15 Oktober 2026)**:
+   - **Tabel `ppepp_cycles`**: Menampung siklus berkelanjutan per judul dokumen untuk rekapitulasi capaian mutu pada Review Hub (`SuperAdminController`).
+   - **Tabel `ppepp_document_revisions`**: Menampung riwayat versi berkas revisi.
+   - **Kolom `ppepp_documents.cycle_id`**: Menghubungkan setiap dokumen ke `ppepp_cycles`.
+   - **Reset Status Dokumen ke Antrean Telaah GPM**:
+     - Seluruh dokumen mutu yang telah diunggah diatur ulang ke `status_review = 'menunggu_review_gpm'` dan `tahap_review = 'gpm'`.
+     - Seluruh catatan review dan evaluator sebelumnya di-reset menjadi `NULL`.
+   - **Pembersihan Riwayat Review Lama**:
+     - Data review lampau LPM dan catatan uji coba dibersihkan dari `ppepp_document_reviews` & `ppepp_document_revisions` agar proses telaah dokumen oleh GPM dapat dimulai dari awal secara bersih.
+   - **Defensive Error Handling**: Ditambahkan blok `try-catch` pada `SuperAdminController`, `AdminProdiController`, dan `AdminFakultasController` agar akses modul tetap aman tanpa unhandled PDOException.
+   - Skrip maintenance: `database/reset_reviews_to_gpm_and_cleanup.php`.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
@@ -83,3 +95,4 @@ mysql -u root spmi_ppepp < database/spmi_ppepp.sql
 atau melalui phpMyAdmin:
 1. Buat/pilih database `spmi_ppepp`.
 2. Klik tab **Import**, pilih berkas `database/spmi_ppepp.sql`, lalu klik **Import**.
+

@@ -566,21 +566,25 @@ class AdminFakultasController extends Controller {
                     // Pastikan terhubung ke ppepp_cycles (Siklus Berkelanjutan Tingkat Fakultas)
                     $cycleId = !empty($d['cycle_id']) ? (int)$d['cycle_id'] : null;
                     if (!$cycleId) {
-                        $stmtCheckCyc = $this->db->prepare("SELECT id FROM ppepp_cycles WHERE judul_siklus = ? AND fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL LIMIT 1");
-                        $stmtCheckCyc->execute([$namaDokumen, $this->fakultasId]);
-                        $foundCyc = $stmtCheckCyc->fetchColumn();
-                        if ($foundCyc) {
-                            $cycleId = (int)$foundCyc;
-                        } else {
-                            $stmtInsCyc = $this->db->prepare("
-                                INSERT INTO ppepp_cycles (judul_siklus, level, prodi_id, fakultas_id, bidang_id, sub_bidang_id, tahun_akademik, deskripsi, created_by, created_at)
-                                VALUES (?, 'fakultas', NULL, ?, ?, ?, ?, ?, ?, NOW())
-                            ");
-                            $stmtInsCyc->execute([
-                                $namaDokumen, $this->fakultasId,
-                                $bidangId, $subBidangId, $tahunAkademik, $deskripsi, Auth::id()
-                            ]);
-                            $cycleId = (int)$this->db->lastInsertId();
+                        try {
+                            $stmtCheckCyc = $this->db->prepare("SELECT id FROM ppepp_cycles WHERE judul_siklus = ? AND fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL LIMIT 1");
+                            $stmtCheckCyc->execute([$namaDokumen, $this->fakultasId]);
+                            $foundCyc = $stmtCheckCyc->fetchColumn();
+                            if ($foundCyc) {
+                                $cycleId = (int)$foundCyc;
+                            } else {
+                                $stmtInsCyc = $this->db->prepare("
+                                    INSERT INTO ppepp_cycles (judul_siklus, level, prodi_id, fakultas_id, bidang_id, sub_bidang_id, tahun_akademik, deskripsi, created_by, created_at)
+                                    VALUES (?, 'fakultas', NULL, ?, ?, ?, ?, ?, ?, NOW())
+                                ");
+                                $stmtInsCyc->execute([
+                                    $namaDokumen, $this->fakultasId,
+                                    $bidangId, $subBidangId, $tahunAkademik, $deskripsi, Auth::id()
+                                ]);
+                                $cycleId = (int)$this->db->lastInsertId();
+                            }
+                        } catch (\PDOException $e) {
+                            $cycleId = null;
                         }
                     }
 
