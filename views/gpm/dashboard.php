@@ -493,37 +493,37 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         <div class="dashboard-revision-box mb-4 shadow-sm" style="border-color: <?= !empty($perluTindakanDocs) ? '#FECACA' : '#BFDBFE' ?> !important;">
             <!-- Header Ringkasan Status Revisi -->
             <div class="dashboard-revision-header d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3"
-                 style="background: <?= !empty($perluTindakanDocs) ? 'linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%)' : 'linear-gradient(135deg, #EFF6FF 0%, #F0F7FF 100%)' ?>;">
+                 style="background: linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%);">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" 
-                         style="width: 46px; height: 46px; font-size: 1.25rem; background: <?= !empty($perluTindakanDocs) ? '#DC2626; color: #ffffff;' : '#2563EB; color: #ffffff;' ?>">
-                        <i class="fas <?= !empty($perluTindakanDocs) ? 'fa-wrench fa-beat-fade' : 'fa-clock-rotate-left' ?>"></i>
+                         style="width: 46px; height: 46px; font-size: 1.25rem; background: #DC2626; color: #ffffff;">
+                        <i class="fas fa-clipboard-list"></i>
                     </div>
                     <div>
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                            <h5 class="fw-bold mb-0" style="color: <?= !empty($perluTindakanDocs) ? '#991B1B' : '#1E40AF' ?>; font-size: 1.12rem; letter-spacing: -0.2px;">
-                                Dokumen Memerlukan Revisi Evaluasi LPM
+                            <h5 class="fw-bold mb-0" style="color: #991B1B; font-size: 1.12rem; letter-spacing: -0.2px;">
+                                Monitoring Dokumen Perlu Revisi (Unit Prodi &amp; Dekanat)
                             </h5>
                             <?php if (count($perluTindakanDocs) > 0): ?>
                                 <span class="badge bg-danger rounded-pill px-2.5 py-1 fw-bold shadow-2xs" style="font-size: 0.72rem;">
-                                    <?= count($perluTindakanDocs) ?> Perlu Tindakan Segera
+                                    <?= count($perluTindakanDocs) ?> Menunggu Revisi Unit
                                 </span>
                             <?php endif; ?>
                             <?php if (count($sudahDiperbaikiDocs) > 0): ?>
                                 <span class="badge bg-primary rounded-pill px-2.5 py-1 fw-semibold shadow-2xs" style="font-size: 0.72rem;">
-                                    <?= count($sudahDiperbaikiDocs) ?> Sedang Ditinjau LPM
+                                    <?= count($sudahDiperbaikiDocs) ?> Antrean Telaah Ulang
                                 </span>
                             <?php endif; ?>
                         </div>
                         <p class="text-secondary small mb-0" style="font-size: 0.84rem; line-height: 1.45;">
-                            Terdapat catatan evaluasi dari Pusat Penjaminan Mutu LPM yang harus diperbaiki agar berkas dapat disahkan.
+                            Daftar dokumen mutu unit binaan yang memerlukan tindak lanjut perbaikan berdasarkan catatan telaah evaluasi LPM / GPM.
                         </p>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                    <a href="<?= base_url('gpm/perbaikan') ?>" class="btn <?= !empty($perluTindakanDocs) ? 'btn-danger' : 'btn-primary' ?> rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2" style="font-size: 0.85rem;">
-                        <i class="fas fa-arrow-up-right-from-square"></i>
-                        <span>Buka Ruang Kerja Perbaikan</span>
+                    <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                        <i class="fas fa-list-check"></i>
+                        <span>Buka Monitoring Revisi</span>
                     </a>
                 </div>
             </div>
@@ -551,15 +551,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <div style="min-width: 0;" class="flex-grow-1">
                                 <!-- Badges -->
                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                                    <?php if ($isPerlu): ?>
-                                        <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
-                                            <i class="fas fa-circle-exclamation me-1"></i> Perlu Tindakan
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge rounded-pill bg-primary text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
-                                            <i class="fas fa-clock-rotate-left me-1"></i> Menunggu Review
-                                        </span>
-                                    <?php endif; ?>
+                                    <?= render_review_status_badge($item['status_review'], $item['tahap_review'] ?? null) ?>
                                     
                                     <!-- Unit Badge -->
                                     <?php if ($isFakultas): ?>
@@ -582,7 +574,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                                 <!-- Document Title -->
                                 <h6 class="mb-2 fw-bold" style="font-size: 1rem; line-height: 1.55;">
-                                    <a href="<?= base_url('gpm/dokumen/edit/' . $item['id']) ?>" class="text-dark-blue text-decoration-none hover-primary">
+                                    <a href="<?= base_url('gpm/perbaikan') ?>" class="text-dark-blue text-decoration-none hover-primary">
                                         <?= htmlspecialchars($item['nama_dokumen']) ?>
                                     </a>
                                 </h6>
@@ -605,7 +597,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         </div>
 
                         <!-- Right: Action Buttons Symmetrically Aligned -->
-                        <div class="dashboard-revision-actions align-self-start align-self-lg-center pt-2 pt-lg-0">
+                        <div class="dashboard-revision-actions align-self-start align-self-lg-center pt-2 pt-lg-0 d-flex flex-wrap align-items-center gap-2">
                             <!-- Tombol Lihat Catatan Evaluator (Modal Popup) -->
                             <button type="button" class="btn btn-outline-secondary btn-revision-note shadow-2xs fw-semibold"
                                     data-bs-toggle="modal" 
@@ -616,22 +608,24 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                     data-siklus="<?= htmlspecialchars($item['siklus'] ?? '') ?>"
                                     data-status="<?= $isPerlu ? 'perlu_perbaikan' : 'sudah_diperbaiki' ?>"
-                                    data-edit-url="<?= base_url('gpm/dokumen/edit/' . $item['id']) ?>">
+                                    data-edit-url="<?= base_url('gpm/perbaikan') ?>">
                                 <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?> me-2"></i>
                                 <span>Lihat Catatan</span>
                             </button>
 
-                            <?php if ($isPerlu): ?>
-                                <a href="<?= base_url('gpm/dokumen/edit/' . $item['id']) ?>" class="btn btn-danger btn-revision-action fw-bold shadow-xs">
-                                    <i class="fas fa-wrench me-2"></i>
-                                    <span>Perbaiki</span>
-                                </a>
-                            <?php else: ?>
-                                <span class="badge bg-light text-primary border border-primary-subtle btn-revision-action fw-semibold">
-                                    <i class="fas fa-hourglass-half text-primary me-2"></i>
-                                    <span>Dalam Antrean</span>
-                                </span>
-                            <?php endif; ?>
+                            <!-- Tombol Riwayat Review -->
+                            <button type="button" class="btn btn-outline-secondary btn-revision-action btn-review-history fw-semibold shadow-2xs d-inline-flex align-items-center gap-1.5"
+                                    data-doc-id="<?= $item['id'] ?>"
+                                    title="Lihat Riwayat Review">
+                                <i class="fas fa-history text-secondary"></i>
+                                <span>Riwayat</span>
+                            </button>
+
+                            <!-- Tombol Pantau ke Halaman Perbaikan -->
+                            <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-light border btn-revision-action fw-semibold shadow-2xs d-inline-flex align-items-center gap-1.5 text-primary">
+                                <i class="fas fa-eye"></i>
+                                <span>Pantau</span>
+                            </a>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -813,9 +807,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             </div>
             <div class="modal-footer border-top py-2.5 px-4 bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                <a href="#" id="evalModalEditBtn" class="btn btn-danger btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2">
-                    <i class="fas fa-wrench me-1"></i>
-                    <span>Perbaiki Dokumen Sekarang</span>
+                <a href="<?= base_url('gpm/perbaikan') ?>" id="evalModalEditBtn" class="btn btn-primary bg-scu-blue border-0 btn-sm rounded-pill px-4 py-2 fw-semibold shadow-xs d-inline-flex align-items-center gap-2">
+                    <i class="fas fa-arrow-up-right-from-square me-1"></i>
+                    <span>Pantau di Ruang Monitoring</span>
                 </a>
             </div>
         </div>
@@ -849,16 +843,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (catEl) catEl.textContent = catatan;
             
             if (editBtn) {
-                editBtn.href = editUrl;
-                if (status === 'sudah_diperbaiki') {
-                    editBtn.className = 'btn btn-outline-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
-                    editBtn.innerHTML = '<i class="fas fa-pen-to-square me-1"></i> <span>Ubah / Lengkapi Berkas</span>';
-                    if (iconEl) iconEl.style.background = '#2563EB';
-                } else {
-                    editBtn.className = 'btn btn-danger btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
-                    editBtn.innerHTML = '<i class="fas fa-wrench me-1"></i> <span>Perbaiki Dokumen Sekarang</span>';
-                    if (iconEl) iconEl.style.background = '#DC2626';
-                }
+                editBtn.href = '<?= base_url("gpm/perbaikan") ?>';
+                editBtn.className = 'btn btn-primary bg-scu-blue border-0 btn-sm rounded-pill px-4 py-2 fw-semibold shadow-xs d-inline-flex align-items-center gap-2';
+                editBtn.innerHTML = '<i class="fas fa-arrow-up-right-from-square me-1"></i> <span>Pantau di Ruang Monitoring</span>';
             }
         });
     }

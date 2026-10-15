@@ -29,12 +29,12 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                 </span>
                 <span class="text-muted small">&bull;</span>
                 <span class="badge rounded-pill px-2.5 py-1 fw-semibold text-danger d-inline-flex align-items-center gap-1" style="background: #FEF2F2; border: 1px solid #FECACA; font-size: 0.75rem;">
-                    <i class="fas fa-wrench"></i> Ruang Kerja Perbaikan
+                    <i class="fas fa-clipboard-check"></i> Monitoring Revisi Dokumen
                 </span>
             </div>
-            <h3 class="fw-bold text-dark-blue mb-1" style="letter-spacing: -0.3px;">Perbaikan Dokumen Mutu</h3>
+            <h3 class="fw-bold text-dark-blue mb-1" style="letter-spacing: -0.3px;">Monitoring Revisi Dokumen Mutu</h3>
             <p class="text-muted small mb-0" style="line-height: 1.5;">
-                Tindak lanjuti dokumen mutu tingkat <strong>Fakultas</strong> dan seluruh <strong>Program Studi</strong> di bawah naungan <strong><?= htmlspecialchars($fakultas['nama_fakultas'] ?? '') ?></strong> yang memperoleh catatan evaluasi dari Lembaga Penjaminan Mutu (LPM).
+                Pantau dokumen mutu tingkat <strong>Fakultas</strong> dan seluruh <strong>Program Studi</strong> di bawah naungan <strong><?= htmlspecialchars($fakultas['nama_fakultas'] ?? '') ?></strong> yang memperoleh catatan evaluasi dari LPM atau GPM agar segera ditindaklanjuti oleh unit sasaran.
             </p>
         </div>
         <div class="d-flex flex-wrap gap-2">
@@ -971,8 +971,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (editBtn) {
                 editBtn.href = editUrl;
                 if (status === 'sudah_diperbaiki') {
-                    editBtn.className = 'btn btn-outline-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
-                    editBtn.innerHTML = '<i class="fas fa-pen-to-square me-1"></i> <span>Ubah / Lengkapi Berkas</span>';
+                    editBtn.className = 'btn btn-primary bg-scu-blue border-0 btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
+                    editBtn.innerHTML = '<i class="fas fa-clipboard-check me-1"></i> <span>Review Hasil Perbaikan</span>';
                     if (iconEl) iconEl.style.background = '#2563EB';
                     if (catEl) {
                         catEl.style.background = '#EFF6FF';
@@ -986,8 +986,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         shieldIcon.className = 'fas fa-user-shield text-primary';
                     }
                 } else {
-                    editBtn.className = 'btn btn-danger btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
-                    editBtn.innerHTML = '<i class="fas fa-wrench me-1"></i> <span>Perbaiki Dokumen Sekarang</span>';
+                    editBtn.className = 'btn btn-primary bg-scu-blue border-0 btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2';
+                    editBtn.innerHTML = '<i class="fas fa-clipboard-list me-1"></i> <span>Tinjau Dokumen di Ruang Telaah</span>';
                     if (iconEl) iconEl.style.background = '#DC2626';
                     if (catEl) {
                         catEl.style.background = '#FFF1F2';

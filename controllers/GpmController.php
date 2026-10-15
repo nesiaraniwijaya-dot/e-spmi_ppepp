@@ -372,7 +372,7 @@ class GpmController extends Controller {
      * Alur: Dokumen Prodi/Fakultas -> Direview GPM -> Jika Sesuai, Diteruskan ke LPM -> Jika Belum, Minta Revisi ke Pengunggah
      */
     public function submitReview(): void {
-        $docId         = !empty($_POST['document_id']) ? (int)$_POST['document_id'] : 0;
+        $docId         = !empty($_POST['document_id']) ? (int)$_POST['document_id'] : (!empty($_POST['id']) ? (int)$_POST['id'] : 0);
         $statusReview  = trim($_POST['status_review'] ?? '');
         $catatanReview = trim($_POST['catatan_review'] ?? '');
         $redirectUrl   = trim($_POST['redirect_to'] ?? 'gpm/dokumen');
