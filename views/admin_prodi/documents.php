@@ -410,30 +410,44 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <div class="d-flex flex-column align-items-start gap-1">
                                         <?= render_review_status_badge($status, $doc['tahap_review'] ?? null) ?>
 
-                                        <?php if (in_array($status, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])): ?>
+                                        <?php if (in_array($status, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])): 
+                                            $isGpmRev = ($status === 'revisi_gpm');
+                                            $noteText = $isGpmRev ? ($doc['gpm_catatan'] ?: $doc['catatan_review']) : ($doc['catatan_review'] ?: $doc['gpm_catatan']);
+                                            $reviewerName = $isGpmRev ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
+                                            $revDate = !empty($doc['gpm_reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['gpm_reviewed_at'])) : (!empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : '');
+                                        ?>
                                             <div class="d-flex flex-wrap gap-1 mt-0.5">
-                                                <?php if (!empty($doc['catatan_review']) || !empty($doc['gpm_catatan']) || !empty($doc['lpm_catatan'])): ?>
+                                                <?php if (!empty($noteText)): ?>
                                                     <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs btn-prodi-note" 
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#prodiViewNoteModal"
                                                             data-id="<?= $doc['id'] ?>"
                                                             data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
-                                                            data-notes="<?= htmlspecialchars($doc['catatan_review'] ?? $doc['gpm_catatan'] ?? $doc['lpm_catatan'] ?? '', ENT_QUOTES) ?>"
-                                                            data-reviewer="<?= ($status === 'revisi_gpm') ? 'GPM Fakultas' : 'LPM Universitas' ?>"
-                                                            data-date="<?= !empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : '' ?>"
+                                                            data-notes="<?= htmlspecialchars($noteText ?? '', ENT_QUOTES) ?>"
+                                                            data-reviewer="<?= htmlspecialchars($reviewerName, ENT_QUOTES) ?>"
+                                                            data-date="<?= $revDate ?>"
                                                             data-status="<?= $status ?>"
                                                             data-edit-url="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>"
                                                             style="font-size: 0.7rem;">
-                                                        <i class="fas fa-comment-dots"></i> Catatan <?= ($status === 'revisi_gpm') ? 'GPM' : 'LPM' ?>
+                                                        <i class="fas fa-comment-dots"></i> Catatan <?= $isGpmRev ? 'GPM' : 'LPM' ?>
                                                     </button>
                                                 <?php endif; ?>
                                                 <a href="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>" class="btn btn-xs btn-danger text-white rounded-pill px-2.5 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs text-decoration-none" style="font-size: 0.7rem;">
                                                     <i class="fas fa-wrench"></i> Perbaiki
                                                 </a>
                                             </div>
+                                        <?php elseif (!empty($doc['gpm_catatan'])): ?>
+                                            <div class="p-1.5 rounded text-start mt-0.5" style="background: #FEF3C7; border: 1px solid #FCD34D; max-width: 230px;">
+                                                <div class="fw-bold text-warning-emphasis d-flex align-items-center gap-1" style="font-size: 0.68rem;">
+                                                    <i class="fas fa-shield-halved text-warning"></i> Catatan GPM:
+                                                </div>
+                                                <div class="text-truncate text-secondary" style="font-size: 0.68rem;" title="<?= htmlspecialchars($doc['gpm_catatan']) ?>">
+                                                    <?= htmlspecialchars($doc['gpm_catatan']) ?>
+                                                </div>
+                                            </div>
                                         <?php endif; ?>
 
-                                        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5 btn-review-history d-inline-flex align-items-center gap-1 mt-0.5 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" style="font-size: 0.68rem;">
+                                        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5 btn-review-history d-inline-flex align-items-center gap-1 mt-0.5 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>" style="font-size: 0.68rem;">
                                             <i class="fas fa-history text-secondary"></i> Riwayat Review
                                         </button>
                                     </div>
@@ -525,23 +539,29 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                 </div>
                                             </div>
 
-                                            <!-- Catatan Evaluasi LPM -->
-                                            <?php if (!empty($doc['catatan_review'])): ?>
-                                                <div class="p-3 rounded-3 mb-3 border <?= $status === 'perlu_perbaikan' ? 'border-danger' : 'border-primary' ?>" style="background: <?= $status === 'perlu_perbaikan' ? '#FFF1F2' : '#EFF6FF' ?>; border-left: 4px solid <?= $status === 'perlu_perbaikan' ? '#DC2626' : '#2563EB' ?> !important;">
+                                            <!-- Catatan Evaluasi Reviewer (GPM / LPM) -->
+                                            <?php 
+                                            $isGpm = ($status === 'revisi_gpm');
+                                            $noteToShow = $isGpm ? ($doc['gpm_catatan'] ?: $doc['catatan_review']) : ($doc['catatan_review'] ?: $doc['gpm_catatan']);
+                                            $evalReviewer = $isGpm ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
+                                            $evalDate = $isGpm ? ($doc['gpm_reviewed_at'] ?? $doc['reviewed_at']) : ($doc['reviewed_at'] ?? $doc['gpm_reviewed_at']);
+                                            ?>
+                                            <?php if (!empty($noteToShow)): ?>
+                                                <div class="p-3 rounded-3 mb-3 border <?= in_array($status, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'border-danger' : 'border-primary' ?>" style="background: <?= in_array($status, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#FFF1F2' : '#EFF6FF' ?>; border-left: 4px solid <?= in_array($status, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#DC2626' : '#2563EB' ?> !important;">
                                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                                        <span class="small fw-bold text-uppercase <?= $status === 'perlu_perbaikan' ? 'text-danger' : 'text-primary' ?>" style="font-size: 0.74rem;">
-                                                            <i class="fas fa-comment-dots me-1"></i> Catatan Evaluasi Reviewer LPM:
+                                                        <span class="small fw-bold text-uppercase <?= in_array($status, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'text-danger' : 'text-primary' ?>" style="font-size: 0.74rem;">
+                                                            <i class="fas fa-comment-dots me-1"></i> Catatan Evaluasi Reviewer <?= $isGpm ? 'GPM Fakultas' : 'LPM' ?>:
                                                         </span>
-                                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
-                                                            <i class="fas fa-award me-0.5"></i> Pusat Penjaminan Mutu LPM
+                                                        <span class="badge <?= $isGpm ? 'bg-purple text-purple border-purple' : 'bg-primary text-primary border-primary' ?> bg-opacity-10 border border-opacity-25 px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
+                                                            <i class="fas <?= $isGpm ? 'fa-shield-halved' : 'fa-award' ?> me-0.5"></i> <?= htmlspecialchars($evalReviewer) ?>
                                                         </span>
                                                     </div>
-                                                    <div class="small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($doc['catatan_review']) ?></div>
+                                                    <div class="small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($noteToShow) ?></div>
                                                     <div class="small text-muted d-flex align-items-center gap-2 pt-1 border-top" style="font-size: 0.72rem; border-color: rgba(0,0,0,0.06) !important;">
-                                                        <span><i class="fas fa-building-columns text-primary me-1"></i>Pusat Penjaminan Mutu LPM</span>
-                                                        <?php if (!empty($doc['reviewed_at'])): ?>
+                                                        <span><i class="fas <?= $isGpm ? 'fa-shield-halved text-purple' : 'fa-building-columns text-primary' ?> me-1"></i><?= htmlspecialchars($evalReviewer) ?></span>
+                                                        <?php if (!empty($evalDate)): ?>
                                                             <span>&bull;</span>
-                                                            <span><i class="far fa-clock text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($doc['reviewed_at'])) ?> WIB</span>
+                                                            <span><i class="far fa-clock text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($evalDate)) ?> WIB</span>
                                                         <?php endif; ?>
                                                     </div>
                                                 </div>
@@ -709,9 +729,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 <div class="modal fade" id="prodiViewNoteModal" tabindex="-1" aria-labelledby="prodiViewNoteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-danger text-white py-3 px-4">
+            <div class="modal-header bg-danger text-white py-3 px-4" id="prodiViewNoteModalHeader">
                 <h5 class="modal-title fw-bold fs-6" id="prodiViewNoteModalLabel">
-                    <i class="fas fa-triangle-exclamation me-2"></i> Catatan Perbaikan Dokumen dari LPM
+                    <i class="fas fa-triangle-exclamation me-2"></i> Catatan Perbaikan Dokumen
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -725,7 +745,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div id="prodiNoteStatusBadge">-</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold small text-danger mb-1">Poin-Poin Perbaikan yang Diminta Admin LPM:</label>
+                    <label class="form-label fw-semibold small text-danger mb-1" id="prodiNotePoinLabel">Poin-Poin Perbaikan yang Diminta Evaluator:</label>
                     <div class="p-3 rounded-3 bg-white border border-danger border-opacity-25 text-dark" style="font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;" id="prodiNoteContent">-</div>
                 </div>
                 <div class="small text-muted d-flex align-items-center gap-2" id="prodiNoteMeta">
@@ -807,19 +827,32 @@ document.addEventListener('DOMContentLoaded', function () {
             const status = button.getAttribute('data-status') || '';
             const editUrl = button.getAttribute('data-edit-url') || '#';
 
+            const isGpm = (status === 'revisi_gpm' || (reviewer && reviewer.includes('GPM')));
+            const titleEl = document.getElementById('prodiViewNoteModalLabel');
+            if (titleEl) {
+                titleEl.innerHTML = '<i class="fas fa-comment-dots me-2"></i> ' + (isGpm ? 'Catatan Perbaikan Dokumen dari GPM Fakultas' : 'Catatan Perbaikan Dokumen dari LPM Universitas');
+            }
+            const labelPoin = document.getElementById('prodiNotePoinLabel');
+            if (labelPoin) {
+                labelPoin.textContent = isGpm ? 'Catatan & Rekomendasi Perbaikan oleh GPM Fakultas:' : 'Poin-Poin Perbaikan yang Diminta Admin LPM:';
+            }
+
             document.getElementById('prodiNoteDocTitle').textContent = title;
             document.getElementById('prodiNoteContent').textContent = notes;
-            document.getElementById('prodiNoteReviewer').textContent = 'Pusat Penjaminan Mutu LPM';
-            document.getElementById('prodiNoteDate').textContent = date;
+            document.getElementById('prodiNoteReviewer').textContent = reviewer || (isGpm ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM');
+            document.getElementById('prodiNoteDate').textContent = date || '-';
             document.getElementById('prodiNoteEditBtn').setAttribute('href', editUrl);
 
             const badgeEl = document.getElementById('prodiNoteStatusBadge');
             const editBtn = document.getElementById('prodiNoteEditBtn');
-            if (status === 'perlu_perbaikan') {
-                badgeEl.innerHTML = '<span class="badge rounded-pill" style="background:#FEE2E2; color:#991B1B; border:1px solid #FCA5A5; font-size:0.75rem;"><i class="fas fa-triangle-exclamation text-danger me-1"></i> Perlu Perbaikan / Revisi</span>';
+            if (status === 'revisi_gpm') {
+                badgeEl.innerHTML = '<span class="badge rounded-pill" style="background:#F3E8FF; color:#7E22CE; border:1px solid #E9D5FF; font-size:0.75rem;"><i class="fas fa-shield-halved text-purple me-1"></i> Perlu Revisi (GPM Fakultas)</span>';
+                if (editBtn) editBtn.style.display = 'inline-flex';
+            } else if (status === 'perlu_perbaikan' || status === 'revisi_lpm') {
+                badgeEl.innerHTML = '<span class="badge rounded-pill" style="background:#FEE2E2; color:#991B1B; border:1px solid #FCA5A5; font-size:0.75rem;"><i class="fas fa-triangle-exclamation text-danger me-1"></i> Perlu Perbaikan (LPM)</span>';
                 if (editBtn) editBtn.style.display = 'inline-flex';
             } else if (status === 'sudah_diperbaiki') {
-                badgeEl.innerHTML = '<span class="badge rounded-pill" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Sudah Diperbaiki (Menunggu Verifikasi LPM)</span>';
+                badgeEl.innerHTML = '<span class="badge rounded-pill" style="background:#E0F2FE; color:#0369A1; border:1px solid #BAE6FD; font-size:0.75rem;"><i class="fas fa-clock text-info me-1"></i> Telah Diperbaiki (Menunggu Review)</span>';
                 if (editBtn) editBtn.style.display = 'none';
             } else {
                 badgeEl.innerHTML = '<span class="badge bg-secondary">' + status + '</span>';

@@ -549,23 +549,29 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                                 </div>
                                             </div>
 
-                                            <!-- Catatan Evaluasi LPM -->
-                                            <?php if (!empty($reviewNotes)): ?>
-                                                <div class="p-3 rounded-3 mb-3 border <?= $reviewStatus === 'perlu_perbaikan' ? 'border-danger' : 'border-primary' ?>" style="background: <?= $reviewStatus === 'perlu_perbaikan' ? '#FFF1F2' : '#EFF6FF' ?>; border-left: 4px solid <?= $reviewStatus === 'perlu_perbaikan' ? '#DC2626' : '#2563EB' ?> !important;">
+                                            <!-- Catatan Evaluasi LPM / GPM -->
+                                            <?php 
+                                            $isGpmRevDoc = ($reviewStatus === 'revisi_gpm');
+                                            $evNote = $isGpmRevDoc ? ($doc['gpm_catatan'] ?: $reviewNotes) : ($reviewNotes ?: ($doc['gpm_catatan'] ?? ''));
+                                            if (!empty($evNote)): 
+                                                $evTitle = $isGpmRevDoc ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : ($reviewerName ?: 'Pusat Penjaminan Mutu LPM');
+                                                $evDate = $isGpmRevDoc ? ($doc['gpm_reviewed_at'] ?? $doc['reviewed_at'] ?? null) : ($doc['reviewed_at'] ?? $doc['gpm_reviewed_at'] ?? null);
+                                            ?>
+                                                <div class="p-3 rounded-3 mb-3 border <?= in_array($reviewStatus, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'border-danger' : 'border-primary' ?>" style="background: <?= in_array($reviewStatus, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#FFF1F2' : '#EFF6FF' ?>; border-left: 4px solid <?= in_array($reviewStatus, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#DC2626' : '#2563EB' ?> !important;">
                                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                                        <span class="small fw-bold text-uppercase <?= $reviewStatus === 'perlu_perbaikan' ? 'text-danger' : 'text-primary' ?>" style="font-size: 0.74rem;">
-                                                            <i class="fas fa-comment-dots me-1"></i> Catatan Evaluasi Reviewer LPM:
+                                                        <span class="small fw-bold text-uppercase <?= in_array($reviewStatus, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'text-danger' : 'text-primary' ?>" style="font-size: 0.74rem;">
+                                                            <i class="fas fa-comment-dots me-1"></i> Catatan Evaluasi Reviewer <?= $isGpmRevDoc ? 'GPM' : 'LPM' ?>:
                                                         </span>
                                                         <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
-                                                            <i class="fas fa-award me-0.5"></i> <?= htmlspecialchars($reviewerName) ?>
+                                                            <i class="fas <?= $isGpmRevDoc ? 'fa-shield-halved' : 'fa-award' ?> me-0.5"></i> <?= htmlspecialchars($evTitle) ?>
                                                         </span>
                                                     </div>
-                                                    <div class="small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($reviewNotes) ?></div>
+                                                    <div class="small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($evNote) ?></div>
                                                     <div class="small text-muted d-flex align-items-center gap-2 pt-1 border-top" style="font-size: 0.72rem; border-color: rgba(0,0,0,0.06) !important;">
-                                                        <span><i class="fas fa-building-columns text-primary me-1"></i><?= htmlspecialchars($reviewerName) ?></span>
-                                                        <?php if (!empty($doc['reviewed_at'])): ?>
+                                                        <span><i class="fas <?= $isGpmRevDoc ? 'fa-shield-halved' : 'fa-building-columns' ?> text-primary me-1"></i><?= htmlspecialchars($evTitle) ?></span>
+                                                        <?php if (!empty($evDate)): ?>
                                                             <span>&bull;</span>
-                                                            <span><i class="far fa-clock text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($doc['reviewed_at'])) ?> WIB</span>
+                                                            <span><i class="far fa-clock text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($evDate)) ?> WIB</span>
                                                         <?php endif; ?>
                                                     </div>
                                                 </div>
@@ -900,10 +906,21 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-view-review-notes').forEach(btn => {
         btn.addEventListener('click', function() {
             document.getElementById('modalNoteDocTitle').textContent = this.dataset.title;
-            document.getElementById('modalNoteReviewer').textContent = 'Pusat Penjaminan Mutu LPM';
+            const reviewerName = this.dataset.reviewer || 'Pusat Penjaminan Mutu LPM';
+            document.getElementById('modalNoteReviewer').textContent = reviewerName;
             document.getElementById('modalNoteDate').textContent = this.dataset.reviewedAt || 'Baru Saja';
             document.getElementById('modalNoteContent').textContent = this.dataset.notes || 'Tidak ada catatan tertulis.';
-            const modal = new bootstrap.Modal(document.getElementById('fakultasViewNoteModal'));
+            
+            const headerLabel = document.getElementById('fakultasViewNoteModalLabel');
+            if (headerLabel) {
+                if (this.dataset.status === 'revisi_gpm') {
+                    headerLabel.innerHTML = '<i class="fas fa-triangle-exclamation me-2"></i> Catatan Perbaikan Dokumen dari GPM Fakultas';
+                } else {
+                    headerLabel.innerHTML = '<i class="fas fa-triangle-exclamation me-2"></i> Catatan Perbaikan Dokumen dari LPM';
+                }
+            }
+
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('fakultasViewNoteModal'));
             modal.show();
         });
     });

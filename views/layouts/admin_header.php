@@ -17,7 +17,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
         $stmt = $headerDb->prepare("
-            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, status_review, reviewed_at, gpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
             ORDER BY updated_at DESC
@@ -33,7 +33,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
         $stmt = $headerDb->prepare("
-            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, status_review, reviewed_at, gpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
             ORDER BY updated_at DESC
@@ -162,7 +162,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
 
             <!-- Notification Bell Icon (Revisi & Perbaikan Dokumen) -->
             <?php if (Auth::isProdi() || Auth::isFakultas() || Auth::isGpm() || (isset($currentUser['role']) && $currentUser['role'] === 'gpm')): 
-                $perluActionCount = count(array_filter($notificationItems, fn($i) => ($i['status_review'] ?? '') === 'perlu_perbaikan'));
+                $perluActionCount = count(array_filter($notificationItems, fn($i) => in_array($i['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])));
             ?>
                 <div class="dropdown">
                     <button class="btn btn-light rounded-circle position-relative d-flex align-items-center justify-content-center shadow-2xs border" 
@@ -236,9 +236,11 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                             <div class="fw-bold text-dark text-truncate mb-1" style="max-width: 250px;" title="<?= htmlspecialchars($notifDoc['nama_dokumen']) ?>">
                                                 <?= htmlspecialchars($notifDoc['nama_dokumen']) ?>
                                             </div>
-                                            <?php if (!empty($notifDoc['catatan_review'])): ?>
+                                            <?php 
+                                            $notifNote = !empty($notifDoc['gpm_catatan']) ? $notifDoc['gpm_catatan'] : ($notifDoc['catatan_review'] ?? '');
+                                            if (!empty($notifNote)): ?>
                                                 <div class="text-muted text-truncate small fst-italic" style="font-size: 0.72rem; max-width: 250px;">
-                                                    "<?= htmlspecialchars($notifDoc['catatan_review']) ?>"
+                                                    "<?= htmlspecialchars($notifNote) ?>"
                                                 </div>
                                             <?php endif; ?>
                                         </div>

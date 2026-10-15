@@ -565,8 +565,22 @@ foreach ($documents as $d) {
         </div>
 
         <?php if (!empty($documents)): ?>
-            <!-- Modals Container: Terpisah dari tabel agar terhindar dari foster-parenting DOM browser -->
-            <?php foreach ($documents as $doc): 
+            <!-- Footer Pagination Controls -->
+            <div class="pt-3.5 mt-2 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3" id="gpmPaginationWrapper" style="border-color: #E2E8F0 !important;">
+                <div class="small text-muted" id="gpmTableInfo">
+                    Menghitung data dokumen...
+                </div>
+                <nav aria-label="Navigasi Halaman Dokumen" id="gpmTablePagination">
+                    <!-- Tombol pagination digenerate oleh JavaScript -->
+                </nav>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Modals Container: Terpisah di luar card dan container agar tidak terpengaruh stacking context / z-index card -->
+<?php if (!empty($documents)): ?>
+    <?php foreach ($documents as $doc): 
                 $files = $doc['files'] ?? [];
                 $links = $doc['links'] ?? [];
                 if (!empty($doc['external_link']) && empty($links)) {
@@ -990,20 +1004,6 @@ foreach ($documents as $d) {
             <?php endforeach; ?>
         <?php endif; ?>
 
-        <?php if (!empty($documents)): ?>
-            <!-- Footer Pagination Controls -->
-            <div class="pt-3.5 mt-2 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3" id="gpmPaginationWrapper" style="border-color: #E2E8F0 !important;">
-                <div class="small text-muted" id="gpmTableInfo">
-                    Menghitung data dokumen...
-                </div>
-                <nav aria-label="Navigasi Halaman Dokumen" id="gpmTablePagination">
-                    <!-- Tombol pagination digenerate oleh JavaScript -->
-                </nav>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
-
 <script>
 let gpmCurrentPage = 1;
 let gpmPageSize = 10;
@@ -1091,19 +1091,6 @@ function goToGpmPage(page) {
 
 document.addEventListener('DOMContentLoaded', function() {
     renderGpmPagination();
-});
-
-// Explicit Bootstrap Modal Show Handler to guarantee opening upon click
-document.addEventListener('click', function(e) {
-    const trigger = e.target.closest('[data-bs-target^="#gpmReviewModal"], [data-bs-target^="#docModal"]');
-    if (!trigger) return;
-    const targetSelector = trigger.getAttribute('data-bs-target');
-    if (!targetSelector) return;
-    const modalEl = document.querySelector(targetSelector);
-    if (modalEl && typeof bootstrap !== 'undefined') {
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
-    }
 });
 </script>
 

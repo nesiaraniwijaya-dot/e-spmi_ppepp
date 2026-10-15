@@ -452,6 +452,14 @@
 
         const modalEl = document.getElementById('reviewHistoryModal');
         if (!modalEl) return;
+
+        // Jika tombol diklik dari dalam modal lain (misal modal review / modal rincian), tutup modal sebelumnya
+        const currentOpenModal = btn.closest('.modal');
+        if (currentOpenModal && currentOpenModal.id !== 'reviewHistoryModal') {
+            const openInst = bootstrap.Modal.getInstance(currentOpenModal);
+            if (openInst) openInst.hide();
+        }
+
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         
         document.getElementById('revHistDocName').textContent = docName;

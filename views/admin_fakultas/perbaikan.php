@@ -184,7 +184,10 @@ $totalDocs = count($documents);
                                     $filesCount = count($pDoc['files'] ?? []);
                                     $hasLink = !empty($pDoc['external_link']);
                                     $hasLegacy = !empty($pDoc['file_path']);
-                                    $noteExcerpt = trim($pDoc['catatan_review'] ?? 'Silakan sesuaikan isi dan lampiran dokumen tingkat fakultas.');
+                                    $isGpmRev = ($pDoc['status_review'] === 'revisi_gpm');
+                                    $revLabel = $isGpmRev ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
+                                    $revDate = !empty($pDoc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($pDoc['gpm_reviewed_at'])) . ' WIB' : (!empty($pDoc['reviewed_at']) ? date('d M Y, H:i', strtotime($pDoc['reviewed_at'])) . ' WIB' : '-');
+                                    $noteExcerpt = trim($pDoc['gpm_catatan'] ?: ($pDoc['catatan_review'] ?? 'Silakan sesuaikan isi dan lampiran dokumen tingkat fakultas.'));
                                 ?>
                                     <tr class="perbaikan-table-row" data-search="<?= strtolower(htmlspecialchars($pDoc['nama_dokumen'] . ' ' . ($pDoc['nomor_dokumen'] ?? '') . ' ' . ($pDoc['nama_bidang'] ?? '') . ' ' . ($pDoc['reviewer_name'] ?? ''))) ?>">
                                         <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
@@ -217,11 +220,11 @@ $totalDocs = count($documents);
                                         </td>
                                         <td class="py-3 px-3" style="border-end: 1px solid #F1F5F9;">
                                             <div class="small fw-bold text-dark-blue d-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
-                                                <i class="fas fa-building-columns text-primary"></i>
-                                                <span>Pusat Penjaminan Mutu LPM</span>
+                                                <i class="fas <?= $isGpmRev ? 'fa-shield-halved text-purple' : 'fa-building-columns text-primary' ?>"></i>
+                                                <span><?= htmlspecialchars($revLabel) ?></span>
                                             </div>
                                             <div class="text-muted small mt-1" style="font-size: 0.71rem;">
-                                                <i class="far fa-clock text-secondary me-1"></i><?= !empty($pDoc['reviewed_at']) ? date('d M Y, H:i', strtotime($pDoc['reviewed_at'])) . ' WIB' : '-' ?>
+                                                <i class="far fa-clock text-secondary me-1"></i><?= $revDate ?>
                                             </div>
                                         </td>
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
@@ -230,11 +233,12 @@ $totalDocs = count($documents);
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#modalCatatanEvaluator"
                                                     data-nama="<?= htmlspecialchars($pDoc['nama_dokumen']) ?>"
-                                                    data-reviewer="Pusat Penjaminan Mutu LPM"
-                                                    data-tanggal="<?= !empty($pDoc['reviewed_at']) ? date('d M Y, H:i', strtotime($pDoc['reviewed_at'])) . ' WIB' : '-' ?>"
+                                                    data-reviewer="<?= htmlspecialchars($revLabel) ?>"
+                                                    data-tanggal="<?= $revDate ?>"
                                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                                     data-siklus="<?= htmlspecialchars($pDoc['siklus'] ?? '') ?>"
                                                     data-status="perlu_perbaikan"
+                                                    data-is-gpm="<?= $isGpmRev ? '1' : '0' ?>"
                                                     data-edit-url="<?= base_url('fakultas/dokumen/edit/' . $pDoc['id']) ?>">
                                                 <i class="fas fa-comment-dots text-danger"></i>
                                                 <span>Lihat Catatan</span>
@@ -379,16 +383,23 @@ $totalDocs = count($documents);
                                             </div>
                                         </td>
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
+                                            <?php 
+                                            $sIsGpm = ($sDoc['status_review'] === 'revisi_gpm');
+                                            $sRevLabel = $sIsGpm ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
+                                            $sRevDate = !empty($sDoc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($sDoc['gpm_reviewed_at'])) . ' WIB' : (!empty($sDoc['reviewed_at']) ? date('d M Y, H:i', strtotime($sDoc['reviewed_at'])) . ' WIB' : '-');
+                                            $sNote = trim($sDoc['gpm_catatan'] ?: ($sDoc['catatan_review'] ?? 'Menunggu review ulang.'));
+                                            ?>
                                             <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs"
                                                     style="font-size: 0.78rem;"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#modalCatatanEvaluator"
                                                     data-nama="<?= htmlspecialchars($sDoc['nama_dokumen']) ?>"
-                                                    data-reviewer="Pusat Penjaminan Mutu LPM"
-                                                    data-tanggal="<?= !empty($sDoc['reviewed_at']) ? date('d M Y, H:i', strtotime($sDoc['reviewed_at'])) . ' WIB' : '-' ?>"
-                                                    data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
+                                                    data-reviewer="<?= htmlspecialchars($sRevLabel) ?>"
+                                                    data-tanggal="<?= $sRevDate ?>"
+                                                    data-catatan="<?= htmlspecialchars($sNote) ?>"
                                                     data-siklus="<?= htmlspecialchars($sDoc['siklus'] ?? '') ?>"
                                                     data-status="sudah_diperbaiki"
+                                                    data-is-gpm="<?= $sIsGpm ? '1' : '0' ?>"
                                                     data-edit-url="<?= base_url('fakultas/dokumen/edit/' . $sDoc['id']) ?>">
                                                 <i class="fas fa-comment-dots text-primary"></i>
                                                 <span>Lihat Catatan</span>
@@ -471,8 +482,11 @@ $totalDocs = count($documents);
                             </thead>
                             <tbody>
                                 <?php foreach ($documents as $idx => $doc): 
-                                    $isPerlu = ($doc['status_review'] === 'perlu_perbaikan');
-                                    $noteExcerpt = trim($doc['catatan_review'] ?? ($isPerlu ? 'Silakan sesuaikan isi dokumen sesuai arahan.' : 'Menunggu review ulang LPM.'));
+                                    $isGpmRev = ($doc['status_review'] === 'revisi_gpm');
+                                    $revLabel = $isGpmRev ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
+                                    $revDate = !empty($doc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'])) . ' WIB' : (!empty($doc['reviewed_at']) ? date('d M Y, H:i', strtotime($doc['reviewed_at'])) . ' WIB' : '-');
+                                    $isPerlu = in_array($doc['status_review'], ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']);
+                                    $noteExcerpt = trim($doc['gpm_catatan'] ?: ($doc['catatan_review'] ?? ($isPerlu ? 'Silakan sesuaikan isi dokumen sesuai arahan.' : 'Menunggu review ulang.')));
                                 ?>
                                     <tr class="perbaikan-table-row" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
                                         <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
@@ -512,11 +526,12 @@ $totalDocs = count($documents);
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#modalCatatanEvaluator"
                                                     data-nama="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
-                                                    data-reviewer="Pusat Penjaminan Mutu LPM"
-                                                    data-tanggal="<?= !empty($doc['reviewed_at']) ? date('d M Y, H:i', strtotime($doc['reviewed_at'])) . ' WIB' : '-' ?>"
+                                                    data-reviewer="<?= htmlspecialchars($revLabel) ?>"
+                                                    data-tanggal="<?= $revDate ?>"
                                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                                     data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '') ?>"
                                                     data-status="<?= $isPerlu ? 'perlu_perbaikan' : 'sudah_diperbaiki' ?>"
+                                                    data-is-gpm="<?= $isGpmRev ? '1' : '0' ?>"
                                                     data-edit-url="<?= base_url('fakultas/dokumen/edit/' . $doc['id']) ?>">
                                                 <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?>"></i>
                                                 <span>Lihat Catatan</span>
@@ -567,9 +582,9 @@ $totalDocs = count($documents);
                         </div>
                         <div>
                             <h5 class="modal-title fw-bold text-white mb-0.5" id="modalCatatanLabel" style="font-size: 1.1rem; letter-spacing: -0.2px;">
-                                Catatan Evaluasi / Arahan LPM
+                                Catatan Evaluasi / Arahan Reviewer
                             </h5>
-                            <p class="text-white text-opacity-75 small mb-0" style="font-size: 0.78rem;">Lembaga Penjaminan Mutu UNIKA Soegijapranata</p>
+                            <p class="text-white text-opacity-75 small mb-0" id="modalCatatanSubLabel" style="font-size: 0.78rem;">Penjaminan Mutu UNIKA Soegijapranata</p>
                         </div>
                     </div>
                     <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -583,8 +598,8 @@ $totalDocs = count($documents);
                         <h6 class="fw-bold text-dark-blue mb-0" id="evalModalDocTitle" style="font-size: 0.98rem; line-height: 1.45;">-</h6>
                         <div class="d-flex flex-wrap align-items-center gap-3 mt-2 pt-2 border-top text-muted small" style="font-size: 0.76rem;">
                             <div class="d-flex align-items-center gap-1.5">
-                                <i class="fas fa-building-columns text-primary"></i>
-                                <span class="text-dark fw-bold">Pusat Penjaminan Mutu LPM</span>
+                                <i class="fas fa-building-columns text-primary" id="evalModalReviewerIcon"></i>
+                                <span class="text-dark fw-bold" id="evalModalReviewer">Pusat Penjaminan Mutu LPM</span>
                             </div>
                             <div class="d-flex align-items-center gap-1.5">
                                 <i class="far fa-calendar-check text-secondary"></i>
@@ -776,11 +791,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const iconEl = document.getElementById('evalModalIcon');
             const quoteHeading = document.getElementById('evalModalQuoteHeading');
             const shieldIcon = document.getElementById('evalModalRevShield');
+            const modalLabel = document.getElementById('modalCatatanLabel');
+            const modalSubLabel = document.getElementById('modalCatatanSubLabel');
+            const revIconEl = document.getElementById('evalModalReviewerIcon');
+            const isGpm = btn.getAttribute('data-is-gpm') === '1';
 
             if (titleEl) titleEl.textContent = nama;
             if (revEl) revEl.textContent = reviewer;
             if (tglEl) tglEl.textContent = tanggal;
             if (catEl) catEl.textContent = catatan;
+
+            if (modalLabel) {
+                modalLabel.textContent = isGpm ? 'Catatan Evaluasi / Rekomendasi GPM' : 'Catatan Evaluasi / Arahan LPM';
+            }
+            if (modalSubLabel) {
+                modalSubLabel.textContent = isGpm ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Lembaga Penjaminan Mutu (LPM) UNIKA Soegijapranata';
+            }
+            if (revIconEl) {
+                revIconEl.className = isGpm ? 'fas fa-shield-halved text-purple' : 'fas fa-building-columns text-primary';
+            }
             
             if (editBtn) {
                 editBtn.href = editUrl;

@@ -61,6 +61,10 @@ function redirect(string $path): void {
     exit;
 }
 
+function csrf_field(): string {
+    return '';
+}
+
 function sanitize(string $data): string {
     return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
 }

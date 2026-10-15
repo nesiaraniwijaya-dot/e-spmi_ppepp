@@ -177,8 +177,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
     <!-- Pusat Notifikasi & Ringkasan Perbaikan Dokumen dari LPM -->
     <?php 
-    $perluTindakanDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
-    $menungguVerifikasiDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
+    $perluTindakanDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
+    $menungguVerifikasiDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_gpm', 'menunggu_review_lpm'])));
     $totalRevisiCount = count($perluTindakanDocs) + count($menungguVerifikasiDocs);
     if ($totalRevisiCount > 0): 
     ?>
@@ -194,7 +194,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div>
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-1.5">
                             <h6 class="fw-bold <?= !empty($perluTindakanDocs) ? 'text-danger' : 'text-primary' ?> mb-0" style="font-size: 1.05rem; letter-spacing: -0.2px;">
-                                Dokumen Memerlukan Revisi Evaluasi LPM
+                                Dokumen Memerlukan Revisi (Evaluasi GPM / LPM)
                             </h6>
                             <?php if (!empty($perluTindakanDocs)): ?>
                                 <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
@@ -203,12 +203,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <?php endif; ?>
                             <?php if (!empty($menungguVerifikasiDocs)): ?>
                                 <span class="badge rounded-pill bg-primary text-white px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
-                                    <?= count($menungguVerifikasiDocs) ?> Sedang Ditinjau LPM
+                                    <?= count($menungguVerifikasiDocs) ?> Sedang Ditinjau
                                 </span>
                             <?php endif; ?>
                         </div>
                         <p class="text-muted small mb-0" style="font-size: 0.83rem; line-height: 1.55;">
-                            <?= !empty($perluTindakanDocs) ? 'Terdapat catatan revisi dari Tim Penjaminan Mutu yang harus diperbaiki agar berkas dapat disahkan.' : 'Berkas perbaikan Anda telah masuk ke antrean verifikasi ulang Tim Penjaminan Mutu.' ?>
+                            <?= !empty($perluTindakanDocs) ? 'Terdapat catatan evaluasi dari GPM Fakultas / LPM yang harus diperbaiki agar dokumen mutu dapat disahkan.' : 'Berkas perbaikan Anda telah masuk ke antrean verifikasi tim penjaminan mutu.' ?>
                         </p>
                     </div>
                 </div>
@@ -227,11 +227,14 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <?php 
                 $displayDocs = array_slice(array_merge($perluTindakanDocs, $menungguVerifikasiDocs), 0, 3);
                 foreach ($displayDocs as $item): 
-                    $isPerlu = ($item['status_review'] ?? '') === 'perlu_perbaikan';
-                    $noteExcerpt = trim($item['catatan_review'] ?? '');
+                    $isPerlu = in_array($item['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']);
+                    $isGpmReview = (($item['status_review'] ?? '') === 'revisi_gpm');
+                    $noteExcerpt = trim($item['gpm_catatan'] ?: ($item['catatan_review'] ?? ''));
                     if (empty($noteExcerpt)) {
-                        $noteExcerpt = $isPerlu ? 'Silakan sesuaikan isi dan lampiran dokumen mutu sesuai standar penjaminan mutu.' : 'Menunggu review ulang LPM.';
+                        $noteExcerpt = $isPerlu ? 'Silakan sesuaikan isi dan lampiran dokumen mutu sesuai standar penjaminan mutu.' : 'Menunggu review ulang.';
                     }
+                    $reviewerLabel = $isGpmReview ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
+                    $reviewerDate = !empty($item['gpm_reviewed_at']) ? $item['gpm_reviewed_at'] : ($item['reviewed_at'] ?? $item['updated_at']);
                 ?>
                     <div class="dashboard-revision-item d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3 gap-lg-4">
                         <!-- Left: Status Icon, Title, and Badges with Generous Margins -->
@@ -245,7 +248,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                                     <?php if ($isPerlu): ?>
                                         <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.02em;">
-                                            <i class="fas fa-circle-exclamation me-1"></i> Perlu Tindakan
+                                            <i class="fas fa-circle-exclamation me-1"></i> <?= $isGpmReview ? 'Revisi GPM' : 'Perlu Tindakan' ?>
                                         </span>
                                     <?php else: ?>
                                         <span class="badge rounded-pill bg-primary text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.02em;">
@@ -270,16 +273,14 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <!-- Reviewer Meta -->
                                 <div class="d-inline-flex flex-wrap align-items-center gap-2 text-muted px-2.5 py-1 rounded-pill bg-light border mt-1" style="font-size: 0.76rem;">
                                     <span class="d-inline-flex align-items-center gap-1.5">
-                                        <i class="fas fa-building-columns text-primary"></i>
-                                        <span><strong class="text-dark">Pusat Penjaminan Mutu LPM</strong></span>
+                                        <i class="fas <?= $isGpmReview ? 'fa-shield-halved text-purple' : 'fa-building-columns text-primary' ?>"></i>
+                                        <span><strong class="text-dark"><?= htmlspecialchars($reviewerLabel) ?></strong></span>
                                     </span>
-                                    <?php if (!empty($item['reviewed_at'])): ?>
-                                        <span class="text-secondary opacity-50">&bull;</span>
-                                        <span class="d-inline-flex align-items-center gap-1">
-                                             <i class="far fa-calendar-check text-secondary"></i>
-                                            <span><?= date('d M Y, H:i', strtotime($item['reviewed_at'])) ?> WIB</span>
-                                        </span>
+                                    <?php if (!empty($reviewerDate)): ?>
+                                        <span>&bull;</span>
+                                        <span><i class="far fa-calendar-check text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($reviewerDate)) ?> WIB</span>
                                     <?php endif; ?>
+                                </div>
                                 </div>
                             </div>
                         </div>
