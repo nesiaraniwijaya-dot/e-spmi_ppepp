@@ -614,10 +614,201 @@ $siklusDefinitions = [
 
     <?php else: ?>
         <!-- ========================================== -->
+        <!-- DAFTAR JUDUL SIKLUS & TAHAPAN PPEPP        -->
+        <!-- ========================================== -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
+            <div class="card-header bg-white border-bottom p-3.5 p-md-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 rounded-top-4">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge rounded-pill px-2.5 py-1 fw-bold" style="background: #EEF2FF; color: #4F46E5; border: 1px solid #C7D2FE; font-size: 0.74rem;">
+                            <i class="fas fa-arrows-spin me-1"></i> Progres Siklus PPEPP
+                        </span>
+                        <span class="badge bg-light text-secondary border"><?= count($existingCycles ?? []) ?> Judul Terdaftar</span>
+                    </div>
+                    <h5 class="fw-bold text-dark-blue mb-1" style="letter-spacing: -0.2px;">
+                        Daftar Judul &amp; Kelengkapan Tahapan PPEPP
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Dokumen diunggah bertahap (Penetapan &rarr; Pelaksanaan &rarr; Evaluasi &rarr; Pengendalian &rarr; Peningkatan). Klik icon <span class="badge bg-primary bg-opacity-10 text-primary fw-bold"><i class="fas fa-plus"></i></span> pada tahap yang belum ada dokumen untuk mengunggah dokumen lanjutan bagi judul tersebut.
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="input-group input-group-sm" style="max-width: 250px;">
+                        <span class="input-group-text bg-light text-secondary border-end-0"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control border-start-0" id="searchCycleInput" placeholder="Cari judul siklus..." oninput="filterCycleList(this.value)">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 flex-shrink-0" onclick="resetFormToNewCycle()">
+                        <i class="fas fa-plus-circle"></i> <span>Buat Judul Baru</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body p-3.5 p-md-4">
+                <?php if (empty($existingCycles)): ?>
+                    <div class="text-center py-4 px-3">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary mb-3" style="width: 52px; height: 52px;">
+                            <i class="fas fa-folder-open fa-2x"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1">Belum Ada Judul Siklus PPEPP</h6>
+                        <p class="text-muted small mb-0" style="max-width: 520px; margin: 0 auto;">
+                            Saat Anda mengunggah dokumen baru melalui formulir di bawah, judul siklus akan otomatis dicatat. Anda kemudian dapat melanjutkan tahapan Pelaksanaan hingga Peningkatan secara bertahap kapan saja.
+                        </p>
+                    </div>
+                <?php else: ?>
+                    <div class="d-flex flex-column gap-3" id="cycleListContainer">
+                        <?php foreach ($existingCycles as $cyc): 
+                            $cId = $cyc['id'];
+                            $cJudul = htmlspecialchars($cyc['judul_siklus']);
+                            $cBidang = htmlspecialchars($cyc['nama_bidang']);
+                            $cSub = htmlspecialchars($cyc['nama_sub_bidang'] ?: 'Umum');
+                            $cTahun = htmlspecialchars($cyc['tahun_akademik']);
+                            $cProgress = (int)$cyc['progress_percent'];
+                            $cCompleted = (int)$cyc['completed_count'];
+                        ?>
+                            <div class="cycle-item-card p-3 p-md-3.5 rounded-4 border bg-white shadow-2xs transition-all" id="cycle_card_<?= $cId ?>" data-cycle-title="<?= strtolower($cJudul) ?>">
+                                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 pb-2.5 border-bottom mb-2.5">
+                                    <div class="d-flex align-items-start gap-2.5">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary bg-opacity-10 text-primary flex-shrink-0 p-2" style="width: 36px; height: 36px; font-size: 0.88rem;">
+                                            <i class="fas fa-folder-tree"></i>
+                                        </span>
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap mb-0.5">
+                                                <h6 class="fw-bold text-dark-blue mb-0" style="font-size: 0.92rem;"><?= $cJudul ?></h6>
+                                                <span class="badge rounded-pill bg-light text-secondary border fw-normal" style="font-size: 0.72rem;">
+                                                    <i class="far fa-calendar-alt me-1"></i> TA <?= $cTahun ?>
+                                                </span>
+                                                <span class="badge rounded-pill px-2.5 py-0.5 fw-semibold" style="background: #F1F5F9; color: #475569; font-size: 0.72rem;">
+                                                    <?= $cBidang ?> &bull; <?= $cSub ?>
+                                                </span>
+                                            </div>
+                                            <div class="text-muted small" style="font-size: 0.74rem;">
+                                                Terakhir diperbarui: <?= date('d M Y H:i', strtotime($cyc['updated_at'])) ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="text-end d-none d-sm-block">
+                                            <div class="small fw-bold text-dark-blue" style="font-size: 0.78rem;"><?= $cCompleted ?> dari 5 Tahap Lengkap</div>
+                                            <div class="text-muted" style="font-size: 0.7rem;"><?= $cProgress ?>% Kelengkapan Siklus</div>
+                                        </div>
+                                        <div class="progress" style="width: 100px; height: 8px; border-radius: 999px; background: #E2E8F0;">
+                                            <div class="progress-bar <?= $cProgress == 100 ? 'bg-success' : ($cProgress >= 60 ? 'bg-primary' : 'bg-warning') ?>" role="progressbar" style="width: <?= $cProgress ?>%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 5 Stages Stepper -->
+                                <div class="row g-2">
+                                    <?php 
+                                    $stageCards = [
+                                        'penetapan' => ['label' => 'Penetapan', 'code' => 'P1', 'color' => '#2563EB', 'bg' => '#EFF6FF'],
+                                        'pelaksanaan' => ['label' => 'Pelaksanaan', 'code' => 'P2', 'color' => '#059669', 'bg' => '#ECFDF5'],
+                                        'evaluasi' => ['label' => 'Evaluasi', 'code' => 'E', 'color' => '#D97706', 'bg' => '#FFFBEB'],
+                                        'pengendalian' => ['label' => 'Pengendalian', 'code' => 'P3', 'color' => '#7C3AED', 'bg' => '#F5F3FF'],
+                                        'peningkatan' => ['label' => 'Peningkatan', 'code' => 'P4', 'color' => '#0891B2', 'bg' => '#ECFEFF'],
+                                    ];
+                                    foreach ($stageCards as $sKey => $sMeta): 
+                                        $stageInfo = $cyc['stages'][$sKey] ?? ['has_doc' => false, 'docs' => []];
+                                        $hasDoc = $stageInfo['has_doc'];
+                                        $docItem = $hasDoc ? $stageInfo['primary_doc'] : null;
+                                    ?>
+                                        <div class="col-12 col-sm-6 col-md col-lg">
+                                            <div class="stage-cell p-2.5 rounded-3 border h-100 d-flex flex-column justify-content-between position-relative transition-all <?= $hasDoc ? 'bg-light-subtle' : 'border-dashed bg-white' ?>">
+                                                <div>
+                                                    <div class="d-flex align-items-center justify-content-between mb-1.5">
+                                                        <span class="badge rounded-pill px-2 py-0.5 fw-bold" style="background: <?= $sMeta['bg'] ?>; color: <?= $sMeta['color'] ?>; font-size: 0.7rem;">
+                                                            <?= $sMeta['code'] ?>
+                                                        </span>
+                                                        <?php if ($hasDoc): ?>
+                                                            <span class="badge rounded-circle p-1 bg-success text-white d-inline-flex align-items-center justify-content-center" style="width: 18px; height: 18px; font-size: 0.65rem;" title="Dokumen sudah diunggah">
+                                                                <i class="fas fa-check"></i>
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="badge rounded-circle p-1 bg-secondary bg-opacity-10 text-secondary d-inline-flex align-items-center justify-content-center" style="width: 18px; height: 18px; font-size: 0.65rem;" title="Belum diunggah">
+                                                                <i class="fas fa-minus"></i>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="fw-bold text-dark text-truncate" style="font-size: 0.8rem;" title="<?= $sMeta['label'] ?>">
+                                                        <?= $sMeta['label'] ?>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mt-2 pt-2 border-top" style="border-color: #F1F5F9 !important;">
+                                                    <?php if ($hasDoc && $docItem): 
+                                                        $statRev = $docItem['status_review'] ?? 'draft';
+                                                        $statBadgeClass = 'bg-secondary bg-opacity-10 text-secondary';
+                                                        $statText = 'Draf';
+                                                        if ($statRev === 'disetujui_lpm') {
+                                                            $statBadgeClass = 'bg-success bg-opacity-10 text-success';
+                                                            $statText = 'Disetujui';
+                                                        } elseif (str_contains($statRev, 'menunggu')) {
+                                                            $statBadgeClass = 'bg-warning bg-opacity-10 text-warning-emphasis';
+                                                            $statText = 'Direview';
+                                                        } elseif (str_contains($statRev, 'revisi') || str_contains($statRev, 'perbaikan')) {
+                                                            $statBadgeClass = 'bg-danger bg-opacity-10 text-danger';
+                                                            $statText = 'Perlu Revisi';
+                                                        }
+                                                    ?>
+                                                        <div class="d-flex align-items-center justify-content-between gap-1">
+                                                            <span class="badge rounded-pill <?= $statBadgeClass ?> text-truncate px-2 py-0.5" style="font-size: 0.68rem; max-width: 90px;" title="<?= htmlspecialchars($docItem['nama_dokumen']) ?>">
+                                                                <?= $statText ?>
+                                                            </span>
+                                                            <a href="<?= base_url('prodi/dokumen/detail/' . $docItem['id']) ?>" target="_blank" class="btn btn-xs btn-outline-secondary rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.65rem;" title="Lihat Dokumen">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <button type="button" class="btn btn-sm btn-primary w-100 rounded-pill py-1 px-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1 shadow-2xs btn-add-cycle-stage" 
+                                                                style="font-size: 0.72rem; background: #0284C7; border-color: #0284C7;"
+                                                                onclick='continueCycleUpload(<?= json_encode($cyc, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>, "<?= $sKey ?>")'>
+                                                            <i class="fas fa-plus"></i>
+                                                            <span>Tambah</span>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
         <!-- MODE CREATE: BATCH MULTI-UPLOAD (1-10 DOK)  -->
         <!-- ========================================== -->
         <form action="<?= base_url('prodi/dokumen/save') ?>" method="POST" enctype="multipart/form-data" id="batchDocForm" novalidate>
             
+            <!-- Banner Mode Kelanjutan Judul PPEPP -->
+            <div id="activeContinuationBanner" class="card border-0 shadow-sm rounded-4 p-3.5 mb-4 text-white" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); display: none;">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center bg-white text-primary flex-shrink-0 shadow-sm" style="width: 40px; height: 40px; font-size: 1.1rem;">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <div>
+                            <div class="badge rounded-pill px-2.5 py-0.5 bg-white bg-opacity-25 text-white fw-semibold mb-1" style="font-size: 0.72rem;">
+                                Mode Dokumen Lanjutan PPEPP Aktif
+                            </div>
+                            <div class="fw-bold" style="font-size: 0.95rem;">
+                                Melanjutkan Judul: <span id="continuationJudulText" class="text-warning fw-bold">-</span>
+                            </div>
+                            <div class="small text-white-50" style="font-size: 0.76rem;">
+                                Tahap: <strong id="continuationStageText" class="text-white">-</strong> &bull; Standar: <span id="continuationBidangText" class="text-white">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light text-dark fw-bold rounded-pill px-3 py-1.5 shadow-2xs d-inline-flex align-items-center gap-1.5" onclick="resetFormToNewCycle()">
+                        <i class="fas fa-xmark"></i> Batal / Buat Judul Baru
+                    </button>
+                </div>
+            </div>
+
             <!-- Quick Helper & Action Bar -->
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center p-3.5 rounded-4 bg-white border shadow-2xs mb-4 gap-3" style="border: 1px solid #E2E8F0 !important;">
                 <div class="d-flex align-items-center gap-3">
@@ -625,8 +816,8 @@ $siklusDefinitions = [
                         <i class="fas fa-layer-group"></i>
                     </div>
                     <div>
-                        <div class="fw-bold text-dark-blue small">Formulir Multi-Unggah Dokumen Mutu Program Studi</div>
-                        <div class="text-muted" style="font-size: 0.72rem;">Anda dapat mengunggah hingga 10 dokumen mutu sekaligus dalam satu kali proses simpan.</div>
+                        <div class="fw-bold text-dark-blue small" id="formHeaderTitle">Formulir Multi-Unggah Dokumen Mutu Program Studi</div>
+                        <div class="text-muted" style="font-size: 0.72rem;" id="formHeaderSubtitle">Anda dapat mengunggah hingga 10 dokumen mutu sekaligus dalam satu kali proses simpan.</div>
                     </div>
                 </div>
                 <div class="d-flex gap-2">
@@ -680,6 +871,8 @@ const SUB_BIDANGS_DATA = <?= json_encode($subBidangList ?? []) ?>;
 const PRODI_NAME = <?= json_encode($prodi['nama_prodi'] ?? 'Program Studi') ?>;
 const PRODI_JENJANG = <?= json_encode($prodi['jenjang'] ?? 'S1') ?>;
 const IS_EDIT_MODE = <?= $isEdit ? 'true' : 'false' ?>;
+const PRESET_CYCLE = <?= json_encode($presetCycle ?? null) ?>;
+const PRESET_SIKLUS = <?= json_encode($presetSiklus ?? null) ?>;
 
 // Sub-bidang filtering helper
 function getFilteredSubBidang(bidangId) {
@@ -1045,18 +1238,22 @@ function addSingleGdriveLinkRow() {
 let cardCounter = 0;
 let batchStagedFiles = {}; // idx => [File]
 
-function createDocCardTemplate(idx) {
-    const initCardLinkPicker = renderSubStandarPicker(`docs[${idx}][external_link_sub_bidang][0][]`, [], `card_${idx}_link_0`, null);
+function createDocCardTemplate(idx, presetData = null) {
+    const defaultTahunVal = <?= json_encode($defaultTahun) ?>;
+    const initCardLinkPicker = renderSubStandarPicker(`docs[${idx}][external_link_sub_bidang][0][]`, [], `card_${idx}_link_0`, presetData ? presetData.bidang_id : null);
+    
     let bidangOptions = '<option value="">-- Pilih Bidang --</option>';
     BIDANGS_DATA.forEach(b => {
-        bidangOptions += `<option value="${b.id}">${b.nama_bidang}</option>`;
+        const isSelBid = (presetData && presetData.bidang_id == b.id) ? 'selected' : '';
+        bidangOptions += `<option value="${b.id}" ${isSelBid}>${b.nama_bidang}</option>`;
     });
 
     let cycleCardsHtml = '';
     for (const [key, val] of Object.entries(SIKLUS_DEFS)) {
+        const isSelCyc = (presetData && presetData.siklus === key);
         cycleCardsHtml += `
-            <label class="ppepp-cycle-card ${val.theme}" onclick="selectBatchCycle(${idx}, '${key}', this)">
-                <input type="radio" name="docs[${idx}][siklus]" value="${key}" class="ppepp-cycle-radio">
+            <label class="ppepp-cycle-card ${val.theme} ${isSelCyc ? 'selected' : ''}" onclick="selectBatchCycle(${idx}, '${key}', this)">
+                <input type="radio" name="docs[${idx}][siklus]" value="${key}" class="ppepp-cycle-radio" ${isSelCyc ? 'checked' : ''}>
                 <div class="ppepp-cycle-badge">${val.code}</div>
                 <div class="ppepp-cycle-icon-wrap"><i class="fas ${val.icon}"></i></div>
                 <div class="ppepp-cycle-title">${val.title}</div>
@@ -1066,8 +1263,14 @@ function createDocCardTemplate(idx) {
         `;
     }
 
+    const docTitleVal = presetData && presetData.judul_siklus ? presetData.judul_siklus : '';
+    const cycleIdVal = presetData && presetData.cycle_id ? presetData.cycle_id : '';
+    const tahunAkadVal = presetData && presetData.tahun_akademik ? presetData.tahun_akademik : defaultTahunVal;
+    const titlePreview = docTitleVal ? docTitleVal : '(Belum ada judul)';
+
     return `
     <div class="card border-0 shadow-sm rounded-4 doc-batch-card" id="docCard_${idx}" data-card-idx="${idx}" style="border: 1px solid #E2E8F0 !important;">
+        <input type="hidden" name="docs[${idx}][cycle_id]" id="doc_cycle_id_${idx}" value="${cycleIdVal}">
         <!-- Card Header -->
         <div class="card-header bg-white border-bottom p-3.5 d-flex align-items-center justify-content-between rounded-top-4" style="cursor: pointer;" onclick="toggleCardCollapse(${idx}, event)">
             <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -1078,7 +1281,7 @@ function createDocCardTemplate(idx) {
                     <i class="fas fa-graduation-cap me-1"></i> ${PRODI_JENJANG} ${PRODI_NAME}
                 </span>
                 <span class="fw-semibold text-dark-blue small ms-1" id="doc_title_preview_${idx}">
-                    (Belum ada judul)
+                    ${titlePreview}
                 </span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -1125,7 +1328,12 @@ function createDocCardTemplate(idx) {
                     <!-- Nama Dokumen -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold small text-secondary">Nama Dokumen Mutu <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="docs[${idx}][nama_dokumen]" placeholder="Contoh: Standar Penilaian Pembelajaran" required oninput="updateCardTitlePreview(${idx}, this.value)">
+                        <input type="text" class="form-control" name="docs[${idx}][nama_dokumen]" id="doc_nama_${idx}" value="${docTitleVal.replace(/"/g, '&quot;')}" placeholder="Contoh: Standar Penilaian Pembelajaran" required oninput="updateCardTitlePreview(${idx}, this.value)">
+                        ${cycleIdVal ? `
+                            <div class="form-text text-primary small d-flex align-items-center gap-1.5 mt-1">
+                                <i class="fas fa-link"></i> Terhubung ke Siklus Judul: <strong>${docTitleVal}</strong>
+                            </div>
+                        ` : ''}
                     </div>
 
                     <!-- Nomor Dokumen & Tahun Akademik -->
@@ -1136,7 +1344,7 @@ function createDocCardTemplate(idx) {
                         </div>
                         <div class="col-md-5">
                             <label class="form-label fw-semibold small text-secondary">Tahun Akademik <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="docs[${idx}][tahun_akademik]" value="<?= htmlspecialchars($defaultTahun) ?>" required>
+                            <input type="text" class="form-control" name="docs[${idx}][tahun_akademik]" value="${tahunAkadVal}" required>
                         </div>
                     </div>
 
@@ -1671,7 +1879,7 @@ function removeCardGdriveLink(btn, idx) {
     }
 }
 
-function addNewDocCard() {
+function addNewDocCard(presetData = null) {
     const currentCards = document.querySelectorAll('.doc-batch-card');
     if (currentCards.length >= 10) {
         alert('Maksimal pengunggahan sekaligus adalah 10 dokumen.');
@@ -1679,10 +1887,86 @@ function addNewDocCard() {
     }
     const container = document.getElementById('batchCardsContainer');
     if (!container) return;
-    const template = createDocCardTemplate(cardCounter);
+    const template = createDocCardTemplate(cardCounter, presetData);
     container.insertAdjacentHTML('beforeend', template);
+    
+    // Jika ada preset bidang, sinkronkan sub-bidang picker di kartu ini
+    if (presetData && presetData.bidang_id) {
+        handleBatchCardBidangChange(cardCounter, presetData.bidang_id);
+    }
+
     cardCounter++;
     updateTotalCardCounter();
+}
+
+function continueCycleUpload(cycleData, stageKey) {
+    if (!cycleData) return;
+    
+    // 1. Tampilkan dan perbarui banner continuation
+    const banner = document.getElementById('activeContinuationBanner');
+    if (banner) {
+        banner.style.display = 'block';
+        const jEl = document.getElementById('continuationJudulText');
+        const sEl = document.getElementById('continuationStageText');
+        const bEl = document.getElementById('continuationBidangText');
+        if (jEl) jEl.textContent = cycleData.judul_siklus;
+        
+        const stageDef = SIKLUS_DEFS[stageKey] || { title: stageKey, code: stageKey.toUpperCase() };
+        if (sEl) sEl.textContent = stageDef.title + ' (' + stageDef.code + ')';
+        if (bEl) bEl.textContent = cycleData.nama_bidang + (cycleData.nama_sub_bidang ? ' - ' + cycleData.nama_sub_bidang : '');
+    }
+
+    // 2. Beri highlight visual pada kartu siklus di daftar
+    document.querySelectorAll('.cycle-item-card').forEach(c => c.classList.remove('active-continuation'));
+    const targetCard = document.getElementById('cycle_card_' + cycleData.id);
+    if (targetCard) targetCard.classList.add('active-continuation');
+
+    // 3. Reset kontainer kartu formulir
+    const container = document.getElementById('batchCardsContainer');
+    if (container) container.innerHTML = '';
+    batchStagedFiles = {};
+    cardCounter = 0;
+
+    // 4. Buat kartu baru terisi preset judul dan tahap yang dipilih
+    addNewDocCard({
+        cycle_id: cycleData.id,
+        judul_siklus: cycleData.judul_siklus,
+        bidang_id: cycleData.bidang_id,
+        sub_bidang_id: cycleData.sub_bidang_id,
+        tahun_akademik: cycleData.tahun_akademik,
+        siklus: stageKey,
+        is_continuation: true
+    });
+
+    // 5. Scroll mulus ke banner aktif
+    if (banner) {
+        banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function resetFormToNewCycle() {
+    const banner = document.getElementById('activeContinuationBanner');
+    if (banner) banner.style.display = 'none';
+    
+    document.querySelectorAll('.cycle-item-card').forEach(c => c.classList.remove('active-continuation'));
+    
+    const container = document.getElementById('batchCardsContainer');
+    if (container) container.innerHTML = '';
+    batchStagedFiles = {};
+    cardCounter = 0;
+
+    addNewDocCard(); // buat kartu kosong baru
+
+    const form = document.getElementById('batchDocForm');
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function filterCycleList(query) {
+    const q = (query || '').toLowerCase().trim();
+    document.querySelectorAll('.cycle-item-card').forEach(card => {
+        const title = card.getAttribute('data-cycle-title') || '';
+        card.style.display = (!q || title.includes(q)) ? 'block' : 'none';
+    });
 }
 
 function removeDocCard(idx, evt) {
@@ -1704,7 +1988,11 @@ function updateTotalCardCounter() {
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
     if (!IS_EDIT_MODE) {
-        addNewDocCard(); // Initialize card #1
+        if (PRESET_CYCLE && PRESET_SIKLUS) {
+            continueCycleUpload(PRESET_CYCLE, PRESET_SIKLUS);
+        } else {
+            addNewDocCard(); // Initialize card #1
+        }
     } else {
         const initialBidangId = document.getElementById('bidang_id')?.value;
         if (initialBidangId) handleSingleBidangChange(initialBidangId);

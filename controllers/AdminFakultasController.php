@@ -292,6 +292,83 @@ class AdminFakultasController extends Controller {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active=1 ORDER BY id ASC")->fetchAll();
         $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active=1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
 
+        // 1. Ambil daftar judul siklus PPEPP yang sudah dibuat untuk fakultas ini
+        $stmtCycles = $this->db->prepare("
+            SELECT c.*, b.nama_bidang, sb.nama_sub_bidang
+            FROM ppepp_cycles c
+            LEFT JOIN bidang_standar b ON c.bidang_id = b.id
+            LEFT JOIN sub_bidang_standar sb ON c.sub_bidang_id = sb.id
+            WHERE c.fakultas_id = ? AND c.level = 'fakultas' AND c.deleted_at IS NULL
+            ORDER BY c.updated_at DESC, c.id DESC
+        ");
+        $stmtCycles->execute([$this->fakultasId]);
+        $cycles = $stmtCycles->fetchAll() ?: [];
+
+        // 2. Ambil dokumen mutu aktif fakultas ini yang memiliki cycle_id
+        $stmtDocs = $this->db->prepare("
+            SELECT d.id, d.cycle_id, d.nama_dokumen, d.nomor_dokumen, d.siklus, d.status_review, d.tahap_review, d.file_path, d.external_link, d.updated_at
+            FROM ppepp_documents d
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.cycle_id IS NOT NULL AND d.deleted_at IS NULL
+            ORDER BY d.id ASC
+        ");
+        $stmtDocs->execute([$this->fakultasId]);
+        $cycleDocs = $stmtDocs->fetchAll() ?: [];
+
+        $docsByCycle = [];
+        foreach ($cycleDocs as $cd) {
+            $cid = (int)$cd['cycle_id'];
+            $docsByCycle[$cid][$cd['siklus']][] = $cd;
+        }
+
+        $stagesList = ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'];
+        $existingCyclesWithStages = [];
+
+        foreach ($cycles as $c) {
+            $cId = (int)$c['id'];
+            $stages = [];
+            $completedCount = 0;
+
+            foreach ($stagesList as $stageKey) {
+                $hasDoc = !empty($docsByCycle[$cId][$stageKey]);
+                $docsInStage = $hasDoc ? $docsByCycle[$cId][$stageKey] : [];
+                if ($hasDoc) $completedCount++;
+
+                $stages[$stageKey] = [
+                    'has_doc' => $hasDoc,
+                    'docs' => $docsInStage,
+                    'primary_doc' => $hasDoc ? $docsInStage[0] : null
+                ];
+            }
+
+            $existingCyclesWithStages[] = [
+                'id' => $cId,
+                'judul_siklus' => $c['judul_siklus'],
+                'bidang_id' => $c['bidang_id'],
+                'nama_bidang' => $c['nama_bidang'] ?? 'Umum',
+                'sub_bidang_id' => $c['sub_bidang_id'],
+                'nama_sub_bidang' => $c['nama_sub_bidang'] ?? '',
+                'tahun_akademik' => $c['tahun_akademik'],
+                'deskripsi' => $c['deskripsi'] ?? '',
+                'stages' => $stages,
+                'completed_count' => $completedCount,
+                'progress_percent' => round(($completedCount / 5) * 100),
+                'updated_at' => $c['updated_at'] ?? $c['created_at']
+            ];
+        }
+
+        // Cek parameter pre-fill jika datang dari link lanjutan
+        $targetCycleId = isset($_GET['cycle_id']) ? (int)$_GET['cycle_id'] : null;
+        $targetSiklus = isset($_GET['siklus']) ? trim($_GET['siklus']) : null;
+        $presetCycle = null;
+        if ($targetCycleId && !empty($existingCyclesWithStages)) {
+            foreach ($existingCyclesWithStages as $ecs) {
+                if ($ecs['id'] === $targetCycleId) {
+                    $presetCycle = $ecs;
+                    break;
+                }
+            }
+        }
+
         $this->render('admin_fakultas/document_form', [
             'pageTitle' => 'Unggah Dokumen Mutu Fakultas',
             'fakultas' => $this->fakultas,
@@ -299,7 +376,10 @@ class AdminFakultasController extends Controller {
             'subBidangList' => $subBidangList,
             'doc' => null,
             'docFiles' => [],
-            'isEdit' => false
+            'isEdit' => false,
+            'existingCycles' => $existingCyclesWithStages,
+            'presetCycle' => $presetCycle,
+            'presetSiklus' => $targetSiklus
         ]);
     }
 
@@ -586,6 +666,10 @@ class AdminFakultasController extends Controller {
                         } catch (\PDOException $e) {
                             $cycleId = null;
                         }
+                    } else {
+                        try {
+                            $this->db->prepare("UPDATE ppepp_cycles SET updated_at = NOW() WHERE id = ?")->execute([$cycleId]);
+                        } catch (\PDOException $e) {}
                     }
 
                     // Insert ke tabel `ppepp_documents` dengan level = 'fakultas'

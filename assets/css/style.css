@@ -4308,4 +4308,40 @@ select.form-select-sm[id*="pageSize"] {
 .modal-dialog {
   z-index: 1065 !important;
 }
+
+/* ========================================================
+   PPEPP CYCLE & STEPPER CARDS (PRODI & FAKULTAS)
+   ======================================================== */
+.cycle-item-card {
+  transition: all 0.2s ease-in-out;
+  border-color: #E2E8F0 !important;
+}
+.cycle-item-card:hover {
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important;
+}
+.cycle-item-card.active-continuation {
+  border-color: #0284C7 !important;
+  background: #F0F9FF !important;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25) !important;
+}
+.stage-cell {
+  min-height: 98px;
+  transition: all 0.2s ease-in-out;
+}
+.stage-cell:hover {
+  border-color: #94A3B8 !important;
+  transform: translateY(-2px);
+}
+.stage-cell.border-dashed {
+  border-style: dashed !important;
+}
+.btn-add-cycle-stage {
+  transition: all 0.2s ease;
+}
+.btn-add-cycle-stage:hover {
+  transform: scale(1.03);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+}
+
 

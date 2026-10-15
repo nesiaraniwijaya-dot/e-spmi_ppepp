@@ -268,13 +268,93 @@ class AdminProdiController extends Controller {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
         $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active = 1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
 
+        // 1. Ambil daftar judul siklus PPEPP yang sudah dibuat untuk prodi ini
+        $stmtCycles = $this->db->prepare("
+            SELECT c.*, b.nama_bidang, sb.nama_sub_bidang
+            FROM ppepp_cycles c
+            LEFT JOIN bidang_standar b ON c.bidang_id = b.id
+            LEFT JOIN sub_bidang_standar sb ON c.sub_bidang_id = sb.id
+            WHERE c.prodi_id = ? AND c.deleted_at IS NULL
+            ORDER BY c.updated_at DESC, c.id DESC
+        ");
+        $stmtCycles->execute([$this->prodiId]);
+        $cycles = $stmtCycles->fetchAll() ?: [];
+
+        // 2. Ambil dokumen mutu aktif prodi ini yang memiliki cycle_id
+        $stmtDocs = $this->db->prepare("
+            SELECT d.id, d.cycle_id, d.nama_dokumen, d.nomor_dokumen, d.siklus, d.status_review, d.tahap_review, d.file_path, d.external_link, d.updated_at
+            FROM ppepp_documents d
+            WHERE d.prodi_id = ? AND d.cycle_id IS NOT NULL AND d.deleted_at IS NULL
+            ORDER BY d.id ASC
+        ");
+        $stmtDocs->execute([$this->prodiId]);
+        $cycleDocs = $stmtDocs->fetchAll() ?: [];
+
+        $docsByCycle = [];
+        foreach ($cycleDocs as $cd) {
+            $cid = (int)$cd['cycle_id'];
+            $docsByCycle[$cid][$cd['siklus']][] = $cd;
+        }
+
+        $stagesList = ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'];
+        $existingCyclesWithStages = [];
+
+        foreach ($cycles as $c) {
+            $cId = (int)$c['id'];
+            $stages = [];
+            $completedCount = 0;
+
+            foreach ($stagesList as $stageKey) {
+                $hasDoc = !empty($docsByCycle[$cId][$stageKey]);
+                $docsInStage = $hasDoc ? $docsByCycle[$cId][$stageKey] : [];
+                if ($hasDoc) $completedCount++;
+
+                $stages[$stageKey] = [
+                    'has_doc' => $hasDoc,
+                    'docs' => $docsInStage,
+                    'primary_doc' => $hasDoc ? $docsInStage[0] : null
+                ];
+            }
+
+            $existingCyclesWithStages[] = [
+                'id' => $cId,
+                'judul_siklus' => $c['judul_siklus'],
+                'bidang_id' => $c['bidang_id'],
+                'nama_bidang' => $c['nama_bidang'] ?? 'Umum',
+                'sub_bidang_id' => $c['sub_bidang_id'],
+                'nama_sub_bidang' => $c['nama_sub_bidang'] ?? '',
+                'tahun_akademik' => $c['tahun_akademik'],
+                'deskripsi' => $c['deskripsi'] ?? '',
+                'stages' => $stages,
+                'completed_count' => $completedCount,
+                'progress_percent' => round(($completedCount / 5) * 100),
+                'updated_at' => $c['updated_at'] ?? $c['created_at']
+            ];
+        }
+
+        // Cek parameter pre-fill jika datang dari link lanjutan
+        $targetCycleId = isset($_GET['cycle_id']) ? (int)$_GET['cycle_id'] : null;
+        $targetSiklus = isset($_GET['siklus']) ? trim($_GET['siklus']) : null;
+        $presetCycle = null;
+        if ($targetCycleId && !empty($existingCyclesWithStages)) {
+            foreach ($existingCyclesWithStages as $ecs) {
+                if ($ecs['id'] === $targetCycleId) {
+                    $presetCycle = $ecs;
+                    break;
+                }
+            }
+        }
+
         $this->render('admin_prodi/document_form', [
             'pageTitle' => 'Unggah Dokumen Mutu Baru',
             'prodi' => $this->prodi,
             'bidangList' => $bidangList,
             'subBidangList' => $subBidangList,
             'doc' => null,
-            'docFiles' => []
+            'docFiles' => [],
+            'existingCycles' => $existingCyclesWithStages,
+            'presetCycle' => $presetCycle,
+            'presetSiklus' => $targetSiklus
         ]);
     }
 
@@ -564,6 +644,11 @@ class AdminProdiController extends Controller {
                         } catch (\PDOException $e) {
                             $cycleId = null;
                         }
+                    } else {
+                        try {
+                            $stmtUpdCyc = $this->db->prepare("UPDATE ppepp_cycles SET updated_at = NOW() WHERE id = ?");
+                            $stmtUpdCyc->execute([$cycleId]);
+                        } catch (\PDOException $e) {}
                     }
 
                     // Insert into ppepp_documents
@@ -1184,15 +1269,44 @@ class AdminProdiController extends Controller {
         $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
         $tahapReview  = $isDraft ? null : 'gpm';
 
+        // Hubungkan ke ppepp_cycles untuk single mode
+        $cycleId = !empty($_POST['cycle_id']) ? (int)$_POST['cycle_id'] : null;
+        if (!$cycleId) {
+            try {
+                $stmtCheckCyc = $this->db->prepare("SELECT id FROM ppepp_cycles WHERE judul_siklus = ? AND prodi_id = ? AND deleted_at IS NULL LIMIT 1");
+                $stmtCheckCyc->execute([$namaDokumen, $this->prodiId]);
+                $foundCyc = $stmtCheckCyc->fetchColumn();
+                if ($foundCyc) {
+                    $cycleId = (int)$foundCyc;
+                } else {
+                    $stmtInsCyc = $this->db->prepare("
+                        INSERT INTO ppepp_cycles (judul_siklus, level, prodi_id, fakultas_id, bidang_id, sub_bidang_id, tahun_akademik, deskripsi, created_by, created_at)
+                        VALUES (?, 'prodi', ?, ?, ?, ?, ?, ?, ?, NOW())
+                    ");
+                    $stmtInsCyc->execute([
+                        $namaDokumen, $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0),
+                        $bidangId, $subBidangId, $tahunAkademik, $deskripsi, Auth::id()
+                    ]);
+                    $cycleId = (int)$this->db->lastInsertId();
+                }
+            } catch (\PDOException $e) {
+                $cycleId = null;
+            }
+        } else {
+            try {
+                $this->db->prepare("UPDATE ppepp_cycles SET updated_at = NOW() WHERE id = ?")->execute([$cycleId]);
+            } catch (\PDOException $e) {}
+        }
+
         $stmt = $this->db->prepare("
             INSERT INTO ppepp_documents 
-            (prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, 
+            (cycle_id, prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, 
              tanggal_berlaku_mulai, tanggal_berlaku_selesai, jenis_upload, file_path, file_size, 
              file_extension, external_link, public_page_limit, can_download_public, status_review, tahap_review, deskripsi)
-            VALUES (?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
-            $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), Auth::id(), $bidangId, $subBidangId, $namaDokumen, $nomorDokumen,
+            $cycleId, $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), Auth::id(), $bidangId, $subBidangId, $namaDokumen, $nomorDokumen,
             $siklus, $tahunAkademik, $startDate, $endDate, $jenisUpload,
             $filePath, $fileSize, $fileExt, $externalLink,
             $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview, $deskripsi
