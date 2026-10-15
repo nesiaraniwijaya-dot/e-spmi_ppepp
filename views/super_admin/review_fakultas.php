@@ -389,6 +389,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         <!-- Tombol Riwayat Review -->
                                         <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 w-100 btn-review-history d-inline-flex align-items-center justify-content-center gap-1 shadow-2xs" 
                                                 data-doc-id="<?= $doc['id'] ?>" 
+                                                data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                 title="Lihat Jejak Audit & Riwayat Review" 
                                                 style="font-size: 0.72rem;">
                                             <i class="fas fa-history text-secondary"></i> Riwayat

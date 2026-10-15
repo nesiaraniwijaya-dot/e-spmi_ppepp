@@ -2510,7 +2510,7 @@ body.public-page>.scu-footer {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 990;
   box-shadow: var(--shadow-sm);
   flex-shrink: 0;
 }
@@ -4282,4 +4282,18 @@ select.form-select-sm[id*="pageSize"] {
 
 .pulse-red-badge {
   animation: pulseRedBadge 1.8s infinite;
-}
+}
+
+/* ========================================================
+   MODAL & BACKDROP STACKING CONTEXT ENFORCEMENT
+   ======================================================== */
+.modal {
+  z-index: 1060 !important;
+}
+.modal-backdrop {
+  z-index: 1050 !important;
+}
+.modal-dialog {
+  z-index: 1065 !important;
+}
+

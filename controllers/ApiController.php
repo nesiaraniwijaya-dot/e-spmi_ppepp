@@ -46,7 +46,91 @@ class ApiController extends Controller {
             $stmtHist->execute([$docId]);
             $history = $stmtHist->fetchAll();
 
-            // Jika belum ada record di ppepp_document_reviews tapi ada catatan lama di ppepp_documents
+            // Ambil dari ppepp_document_revisions untuk melengkapi catatan perbaikan uploader
+            $stmtRevs = $this->db->prepare("
+                SELECT r.*,
+                       DATE_FORMAT(r.reviewed_at, '%d %b %Y, %H:%i') as reviewed_at_formatted,
+                       DATE_FORMAT(r.revised_at, '%d %b %Y, %H:%i') as revised_at_formatted
+                FROM ppepp_document_revisions r
+                WHERE r.document_id = ?
+                ORDER BY r.revisi_ke ASC, r.id ASC
+            ");
+            $stmtRevs->execute([$docId]);
+            $revisions = $stmtRevs->fetchAll();
+
+            // Integrasikan data tanggapan uploader / revisi jika ada
+            if (!empty($history) && !empty($revisions)) {
+                foreach ($history as &$hItem) {
+                    foreach ($revisions as $rev) {
+                        if (!empty($rev['catatan_perbaikan']) && (
+                            $hItem['catatan'] === $rev['catatan_review'] ||
+                            (!empty($hItem['created_at']) && !empty($rev['reviewed_at']) && substr($hItem['created_at'], 0, 16) === substr($rev['reviewed_at'], 0, 16))
+                        )) {
+                            $hItem['catatan_perbaikan'] = $rev['catatan_perbaikan'];
+                            $hItem['uploader_name'] = $rev['uploader_name'];
+                            $hItem['revised_at'] = $rev['revised_at_formatted'] ?? $rev['revised_at'];
+                            break;
+                        }
+                    }
+                }
+                unset($hItem);
+
+                // Tambahkan entri revisi yang belum terdaftar di ppepp_document_reviews
+                foreach ($revisions as $rev) {
+                    $matched = false;
+                    foreach ($history as $h) {
+                        if ($h['catatan'] === $rev['catatan_review'] || 
+                            (!empty($h['created_at']) && !empty($rev['reviewed_at']) && substr($h['created_at'], 0, 16) === substr($rev['reviewed_at'], 0, 16))) {
+                            $matched = true;
+                            break;
+                        }
+                    }
+                    if (!$matched) {
+                        $history[] = [
+                            'id' => 0,
+                            'document_id' => $doc['id'],
+                            'reviewer_id' => $rev['reviewer_id'],
+                            'reviewer_role' => $rev['reviewer_role'] ?? 'lpm',
+                            'reviewer_name' => $rev['reviewer_name'] ?? 'LPM Reviewer',
+                            'tahap' => 'lpm',
+                            'status_sebelumnya' => null,
+                            'status_hasil' => $rev['status_review'],
+                            'catatan' => $rev['catatan_review'],
+                            'catatan_perbaikan' => $rev['catatan_perbaikan'],
+                            'uploader_name' => $rev['uploader_name'],
+                            'revised_at' => $rev['revised_at_formatted'] ?? $rev['revised_at'],
+                            'created_at' => $rev['reviewed_at'],
+                            'reviewer_user_name' => $rev['reviewer_name'] ?? 'LPM Reviewer',
+                            'reviewer_user_role' => $rev['reviewer_role'] ?? 'admin_lpm'
+                        ];
+                    }
+                }
+                usort($history, function($a, $b) {
+                    return strcmp($a['created_at'] ?? '', $b['created_at'] ?? '');
+                });
+            } elseif (empty($history) && !empty($revisions)) {
+                foreach ($revisions as $rev) {
+                    $history[] = [
+                        'id' => 0,
+                        'document_id' => $doc['id'],
+                        'reviewer_id' => $rev['reviewer_id'],
+                        'reviewer_role' => $rev['reviewer_role'] ?? 'lpm',
+                        'reviewer_name' => $rev['reviewer_name'] ?? 'LPM Reviewer',
+                        'tahap' => 'lpm',
+                        'status_sebelumnya' => null,
+                        'status_hasil' => $rev['status_review'],
+                        'catatan' => $rev['catatan_review'],
+                        'catatan_perbaikan' => $rev['catatan_perbaikan'],
+                        'uploader_name' => $rev['uploader_name'],
+                        'revised_at' => $rev['revised_at_formatted'] ?? $rev['revised_at'],
+                        'created_at' => $rev['reviewed_at'],
+                        'reviewer_user_name' => $rev['reviewer_name'] ?? 'LPM Reviewer',
+                        'reviewer_user_role' => $rev['reviewer_role'] ?? 'admin_lpm'
+                    ];
+                }
+            }
+
+            // Jika belum ada record di kedua tabel tapi ada catatan lama di ppepp_documents
             if (empty($history)) {
                 $syntheticHistory = [];
                 if (!empty($doc['gpm_catatan'])) {
@@ -55,6 +139,7 @@ class ApiController extends Controller {
                         'document_id' => $doc['id'],
                         'reviewer_id' => null,
                         'reviewer_role' => 'gpm',
+                        'reviewer_name' => 'Gugus Penjaminan Mutu (GPM)',
                         'tahap' => 'gpm',
                         'status_hasil' => ($doc['status_review'] === 'revisi_gpm') ? 'revisi_gpm' : 'menunggu_review_lpm',
                         'catatan' => $doc['gpm_catatan'],
@@ -69,6 +154,7 @@ class ApiController extends Controller {
                         'document_id' => $doc['id'],
                         'reviewer_id' => null,
                         'reviewer_role' => 'lpm',
+                        'reviewer_name' => 'Pusat Penjaminan Mutu LPM',
                         'tahap' => 'lpm',
                         'status_hasil' => $doc['status_review'],
                         'catatan' => $doc['lpm_catatan'] ?? $doc['catatan_review'] ?? '',

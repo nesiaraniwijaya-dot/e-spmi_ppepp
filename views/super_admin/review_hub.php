@@ -536,6 +536,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                 <!-- Tombol Riwayat Review -->
                                                 <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 w-100 btn-review-history d-inline-flex align-items-center justify-content-center gap-1 shadow-2xs" 
                                                         data-doc-id="<?= $doc['id'] ?>" 
+                                                        data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                         title="Lihat Jejak Audit & Riwayat Review" 
                                                         style="font-size: 0.72rem;">
                                                     <i class="fas fa-history text-secondary"></i> Riwayat
@@ -1007,7 +1008,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                                     ?>
                                                                                         <span class="badge rounded-pill px-2 py-1 <?= $isAcc ? 'bg-success text-white' : ($isRevisi ? 'bg-warning text-dark' : ($isReview ? 'bg-info text-dark' : 'bg-light text-muted border')) ?>" 
                                                                                               style="font-size: 0.68rem; cursor: <?= $docItem ? 'pointer' : 'default' ?>;"
-                                                                                              title="<?= $stMeta[1] ?>: <?= $isAcc ? 'Disetujui (+20%)' : ($isRevisi ? 'Perlu Revisi (0%)' : ($isReview ? 'Menunggu Review (0%)' : 'Belum Diisi (0%)')) ?>"
+                                                                                              title="<?= $stMeta[1] ?>: <?= $isAcc ? 'Disetujui' : ($isRevisi ? 'Perlu Revisi' : ($isReview ? 'Menunggu Review' : 'Belum Diisi')) ?>"
                                                                                               <?php if ($docItem): ?>
                                                                                                   onclick="openDocReviewHistory(<?= $docItem['id'] ?>)"
                                                                                               <?php endif; ?>>
@@ -1019,7 +1020,6 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                                                 <i class="fas fa-clock me-0.5"></i>
                                                                                             <?php endif; ?>
                                                                                             <?= $stMeta[0] ?>
-                                                                                            <?php if ($isAcc): ?><span style="font-size: 0.6rem;">(+20%)</span><?php endif; ?>
                                                                                         </span>
                                                                                     <?php endforeach; ?>
                                                                                 </div>
@@ -1696,6 +1696,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!docId) return;
         const modalEl = document.getElementById('modalRiwayatRevisiDokumen');
         if (!modalEl) return;
+        if (modalEl.parentElement !== document.body) {
+            document.body.appendChild(modalEl);
+        }
         const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
         bsModal.show();
 

@@ -6,7 +6,13 @@
  */
 ?>
 
+<?php if (!empty($isAdminLayout)): ?>
+    </div><!-- /.admin-main -->
+</div><!-- /.admin-content -->
+<?php endif; ?>
+
     <!-- ============================================================
+
          GLOBAL MODAL: PDF Viewer Interaktif (Batas Halaman Publik & Proteksi)
     ============================================================ -->
     <div class="modal fade" id="pdfPreviewModal" tabindex="-1"
@@ -112,6 +118,9 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================================
          GLOBAL MODAL: Riwayat Catatan Revisi & Evaluasi Dokumen
@@ -169,10 +178,7 @@
         </div>
     </div>
 
-<?php if (!empty($isAdminLayout)): ?>
-    </div><!-- /.admin-main -->
-</div><!-- /.admin-content -->
-<?php else: ?>
+<?php if (empty($isAdminLayout)): ?>
     <!-- ============================================================
          INSTITUTIONAL FOOTER (Public Pages Only) - SMOOTH & CLEAN
     ============================================================ -->
@@ -427,8 +433,15 @@
     <script src="<?= asset('js/ppepp_form.js') ?>"></script>
     <script src="<?= asset('js/sub_standar_picker.js') ?>"></script>
 
-    <!-- Global Review History Modal Handler -->
+    <!-- Global Modal Auto-Hoist & Review History Handler -->
     <script>
+    // Pastikan setiap modal selalu menjadi anak langsung dari <body> agar tidak terperangkap z-index backdrop
+    document.addEventListener('show.bs.modal', function(e) {
+        if (e.target && e.target.classList.contains('modal') && e.target.parentElement !== document.body) {
+            document.body.appendChild(e.target);
+        }
+    });
+
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('.btn-review-history');
         if (!btn) return;
@@ -515,6 +528,24 @@
                                 </div>
                             </div>
                             <div class="p-2.5 rounded-3 bg-light border text-dark small" style="line-height:1.6; white-space:pre-wrap; font-size:0.83rem;">${item.catatan || '(Tidak ada catatan tertulis)'}</div>
+                            ${(item.catatan_perbaikan || item.revised_at) ? `
+                                <div class="mt-2.5 pt-2.5 border-top border-dashed">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1" style="font-size:0.7rem;">
+                                            <i class="fas fa-file-arrow-up me-1"></i> Perbaikan Telah Diunggah
+                                        </span>
+                                        <span class="text-muted small" style="font-size:0.72rem;">
+                                            <i class="far fa-clock me-1"></i> ${item.revised_at || ''}
+                                        </span>
+                                    </div>
+                                    ${item.uploader_name ? `<div class="small text-muted mb-1" style="font-size:0.75rem;">Diunggah oleh: <strong class="text-dark">${item.uploader_name}</strong></div>` : ''}
+                                    ${item.catatan_perbaikan ? `
+                                        <div class="small text-secondary p-2 bg-light rounded-2 border" style="font-size:0.8rem; line-height:1.5;">
+                                            <strong>Tanggapan / Catatan Unit:</strong> ${item.catatan_perbaikan}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 });

@@ -1260,6 +1260,58 @@ class SuperAdminController extends Controller {
         $stmtRev->execute([$id]);
         $revisions = $stmtRev->fetchAll();
 
+        // Fallback ke ppepp_document_reviews atau catatan dokumen jika ppepp_document_revisions belum terisi
+        if (empty($revisions)) {
+            $stmtHist = $this->db->prepare("
+                SELECT r.*,
+                       DATE_FORMAT(r.created_at, '%d %b %Y, %H:%i') as reviewed_at_formatted
+                FROM ppepp_document_reviews r
+                WHERE r.document_id = ?
+                ORDER BY r.created_at ASC, r.id ASC
+            ");
+            $stmtHist->execute([$id]);
+            $histRows = $stmtHist->fetchAll();
+
+            if (!empty($histRows)) {
+                $idx = 1;
+                foreach ($histRows as $hr) {
+                    $revisions[] = [
+                        'id' => $hr['id'],
+                        'document_id' => $hr['document_id'],
+                        'revisi_ke' => $idx++,
+                        'reviewer_id' => $hr['reviewer_id'],
+                        'reviewer_name' => $hr['reviewer_name'] ?? 'Reviewer LPM',
+                        'reviewer_role' => $hr['reviewer_role'] ?? 'super_admin',
+                        'status_review' => $hr['status_hasil'],
+                        'catatan_review' => $hr['catatan'],
+                        'reviewed_at' => $hr['created_at'],
+                        'reviewed_at_formatted' => $hr['reviewed_at_formatted'],
+                        'uploader_name' => null,
+                        'catatan_perbaikan' => null,
+                        'revised_at' => null,
+                        'revised_at_formatted' => null
+                    ];
+                }
+            } elseif (!empty($doc['catatan_review'])) {
+                $revisions[] = [
+                    'id' => 0,
+                    'document_id' => $doc['id'],
+                    'revisi_ke' => 1,
+                    'reviewer_id' => null,
+                    'reviewer_name' => 'Reviewer LPM',
+                    'reviewer_role' => 'super_admin',
+                    'status_review' => $doc['status_review'],
+                    'catatan_review' => $doc['catatan_review'],
+                    'reviewed_at' => date('Y-m-d H:i:s'),
+                    'reviewed_at_formatted' => date('d M Y, H:i'),
+                    'uploader_name' => null,
+                    'catatan_perbaikan' => null,
+                    'revised_at' => null,
+                    'revised_at_formatted' => null
+                ];
+            }
+        }
+
         $this->json([
             'status' => 'success',
             'document' => $doc,
