@@ -279,11 +279,13 @@ foreach ($documents as $d) {
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-shield"></i></span>
                     <select name="status_review" class="form-select border-start-0" onchange="this.form.submit()">
                         <option value="">Semua Status Review</option>
-                        <option value="draft" <?= $statusFilter === 'draft' ? 'selected' : '' ?>>Draf Dokumen</option>
-                        <option value="belum_direview" <?= $statusFilter === 'belum_direview' ? 'selected' : '' ?>>Belum Direview</option>
-                        <option value="perlu_perbaikan" <?= $statusFilter === 'perlu_perbaikan' ? 'selected' : '' ?>>Perlu Perbaikan</option>
+                        <option value="menunggu_review_gpm" <?= in_array($statusFilter, ['menunggu_review_gpm', 'belum_direview']) ? 'selected' : '' ?>>Menunggu Telaah GPM</option>
+                        <option value="revisi_gpm" <?= $statusFilter === 'revisi_gpm' ? 'selected' : '' ?>>Perlu Revisi (GPM)</option>
+                        <option value="menunggu_review_lpm" <?= $statusFilter === 'menunggu_review_lpm' ? 'selected' : '' ?>>Diteruskan ke LPM</option>
+                        <option value="revisi_lpm" <?= in_array($statusFilter, ['revisi_lpm', 'perlu_perbaikan']) ? 'selected' : '' ?>>Perlu Revisi (LPM)</option>
+                        <option value="sesuai" <?= $statusFilter === 'sesuai' ? 'selected' : '' ?>>Sesuai Standar Mutu</option>
                         <option value="sudah_diperbaiki" <?= $statusFilter === 'sudah_diperbaiki' ? 'selected' : '' ?>>Sudah Diperbaiki</option>
-                        <option value="sesuai" <?= $statusFilter === 'sesuai' ? 'selected' : '' ?>>Sesuai Standar</option>
+                        <option value="draft" <?= $statusFilter === 'draft' ? 'selected' : '' ?>>Draf Dokumen</option>
                     </select>
                 </div>
             </div>
@@ -353,7 +355,7 @@ foreach ($documents as $d) {
                         </tr>
                     <?php else: ?>
                         <?php $no = 1; foreach ($documents as $doc): ?>
-                            <tr class="gpm-doc-row">
+                            <tr class="gpm-doc-row" id="doc-row-<?= $doc['id'] ?>">
                                 <td class="ps-3 align-top py-3 text-muted fw-semibold small text-center gpm-row-no"><?= $no++ ?></td>
 
                                 <!-- Unit Sasaran Badge -->
@@ -1091,6 +1093,22 @@ function goToGpmPage(page) {
 
 document.addEventListener('DOMContentLoaded', function() {
     renderGpmPagination();
+
+    // Otomatis buka modal review jika diarahkan dari dashboard (?open_review=ID)
+    const urlParams = new URLSearchParams(window.location.search);
+    const openReviewId = urlParams.get('open_review');
+    if (openReviewId) {
+        const modalEl = document.getElementById('gpmReviewModal' + openReviewId);
+        if (modalEl) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+            const rowEl = document.getElementById('doc-row-' + openReviewId);
+            if (rowEl) {
+                rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                rowEl.classList.add('table-warning');
+            }
+        }
+    }
 });
 
 </script>

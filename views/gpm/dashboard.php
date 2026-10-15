@@ -197,92 +197,117 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     </div>
 
-    <!-- Section: Antrean Dokumen Menunggu Review GPM -->
-    <?php if (!empty($pendingReviewDocs)): ?>
+    <!-- Section: Ringkasan Antrean Dokumen Menunggu Review GPM -->
+    <?php 
+    $totalMenungguReview = (int)($reviewStats['menunggu_review_gpm'] ?? count($pendingReviewDocs));
+    ?>
+    <?php if ($totalMenungguReview > 0): ?>
         <div class="card bg-white border-0 shadow-sm rounded-4 p-4 mb-4" style="border-left: 5px solid #F59E0B !important;">
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
-                <div class="d-flex align-items-center gap-2.5">
-                    <div class="rounded-3 bg-warning bg-opacity-15 text-warning-emphasis d-flex align-items-center justify-content-center p-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-clipboard-check fa-lg text-warning"></i>
+            <!-- Header Ringkasan -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-3 bg-warning bg-opacity-15 text-warning-emphasis d-flex align-items-center justify-content-center p-2" style="width: 44px; height: 44px;">
+                        <i class="fas fa-clipboard-check fa-xl text-warning"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold text-dark-blue mb-0 d-flex align-items-center gap-2">
-                            Antrean Dokumen Menunggu Review GPM
-                            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5" style="font-size: 0.72rem;"><?= count($pendingReviewDocs) ?> Menunggu</span>
-                        </h5>
-                        <p class="text-muted small mb-0">Dokumen terbaru yang memerlukan penelaahan dan verifikasi GPM sebelum diajukan ke LPM.</p>
+                        <div class="d-flex align-items-center gap-2 mb-0.5">
+                            <h5 class="fw-bold text-dark-blue mb-0">Ringkasan Antrean Review Dokumen GPM</h5>
+                            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 0.75rem;">
+                                <?= $totalMenungguReview ?> Menunggu Telaah
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-0">Ringkasan dokumen mutu dari Fakultas dan Program Studi binaan yang siap ditelaah sebelum diajukan ke LPM.</p>
                     </div>
                 </div>
-                <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3.5 fw-bold shadow-2xs">
-                    Buka Semua Antrean <i class="fas fa-arrow-right ms-1"></i>
-                </a>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Buka Semua Antrean (<?= $totalMenungguReview ?>)</span>
+                        <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
             </div>
 
-            <div class="table-responsive rounded-3 border">
-                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
-                    <thead class="table-light text-secondary" style="font-size: 0.74rem; text-transform: uppercase;">
-                        <tr>
-                            <th class="ps-3" style="width: 45px;">No</th>
-                            <th>Nama &amp; Nomor Dokumen</th>
-                            <th>Unit Pengunggah</th>
-                            <th>Siklus &amp; Standar</th>
-                            <th>Waktu Unggah</th>
-                            <th class="text-center pe-3" style="width: 140px;">Aksi Review</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $pNo = 1; foreach ($pendingReviewDocs as $pDoc): ?>
-                            <tr>
-                                <td class="ps-3 text-muted fw-semibold"><?= $pNo++ ?></td>
-                                <td>
-                                    <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($pDoc['nama_dokumen']) ?></div>
-                                    <div class="text-muted small">
-                                        <?php if (!empty($pDoc['nomor_dokumen'])): ?>
-                                            <span class="me-2"><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($pDoc['nomor_dokumen']) ?></span>
-                                        <?php endif; ?>
-                                        <?php if (!empty($pDoc['tahun_akademik'])): ?>
-                                            <span><i class="far fa-calendar me-0.5"></i> TA <?= htmlspecialchars($pDoc['tahun_akademik']) ?></span>
-                                        <?php endif; ?>
+            <!-- Mini Statistik / Ringkasan per Unit -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-4 col-sm-6">
+                    <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Tingkat Fakultas (Dekanat)</div>
+                            <div class="fw-bold text-dark-blue fs-5 mb-0"><?= (int)($fakultasPendingCount ?? 0) ?> Dokumen</div>
+                        </div>
+                        <a href="<?= base_url('gpm/dokumen?unit=fakultas&status_review=menunggu_review_gpm') ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1">
+                            Buka <i class="fas fa-chevron-right ms-0.5"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Program Studi Binaan</div>
+                            <div class="fw-bold text-dark-blue fs-5 mb-0"><?= max(0, $totalMenungguReview - (int)($fakultasPendingCount ?? 0)) ?> Dokumen</div>
+                        </div>
+                        <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-xs btn-outline-success rounded-pill px-2.5 py-1">
+                            Buka <i class="fas fa-chevron-right ms-0.5"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-12">
+                    <div class="p-3 rounded-3 border d-flex align-items-center justify-content-between" style="background: #FFFBEB; border-color: #FDE68A !important;">
+                        <div>
+                            <div class="text-warning-emphasis small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Total Perlu Ditelaah</div>
+                            <div class="fw-bold text-warning-emphasis fs-5 mb-0"><?= $totalMenungguReview ?> Dokumen</div>
+                        </div>
+                        <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1">Prioritas GPM</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Ringkas Dokumen Terbaru (Maksimal 3 Dokumen) -->
+            <div class="border rounded-3 p-3 bg-light bg-opacity-50">
+                <div class="small fw-bold text-secondary text-uppercase mb-2.5 d-flex align-items-center justify-content-between" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                    <span><i class="fas fa-clock text-warning me-1"></i> Preview 3 Dokumen Menunggu Terbaru:</span>
+                    <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="text-primary text-decoration-none fw-semibold">
+                        Buka Seluruh <?= $totalMenungguReview ?> Dokumen &raquo;
+                    </a>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <?php 
+                    $previewDocs = array_slice($pendingReviewDocs, 0, 3);
+                    foreach ($previewDocs as $pDoc): 
+                    ?>
+                        <div class="p-2.5 bg-white border rounded-3 d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2.5 shadow-2xs">
+                            <div class="d-flex align-items-center gap-2.5" style="min-width: 0;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-warning bg-warning bg-opacity-10 flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                    <i class="fas fa-file-lines"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;" title="<?= htmlspecialchars($pDoc['nama_dokumen']) ?>">
+                                        <?= htmlspecialchars($pDoc['nama_dokumen']) ?>
                                     </div>
-                                </td>
-                                <td>
-                                    <?php if ($pDoc['level'] === 'fakultas'): ?>
-                                        <span class="badge rounded-pill px-2.5 py-1 fw-semibold shadow-2xs" style="background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE; font-size: 0.74rem;">
-                                            <i class="fas fa-landmark me-1"></i> Dekanat Fakultas
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge rounded-pill px-2.5 py-1 fw-semibold shadow-2xs" style="background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; font-size: 0.74rem;">
-                                            <i class="fas fa-graduation-cap me-1"></i> <?= htmlspecialchars($pDoc['jenjang'] ?? 'S1') ?> <?= htmlspecialchars($pDoc['nama_prodi'] ?? 'Prodi') ?>
-                                        </span>
-                                    <?php endif; ?>
-                                    <?php if (!empty($pDoc['uploader_name'])): ?>
-                                        <div class="text-muted small mt-0.5" style="font-size: 0.7rem;">
-                                            <i class="fas fa-user-pen me-0.5 opacity-75"></i> <?= htmlspecialchars($pDoc['uploader_name']) ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-1.5 mb-1">
+                                    <div class="d-flex flex-wrap align-items-center gap-1.5 text-muted small" style="font-size: 0.72rem;">
+                                        <?php if ($pDoc['level'] === 'fakultas'): ?>
+                                            <span class="badge text-white" style="background:#1e3a8a; font-size: 0.65rem;">Fakultas</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-dark-blue text-warning" style="font-size: 0.65rem;"><?= htmlspecialchars($pDoc['jenjang'] ?? 'S1') ?> <?= htmlspecialchars($pDoc['nama_prodi'] ?? 'Prodi') ?></span>
+                                        <?php endif; ?>
+                                        <span>&bull;</span>
                                         <?= siklus_badge($pDoc['siklus']) ?>
+                                        <?php if (!empty($pDoc['tahun_akademik'])): ?>
+                                            <span>&bull; TA <?= htmlspecialchars($pDoc['tahun_akademik']) ?></span>
+                                        <?php endif; ?>
                                     </div>
-                                    <div class="text-muted small text-truncate" style="max-width: 220px;" title="<?= htmlspecialchars($pDoc['nama_bidang'] ?? '') ?>">
-                                        <?= htmlspecialchars($pDoc['nama_bidang'] ?? 'Standar Mutu') ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="text-dark small fw-medium"><?= date('d M Y', strtotime($pDoc['created_at'])) ?></div>
-                                    <div class="text-muted small" style="font-size: 0.7rem;"><?= date('H:i', strtotime($pDoc['created_at'])) ?> WIB</div>
-                                </td>
-                                <td class="text-center pe-3">
-                                    <a href="<?= base_url('gpm/dokumen?search=' . urlencode($pDoc['nama_dokumen'])) ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3 py-1 fw-bold shadow-2xs d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
-                                        <i class="fas fa-clipboard-check"></i>
-                                        <span>Review</span>
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-end align-self-md-center">
+                                <a href="<?= base_url('gpm/dokumen?open_review=' . $pDoc['id']) ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3 py-1 fw-bold shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.76rem;">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    <span>Review Dokumen Ini</span>
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
     <?php endif; ?>

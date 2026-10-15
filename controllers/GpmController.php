@@ -48,8 +48,8 @@ class GpmController extends Controller {
         $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
 
         // Query Statistik Dokumen PPEPP (Gabungan Fakultas & Prodi di bawahnya)
-        $scopeWhereSimple = "( (fakultas_id = {$this->fakultasId} AND level = 'fakultas') OR prodi_id IN ({$prodiIdPlaceholder}) )";
-        $scopeWhereAlias  = "( (d.fakultas_id = {$this->fakultasId} AND d.level = 'fakultas') OR d.prodi_id IN ({$prodiIdPlaceholder}) )";
+        $scopeWhereSimple = "( fakultas_id = {$this->fakultasId} OR prodi_id IN ({$prodiIdPlaceholder}) )";
+        $scopeWhereAlias  = "( d.fakultas_id = {$this->fakultasId} OR d.prodi_id IN ({$prodiIdPlaceholder}) )";
 
         $cycleStats = [
             'penetapan'    => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND siklus='penetapan' AND deleted_at IS NULL")->fetchColumn(),
@@ -83,8 +83,9 @@ class GpmController extends Controller {
         ];
 
         // Ringkasan Dokumen Tingkat Fakultas
-        $fakultasDocCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND deleted_at IS NULL")->fetchColumn();
-        $fakultasPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
+        $fakultasDocCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE (fakultas_id = {$this->fakultasId} AND (level = 'fakultas' OR prodi_id IS NULL)) AND deleted_at IS NULL")->fetchColumn();
+        $fakultasPendingCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE (fakultas_id = {$this->fakultasId} AND (level = 'fakultas' OR prodi_id IS NULL)) AND status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
+        $fakultasPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE (fakultas_id = {$this->fakultasId} AND (level = 'fakultas' OR prodi_id IS NULL)) AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
 
         // Ringkasan per Program Studi
         $stmtProdis = $this->db->prepare("
@@ -158,6 +159,7 @@ class GpmController extends Controller {
             'cycleStats'             => $cycleStats,
             'reviewStats'            => $reviewStats,
             'fakultasDocCount'       => $fakultasDocCount,
+            'fakultasPendingCount'   => $fakultasPendingCount,
             'fakultasPerbaikanCount' => $fakultasPerbaikanCount,
             'prodiSummary'           => $prodiSummary,
             'fakultasSummary'        => $rekapData['fakultasSummary'],
@@ -273,14 +275,14 @@ class GpmController extends Controller {
 
         // Filter Kepemilikan Dokumen (Unit Scope)
         if ($unitFilter === 'fakultas') {
-            $sql .= " AND d.fakultas_id = ? AND d.level = 'fakultas'";
+            $sql .= " AND (d.fakultas_id = ? AND (d.level = 'fakultas' OR d.prodi_id IS NULL))";
             $params[] = $this->fakultasId;
         } elseif (is_numeric($unitFilter) && in_array((int)$unitFilter, $prodiIds)) {
-            $sql .= " AND d.prodi_id = ? AND d.level = 'prodi'";
+            $sql .= " AND d.prodi_id = ?";
             $params[] = (int)$unitFilter;
         } else {
-            // All: Tingkat Fakultas ATAU Prodi-prodi di bawah fakultas ini
-            $sql .= " AND ( (d.fakultas_id = ? AND d.level = 'fakultas') OR d.prodi_id IN ({$prodiIdPlaceholder}) )";
+            // All: Tingkat Fakultas ATAU Seluruh Prodi di bawah fakultas ini
+            $sql .= " AND (d.fakultas_id = ? OR d.prodi_id IN ({$prodiIdPlaceholder}))";
             $params[] = $this->fakultasId;
         }
 
@@ -295,8 +297,8 @@ class GpmController extends Controller {
         }
 
         if ($statusFilter) {
-            if ($statusFilter === 'menunggu_review_gpm') {
-                $sql .= " AND d.status_review IN ('menunggu_review_gpm', 'belum_direview')";
+            if ($statusFilter === 'menunggu_review_gpm' || $statusFilter === 'belum_direview') {
+                $sql .= " AND d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview')";
             } elseif ($statusFilter === 'revisi_gpm') {
                 $sql .= " AND d.status_review = 'revisi_gpm'";
             } elseif ($statusFilter === 'menunggu_review_lpm') {
@@ -337,7 +339,7 @@ class GpmController extends Controller {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
         // Hitung dokumen notifikasi aksi dalam lingkup GPM
-        $scopeWhereSimple = "( (fakultas_id = {$this->fakultasId} AND level = 'fakultas') OR prodi_id IN ({$prodiIdPlaceholder}) )";
+        $scopeWhereSimple = "( fakultas_id = {$this->fakultasId} OR prodi_id IN ({$prodiIdPlaceholder}) )";
         $gpmPendingReviewCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
         $gpmWaitingLpmCount    = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'menunggu_review_lpm' AND deleted_at IS NULL")->fetchColumn();
         $gpmRevisiGpmCount     = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'revisi_gpm' AND deleted_at IS NULL")->fetchColumn();
