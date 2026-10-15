@@ -489,6 +489,7 @@ class GpmController extends Controller {
                         $publicPageLimit = 1;
                         $canDownloadPublic = 0;
                     }
+                    $isPageLimited = $publicPageLimit > 0 ? 1 : 0;
 
                     // Proses berkas yang diunggah
                     $uploadedFilesList = [];
@@ -794,6 +795,7 @@ class GpmController extends Controller {
                 $publicPageLimit = 1;
                 $canDownloadPublic = 0;
             }
+            $isPageLimited = $publicPageLimit > 0 ? 1 : 0;
 
             // Kumpulkan seluruh sub standar dari link dan berkas
             $allDocSubIds = [];

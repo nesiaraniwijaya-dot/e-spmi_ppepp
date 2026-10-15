@@ -422,6 +422,7 @@ class AdminProdiController extends Controller {
                         $publicPageLimit = 1;
                         $canDownloadPublic = 0;
                     }
+                    $isPageLimited = $publicPageLimit > 0 ? 1 : 0;
 
                     // Process files for this card (files_{$cardIdx})
                     $uploadedFilesList = [];
@@ -722,6 +723,7 @@ class AdminProdiController extends Controller {
             $publicPageLimit = 1;
             $canDownloadPublic = 0;
         }
+        $isPageLimited = $publicPageLimit > 0 ? 1 : 0;
 
         // 1. Validasi Field Wajib
         if (empty($namaDokumen)) {
@@ -744,31 +746,41 @@ class AdminProdiController extends Controller {
             redirect($redirectUrl);
         }
 
-        if (empty($subBidangId)) {
-            $candidateSubs = [];
-            foreach ($rawSingleLinks as $rl) {
-                if (!empty($rl['sub_bidang_ids'])) $candidateSubs = array_merge($candidateSubs, $rl['sub_bidang_ids']);
+        // Himpun seluruh sub standar dari link, berkas eksisting, dan berkas baru
+        $allDocSubIds = [];
+        if ($subBidangId) $allDocSubIds[] = (int)$subBidangId;
+        foreach ($rawSingleLinks as $rl) {
+            if (!empty($rl['sub_bidang_ids'])) $allDocSubIds = array_merge($allDocSubIds, $rl['sub_bidang_ids']);
+        }
+        if (!empty($_POST['existing_file_sub_bidang']) && is_array($_POST['existing_file_sub_bidang'])) {
+            foreach ($_POST['existing_file_sub_bidang'] as $fSubs) {
+                if (is_array($fSubs)) $allDocSubIds = array_merge($allDocSubIds, $fSubs);
             }
-            if (!empty($_POST['existing_file_sub_bidang']) && is_array($_POST['existing_file_sub_bidang'])) {
-                foreach ($_POST['existing_file_sub_bidang'] as $fSubs) {
-                    if (is_array($fSubs)) $candidateSubs = array_merge($candidateSubs, $fSubs);
-                }
+        }
+        if (!empty($_POST['new_file_sub_bidang']) && is_array($_POST['new_file_sub_bidang'])) {
+            foreach ($_POST['new_file_sub_bidang'] as $fSubs) {
+                if (is_array($fSubs)) $allDocSubIds = array_merge($allDocSubIds, $fSubs);
             }
-            if (!empty($_POST['new_file_sub_bidang']) && is_array($_POST['new_file_sub_bidang'])) {
-                foreach ($_POST['new_file_sub_bidang'] as $fSubs) {
-                    if (is_array($fSubs)) $candidateSubs = array_merge($candidateSubs, $fSubs);
-                }
-            }
-            $candidateSubs = array_values(array_unique(array_filter(array_map('intval', $candidateSubs))));
-            if (!empty($candidateSubs)) {
-                $subBidangId = $candidateSubs[0];
-            }
+        }
+        $allDocSubIds = array_values(array_unique(array_filter(array_map('intval', $allDocSubIds))));
+
+        if (empty($subBidangId) && !empty($allDocSubIds)) {
+            $subBidangId = $allDocSubIds[0];
         }
 
         if (empty($subBidangId) && !empty($bidangId)) {
             $stmtSbFirst = $this->db->prepare("SELECT id FROM sub_bidang_standar WHERE bidang_id = ? AND is_active = 1 ORDER BY id ASC LIMIT 1");
             $stmtSbFirst->execute([$bidangId]);
             $subBidangId = $stmtSbFirst->fetchColumn() ?: null;
+            if ($subBidangId && !in_array((int)$subBidangId, $allDocSubIds, true)) {
+                $allDocSubIds[] = (int)$subBidangId;
+            }
+        }
+
+        if (empty($bidangId) && !empty($subBidangId)) {
+            $stmtB = $this->db->prepare("SELECT bidang_id FROM sub_bidang_standar WHERE id = ?");
+            $stmtB->execute([$subBidangId]);
+            $bidangId = (int)$stmtB->fetchColumn();
         }
 
         if (empty($subBidangId)) {
@@ -875,24 +887,11 @@ class AdminProdiController extends Controller {
                 }
             }
 
-            // Himpun seluruh sub standar dari link, berkas eksisting, dan berkas baru
-            $allDocSubIds = [];
-            if ($subBidangId) $allDocSubIds[] = (int)$subBidangId;
-            foreach ($rawSingleLinks as $rl) {
-                if (!empty($rl['sub_bidang_ids'])) $allDocSubIds = array_merge($allDocSubIds, $rl['sub_bidang_ids']);
-            }
-            if (!empty($_POST['existing_file_sub_bidang']) && is_array($_POST['existing_file_sub_bidang'])) {
-                foreach ($_POST['existing_file_sub_bidang'] as $fSubs) {
-                    if (is_array($fSubs)) $allDocSubIds = array_merge($allDocSubIds, $fSubs);
-                }
-            }
-            if (!empty($_POST['new_file_sub_bidang']) && is_array($_POST['new_file_sub_bidang'])) {
-                foreach ($_POST['new_file_sub_bidang'] as $fSubs) {
-                    if (is_array($fSubs)) $allDocSubIds = array_merge($allDocSubIds, $fSubs);
-                }
+            // Pastikan sub standar induk terbarui
+            if ($subBidangId && !in_array((int)$subBidangId, $allDocSubIds, true)) {
+                $allDocSubIds[] = (int)$subBidangId;
             }
             $allDocSubIds = array_values(array_unique(array_filter(array_map('intval', $allDocSubIds))));
-
             if (empty($subBidangId) && !empty($allDocSubIds)) {
                 $subBidangId = $allDocSubIds[0];
             }
@@ -964,6 +963,9 @@ class AdminProdiController extends Controller {
                     ]);
                     $newFileId = (int)$this->db->lastInsertId();
                     sync_file_sub_bidang($this->db, $newFileId, $fSubArray);
+                    if (!empty($fSubArray)) {
+                        $allDocSubIds = array_merge($allDocSubIds, $fSubArray);
+                    }
                 }
             }
 
@@ -1041,6 +1043,10 @@ class AdminProdiController extends Controller {
             ]);
 
             // Sinkronisasi seluruh sub bidang ke dokumen induk
+            $allDocSubIds = array_values(array_unique(array_filter(array_map('intval', $allDocSubIds))));
+            if (empty($allDocSubIds) && !empty($subBidangId)) {
+                $allDocSubIds = [(int)$subBidangId];
+            }
             sync_document_sub_bidang($this->db, (int)$id, $allDocSubIds);
 
             AuditLogger::log('UPDATE', 'Dokumen PPEPP', (string)$id, $namaDokumen, $oldDoc, [
@@ -1157,7 +1163,15 @@ class AdminProdiController extends Controller {
                 ]);
                 $newFileId = (int)$this->db->lastInsertId();
                 sync_file_sub_bidang($this->db, $newFileId, $fSubArray);
+                if (!empty($fSubArray)) {
+                    $allDocSubIds = array_merge($allDocSubIds, $fSubArray);
+                }
             }
+        }
+
+        $allDocSubIds = array_values(array_unique(array_filter(array_map('intval', $allDocSubIds))));
+        if (empty($allDocSubIds) && !empty($subBidangId)) {
+            $allDocSubIds = [(int)$subBidangId];
         }
 
         // Sinkronisasi seluruh sub bidang ke dokumen induk

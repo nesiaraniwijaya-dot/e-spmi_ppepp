@@ -453,6 +453,7 @@ class AdminFakultasController extends Controller {
                         $publicPageLimit = 1;
                         $canDownloadPublic = 0;
                     }
+                    $isPageLimited = $publicPageLimit > 0 ? 1 : 0;
 
                     // Proses berkas yang diunggah
                     $uploadedFilesList = [];
@@ -759,6 +760,7 @@ class AdminFakultasController extends Controller {
                 $publicPageLimit = 1;
                 $canDownloadPublic = 0;
             }
+            $isPageLimited = $publicPageLimit > 0 ? 1 : 0;
 
             // Himpun seluruh sub standar dari link, berkas eksisting, dan berkas baru
             $allDocSubIds = [];
