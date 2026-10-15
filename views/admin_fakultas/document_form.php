@@ -97,7 +97,14 @@ $siklusDefinitions = [
             <form action="<?= base_url('fakultas/dokumen/save') ?>" method="POST" enctype="multipart/form-data" id="documentUploadForm" novalidate>
                 <input type="hidden" name="id" value="<?= $doc['id'] ?>">
                 
-                <?php if (($doc['status_review'] ?? '') === 'perlu_perbaikan'): ?>
+                <?php if (in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])): 
+                    $isGpmFormRev = (($doc['status_review'] ?? '') === 'revisi_gpm');
+                    $formRevLabel = $isGpmFormRev ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
+                    $formRevDate = $isGpmFormRev ? ($doc['gpm_reviewed_at'] ?? $doc['reviewed_at']) : ($doc['lpm_reviewed_at'] ?? $doc['reviewed_at'] ?? $doc['gpm_reviewed_at']);
+                    $formRevNote = $isGpmFormRev 
+                        ? trim($doc['gpm_catatan'] ?: ($doc['catatan_review'] ?? 'Silakan lakukan revisi sesuai standar penjaminan mutu SPMI.'))
+                        : trim($doc['lpm_catatan'] ?: ($doc['catatan_review'] ?: ($doc['gpm_catatan'] ?? 'Silakan lakukan revisi sesuai standar penjaminan mutu SPMI.')));
+                ?>
                     <!-- Executive Review Notice Callout -->
                     <div class="rounded-4 mb-4 p-3.5 p-md-4 shadow-sm" style="background: #FFFDFD; border: 1px solid #FECACA; border-left: 6px solid #DC2626;">
                         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 pb-2.5 border-bottom" style="border-color: #FEE2E2 !important;">
@@ -106,18 +113,18 @@ $siklusDefinitions = [
                                     <i class="fas fa-triangle-exclamation me-1.5"></i> Perlu Revisi Dokumen
                                 </span>
                                 <span class="fw-bold text-dark-blue small">
-                                    Catatan Evaluasi Penjaminan Mutu (LPM)
+                                    Catatan Evaluasi <?= $isGpmFormRev ? 'GPM Fakultas' : 'Penjaminan Mutu (LPM)' ?>
                                 </span>
                             </div>
                             <div class="d-flex flex-wrap align-items-center gap-2 small" style="font-size: 0.76rem;">
                                 <span class="d-inline-flex align-items-center gap-1.5 bg-white border border-danger-subtle rounded-pill px-3 py-1 text-dark shadow-2xs">
-                                    <i class="fas fa-building-columns text-primary"></i>
-                                    <strong class="text-dark">Pusat Penjaminan Mutu LPM</strong>
+                                    <i class="fas <?= $isGpmFormRev ? 'fa-shield-halved text-purple' : 'fa-building-columns text-primary' ?>"></i>
+                                    <strong class="text-dark"><?= htmlspecialchars($formRevLabel) ?></strong>
                                 </span>
-                                <?php if (!empty($doc['reviewed_at'])): ?>
+                                <?php if (!empty($formRevDate)): ?>
                                     <span class="d-inline-flex align-items-center gap-1 bg-white border border-danger-subtle rounded-pill px-2.5 py-1 text-muted shadow-2xs">
                                         <i class="far fa-clock text-secondary"></i>
-                                        <?= date('d M Y, H:i', strtotime($doc['reviewed_at'])) ?> WIB
+                                        <?= date('d M Y, H:i', strtotime($formRevDate)) ?> WIB
                                     </span>
                                 <?php endif; ?>
                             </div>
@@ -129,14 +136,14 @@ $siklusDefinitions = [
                                 <i class="fas fa-comment-dots text-danger"></i> Poin-Poin Perbaikan yang Harus Dipenuhi:
                             </div>
                             <div class="text-dark fw-medium lh-base text-break" style="font-size: 0.88rem; white-space: pre-line;">
-                                <?= htmlspecialchars($doc['catatan_review'] ?? 'Silakan lakukan revisi sesuai standar penjaminan mutu SPMI.') ?>
+                                <?= htmlspecialchars($formRevNote) ?>
                             </div>
                         </div>
 
                         <!-- Directive Sub-banner -->
                         <div class="d-flex align-items-center gap-2 text-danger small pt-1">
                             <i class="fas fa-circle-info flex-shrink-0"></i>
-                            <span>Silakan perbarui isian atau berkas di bawah ini, lalu klik tombol <strong>"Simpan &amp; Ajukan Ulang ke LPM"</strong> untuk verifikasi lanjutan.</span>
+                            <span>Silakan perbarui isian atau berkas di bawah ini, lalu klik tombol <strong>"Simpan &amp; Ajukan Ulang <?= $isGpmFormRev ? 'ke GPM' : 'ke LPM' ?>"</strong> untuk verifikasi lanjutan.</span>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -602,7 +609,7 @@ $siklusDefinitions = [
                                         <i class="fas fa-floppy-disk me-1.5"></i> Simpan Sebagai Draf
                                     </button>
                                     <button type="submit" name="action_submit" value="publish" class="btn btn-warning px-4 py-2.5 fw-bold rounded-pill text-dark shadow-sm w-100 w-sm-auto order-1 order-sm-2">
-                                        <i class="fas fa-paper-plane me-1.5"></i> <?= ($doc['status_review'] === 'perlu_perbaikan') ? 'Simpan &amp; Ajukan Ulang ke LPM' : 'Simpan &amp; Ajukan ke LPM' ?>
+                                        <i class="fas fa-paper-plane me-1.5"></i> <?= in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']) ? ('Simpan &amp; Ajukan Ulang ' . (($doc['status_review'] ?? '') === 'revisi_gpm' ? 'ke GPM' : 'ke LPM')) : 'Simpan &amp; Ajukan ke LPM' ?>
                                     </button>
                                 </div>
                             </div>

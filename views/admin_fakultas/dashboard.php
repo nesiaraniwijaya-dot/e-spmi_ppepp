@@ -184,9 +184,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 foreach ($displayDocs as $item): 
                     $isPerlu = in_array($item['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']);
                     $isGpmRev = ($item['status_review'] ?? '') === 'revisi_gpm';
-                    $revLabel = $isGpmRev ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
-                    $revDate = !empty($item['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['gpm_reviewed_at'])) . ' WIB' : (!empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : '-');
-                    $noteExcerpt = trim($item['gpm_catatan'] ?: ($item['catatan_review'] ?? ''));
+                    if ($isGpmRev) {
+                        $revLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
+                        $revDate = !empty($item['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['gpm_reviewed_at'])) . ' WIB' : (!empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : '-');
+                        $noteExcerpt = trim($item['gpm_catatan'] ?: ($item['catatan_review'] ?? 'Silakan periksa dan sesuaikan berkas dokumen tingkat fakultas.'));
+                    } else {
+                        $revLabel = 'Pusat Penjaminan Mutu LPM';
+                        $revDate = !empty($item['lpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['lpm_reviewed_at'])) . ' WIB' : (!empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : (!empty($item['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['gpm_reviewed_at'])) . ' WIB' : '-'));
+                        $noteExcerpt = trim($item['lpm_catatan'] ?: ($item['catatan_review'] ?: ($item['gpm_catatan'] ?? 'Silakan periksa dan sesuaikan berkas dokumen tingkat fakultas.')));
+                    }
                     if (empty($noteExcerpt)) {
                         $noteExcerpt = $isPerlu ? 'Silakan periksa dan sesuaikan berkas dokumen tingkat fakultas.' : 'Menunggu review ulang.';
                     }

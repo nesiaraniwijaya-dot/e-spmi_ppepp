@@ -555,10 +555,19 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <?php 
                 $displayDocs = array_slice($revisiDocs, 0, 5);
                 foreach ($displayDocs as $item): 
-                    $isPerlu = ($item['status_review'] ?? '') === 'perlu_perbaikan';
-                    $noteExcerpt = trim($item['catatan_review'] ?? '');
+                    $isPerlu = in_array($item['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']);
+                    $isGpmRev = (($item['status_review'] ?? '') === 'revisi_gpm');
+                    if ($isGpmRev) {
+                        $revLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
+                        $revDate = !empty($item['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['gpm_reviewed_at'])) . ' WIB' : (!empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : '-');
+                        $noteExcerpt = trim($item['gpm_catatan'] ?: ($item['catatan_review'] ?? 'Silakan periksa dan sesuaikan dokumen mutu.'));
+                    } else {
+                        $revLabel = 'Pusat Penjaminan Mutu LPM';
+                        $revDate = !empty($item['lpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['lpm_reviewed_at'])) . ' WIB' : (!empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : (!empty($item['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['gpm_reviewed_at'])) . ' WIB' : '-'));
+                        $noteExcerpt = trim($item['lpm_catatan'] ?: ($item['catatan_review'] ?: ($item['gpm_catatan'] ?? 'Silakan periksa dan sesuaikan dokumen mutu.')));
+                    }
                     if (empty($noteExcerpt)) {
-                        $noteExcerpt = $isPerlu ? 'Silakan periksa dan sesuaikan dokumen mutu sesuai arahan Pusat Penjaminan Mutu LPM.' : 'Dokumen telah diperbaiki dan sedang dalam antrean verifikasi ulang LPM.';
+                        $noteExcerpt = $isPerlu ? 'Silakan periksa dan sesuaikan dokumen mutu.' : 'Dokumen telah diperbaiki dan sedang dalam antrean verifikasi.';
                     }
                     $isFakultas = ($item['level'] ?? '') === 'fakultas';
                     $unitBadge = $isFakultas ? 'Fakultas' : (($item['jenjang'] ?? 'S1') . ' • ' . ($item['nama_prodi'] ?? 'Prodi'));
@@ -604,14 +613,14 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <!-- Reviewer Meta -->
                                 <div class="d-inline-flex flex-wrap align-items-center gap-2 text-muted px-2.5 py-1 rounded-pill bg-light border mt-1" style="font-size: 0.76rem;">
                                     <span class="d-inline-flex align-items-center gap-1.5">
-                                        <i class="fas fa-building-columns text-primary"></i>
-                                        <span><strong class="text-dark">Pusat Penjaminan Mutu LPM</strong></span>
+                                        <i class="fas <?= $isGpmRev ? 'fa-shield-halved text-purple' : 'fa-building-columns text-primary' ?>"></i>
+                                        <span><strong class="text-dark"><?= htmlspecialchars($revLabel) ?></strong></span>
                                     </span>
-                                    <?php if (!empty($item['reviewed_at'])): ?>
+                                    <?php if ($revDate !== '-'): ?>
                                         <span class="text-secondary opacity-50">&bull;</span>
                                         <span class="d-inline-flex align-items-center gap-1">
                                              <i class="far fa-calendar-check text-secondary"></i>
-                                            <span><?= date('d M Y, H:i', strtotime($item['reviewed_at'])) ?> WIB</span>
+                                            <span><?= $revDate ?></span>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -625,11 +634,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     data-bs-toggle="modal" 
                                     data-bs-target="#modalCatatanEvaluator"
                                     data-nama="<?= htmlspecialchars($item['nama_dokumen']) ?>"
-                                    data-reviewer="Pusat Penjaminan Mutu LPM"
-                                    data-tanggal="<?= !empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : '-' ?>"
+                                    data-reviewer="<?= htmlspecialchars($revLabel) ?>"
+                                    data-tanggal="<?= $revDate ?>"
                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                     data-siklus="<?= htmlspecialchars($item['siklus'] ?? '') ?>"
                                     data-status="<?= $isPerlu ? 'perlu_perbaikan' : 'sudah_diperbaiki' ?>"
+                                    data-is-gpm="<?= $isGpmRev ? '1' : '0' ?>"
                                     data-edit-url="<?= base_url('gpm/perbaikan') ?>">
                                 <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?> me-2"></i>
                                 <span>Lihat Catatan</span>
@@ -790,7 +800,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <h5 class="modal-title fw-bold text-white mb-0.5" id="modalCatatanLabel" style="font-size: 1.1rem; letter-spacing: -0.2px;">
                             Catatan Evaluasi / Arahan LPM
                         </h5>
-                        <p class="text-white text-opacity-75 small mb-0" style="font-size: 0.78rem;">Lembaga Penjaminan Mutu UNIKA Soegijapranata</p>
+                        <p class="text-white text-opacity-75 small mb-0" id="modalCatatanSubLabel" style="font-size: 0.78rem;">Lembaga Penjaminan Mutu UNIKA Soegijapranata</p>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -805,8 +815,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </div>
                     <div class="d-flex flex-wrap align-items-center gap-3 mt-2 pt-2 border-top text-muted small" style="font-size: 0.76rem;">
                         <div class="d-flex align-items-center gap-1.5">
-                            <i class="fas fa-building-columns text-primary"></i>
-                            <span class="text-dark fw-bold">Pusat Penjaminan Mutu LPM</span>
+                            <i class="fas fa-building-columns text-primary" id="evalModalReviewerIcon"></i>
+                            <span class="text-dark fw-bold" id="evalModalReviewer">Pusat Penjaminan Mutu LPM</span>
                         </div>
                         <div class="d-flex align-items-center gap-1.5">
                             <i class="far fa-calendar-check text-secondary"></i>
@@ -858,11 +868,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const catEl = document.getElementById('evalModalCatatan');
             const editBtn = document.getElementById('evalModalEditBtn');
             const iconEl = document.getElementById('evalModalIcon');
+            const isGpm = btn.getAttribute('data-is-gpm') === '1';
+            const modalLabel = document.getElementById('modalCatatanLabel');
+            const modalSubLabel = document.getElementById('modalCatatanSubLabel');
+            const revIconEl = document.getElementById('evalModalReviewerIcon');
 
             if (titleEl) titleEl.textContent = nama;
             if (revEl) revEl.textContent = reviewer;
             if (tglEl) tglEl.textContent = tanggal;
             if (catEl) catEl.textContent = catatan;
+
+            if (modalLabel) {
+                modalLabel.textContent = isGpm ? 'Catatan Evaluasi / Rekomendasi GPM' : 'Catatan Evaluasi / Arahan LPM';
+            }
+            if (modalSubLabel) {
+                modalSubLabel.textContent = isGpm ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Lembaga Penjaminan Mutu (LPM) UNIKA Soegijapranata';
+            }
+            if (revIconEl) {
+                revIconEl.className = isGpm ? 'fas fa-shield-halved text-purple' : 'fas fa-building-columns text-primary';
+            }
             
             if (editBtn) {
                 editBtn.href = '<?= base_url("gpm/perbaikan") ?>';

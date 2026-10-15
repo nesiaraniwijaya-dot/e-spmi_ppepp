@@ -552,10 +552,16 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                             <!-- Catatan Evaluasi LPM / GPM -->
                                             <?php 
                                             $isGpmRevDoc = ($reviewStatus === 'revisi_gpm');
-                                            $evNote = $isGpmRevDoc ? ($doc['gpm_catatan'] ?: $reviewNotes) : ($reviewNotes ?: ($doc['gpm_catatan'] ?? ''));
+                                            if ($isGpmRevDoc) {
+                                                $evTitle = 'Gugus Penjaminan Mutu (GPM) Fakultas';
+                                                $evDate = $doc['gpm_reviewed_at'] ?? $doc['reviewed_at'] ?? null;
+                                                $evNote = trim($doc['gpm_catatan'] ?: ($reviewNotes ?: ''));
+                                            } else {
+                                                $evTitle = 'Pusat Penjaminan Mutu LPM';
+                                                $evDate = $doc['lpm_reviewed_at'] ?? $doc['reviewed_at'] ?? ($doc['gpm_reviewed_at'] ?? null);
+                                                $evNote = trim($doc['lpm_catatan'] ?: ($reviewNotes ?: ($doc['gpm_catatan'] ?? '')));
+                                            }
                                             if (!empty($evNote)): 
-                                                $evTitle = $isGpmRevDoc ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : ($reviewerName ?: 'Pusat Penjaminan Mutu LPM');
-                                                $evDate = $isGpmRevDoc ? ($doc['gpm_reviewed_at'] ?? $doc['reviewed_at'] ?? null) : ($doc['reviewed_at'] ?? $doc['gpm_reviewed_at'] ?? null);
                                             ?>
                                                 <div class="p-3 rounded-3 mb-3 border <?= in_array($reviewStatus, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'border-danger' : 'border-primary' ?>" style="background: <?= in_array($reviewStatus, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#FFF1F2' : '#EFF6FF' ?>; border-left: 4px solid <?= in_array($reviewStatus, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#DC2626' : '#2563EB' ?> !important;">
                                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
