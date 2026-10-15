@@ -175,3 +175,5 @@ $rolesOptions = [
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
 }
 </style>
+
+<?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

@@ -1019,8 +1019,6 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
     </div>
 
-</div>
-
 <!-- Hidden Form for Reset Action -->
 <form action="<?= base_url('admin/landing-settings/reset') ?>" method="POST" id="formResetSettings" style="display:none;"></form>
 

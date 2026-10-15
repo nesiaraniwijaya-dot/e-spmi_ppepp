@@ -783,9 +783,6 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
         </div>
     </div>
 </div>
-        </div>
-    </div>
-</div>
 
 <script>
 let currentPerbaikanPages = {

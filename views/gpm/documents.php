@@ -1092,6 +1092,7 @@ function goToGpmPage(page) {
 document.addEventListener('DOMContentLoaded', function() {
     renderGpmPagination();
 });
+
 </script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

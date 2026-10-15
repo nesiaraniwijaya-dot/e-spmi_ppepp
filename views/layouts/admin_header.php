@@ -161,7 +161,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
             </a>
 
             <!-- Notification Bell Icon (Revisi & Perbaikan Dokumen) -->
-            <?php if (Auth::isProdi() || Auth::isFakultas() || Auth::isGpm() || (isset($currentUser['role']) && $currentUser['role'] === 'gpm')): 
+            <?php if (Auth::isProdi() || Auth::isFakultas() || Auth::isGpm() || Auth::isLpm() || (isset($currentUser['role']) && $currentUser['role'] === 'gpm')): 
                 $perluActionCount = count(array_filter($notificationItems, fn($i) => in_array($i['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])));
             ?>
                 <div class="dropdown">
@@ -216,8 +216,9 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                     $editUrl = match(true) {
                                         Auth::isProdi()    => base_url('prodi/dokumen/edit/' . $notifDoc['id']),
                                         Auth::isFakultas() => base_url('fakultas/dokumen/edit/' . $notifDoc['id']),
-                                        ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen'),
-                                        default            => base_url('admin/review'),
+                                        Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen'),
+                                        Auth::isLpm()      => base_url('admin/review-hub'),
+                                        default            => base_url('admin/review-hub'),
                                     };
                                     $isPerlu = in_array($notifDoc['status_review'], ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']);
                                 ?>
@@ -252,13 +253,14 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                         $perbaikanPageUrl = match(true) {
                             Auth::isProdi()    => base_url('prodi/perbaikan'),
                             Auth::isFakultas() => base_url('fakultas/perbaikan'),
-                            ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen'),
-                            default            => base_url('admin/review'),
+                            Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen'),
+                            Auth::isLpm()      => base_url('admin/review-hub'),
+                            default            => base_url('admin/review-hub'),
                         };
                         ?>
                         <li class="p-2 text-center bg-light">
                             <a href="<?= $perbaikanPageUrl ?>" class="text-primary fw-bold text-decoration-none small d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                                <span><?= ($currentUser['role'] ?? '') === 'gpm' ? 'Buka Review Dokumen GPM' : (Auth::isLpm() ? 'Buka Review Dokumen LPM' : 'Buka Menu Perbaikan Dokumen') ?></span>
+                                <span><?= (Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm') ? 'Buka Review Dokumen GPM' : (Auth::isLpm() ? 'Buka Ruang Review LPM' : 'Buka Menu Perbaikan Dokumen') ?></span>
                                 <i class="fas fa-arrow-right"></i>
                             </a>
                         </li>
