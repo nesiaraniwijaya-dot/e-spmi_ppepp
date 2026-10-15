@@ -33,22 +33,23 @@ class SuperAdminController extends Controller {
             'peningkatan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='peningkatan' AND deleted_at IS NULL AND status_review != 'draft'")->fetchColumn(),
         ];
 
-        // Review Statistics for Executive Summary
-        $belumDireviewCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE (status_review IN ('belum_direview', 'menunggu_review_lpm') OR (status_review = 'menunggu_review' AND tahap_review = 'lpm')) AND deleted_at IS NULL")->fetchColumn();
-        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review = 'sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn();
-        $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review IN ('perlu_perbaikan', 'revisi_lpm', 'revisi_gpm') AND deleted_at IS NULL")->fetchColumn();
+        // Review Statistics for Executive Summary (Hanya dokumen yang berada di tahap LPM / telah diteruskan GPM)
+        $menungguLpmCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review = 'menunggu_review_lpm' AND deleted_at IS NULL")->fetchColumn();
+        $sudahDiperbaikiLpmCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review = 'sudah_diperbaiki' AND tahap_review = 'lpm' AND deleted_at IS NULL")->fetchColumn();
+        $perluPerbaikanLpmCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review IN ('revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
         $sesuaiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review = 'sesuai' AND deleted_at IS NULL")->fetchColumn();
 
         $reviewStats = [
-            'perlu_tindakan' => $belumDireviewCount + $sudahDiperbaikiCount,
-            'belum_direview' => $belumDireviewCount,
-            'sudah_diperbaiki' => $sudahDiperbaikiCount,
-            'perlu_perbaikan' => $perluPerbaikanCount,
+            'perlu_tindakan' => $menungguLpmCount + $sudahDiperbaikiLpmCount,
+            'belum_direview' => $menungguLpmCount,
+            'menunggu_review_lpm' => $menungguLpmCount,
+            'sudah_diperbaiki' => $sudahDiperbaikiLpmCount,
+            'perlu_perbaikan' => $perluPerbaikanLpmCount,
             'sesuai' => $sesuaiCount,
             'total' => (int)$totalDokumen
         ];
 
-        // Antrean 6 Dokumen Paling Mendesak Membutuhkan Review
+        // Antrean 6 Dokumen Paling Mendesak Membutuhkan Review LPM (Hanya dokumen yang telah disetujui & diteruskan GPM)
         $stmtUrgent = $this->db->query("
             SELECT d.*, 
                    b.nama_bidang, b.kode_bidang, 
@@ -64,10 +65,11 @@ class SuperAdminController extends Controller {
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
-            WHERE (d.status_review IN ('belum_direview', 'sudah_diperbaiki', 'menunggu_review_lpm') OR (d.status_review = 'menunggu_review' AND d.tahap_review = 'lpm')) AND d.deleted_at IS NULL
+            WHERE (d.status_review = 'menunggu_review_lpm' OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')) 
+              AND d.deleted_at IS NULL
             ORDER BY 
               CASE WHEN d.status_review = 'sudah_diperbaiki' THEN 1 ELSE 2 END ASC,
-              d.created_at DESC
+              d.updated_at DESC
             LIMIT 6
         ");
         $urgentReviewDocs = $stmtUrgent->fetchAll();
@@ -697,7 +699,7 @@ class SuperAdminController extends Controller {
      * Pusat Review Dokumen Mutu Terpusat (Admin LPM / Super Admin)
      */
     public function reviewHub(): void {
-        // Ambil semua dokumen PPEPP aktif beserta relasi unit, bidang, dan uploader
+        // Ambil semua dokumen PPEPP aktif yang telah disetujui GPM dan diteruskan ke LPM
         $stmtDocs = $this->db->query("
             SELECT d.*, 
                    b.nama_bidang, b.kode_bidang, 
@@ -715,24 +717,32 @@ class SuperAdminController extends Controller {
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
             LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
-            WHERE d.deleted_at IS NULL AND d.status_review != 'draft'
+            WHERE d.deleted_at IS NULL 
+              AND d.status_review != 'draft'
+              AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
+              AND (
+                  d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
+                  OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
+                  OR (d.level = 'universitas')
+              )
             ORDER BY 
               CASE 
-                WHEN d.status_review IN ('belum_direview', 'menunggu_review_lpm') THEN 1
+                WHEN d.status_review = 'menunggu_review_lpm' THEN 1
                 WHEN d.status_review = 'sudah_diperbaiki' THEN 2
-                WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm', 'revisi_gpm') THEN 3
+                WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm') THEN 3
                 WHEN d.status_review = 'sesuai' THEN 4
                 ELSE 5
               END ASC,
-              d.created_at DESC
+              d.updated_at DESC
         ");
         $documents = $stmtDocs->fetchAll();
         $this->attachFilesToDocs($documents);
 
-        // Hitung statistik review terpusat
+        // Hitung statistik review terpusat LPM
         $reviewStats = [
             'total' => count($documents),
             'perlu_tindakan' => 0,
+            'menunggu_review_lpm' => 0,
             'belum_direview' => 0,
             'sudah_diperbaiki' => 0,
             'perlu_perbaikan' => 0,
@@ -748,12 +758,18 @@ class SuperAdminController extends Controller {
         ];
 
         foreach ($documents as $doc) {
-            $st = $doc['status_review'] ?? 'belum_direview';
-            if (isset($reviewStats[$st])) {
-                $reviewStats[$st]++;
-            }
-            if ($st === 'belum_direview' || $st === 'sudah_diperbaiki') {
+            $st = $doc['status_review'] ?? '';
+            if ($st === 'menunggu_review_lpm' || $st === 'belum_direview') {
+                $reviewStats['menunggu_review_lpm']++;
+                $reviewStats['belum_direview']++;
                 $reviewStats['perlu_tindakan']++;
+            } elseif ($st === 'sudah_diperbaiki') {
+                $reviewStats['sudah_diperbaiki']++;
+                $reviewStats['perlu_tindakan']++;
+            } elseif ($st === 'perlu_perbaikan' || $st === 'revisi_lpm') {
+                $reviewStats['perlu_perbaikan']++;
+            } elseif ($st === 'sesuai') {
+                $reviewStats['sesuai']++;
             }
             $cy = $doc['siklus'] ?? '';
             if (isset($cycleStats[$cy])) {
@@ -770,10 +786,10 @@ class SuperAdminController extends Controller {
         $stmtProdiSummary = $this->db->query("
             SELECT p.id, p.kode_prodi, p.nama_prodi, p.jenjang, p.fakultas_id, f.nama_fakultas, f.kode_fakultas, p.nama_kaprodi,
                    COUNT(d.id) as total_dokumen,
-                   SUM(CASE WHEN d.status_review IN ('belum_direview', 'sudah_diperbaiki') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as perlu_review_count,
-                   SUM(CASE WHEN d.status_review = 'belum_direview' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as belum_direview_count,
-                   SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sudah_diperbaiki_count,
-                   SUM(CASE WHEN d.status_review = 'perlu_perbaikan' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
+                   SUM(CASE WHEN (d.status_review = 'menunggu_review_lpm' OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')) AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as perlu_review_count,
+                   SUM(CASE WHEN d.status_review = 'menunggu_review_lpm' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as belum_direview_count,
+                   SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sudah_diperbaiki_count,
+                   SUM(CASE WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
                    SUM(CASE WHEN d.status_review = 'sesuai' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sesuai_count
             FROM prodis p
             JOIN fakultas f ON p.fakultas_id = f.id
@@ -917,7 +933,7 @@ class SuperAdminController extends Controller {
             redirect('admin/dashboard');
         }
 
-        // Ambil semua dokumen aktif prodi ini
+        // Ambil semua dokumen aktif prodi ini yang telah disetujui GPM dan diteruskan ke LPM
         $stmtDocs = $this->db->prepare("
             SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, 
                    u.name as uploader_name, r.name as reviewer_name, gpm_u.name as gpm_reviewer_name
@@ -927,7 +943,14 @@ class SuperAdminController extends Controller {
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
             LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
-            WHERE d.prodi_id = ? AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            WHERE d.prodi_id = ? 
+              AND d.deleted_at IS NULL 
+              AND d.status_review != 'draft'
+              AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
+              AND (
+                  d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
+                  OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
+              )
             ORDER BY d.created_at DESC
         ");
         $stmtDocs->execute([$id]);
@@ -939,6 +962,7 @@ class SuperAdminController extends Controller {
         $reviewStats = [
             'total' => count($documents),
             'belum_direview' => 0,
+            'menunggu_review_lpm' => 0,
             'perlu_perbaikan' => 0,
             'sudah_diperbaiki' => 0,
             'sesuai' => 0
@@ -953,9 +977,16 @@ class SuperAdminController extends Controller {
         ];
 
         foreach ($documents as $doc) {
-            $st = $doc['status_review'] ?? 'belum_direview';
-            if (isset($reviewStats[$st])) {
-                $reviewStats[$st]++;
+            $st = $doc['status_review'] ?? '';
+            if ($st === 'menunggu_review_lpm' || $st === 'belum_direview') {
+                $reviewStats['menunggu_review_lpm']++;
+                $reviewStats['belum_direview']++;
+            } elseif ($st === 'sudah_diperbaiki') {
+                $reviewStats['sudah_diperbaiki']++;
+            } elseif ($st === 'perlu_perbaikan' || $st === 'revisi_lpm') {
+                $reviewStats['perlu_perbaikan']++;
+            } elseif ($st === 'sesuai') {
+                $reviewStats['sesuai']++;
             }
             $cy = $doc['siklus'] ?? '';
             if (isset($cycleStats[$cy])) {
@@ -990,7 +1021,7 @@ class SuperAdminController extends Controller {
             return;
         }
 
-        // Ambil semua dokumen aktif fakultas ini (level = 'fakultas')
+        // Ambil semua dokumen aktif fakultas ini yang telah disetujui GPM dan diteruskan ke LPM
         $stmtDocs = $this->db->prepare("
             SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, 
                    u.name as uploader_name, r.name as reviewer_name, gpm_u.name as gpm_reviewer_name
@@ -1000,7 +1031,15 @@ class SuperAdminController extends Controller {
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
             LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            WHERE d.fakultas_id = ? 
+              AND d.level = 'fakultas' 
+              AND d.deleted_at IS NULL 
+              AND d.status_review != 'draft'
+              AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
+              AND (
+                  d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
+                  OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
+              )
             ORDER BY d.created_at DESC
         ");
         $stmtDocs->execute([$id]);
@@ -1011,6 +1050,7 @@ class SuperAdminController extends Controller {
         $reviewStats = [
             'total' => count($documents),
             'belum_direview' => 0,
+            'menunggu_review_lpm' => 0,
             'perlu_perbaikan' => 0,
             'sudah_diperbaiki' => 0,
             'sesuai' => 0
@@ -1025,9 +1065,16 @@ class SuperAdminController extends Controller {
         ];
 
         foreach ($documents as $doc) {
-            $st = $doc['status_review'] ?? 'belum_direview';
-            if (isset($reviewStats[$st])) {
-                $reviewStats[$st]++;
+            $st = $doc['status_review'] ?? '';
+            if ($st === 'menunggu_review_lpm' || $st === 'belum_direview') {
+                $reviewStats['menunggu_review_lpm']++;
+                $reviewStats['belum_direview']++;
+            } elseif ($st === 'sudah_diperbaiki') {
+                $reviewStats['sudah_diperbaiki']++;
+            } elseif ($st === 'perlu_perbaikan' || $st === 'revisi_lpm') {
+                $reviewStats['perlu_perbaikan']++;
+            } elseif ($st === 'sesuai') {
+                $reviewStats['sesuai']++;
             }
             $cy = $doc['siklus'] ?? '';
             if (isset($cycleStats[$cy])) {
@@ -1078,6 +1125,14 @@ class SuperAdminController extends Controller {
 
         if (!$doc) {
             Auth::setFlash('danger', 'Dokumen tidak ditemukan.');
+            redirect($fallbackRedirect);
+            return;
+        }
+
+        // Validasi Alur Multi-Tier GPM -> LPM:
+        // Dokumen yang masih ditelaah GPM belum boleh direview oleh LPM
+        if (in_array($doc['status_review'], ['draft', 'menunggu_review_gpm', 'revisi_gpm']) || $doc['tahap_review'] === 'gpm') {
+            Auth::setFlash('danger', 'Dokumen ini masih dalam tahap review oleh GPM Fakultas dan belum disetujui untuk diteruskan ke LPM.');
             redirect($fallbackRedirect);
             return;
         }

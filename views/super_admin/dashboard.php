@@ -175,11 +175,11 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
         <?php if (empty($urgentReviewDocs)): ?>
             <div class="p-4 text-center rounded-3 bg-light border border-light-subtle">
-                <div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; font-size: 1.4rem;">
-                    <i class="fas fa-circle-check"></i>
+                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; font-size: 1.4rem;">
+                    <i class="fas fa-shield-halved"></i>
                 </div>
-                <h6 class="fw-bold text-dark mb-1">Seluruh Dokumen Telah Selesai Direview!</h6>
-                <p class="text-muted small mb-0">Tidak ada antrean dokumen yang tertunda saat ini. Anda dapat memeriksa seluruh riwayat dokumen di Pusat Review.</p>
+                <h6 class="fw-bold text-dark mb-1">Tidak Ada Dokumen Menunggu Review LPM</h6>
+                <p class="text-muted small mb-0">Dokumen mutu fakultas &amp; program studi ditelaah terlebih dahulu oleh GPM Fakultas. Dokumen akan masuk ke antrean LPM setelah disetujui dan diteruskan oleh GPM.</p>
             </div>
         <?php else: ?>
             <div class="table-responsive rounded-3 border">

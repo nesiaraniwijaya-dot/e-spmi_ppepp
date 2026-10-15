@@ -62,15 +62,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             </div>
         </div>
 
-        <!-- 2. Belum Direview -->
+        <!-- 2. Menunggu Telaah LPM -->
         <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 kpi-card cursor-pointer border-start border-4 border-warning" onclick="applyStatusFilter('belum_direview')" title="Klik untuk filter: Dokumen belum pernah direview">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 kpi-card cursor-pointer border-start border-4 border-warning" onclick="applyStatusFilter('menunggu_review_lpm')" title="Klik untuk filter: Dokumen disetujui GPM &amp; menunggu telaah LPM">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-muted fw-bold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Belum Direview</span>
+                    <span class="text-muted fw-bold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Menunggu Telaah LPM</span>
                     <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning p-2"><i class="fas fa-clock"></i></span>
                 </div>
-                <div class="fs-3 fw-bolder text-warning mb-0"><?= $reviewStats['belum_direview'] ?></div>
-                <div class="small text-muted" style="font-size: 0.7rem;">Menunggu verifikasi awal</div>
+                <div class="fs-3 fw-bolder text-warning mb-0"><?= $reviewStats['menunggu_review_lpm'] ?? $reviewStats['belum_direview'] ?></div>
+                <div class="small text-muted" style="font-size: 0.7rem;">Diteruskan dari GPM</div>
             </div>
         </div>
 
@@ -110,15 +110,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             </div>
         </div>
 
-        <!-- 6. Total Seluruh Dokumen -->
+        <!-- 6. Total Dokumen Masuk LPM -->
         <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 kpi-card cursor-pointer border-start border-4 border-primary" onclick="applyStatusFilter('all')" title="Klik untuk menampilkan semua dokumen">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 kpi-card cursor-pointer border-start border-4 border-primary" onclick="applyStatusFilter('all')" title="Klik untuk menampilkan semua dokumen yang masuk ke LPM">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-muted fw-bold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Dokumen</span>
+                    <span class="text-muted fw-bold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Dokumen LPM</span>
                     <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary p-2"><i class="fas fa-folder-closed"></i></span>
                 </div>
                 <div class="fs-3 fw-bolder text-primary mb-0"><?= $reviewStats['total'] ?></div>
-                <div class="small text-muted" style="font-size: 0.7rem;">Seluruh unit universitas</div>
+                <div class="small text-muted" style="font-size: 0.7rem;">Antrean masuk ke LPM</div>
             </div>
         </div>
     </div>
@@ -156,9 +156,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <i class="fas fa-bell text-danger me-1"></i> Perlu Tindakan Segera
                         <span class="badge bg-danger rounded-pill ms-1"><?= $reviewStats['perlu_tindakan'] ?></span>
                     </button>
-                    <button type="button" class="btn btn-sm rounded-pill px-3 filter-pill" data-filter="belum_direview" onclick="applyStatusFilter('belum_direview')">
-                        <i class="fas fa-clock text-warning me-1"></i> Belum Direview
-                        <span class="badge bg-warning text-dark rounded-pill ms-1"><?= $reviewStats['belum_direview'] ?></span>
+                    <button type="button" class="btn btn-sm rounded-pill px-3 filter-pill" data-filter="menunggu_review_lpm" onclick="applyStatusFilter('menunggu_review_lpm')">
+                        <i class="fas fa-clock text-warning me-1"></i> Menunggu Review LPM
+                        <span class="badge bg-warning text-dark rounded-pill ms-1"><?= $reviewStats['menunggu_review_lpm'] ?? $reviewStats['belum_direview'] ?></span>
                     </button>
                     <button type="button" class="btn btn-sm rounded-pill px-3 filter-pill" data-filter="sudah_diperbaiki" onclick="applyStatusFilter('sudah_diperbaiki')">
                         <i class="fas fa-arrows-rotate text-warning me-1"></i> Revisi Masuk
@@ -266,9 +266,19 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <tbody>
                             <?php if (empty($documents)): ?>
                                 <tr>
-                                    <td colspan="7" class="text-center py-5 text-muted">
-                                        <i class="fas fa-folder-open fs-1 text-secondary opacity-50 mb-2"></i>
-                                        <p class="mb-0 fw-semibold">Belum ada dokumen PPEPP yang diunggah.</p>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary mx-auto d-flex align-items-center justify-content-center mb-3 shadow-2xs" style="width: 60px; height: 60px;">
+                                            <i class="fas fa-shield-halved fs-3 text-primary"></i>
+                                        </div>
+                                        <h6 class="fw-bold text-dark-blue mb-1">Belum Ada Dokumen Menunggu Review LPM</h6>
+                                        <p class="text-muted small mx-auto mb-3" style="max-width: 520px; line-height: 1.6;">
+                                            Dokumen mutu yang diunggah oleh Program Studi atau Fakultas akan ditelaah terlebih dahulu oleh <strong>GPM (Gugus Penjaminan Mutu) Fakultas</strong>. Dokumen baru akan masuk ke antrean LPM ini setelah disetujui dan diteruskan oleh GPM.
+                                        </p>
+                                        <div class="d-inline-flex gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-2xs" onclick="document.getElementById('rekap-tab').click();">
+                                                <i class="fas fa-chart-pie me-1"></i> Pantau Rekapitulasi Status Unit
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php else: ?>
@@ -496,6 +506,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                         data-id="<?= $doc['id'] ?>"
                                                         data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                         data-unit="<?= htmlspecialchars($isFakDoc ? ($doc['nama_fakultas'] ?? '') : ($doc['nama_prodi'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-gpm-notes="<?= htmlspecialchars($doc['gpm_catatan'] ?? '', ENT_QUOTES) ?>"
+                                                        data-gpm-reviewer="<?= htmlspecialchars($doc['gpm_reviewer_name'] ?? 'GPM Fakultas', ENT_QUOTES) ?>"
+                                                        data-gpm-date="<?= !empty($doc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'])) : '' ?>"
                                                         title="Setujui Dokumen (Disetujui)">
                                                     <i class="fas fa-check" style="font-size: 0.72rem;"></i>
                                                 </button>
@@ -510,6 +523,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                         data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                         data-notes="<?= htmlspecialchars($doc['catatan_review'] ?? '', ENT_QUOTES) ?>"
                                                         data-unit="<?= htmlspecialchars($isFakDoc ? ($doc['nama_fakultas'] ?? '') : ($doc['nama_prodi'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-gpm-notes="<?= htmlspecialchars($doc['gpm_catatan'] ?? '', ENT_QUOTES) ?>"
+                                                        data-gpm-reviewer="<?= htmlspecialchars($doc['gpm_reviewer_name'] ?? 'GPM Fakultas', ENT_QUOTES) ?>"
+                                                        data-gpm-date="<?= !empty($doc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'])) : '' ?>"
                                                         title="Minta Revisi Unit">
                                                     <i class="fas fa-pen-to-square" style="font-size: 0.72rem;"></i>
                                                 </button>
@@ -1210,13 +1226,27 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         </div>
                     </div>
 
+                    <!-- Hasil Telaah GPM Fakultas (Tier-1) -->
+                    <div id="approveGpmBox" class="p-3 rounded-3 mb-3 border border-warning d-none" style="background: #FFFBEB; border-left: 4px solid #D97706 !important;">
+                        <div class="d-flex align-items-center justify-content-between mb-1.5">
+                            <span class="small fw-bold text-uppercase text-warning-emphasis" style="font-size: 0.72rem;">
+                                <i class="fas fa-shield-halved text-warning me-1"></i> Rekomendasi Telaah GPM Fakultas:
+                            </span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">
+                                Disetujui GPM
+                            </span>
+                        </div>
+                        <div class="small text-dark mb-1" id="approveGpmNotes" style="font-size: 0.82rem; line-height: 1.5; white-space: pre-wrap;"></div>
+                        <div class="small text-muted" id="approveGpmMeta" style="font-size: 0.7rem;"></div>
+                    </div>
+
                     <div class="mb-2">
                         <label for="approveCatatan" class="form-label fw-bold text-dark-blue small mb-1.5" style="font-size: 0.82rem;">
                             Catatan Verifikator LPM <span class="text-muted fw-normal">(Opsional)</span>
                         </label>
                         <input type="text" class="form-control rounded-3 p-2.5 text-dark" id="approveCatatan" name="catatan_review" 
-                               value="Dokumen telah diverifikasi dan disetujui sesuai standar mutu."
-                               style="font-size: 0.85rem; border-color: #CBD5E1;">
+                                value="Dokumen telah diverifikasi dan disetujui sesuai standar mutu."
+                                style="font-size: 0.85rem; border-color: #CBD5E1;">
                         <div class="form-text mt-1 text-muted" style="font-size: 0.72rem;">
                             Catatan akan tersimpan di riwayat review dan dapat dibaca oleh unit pengunggah.
                         </div>
@@ -1278,6 +1308,20 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <div class="text-muted small" id="revDocUnit" style="font-size: 0.76rem;">-</div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Hasil Telaah GPM Fakultas (Tier-1) -->
+                    <div id="revGpmBox" class="p-3 rounded-3 mb-3 border border-warning d-none" style="background: #FFFBEB; border-left: 4px solid #D97706 !important;">
+                        <div class="d-flex align-items-center justify-content-between mb-1.5">
+                            <span class="small fw-bold text-uppercase text-warning-emphasis" style="font-size: 0.72rem;">
+                                <i class="fas fa-shield-halved text-warning me-1"></i> Catatan Telaah GPM Fakultas Sebelumnya:
+                            </span>
+                            <span class="badge bg-warning bg-opacity-25 text-warning-emphasis border border-warning border-opacity-25 rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">
+                                Catatan GPM
+                            </span>
+                        </div>
+                        <div class="small text-dark mb-1" id="revGpmNotes" style="font-size: 0.82rem; line-height: 1.5; white-space: pre-wrap;"></div>
+                        <div class="small text-muted" id="revGpmMeta" style="font-size: 0.7rem;"></div>
                     </div>
 
                     <!-- Catatan / Arahan Input Form -->
@@ -1552,7 +1596,11 @@ function filterHubTable() {
         if (currentStatusFilter === 'all') {
             matchStatus = true;
         } else if (currentStatusFilter === 'perlu_tindakan') {
-            matchStatus = (rowStatus === 'belum_direview' || rowStatus === 'sudah_diperbaiki');
+            matchStatus = (rowStatus === 'menunggu_review_lpm' || rowStatus === 'belum_direview' || rowStatus === 'sudah_diperbaiki');
+        } else if (currentStatusFilter === 'menunggu_review_lpm' || currentStatusFilter === 'belum_direview') {
+            matchStatus = (rowStatus === 'menunggu_review_lpm' || rowStatus === 'belum_direview');
+        } else if (currentStatusFilter === 'perlu_perbaikan') {
+            matchStatus = (rowStatus === 'perlu_perbaikan' || rowStatus === 'revisi_lpm');
         } else {
             matchStatus = (rowStatus === currentStatusFilter);
         }
@@ -1609,10 +1657,24 @@ document.addEventListener('DOMContentLoaded', function () {
             const docId = btn.getAttribute('data-id') || '';
             const docTitle = btn.getAttribute('data-title') || '-';
             const docUnit = btn.getAttribute('data-unit') || '';
+            const gpmNotes = btn.getAttribute('data-gpm-notes') || '';
+            const gpmReviewer = btn.getAttribute('data-gpm-reviewer') || 'GPM Fakultas';
+            const gpmDate = btn.getAttribute('data-gpm-date') || '';
 
             document.getElementById('approveDocId').value = docId;
             document.getElementById('approveDocTitle').textContent = docTitle;
             document.getElementById('approveDocUnit').textContent = docUnit ? 'Unit: ' + docUnit : '';
+
+            const gpmBox = document.getElementById('approveGpmBox');
+            if (gpmBox) {
+                if (gpmNotes) {
+                    gpmBox.classList.remove('d-none');
+                    document.getElementById('approveGpmNotes').textContent = gpmNotes;
+                    document.getElementById('approveGpmMeta').innerHTML = '<i class="far fa-user me-1"></i> ' + gpmReviewer + (gpmDate ? ' &bull; ' + gpmDate : '');
+                } else {
+                    gpmBox.classList.add('d-none');
+                }
+            }
         });
     }
 
@@ -1626,11 +1688,25 @@ document.addEventListener('DOMContentLoaded', function () {
             const docTitle = btn.getAttribute('data-title') || '-';
             const docNotes = btn.getAttribute('data-notes') || '';
             const docUnit = btn.getAttribute('data-unit') || '';
+            const gpmNotes = btn.getAttribute('data-gpm-notes') || '';
+            const gpmReviewer = btn.getAttribute('data-gpm-reviewer') || 'GPM Fakultas';
+            const gpmDate = btn.getAttribute('data-gpm-date') || '';
 
             document.getElementById('revDocId').value = docId;
             document.getElementById('revDocTitle').textContent = docTitle;
             document.getElementById('revDocUnit').textContent = docUnit ? 'Unit: ' + docUnit : '';
             document.getElementById('revCatatan').value = docNotes;
+
+            const gpmBox = document.getElementById('revGpmBox');
+            if (gpmBox) {
+                if (gpmNotes) {
+                    gpmBox.classList.remove('d-none');
+                    document.getElementById('revGpmNotes').textContent = gpmNotes;
+                    document.getElementById('revGpmMeta').innerHTML = '<i class="far fa-user me-1"></i> ' + gpmReviewer + (gpmDate ? ' &bull; ' + gpmDate : '');
+                } else {
+                    gpmBox.classList.add('d-none');
+                }
+            }
         });
     }
 
