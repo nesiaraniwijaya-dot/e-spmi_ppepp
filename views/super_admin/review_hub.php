@@ -1263,7 +1263,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             Catatan Verifikator LPM <span class="text-muted fw-normal">(Opsional)</span>
                         </label>
                         <input type="text" class="form-control rounded-3 p-2.5 text-dark" id="approveCatatan" name="catatan_review" 
-                                value="Dokumen telah diverifikasi dan disetujui sesuai standar mutu."
+                                value="" placeholder="Tuliskan catatan verifikasi jika diperlukan (opsional)..."
                                 style="font-size: 0.85rem; border-color: #CBD5E1;">
                         <div class="form-text mt-1 text-muted" style="font-size: 0.72rem;">
                             Catatan akan tersimpan di riwayat review dan dapat dibaca oleh unit pengunggah.
@@ -1682,6 +1682,10 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('approveDocId').value = docId;
             document.getElementById('approveDocTitle').textContent = docTitle;
             document.getElementById('approveDocUnit').textContent = docUnit ? 'Unit: ' + docUnit : '';
+            const approveNotesEl = document.getElementById('approveCatatan');
+            if (approveNotesEl) {
+                approveNotesEl.value = '';
+            }
 
             const gpmBox = document.getElementById('approveGpmBox');
             if (gpmBox) {
@@ -1713,7 +1717,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('revDocId').value = docId;
             document.getElementById('revDocTitle').textContent = docTitle;
             document.getElementById('revDocUnit').textContent = docUnit ? 'Unit: ' + docUnit : '';
-            document.getElementById('revCatatan').value = docNotes;
+            // Kosongkan catatan revisi default agar LPM dapat mengisikan catatan baru
+            document.getElementById('revCatatan').value = '';
 
             const gpmBox = document.getElementById('revGpmBox');
             if (gpmBox) {

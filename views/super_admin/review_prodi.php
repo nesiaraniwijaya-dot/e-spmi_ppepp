@@ -818,7 +818,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             document.getElementById('revDocId').value = docId || '';
             document.getElementById('revDocTitle').textContent = docTitle || '-';
-            document.getElementById('revCatatan').value = docNotes || '';
+            document.getElementById('revCatatan').value = '';
         });
     }
 

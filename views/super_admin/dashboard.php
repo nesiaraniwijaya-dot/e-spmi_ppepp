@@ -628,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!btn) return;
             document.getElementById('dashRevDocId').value = btn.getAttribute('data-id') || '';
             document.getElementById('dashRevDocTitle').textContent = btn.getAttribute('data-title') || '-';
-            document.getElementById('dashRevCatatan').value = btn.getAttribute('data-notes') || '';
+            document.getElementById('dashRevCatatan').value = '';
         });
     }
 
