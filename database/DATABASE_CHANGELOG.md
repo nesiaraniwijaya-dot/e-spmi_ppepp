@@ -57,6 +57,22 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
    - Mengizinkan Administrator melihat/mengelola kata sandi akun pengguna pada modal edit tanpa perlu reset acak.
    - Telah disinkronkan dan diisi nilai kata sandi default untuk seluruh akun pengguna yang ada.
 
+8. **Alur Review Bertingkat (Prodi/Fakultas -> GPM -> LPM) & Riwayat Revisi (`ppepp_document_reviews`)**:
+   - Dibuat tabel baru **`ppepp_document_reviews`** untuk mencatat jejak kronologis setiap keputusan dan catatan perbaikan (kapan direview, oleh siapa, catatan apa, status hasil).
+   - Memperluas enum `ppepp_documents.status_review`:
+     - `'draft'`: Draf belum diajukan.
+     - `'menunggu_review_gpm'`: Dokumen baru diunggah / perbaikan diajukan, menunggu telaah GPM Fakultas.
+     - `'revisi_gpm'`: GPM meminta perbaikan kepada Prodi/Fakultas.
+     - `'menunggu_review_lpm'`: GPM menyetujui & merekomendasikan ke antrean review LPM.
+     - `'revisi_lpm'`: LPM meminta perbaikan kepada Prodi/Fakultas (GPM mendapat tembusan).
+     - `'sudah_diperbaiki'`: Prodi/Fakultas telah mengirimkan berkas revisi.
+     - `'sesuai'`: Dokumen disahkan final oleh LPM (Sesuai Standar Mutu SPMI).
+   - Menambahkan kolom pendukung di `ppepp_documents`:
+     - `tahap_review` ENUM('draft', 'gpm', 'lpm', 'selesai').
+     - `gpm_reviewed_by`, `gpm_reviewed_at`, `gpm_catatan`.
+     - `lpm_reviewed_by`, `lpm_reviewed_at`, `lpm_catatan`.
+   - Skrip migrasi terpasang: `database/migration_gpm_review_workflow.php`.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:

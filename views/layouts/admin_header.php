@@ -19,8 +19,8 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
         $stmt = $headerDb->prepare("
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
             FROM ppepp_documents
-            WHERE prodi_id = ? AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
-            ORDER BY FIELD(status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), updated_at DESC
+            WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
+            ORDER BY updated_at DESC
         ");
         $stmt->execute([$headerProdiId]);
         $notificationItems = $stmt->fetchAll() ?: [];
@@ -35,8 +35,8 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
         $stmt = $headerDb->prepare("
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
             FROM ppepp_documents
-            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
-            ORDER BY FIELD(status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), updated_at DESC
+            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
+            ORDER BY updated_at DESC
         ");
         $stmt->execute([$headerFakultasId]);
         $notificationItems = $stmt->fetchAll() ?: [];
@@ -52,10 +52,26 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
             FROM ppepp_documents
             WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
-              AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
-            ORDER BY FIELD(status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), updated_at DESC
+              AND status_review IN ('menunggu_review_gpm', 'belum_direview', 'revisi_lpm') AND deleted_at IS NULL
+            ORDER BY FIELD(status_review, 'menunggu_review_gpm', 'belum_direview', 'revisi_lpm'), updated_at DESC
         ");
         $stmt->execute([$headerFakultasId, $headerFakultasId]);
+        $notificationItems = $stmt->fetchAll() ?: [];
+        $notificationCount = count($notificationItems);
+    } catch (\Throwable $e) {
+        $notificationItems = [];
+        $notificationCount = 0;
+    }
+} elseif ($currentUser && Auth::isLpm()) {
+    try {
+        $headerDb = Database::getInstance()->getConnection();
+        $stmt = $headerDb->query("
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
+            FROM ppepp_documents
+            WHERE status_review IN ('menunggu_review_lpm', 'sudah_diperbaiki') AND deleted_at IS NULL
+            ORDER BY updated_at DESC
+            LIMIT 15
+        ");
         $notificationItems = $stmt->fetchAll() ?: [];
         $notificationCount = count($notificationItems);
     } catch (\Throwable $e) {
@@ -200,9 +216,10 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                     $editUrl = match(true) {
                                         Auth::isProdi()    => base_url('prodi/dokumen/edit/' . $notifDoc['id']),
                                         Auth::isFakultas() => base_url('fakultas/dokumen/edit/' . $notifDoc['id']),
-                                        ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen/edit/' . $notifDoc['id']),
-                                        default            => base_url('admin/dashboard'),
+                                        ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen'),
+                                        default            => base_url('admin/review'),
                                     };
+                                    $isPerlu = in_array($notifDoc['status_review'], ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']);
                                 ?>
                                     <a href="<?= $editUrl ?>" class="dropdown-item p-3 border-bottom text-wrap d-flex align-items-start gap-2.5 hover-bg-light" style="font-size: 0.82rem;">
                                         <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 mt-0.5" 
@@ -211,9 +228,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                         </div>
                                         <div class="flex-grow-1 min-w-0">
                                             <div class="d-flex align-items-center justify-content-between gap-1 mb-1">
-                                                <span class="badge rounded-pill <?= $isPerlu ? 'bg-danger text-white' : 'bg-primary text-white' ?>" style="font-size: 0.65rem;">
-                                                    <?= $isPerlu ? 'Perlu Perbaikan' : 'Menunggu Review' ?>
-                                                </span>
+                                                <?= render_review_status_badge($notifDoc['status_review']) ?>
                                                 <span class="text-muted" style="font-size: 0.68rem;">
                                                     <?= !empty($notifDoc['updated_at']) ? date('d M', strtotime($notifDoc['updated_at'])) : '' ?>
                                                 </span>
@@ -235,13 +250,13 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                         $perbaikanPageUrl = match(true) {
                             Auth::isProdi()    => base_url('prodi/perbaikan'),
                             Auth::isFakultas() => base_url('fakultas/perbaikan'),
-                            ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/perbaikan'),
+                            ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen'),
                             default            => base_url('admin/review'),
                         };
                         ?>
                         <li class="p-2 text-center bg-light">
                             <a href="<?= $perbaikanPageUrl ?>" class="text-primary fw-bold text-decoration-none small d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                                <span>Buka Menu Perbaikan Dokumen</span>
+                                <span><?= ($currentUser['role'] ?? '') === 'gpm' ? 'Buka Review Dokumen GPM' : (Auth::isLpm() ? 'Buka Review Dokumen LPM' : 'Buka Menu Perbaikan Dokumen') ?></span>
                                 <i class="fas fa-arrow-right"></i>
                             </a>
                         </li>

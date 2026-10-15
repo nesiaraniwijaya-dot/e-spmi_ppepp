@@ -54,14 +54,14 @@ class AdminProdiController extends Controller {
         ];
         $cycleStats['total'] = $cycleStats['penetapan'] + $cycleStats['pelaksanaan'] + $cycleStats['evaluasi'] + $cycleStats['pengendalian'] + $cycleStats['peningkatan'];
 
-        // Documents in review/revision cycle with LPM (perlu_perbaikan & sudah_diperbaiki)
+        // Documents in review/revision cycle with GPM/LPM (revisi_gpm, revisi_lpm, perlu_perbaikan & sudah_diperbaiki)
         $stmtRevisi = $this->db->prepare("
             SELECT d.*, b.nama_bidang, u.name as reviewer_name 
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN users u ON d.reviewed_by = u.id
-            WHERE d.prodi_id = ? AND d.status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
-            ORDER BY FIELD(d.status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            WHERE d.prodi_id = ? AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
+            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
         ");
         $stmtRevisi->execute([$this->prodiId]);
         $revisiDocs = $stmtRevisi->fetchAll();
@@ -145,8 +145,8 @@ class AdminProdiController extends Controller {
 
         $this->attachFilesToDocs($documents);
 
-        $perluPerbaikanDocs = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
-        $sudahDiperbaikiDocs = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
+        $perluPerbaikanDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
+        $sudahDiperbaikiDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm'])));
 
         $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE prodi_id = {$this->prodiId} AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
 
@@ -174,15 +174,15 @@ class AdminProdiController extends Controller {
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
-            WHERE d.prodi_id = ? AND d.status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
-            ORDER BY FIELD(d.status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            WHERE d.prodi_id = ? AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
+            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
         ");
         $stmt->execute([$this->prodiId]);
         $documents = $stmt->fetchAll();
         $this->attachFilesToDocs($documents);
 
-        $perluDocs = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
-        $sudahDocs = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
+        $perluDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
+        $sudahDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm'])));
 
         $this->render('admin_prodi/perbaikan', [
             'pageTitle' => 'Perbaikan Dokumen Mutu - ' . $this->prodi['nama_prodi'],
@@ -246,17 +246,18 @@ class AdminProdiController extends Controller {
             return;
         }
 
-        $stmtUpd = $this->db->prepare("UPDATE ppepp_documents SET status_review = 'belum_direview', updated_at = NOW() WHERE id = ?");
+        $stmtUpd = $this->db->prepare("UPDATE ppepp_documents SET status_review = 'menunggu_review_gpm', tahap_review = 'gpm', updated_at = NOW() WHERE id = ?");
         $stmtUpd->execute([$docId]);
 
         AuditLogger::log('UPDATE', 'Dokumen PPEPP', (string)$docId, $doc['nama_dokumen'], [
             'status_review' => 'draft'
         ], [
-            'status_review' => 'belum_direview',
+            'status_review' => 'menunggu_review_gpm',
+            'tahap_review' => 'gpm',
             'action' => 'publish_draft'
         ], $this->prodiId, $this->prodi['nama_prodi']);
 
-        Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' berhasil diajukan ke Lembaga Penjaminan Mutu (LPM) untuk diverifikasi.");
+        Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' berhasil diajukan ke Gugus Penjaminan Mutu (GPM) Fakultas untuk direview.");
         redirect('prodi/dokumen');
     }
 
@@ -537,21 +538,22 @@ class AdminProdiController extends Controller {
                         $externalLink = null;
                     }
 
-                    $statusReview = $isDraft ? 'draft' : 'belum_direview';
+                    $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
+                    $tahapReview  = $isDraft ? null : 'gpm';
 
                     // Insert into ppepp_documents
                     $stmt = $this->db->prepare("
                         INSERT INTO ppepp_documents 
                         (prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, 
                          tanggal_berlaku_mulai, tanggal_berlaku_selesai, jenis_upload, file_path, file_size, 
-                         file_extension, external_link, public_page_limit, can_download_public, status_review, deskripsi)
-                        VALUES (?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         file_extension, external_link, public_page_limit, can_download_public, status_review, tahap_review, deskripsi)
+                        VALUES (?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
                     $stmt->execute([
                         $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), Auth::id(), $bidangId, $subBidangId, $namaDokumen, $nomorDokumen,
                         $siklus, $tahunAkademik, $startDate, $endDate, $jenisUpload,
                         $filePath, $fileSize, $fileExt, $externalLink,
-                        $publicPageLimit, $canDownloadPublic, $statusReview, $deskripsi
+                        $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview, $deskripsi
                     ]);
                     $newDocId = (int)$this->db->lastInsertId();
 
@@ -1015,14 +1017,18 @@ class AdminProdiController extends Controller {
                 }
             }
 
-            $newStatusReview = $oldDoc['status_review'] ?? 'belum_direview';
+            $newStatusReview = $oldDoc['status_review'] ?? 'menunggu_review_gpm';
+            $newTahapReview  = $oldDoc['tahap_review'] ?? 'gpm';
             if ($isDraft) {
                 $newStatusReview = 'draft';
+                $newTahapReview  = null;
             } else {
-                if ($newStatusReview === 'perlu_perbaikan') {
-                    $newStatusReview = 'sudah_diperbaiki';
-                } elseif ($newStatusReview === 'draft') {
-                    $newStatusReview = 'belum_direview';
+                if (in_array($newStatusReview, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'])) {
+                    $newStatusReview = 'menunggu_review_gpm';
+                    $newTahapReview  = 'gpm';
+                } elseif (in_array($newStatusReview, ['draft', 'belum_direview'])) {
+                    $newStatusReview = 'menunggu_review_gpm';
+                    $newTahapReview  = 'gpm';
                 }
             }
 
@@ -1032,14 +1038,14 @@ class AdminProdiController extends Controller {
                     tahun_akademik = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?, 
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, 
                     external_link = ?, public_page_limit = ?, can_download_public = ?, 
-                    status_review = ?, deskripsi = ?
+                    status_review = ?, tahap_review = ?, deskripsi = ?
                 WHERE id = ? AND prodi_id = ?
             ");
             $stmt->execute([
                 $bidangId, $subBidangId, $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik,
                 $startDate, $endDate, $jenisUpload, $filePath, $fileSize, $fileExt,
                 $externalLink, $publicPageLimit, $canDownloadPublic, 
-                $newStatusReview, $deskripsi, $id, $this->prodiId
+                $newStatusReview, $newTahapReview, $deskripsi, $id, $this->prodiId
             ]);
 
             // Sinkronisasi seluruh sub bidang ke dokumen induk
@@ -1055,6 +1061,7 @@ class AdminProdiController extends Controller {
                 'bidang_id' => $bidangId,
                 'sub_bidang_id' => $subBidangId,
                 'status_review' => $newStatusReview,
+                'tahap_review' => $newTahapReview,
                 'jenis' => $jenisUpload,
                 'public_page_limit' => $publicPageLimit,
                 'can_download_public' => $canDownloadPublic
@@ -1066,10 +1073,10 @@ class AdminProdiController extends Controller {
                 return;
             }
 
-            $pesanSukses = ($newStatusReview === 'sudah_diperbaiki')
-                ? "Dokumen '{$namaDokumen}' berhasil diperbarui dan statusnya kini 'Menunggu Review Ulang' oleh Admin LPM."
+            $pesanSukses = in_array($oldDoc['status_review'], ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])
+                ? "Dokumen '{$namaDokumen}' berhasil diperbaiki dan statusnya kini 'Menunggu Review GPM' untuk ditinjau oleh Gugus Penjaminan Mutu Fakultas."
                 : (($oldDoc['status_review'] === 'draft')
-                    ? "Dokumen '{$namaDokumen}' berhasil diajukan ke LPM untuk diverifikasi."
+                    ? "Dokumen '{$namaDokumen}' berhasil diajukan ke GPM Fakultas untuk direview."
                     : "Dokumen '{$namaDokumen}' berhasil diperbarui.");
 
             Auth::setFlash('success', $pesanSukses);
@@ -1118,20 +1125,21 @@ class AdminProdiController extends Controller {
             $externalLink = null;
         }
 
-        $statusReview = $isDraft ? 'draft' : 'belum_direview';
+        $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
+        $tahapReview  = $isDraft ? null : 'gpm';
 
         $stmt = $this->db->prepare("
             INSERT INTO ppepp_documents 
             (prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, 
              tanggal_berlaku_mulai, tanggal_berlaku_selesai, jenis_upload, file_path, file_size, 
-             file_extension, external_link, public_page_limit, can_download_public, status_review, deskripsi)
-            VALUES (?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             file_extension, external_link, public_page_limit, can_download_public, status_review, tahap_review, deskripsi)
+            VALUES (?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), Auth::id(), $bidangId, $subBidangId, $namaDokumen, $nomorDokumen,
             $siklus, $tahunAkademik, $startDate, $endDate, $jenisUpload,
             $filePath, $fileSize, $fileExt, $externalLink,
-            $publicPageLimit, $canDownloadPublic, $statusReview, $deskripsi
+            $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview, $deskripsi
         ]);
         $newId = (int)$this->db->lastInsertId();
 
@@ -1193,7 +1201,7 @@ class AdminProdiController extends Controller {
             Auth::setFlash('success', "Dokumen '{$namaDokumen}' berhasil disimpan sebagai draf.");
             redirect('prodi/draft');
         } else {
-            Auth::setFlash('success', "Dokumen mutu '{$namaDokumen}' berhasil diunggah dan diajukan ke LPM (" . ($jenisUpload === 'file' ? count($uploadedFilesList) . ' berkas file' : 'Link Google Drive') . ").");
+            Auth::setFlash('success', "Dokumen mutu '{$namaDokumen}' berhasil diunggah dan diajukan ke GPM Fakultas (" . ($jenisUpload === 'file' ? count($uploadedFilesList) . ' berkas file' : 'Link Google Drive') . ").");
             redirect('prodi/dokumen');
         }
     }

@@ -16,13 +16,10 @@ $bidangFilter = $bidangFilter ?? 0;
 $statusFilter = $statusFilter ?? '';
 $search       = $search ?? '';
 
-$perluDocs  = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
-$sudahDocs  = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
-$draftDocs  = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'draft'));
-
-$perluCount = $gpmPerluCount ?? count($perluDocs);
-$sudahCount = $gpmSudahCount ?? count($sudahDocs);
-$draftCount = $gpmDraftCount ?? count($draftDocs);
+$pendingGpmCount = $gpmPendingReviewCount ?? count(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['menunggu_review_gpm', 'belum_direview'])));
+$waitingLpmCount = $gpmWaitingLpmCount ?? count(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'menunggu_review_lpm'));
+$revisiCount     = $gpmPerluCount ?? count(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
+$sesuaiCount     = $gpmSesuaiCount ?? count(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'sesuai'));
 
 // Hitung siklus
 $siklusCounts = [
@@ -51,117 +48,110 @@ foreach ($documents as $d) {
                 </span>
                 <span class="text-muted small">&bull;</span>
                 <span class="badge rounded-pill px-2.5 py-1 fw-semibold text-secondary d-inline-flex align-items-center gap-1" style="background: #F1F5F9; border: 1px solid #E2E8F0; font-size: 0.75rem;">
-                    <i class="fas fa-folder-open text-primary"></i> Repositori Mutu PPEPP
+                    <i class="fas fa-clipboard-check text-warning"></i> Pusat Review Dokumen Mutu
                 </span>
             </div>
-            <h3 class="fw-bold text-dark-blue mb-1" style="letter-spacing: -0.3px;">Daftar Dokumen Mutu PPEPP</h3>
+            <h3 class="fw-bold text-dark-blue mb-1" style="letter-spacing: -0.3px;">Review Dokumen Mutu PPEPP</h3>
             <p class="text-muted small mb-0" style="line-height: 1.5;">
-                Kelola dokumen PPEPP untuk tingkat <strong>Fakultas</strong> dan seluruh <strong>Program Studi</strong> di bawah naungan <strong><?= htmlspecialchars($fakultas['nama_fakultas'] ?? '') ?></strong>.
+                Telaah dan verifikasi dokumen PPEPP tingkat <strong>Fakultas</strong> dan seluruh <strong>Program Studi</strong> di bawah naungan <strong><?= htmlspecialchars($fakultas['nama_fakultas'] ?? '') ?></strong> sebelum diteruskan ke antrean LPM.
             </p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="<?= base_url('gpm/dokumen/create') ?>" class="btn btn-primary btn-sm rounded-pill px-4 py-2 shadow-sm bg-scu-blue border-0 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.84rem;">
-                <i class="fas fa-plus"></i> Unggah Dokumen Baru
+            <a href="<?= base_url('gpm/rekapitulasi') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 py-2 shadow-2xs fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.84rem;">
+                <i class="fas fa-chart-pie"></i> Rekapitulasi Unit
+            </a>
+            <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-outline-danger btn-sm rounded-pill px-3.5 py-2 shadow-2xs fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.84rem;">
+                <i class="fas fa-wrench"></i> Monitoring Revisi
+                <?php if ($revisiCount > 0): ?>
+                    <span class="badge bg-danger rounded-pill px-2 py-0.5 text-white" style="font-size:0.65rem;"><?= $revisiCount ?></span>
+                <?php endif; ?>
             </a>
         </div>
     </div>
 
-    <?php 
-    $activeNotifCount = ($perluCount > 0 ? 1 : 0) + ($sudahCount > 0 ? 1 : 0) + ($draftCount > 0 ? 1 : 0);
-    $colClass = $activeNotifCount === 3 ? 'col-lg-4 col-md-6 col-12' : ($activeNotifCount === 2 ? 'col-md-6 col-12' : 'col-12');
-    ?>
-
-    <?php if ($activeNotifCount > 0): ?>
-        <!-- Quick Action Notification Grid: Bernafas Lega, Rapi, & Proporsional -->
-        <div class="row g-3 g-xl-4 mb-4 pb-1">
-            <!-- 1. Perlu Tindakan Revisi LPM -->
-            <?php if ($perluCount > 0): ?>
-                <div class="<?= $colClass ?>">
-                    <div class="card border-0 shadow-2xs rounded-4 p-3.5 p-xl-4 h-100 d-flex flex-row align-items-center justify-content-between gap-3.5 transition-all" 
-                         style="background: linear-gradient(135deg, #FFF5F5 0%, #FEF2F2 100%); border: 1px solid #FECACA !important;">
-                        <div class="d-flex align-items-center gap-3.5" style="min-width: 0;">
-                            <div class="rounded-4 bg-danger text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.25rem;">
-                                <i class="fas fa-wrench"></i>
-                            </div>
-                            <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
-                                <div class="mb-1.5">
-                                    <span class="badge bg-danger rounded-pill px-2.5 py-1 fw-bold shadow-2xs" style="font-size: 0.68rem; letter-spacing: 0.3px;">Perlu Tindakan</span>
-                                </div>
-                                <div class="fw-bold text-dark-blue mb-0.5 text-truncate" style="font-size: 0.98rem; line-height: 1.3;">
-                                    <?= $perluCount ?> Dokumen Revisi
-                                </div>
-                                <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                                    Catatan evaluasi mutu dari LPM
-                                </div>
-                            </div>
+    <!-- Quick Action Notification Grid: GPM Review Workflow -->
+    <div class="row g-3 g-xl-4 mb-4 pb-1">
+        <!-- 1. Antrean Review GPM -->
+        <div class="col-lg-4 col-md-6 col-12">
+            <div class="card border-0 shadow-2xs rounded-4 p-3.5 p-xl-4 h-100 d-flex flex-row align-items-center justify-content-between gap-3.5 transition-all" 
+                 style="background: linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%); border: 1px solid #FCD34D !important;">
+                <div class="d-flex align-items-center gap-3.5" style="min-width: 0;">
+                    <div class="rounded-4 bg-warning text-dark d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.25rem;">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
+                        <div class="mb-1.5">
+                            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold shadow-2xs" style="font-size: 0.68rem; letter-spacing: 0.3px;">Menunggu GPM</span>
                         </div>
-                        <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-danger btn-sm rounded-pill px-3.5 py-2 fw-semibold text-nowrap shadow-xs d-inline-flex align-items-center gap-2 flex-shrink-0" style="font-size: 0.82rem;">
-                            <span>Perbaiki</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
+                        <div class="fw-bold text-dark-blue mb-0.5 text-truncate" style="font-size: 0.98rem; line-height: 1.3;">
+                            <?= $pendingGpmCount ?> Dokumen Antrean
+                        </div>
+                        <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
+                            Siap ditelaah oleh GPM
+                        </div>
                     </div>
                 </div>
-            <?php endif; ?>
-
-            <!-- 2. Menunggu Antrean Review LPM -->
-            <?php if ($sudahCount > 0): ?>
-                <div class="<?= $colClass ?>">
-                    <div class="card border-0 shadow-2xs rounded-4 p-3.5 p-xl-4 h-100 d-flex flex-row align-items-center justify-content-between gap-3.5 transition-all" 
-                         style="background: linear-gradient(135deg, #F0F7FF 0%, #EFF6FF 100%); border: 1px solid #BFDBFE !important;">
-                        <div class="d-flex align-items-center gap-3.5" style="min-width: 0;">
-                            <div class="rounded-4 bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.25rem;">
-                                <i class="fas fa-clock-rotate-left"></i>
-                            </div>
-                            <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
-                                <div class="mb-1.5">
-                                    <span class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold shadow-2xs" style="font-size: 0.68rem; letter-spacing: 0.3px;">Antrean Review</span>
-                                </div>
-                                <div class="fw-bold text-dark-blue mb-0.5 text-truncate" style="font-size: 0.98rem; line-height: 1.3;">
-                                    <?= $sudahCount ?> Dokumen Antrean
-                                </div>
-                                <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                                    Verifikasi ulang Tim LPM
-                                </div>
-                            </div>
-                        </div>
-                        <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 py-2 fw-semibold text-nowrap shadow-2xs d-inline-flex align-items-center gap-2 flex-shrink-0" style="font-size: 0.82rem;">
-                            <span>Pantau Revisi</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <!-- 3. Draf Dokumen Belum Diajukan -->
-            <?php if ($draftCount > 0): ?>
-                <div class="<?= $colClass ?>">
-                    <div class="card border-0 shadow-2xs rounded-4 p-3.5 p-xl-4 h-100 d-flex flex-row align-items-center justify-content-between gap-3.5 transition-all" 
-                         style="background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1px solid #E2E8F0 !important;">
-                        <div class="d-flex align-items-center gap-3.5" style="min-width: 0;">
-                            <div class="rounded-4 text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.25rem; background-color: #64748B !important;">
-                                <i class="fas fa-file-pen"></i>
-                            </div>
-                            <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
-                                <div class="mb-1.5">
-                                    <span class="badge bg-secondary rounded-pill px-2.5 py-1 fw-bold shadow-2xs" style="font-size: 0.68rem; letter-spacing: 0.3px;">Draf Tersimpan</span>
-                                </div>
-                                <div class="fw-bold text-dark-blue mb-0.5 text-truncate" style="font-size: 0.98rem; line-height: 1.3;">
-                                    <?= $draftCount ?> Draf Dokumen
-                                </div>
-                                <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                                    Belum diajukan ke LPM
-                                </div>
-                            </div>
-                        </div>
-                        <a href="<?= base_url('gpm/draft') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-2 fw-semibold text-nowrap shadow-2xs d-inline-flex align-items-center gap-2 flex-shrink-0" style="font-size: 0.82rem;">
-                            <span>Buka Draf</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-            <?php endif; ?>
+                <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3.5 py-2 fw-bold text-nowrap shadow-xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;">
+                    <span>Filter</span>
+                    <i class="fas fa-filter"></i>
+                </a>
+            </div>
         </div>
-    <?php endif; ?>
+
+        <!-- 2. Diteruskan ke LPM -->
+        <div class="col-lg-4 col-md-6 col-12">
+            <div class="card border-0 shadow-2xs rounded-4 p-3.5 p-xl-4 h-100 d-flex flex-row align-items-center justify-content-between gap-3.5 transition-all" 
+                 style="background: linear-gradient(135deg, #F0F7FF 0%, #EFF6FF 100%); border: 1px solid #BFDBFE !important;">
+                <div class="d-flex align-items-center gap-3.5" style="min-width: 0;">
+                    <div class="rounded-4 bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.25rem;">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
+                        <div class="mb-1.5">
+                            <span class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold shadow-2xs" style="font-size: 0.68rem; letter-spacing: 0.3px;">Menunggu LPM</span>
+                        </div>
+                        <div class="fw-bold text-dark-blue mb-0.5 text-truncate" style="font-size: 0.98rem; line-height: 1.3;">
+                            <?= $waitingLpmCount ?> Dokumen Diteruskan
+                        </div>
+                        <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
+                            Antre review akhir LPM
+                        </div>
+                    </div>
+                </div>
+                <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_lpm') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 py-2 fw-semibold text-nowrap shadow-2xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;">
+                    <span>Filter</span>
+                    <i class="fas fa-filter"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- 3. Monitoring Revisi -->
+        <div class="col-lg-4 col-md-12 col-12">
+            <div class="card border-0 shadow-2xs rounded-4 p-3.5 p-xl-4 h-100 d-flex flex-row align-items-center justify-content-between gap-3.5 transition-all" 
+                 style="background: linear-gradient(135deg, #FFF5F5 0%, #FEF2F2 100%); border: 1px solid #FECACA !important;">
+                <div class="d-flex align-items-center gap-3.5" style="min-width: 0;">
+                    <div class="rounded-4 bg-danger text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.25rem;">
+                        <i class="fas fa-wrench"></i>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
+                        <div class="mb-1.5">
+                            <span class="badge bg-danger rounded-pill px-2.5 py-1 fw-bold shadow-2xs" style="font-size: 0.68rem; letter-spacing: 0.3px;">Perlu Revisi</span>
+                        </div>
+                        <div class="fw-bold text-dark-blue mb-0.5 text-truncate" style="font-size: 0.98rem; line-height: 1.3;">
+                            <?= $revisiCount ?> Dokumen Revisi
+                        </div>
+                        <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
+                            Perbaikan GPM / LPM
+                        </div>
+                    </div>
+                </div>
+                <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-danger btn-sm rounded-pill px-3.5 py-2 fw-semibold text-nowrap shadow-xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;">
+                    <span>Pantau</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
 
     <!-- Filter Unit Kerja GPM: Dropdown Rapi, User-Friendly & Ringkas -->
     <div class="card shadow-2xs rounded-4 p-3 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
@@ -344,7 +334,7 @@ foreach ($documents as $d) {
                         <th class="py-3" style="min-width: 250px;">Dokumen Mutu & Berkas</th>
                         <th class="py-3" style="width: 130px;">Siklus PPEPP</th>
                         <th class="py-3" style="min-width: 170px;">Bidang &amp; Standar</th>
-                        <th class="py-3" style="min-width: 180px;">Status Review LPM</th>
+                        <th class="py-3" style="min-width: 180px;">Status &amp; Tahap Review</th>
                         <th class="text-end pe-3 py-3" style="width: 140px;">Aksi</th>
                     </tr>
                 </thead>
@@ -356,11 +346,8 @@ foreach ($documents as $d) {
                                     <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; font-size: 1.8rem;">
                                         <i class="fas fa-folder-open text-secondary"></i>
                                     </div>
-                                    <h6 class="fw-bold text-dark mb-1">Tidak Ada Dokumen yang Sesuai</h6>
-                                    <p class="small text-muted mb-3">Belum ada dokumen yang sesuai dengan kriteria filter yang Anda pilih.</p>
-                                    <a href="<?= base_url('gpm/dokumen/create') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5 py-1.5 bg-scu-blue border-0 fw-semibold">
-                                        <i class="fas fa-plus me-1"></i> Unggah Dokumen Baru
-                                    </a>
+                                    <h6 class="fw-bold text-dark mb-1">Tidak Ada Dokumen yang Ditemukan</h6>
+                                    <p class="small text-muted mb-0">Belum ada dokumen mutu yang diunggah oleh Program Studi atau Fakultas yang sesuai dengan filter.</p>
                                 </div>
                             </td>
                         </tr>
@@ -526,56 +513,19 @@ foreach ($documents as $d) {
                                     <?php endif; ?>
                                 </td>
 
-                                <!-- Status Review LPM -->
+                                <!-- Status & Tahap Review -->
                                 <td class="align-top py-3">
                                     <div class="d-flex flex-column align-items-start gap-1">
-                                        <?php if ($doc['status_review'] === 'perlu_perbaikan'): ?>
-                                            <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                <i class="fas fa-triangle-exclamation text-danger"></i> Perlu Perbaikan
-                                            </span>
-                                            <div class="d-flex flex-wrap gap-1 mt-0.5">
-                                                <?php if (!empty($doc['catatan_review'])): ?>
-                                                    <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#docModal<?= $doc['id'] ?>"
-                                                            style="font-size: 0.68rem;">
-                                                        <i class="fas fa-comment-dots"></i> Catatan LPM
-                                                    </button>
-                                                <?php endif; ?>
-                                                <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-xs btn-danger text-white rounded-pill px-2 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs text-decoration-none" style="font-size: 0.68rem;">
-                                                    <i class="fas fa-wrench"></i> Perbaiki
-                                                </a>
-                                            </div>
-                                        <?php elseif ($doc['status_review'] === 'sudah_diperbaiki'): ?>
-                                            <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                <i class="fas fa-clock-rotate-left text-primary"></i> Menunggu Review LPM
-                                            </span>
-                                            <?php if (!empty($doc['catatan_review'])): ?>
-                                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5 mt-0.5 d-inline-flex align-items-center gap-1 shadow-2xs"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#docModal<?= $doc['id'] ?>"
-                                                        style="font-size: 0.68rem;">
-                                                    <i class="fas fa-history"></i> Catatan Sebelumnya
-                                                </button>
-                                            <?php endif; ?>
-                                        <?php elseif ($doc['status_review'] === 'sesuai'): ?>
-                                            <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                <i class="fas fa-circle-check text-success"></i> Sesuai Standar
-                                            </span>
-                                        <?php elseif ($doc['status_review'] === 'draft'): ?>
-                                            <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                <i class="fas fa-pencil text-secondary"></i> Draf Dokumen
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                <i class="fas fa-clock text-warning"></i> Belum Direview
-                                            </span>
-                                        <?php endif; ?>
+                                        <?= render_review_status_badge($doc['status_review'], $doc['tahap_review'] ?? null) ?>
+                                        
+                                        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5 btn-review-history d-inline-flex align-items-center gap-1 mt-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" style="font-size: 0.68rem;">
+                                            <i class="fas fa-history text-secondary"></i> Riwayat Review
+                                        </button>
 
-                                        <?php if (!empty($doc['reviewed_at']) && !in_array($doc['status_review'], ['draft', 'belum_direview'])): ?>
+                                        <?php if (!empty($doc['gpm_reviewed_at']) || !empty($doc['lpm_reviewed_at']) || (!empty($doc['reviewed_at']) && !in_array($doc['status_review'], ['draft', 'belum_direview', 'menunggu_review_gpm']))): ?>
                                             <div class="text-muted d-flex align-items-center gap-1 mt-0.5" style="font-size: 0.68rem;">
                                                 <i class="far fa-clock text-secondary opacity-75"></i>
-                                                <span><?= date('d/m/Y H:i', strtotime($doc['reviewed_at'])) ?> WIB</span>
+                                                <span><?= date('d/m/Y H:i', strtotime($doc['gpm_reviewed_at'] ?? $doc['lpm_reviewed_at'] ?? $doc['reviewed_at'])) ?> WIB</span>
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -589,15 +539,16 @@ foreach ($documents as $d) {
                                             <i class="fas fa-eye text-primary" style="font-size: 0.85rem;"></i>
                                         </button>
 
-                                        <!-- Edit -->
-                                        <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" style="width: 36px; height: 36px;" title="Edit / Ubah Dokumen">
-                                            <i class="fas fa-pen text-warning" style="font-size: 0.85rem;"></i>
-                                        </a>
-
-                                        <!-- Delete Soft -->
-                                        <button type="button" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" style="width: 36px; height: 36px;" title="Hapus Dokumen" data-bs-toggle="modal" data-bs-target="#delModal<?= $doc['id'] ?>">
-                                            <i class="fas fa-trash-can text-danger" style="font-size: 0.85rem;"></i>
-                                        </button>
+                                        <!-- Review Button -->
+                                        <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview'])): ?>
+                                            <button type="button" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs text-white" title="Review Dokumen Ini" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.78rem; font-weight: 600;">
+                                                <i class="fas fa-clipboard-check"></i> Review
+                                            </button>
+                                        <?php else: ?>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1 text-muted" title="Buka Detail Review" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.75rem;">
+                                                <i class="fas fa-clipboard-list"></i> Tinjau
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
@@ -819,35 +770,105 @@ foreach ($documents as $d) {
                                         </div>
                                         <div class="modal-footer border-top pt-3">
                                             <button type="button" class="btn btn-light rounded-pill px-3.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                                            <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs">
-                                                <i class="fas fa-pen me-1.5"></i> Edit Dokumen
-                                            </a>
+                                            <button type="button" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>">
+                                                <i class="fas fa-clipboard-check me-1.5"></i> Review Dokumen
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Modal Konfirmasi Hapus Soft -->
-                            <div class="modal fade" id="delModal<?= $doc['id'] ?>" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-sm">
-                                    <div class="modal-content rounded-4 border-0 shadow">
-                                        <div class="modal-body p-4 text-center">
-                                            <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 54px; height: 54px; font-size: 1.5rem;">
-                                                <i class="fas fa-trash-can"></i>
+                            <!-- Modal Review Dokumen oleh GPM -->
+                            <div class="modal fade" id="gpmReviewModal<?= $doc['id'] ?>" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-lg">
+                                    <div class="modal-content rounded-4 border-0 shadow-lg">
+                                        <div class="modal-header border-0 px-4 py-3" style="background: linear-gradient(135deg, #0A192F 0%, #1E3E62 100%) !important;">
+                                            <div class="d-flex align-items-center gap-2.5">
+                                                <div class="p-2 rounded-3 bg-white bg-opacity-10 text-warning d-flex align-items-center justify-content-center">
+                                                    <i class="fas fa-clipboard-check fa-lg"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="modal-title fw-bold text-white mb-0" style="font-size: 1.05rem;">Review Dokumen Mutu (GPM)</h6>
+                                                    <div class="text-white-50 small" style="font-size: 0.72rem;">Gugus Penjaminan Mutu &bull; Penilaian Tingkat 1</div>
+                                                </div>
                                             </div>
-                                            <h6 class="fw-bold text-dark mb-1">Hapus Dokumen Mutu?</h6>
-                                            <p class="small text-muted mb-4" style="line-height: 1.45;">
-                                                Dokumen <strong>"<?= htmlspecialchars($doc['nama_dokumen']) ?>"</strong> akan dinonaktifkan dan masuk ke daftar Dokumen Terhapus (dapat dipulihkan sewaktu-waktu).
-                                            </p>
-                                            <div class="d-flex justify-content-center gap-2">
-                                                <button type="button" class="btn btn-light rounded-pill px-3 btn-sm fw-semibold" data-bs-dismiss="modal">Batal</button>
-                                                <form action="<?= base_url('gpm/dokumen/delete/' . $doc['id']) ?>" method="POST" class="d-inline">
-                                                    <button type="submit" class="btn btn-danger rounded-pill px-3 btn-sm fw-semibold shadow-xs">
-                                                        Ya, Hapus Dokumen
-                                                    </button>
-                                                </form>
-                                            </div>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
+                                        <form action="<?= base_url('gpm/review/submit') ?>" method="POST">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="id" value="<?= $doc['id'] ?>">
+                                            <div class="modal-body p-4">
+                                                <div class="p-3 rounded-3 bg-light border mb-3">
+                                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                                                        <span class="badge rounded-pill px-2.5 py-1 fw-semibold <?= $doc['level'] === 'fakultas' ? 'bg-primary text-white' : 'bg-info text-white' ?>" style="font-size: 0.7rem;">
+                                                            <i class="fas <?= $doc['level'] === 'fakultas' ? 'fa-building-columns' : 'fa-graduation-cap' ?> me-1"></i>
+                                                            <?= $doc['level'] === 'fakultas' ? 'Fakultas ' . htmlspecialchars($fakultas['nama_fakultas'] ?? '') : htmlspecialchars(($doc['jenjang'] ?? 'S1') . ' ' . ($doc['nama_prodi'] ?? '')) ?>
+                                                        </span>
+                                                        <?= render_review_status_badge($doc['status_review'], $doc['tahap_review'] ?? null) ?>
+                                                    </div>
+                                                    <h6 class="fw-bold text-dark-blue mb-1" style="line-height: 1.4;"><?= htmlspecialchars($doc['nama_dokumen']) ?></h6>
+                                                    <div class="text-muted small" style="font-size: 0.75rem;">
+                                                        <span><i class="fas fa-folder me-1"></i><?= htmlspecialchars($doc['nama_bidang'] ?? 'Standar Mutu') ?></span>
+                                                        <span class="mx-1">&bull;</span>
+                                                        <span><i class="far fa-calendar me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></span>
+                                                        <span class="mx-1">&bull;</span>
+                                                        <span><i class="fas fa-arrows-spin me-1"></i><?= strtoupper($doc['siklus']) ?></span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold text-dark small mb-2">
+                                                        Keputusan Hasil Review GPM <span class="text-danger">*</span>
+                                                    </label>
+                                                    <div class="row g-2">
+                                                        <div class="col-md-6">
+                                                            <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
+                                                                <input type="radio" name="status_review" value="menunggu_review_lpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= (!in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan'])) ? 'checked' : '' ?> required>
+                                                                <div class="d-flex align-items-center gap-2.5 mb-1.5">
+                                                                    <div class="rounded-circle p-2 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                                        <i class="fas fa-check"></i>
+                                                                    </div>
+                                                                    <span class="fw-bold text-dark" style="font-size: 0.88rem;">Disetujui GPM</span>
+                                                                </div>
+                                                                <div class="text-muted small" style="font-size: 0.75rem; line-height: 1.4;">
+                                                                    Dokumen dinyatakan sesuai kriteria mutu fakultas dan <strong>diteruskan ke antrean review LPM</strong>.
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
+                                                                <input type="radio" name="status_review" value="revisi_gpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan']) ? 'checked' : '' ?> required>
+                                                                <div class="d-flex align-items-center gap-2.5 mb-1.5">
+                                                                    <div class="rounded-circle p-2 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                                        <i class="fas fa-triangle-exclamation"></i>
+                                                                    </div>
+                                                                    <span class="fw-bold text-dark" style="font-size: 0.88rem;">Perlu Revisi</span>
+                                                                </div>
+                                                                <div class="text-muted small" style="font-size: 0.75rem; line-height: 1.4;">
+                                                                    Dokumen belum sesuai. Dikembalikan ke unit sasaran untuk <strong>diperbaiki sesuai catatan review</strong>.
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-2">
+                                                    <label for="catatanGpm<?= $doc['id'] ?>" class="form-label fw-bold text-dark small mb-1">
+                                                        Catatan Evaluasi / Rekomendasi GPM
+                                                    </label>
+                                                    <textarea name="catatan_review" id="catatanGpm<?= $doc['id'] ?>" rows="3" class="form-control rounded-3" placeholder="Tuliskan catatan detail evaluasi, butir kekurangan, atau rekomendasi perbaikan..."><?= htmlspecialchars($doc['gpm_catatan'] ?? $doc['catatan_review'] ?? '') ?></textarea>
+                                                    <div class="form-text small" style="font-size: 0.72rem;">
+                                                        <i class="fas fa-info-circle text-primary me-1"></i> Wajib diisi bila memilih opsi "Perlu Revisi". Catatan ini akan terbaca oleh unit sasaran dan reviewer LPM.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-top pt-3 bg-light rounded-bottom-4 px-4">
+                                                <button type="button" class="btn btn-light rounded-pill px-3.5 btn-sm fw-semibold" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs">
+                                                    <i class="fas fa-paper-plane me-1.5"></i> Simpan Keputusan Review
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </div>

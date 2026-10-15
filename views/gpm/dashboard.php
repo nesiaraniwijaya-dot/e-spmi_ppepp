@@ -14,15 +14,18 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <span class="badge text-white px-3 py-1 rounded-pill" style="background: #8b5cf6;">
                     <i class="fas fa-shield-halved me-1"></i> GPM Fakultas <?= htmlspecialchars($fakultas['kode_fakultas'] ?? '') ?>
                 </span>
-                <span class="badge bg-light text-secondary border">Koordinator Mutu Fakultas &amp; Program Studi</span>
+                <span class="badge bg-light text-secondary border">Koordinator &amp; Reviewer Dokumen Mutu (Tier-1)</span>
             </div>
             <h3 class="fw-bold text-dark-blue mb-0">Panel GPM: <?= htmlspecialchars($fakultas['nama_fakultas']) ?></h3>
-            <p class="text-muted small mb-0 mt-1">Mengelola dokumen SPMI PPEPP tingkat Fakultas serta seluruh Program Studi binaan di bawah <?= htmlspecialchars($fakultas['nama_fakultas']) ?>.</p>
+            <p class="text-muted small mb-0 mt-1">Pusat Penelaahan Dokumen Mutu PPEPP Tingkat Fakultas (Tier-1 Reviewer) untuk Dekanat dan seluruh Program Studi binaan di bawah <?= htmlspecialchars($fakultas['nama_fakultas']) ?>.</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="<?= base_url('gpm/dokumen/create') ?>" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm bg-scu-blue border-0 d-flex align-items-center gap-2">
-                <i class="fas fa-cloud-arrow-up"></i>
-                <span>Unggah Dokumen Mutu</span>
+            <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3.5 shadow-sm fw-bold border-0 d-flex align-items-center gap-2">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Review Dokumen Mutu</span>
+                <?php if (!empty($reviewStats['menunggu_review_gpm']) && $reviewStats['menunggu_review_gpm'] > 0): ?>
+                    <span class="badge bg-danger text-white rounded-pill px-2 py-0.5" style="font-size: 0.68rem;"><?= $reviewStats['menunggu_review_gpm'] ?></span>
+                <?php endif; ?>
             </a>
             <a href="<?= base_url('fakultas/' . $fakultas['id'] . '/ppepp') ?>" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm d-flex align-items-center gap-1.5">
                 <i class="fas fa-globe"></i>
@@ -31,52 +34,52 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     </div>
 
-    <!-- Alert Banner Perlu Perbaikan (Jika Ada Dokumen Direvisi LPM) -->
+    <!-- Alert Banner: Menunggu Review GPM (Prioritas Utama) -->
     <?php 
-    $perluTindakanList = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
-    $perluCount = count($perluTindakanList);
-    if ($perluCount > 0): 
+    $pendingGpmCount = (int)($reviewStats['menunggu_review_gpm'] ?? 0);
+    $revisiTotalCount = (int)($reviewStats['perlu_perbaikan'] ?? 0);
     ?>
-        <div class="alert alert-danger border-danger border-2 rounded-4 p-3.5 mb-4 shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" 
-             style="background: linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%);">
+    <?php if ($pendingGpmCount > 0): ?>
+        <div class="alert border-0 rounded-4 p-3.5 mb-4 shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" 
+             style="background: linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%); border: 1.5px solid #FCD34D !important;">
             <div class="d-flex align-items-center gap-3.5">
-                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; font-size: 1.25rem;">
-                    <i class="fas fa-triangle-exclamation fa-beat"></i>
+                <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; font-size: 1.25rem;">
+                    <i class="fas fa-clipboard-check fa-bounce"></i>
                 </div>
                 <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge bg-danger rounded-pill px-2.5 py-0.5 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Tindakan Diperlukan</span>
-                        <span class="text-danger fw-bold small">&bull; <?= $perluCount ?> Dokumen Butuh Revisi</span>
+                        <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Antrean Telaah GPM</span>
+                        <span class="text-dark fw-bold small">&bull; <?= $pendingGpmCount ?> Dokumen Menunggu Review</span>
                     </div>
                     <h6 class="fw-bold text-dark-blue mb-1" style="font-size: 1.02rem;">
-                        Pemberitahuan: Terdapat <?= $perluCount ?> dokumen mutu binaan yang memerlukan perbaikan dari LPM!
+                        Terdapat <?= $pendingGpmCount ?> dokumen mutu binaan yang siap ditelaah oleh GPM!
                     </h6>
-                    <p class="text-muted small mb-0" style="font-size: 0.82rem;">
-                        Lembaga Penjaminan Mutu telah memberikan catatan evaluasi. Harap koordinasikan dan perbarui berkas dokumen agar dapat disahkan.
+                    <p class="text-secondary small mb-0" style="font-size: 0.82rem;">
+                        Silakan periksa kesesuaian berkas dokumen dari Dekanat dan Program Studi. Dokumen yang disetujui akan diteruskan ke LPM untuk review akhir.
                     </p>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-end align-self-md-center">
-                <a href="<?= base_url('gpm/perbaikan') ?>" class="btn btn-danger btn-sm rounded-pill px-4 py-2.5 fw-bold shadow-xs d-inline-flex align-items-center gap-2 text-nowrap" style="font-size: 0.84rem;">
-                    <i class="fas fa-wrench"></i>
-                    <span>Tindak Lanjuti Perbaikan</span>
+                <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-4 py-2.5 fw-bold shadow-xs d-inline-flex align-items-center gap-2 text-nowrap" style="font-size: 0.84rem;">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Telaah Sekarang</span>
                     <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         </div>
     <?php endif; ?>
 
-    <!-- Overview Scope Summary Card -->
+    <!-- Overview Scope & Review Pipeline Metric Cards -->
     <div class="card bg-white border-0 shadow-sm rounded-4 p-4 mb-4">
         <div class="row g-3 align-items-center">
-            <div class="col-lg-7 border-end-lg pe-lg-4">
+            <div class="col-lg-6 border-end-lg pe-lg-4">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-4 text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" 
                          style="width: 56px; height: 56px; background: linear-gradient(135deg, #7c3aed, #8b5cf6); font-size: 1.6rem;">
-                        <i class="fas fa-diagram-project"></i>
+                        <i class="fas fa-shield-halved"></i>
                     </div>
                     <div>
-                        <div class="small text-muted fw-semibold" style="font-size: 0.75rem;">RUANG LINGKUP PENJAMINAN MUTU:</div>
+                        <div class="small text-muted fw-semibold" style="font-size: 0.75rem;">RUANG LINGKUP REVIEW MUTU:</div>
                         <h5 class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($fakultas['nama_fakultas']) ?></h5>
                         <div class="small text-secondary">
                             Menaungi <strong>1 Tingkat Fakultas (Dekanat)</strong> &bull; <strong><?= count($prodisList) ?> Program Studi</strong>
@@ -84,24 +87,30 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </div>
                 </div>
             </div>
-            <div class="col-lg-5 ps-lg-4">
+            <div class="col-lg-6 ps-lg-4">
                 <div class="row g-2 text-center">
-                    <div class="col-4">
-                        <div class="p-2 bg-light rounded-3 border">
-                            <div class="fs-5 fw-bold text-primary"><?= $fakultasDocCount ?></div>
-                            <div class="text-muted" style="font-size: 0.7rem;">Dok. Fakultas</div>
+                    <div class="col-3">
+                        <div class="p-2 rounded-3 border <?= $pendingGpmCount > 0 ? 'bg-warning-subtle border-warning' : 'bg-light' ?>">
+                            <div class="fs-5 fw-bold <?= $pendingGpmCount > 0 ? 'text-warning-emphasis' : 'text-secondary' ?>"><?= $pendingGpmCount ?></div>
+                            <div class="text-muted" style="font-size: 0.68rem;">Menunggu GPM</div>
                         </div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-3">
                         <div class="p-2 bg-light rounded-3 border">
-                            <div class="fs-5 fw-bold text-success"><?= $cycleStats['total'] - $fakultasDocCount ?></div>
-                            <div class="text-muted" style="font-size: 0.7rem;">Dok. Prodi</div>
+                            <div class="fs-5 fw-bold text-primary"><?= (int)($reviewStats['menunggu_review_lpm'] ?? 0) ?></div>
+                            <div class="text-muted" style="font-size: 0.68rem;">Menunggu LPM</div>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <div class="p-2 bg-light rounded-3 border <?= $reviewStats['perlu_perbaikan'] > 0 ? 'border-danger bg-danger-subtle' : '' ?>">
-                            <div class="fs-5 fw-bold <?= $reviewStats['perlu_perbaikan'] > 0 ? 'text-danger' : 'text-secondary' ?>"><?= $reviewStats['perlu_perbaikan'] ?></div>
-                            <div class="text-muted" style="font-size: 0.7rem;">Perlu Revisi</div>
+                    <div class="col-3">
+                        <div class="p-2 rounded-3 border <?= $revisiTotalCount > 0 ? 'border-danger bg-danger-subtle' : 'bg-light' ?>">
+                            <div class="fs-5 fw-bold <?= $revisiTotalCount > 0 ? 'text-danger' : 'text-secondary' ?>"><?= $revisiTotalCount ?></div>
+                            <div class="text-muted" style="font-size: 0.68rem;">Perlu Revisi</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-2 bg-light rounded-3 border">
+                            <div class="fs-5 fw-bold text-success"><?= (int)($reviewStats['sesuai'] ?? 0) ?></div>
+                            <div class="text-muted" style="font-size: 0.68rem;">Sesuai LPM</div>
                         </div>
                     </div>
                 </div>
@@ -187,6 +196,96 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             </div>
         </div>
     </div>
+
+    <!-- Section: Antrean Dokumen Menunggu Review GPM -->
+    <?php if (!empty($pendingReviewDocs)): ?>
+        <div class="card bg-white border-0 shadow-sm rounded-4 p-4 mb-4" style="border-left: 5px solid #F59E0B !important;">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2.5">
+                    <div class="rounded-3 bg-warning bg-opacity-15 text-warning-emphasis d-flex align-items-center justify-content-center p-2" style="width: 40px; height: 40px;">
+                        <i class="fas fa-clipboard-check fa-lg text-warning"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark-blue mb-0 d-flex align-items-center gap-2">
+                            Antrean Dokumen Menunggu Review GPM
+                            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5" style="font-size: 0.72rem;"><?= count($pendingReviewDocs) ?> Menunggu</span>
+                        </h5>
+                        <p class="text-muted small mb-0">Dokumen terbaru yang memerlukan penelaahan dan verifikasi GPM sebelum diajukan ke LPM.</p>
+                    </div>
+                </div>
+                <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3.5 fw-bold shadow-2xs">
+                    Buka Semua Antrean <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive rounded-3 border">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-light text-secondary" style="font-size: 0.74rem; text-transform: uppercase;">
+                        <tr>
+                            <th class="ps-3" style="width: 45px;">No</th>
+                            <th>Nama &amp; Nomor Dokumen</th>
+                            <th>Unit Pengunggah</th>
+                            <th>Siklus &amp; Standar</th>
+                            <th>Waktu Unggah</th>
+                            <th class="text-center pe-3" style="width: 140px;">Aksi Review</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $pNo = 1; foreach ($pendingReviewDocs as $pDoc): ?>
+                            <tr>
+                                <td class="ps-3 text-muted fw-semibold"><?= $pNo++ ?></td>
+                                <td>
+                                    <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($pDoc['nama_dokumen']) ?></div>
+                                    <div class="text-muted small">
+                                        <?php if (!empty($pDoc['nomor_dokumen'])): ?>
+                                            <span class="me-2"><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($pDoc['nomor_dokumen']) ?></span>
+                                        <?php endif; ?>
+                                        <?php if (!empty($pDoc['tahun_akademik'])): ?>
+                                            <span><i class="far fa-calendar me-0.5"></i> TA <?= htmlspecialchars($pDoc['tahun_akademik']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <?php if ($pDoc['level'] === 'fakultas'): ?>
+                                        <span class="badge rounded-pill px-2.5 py-1 fw-semibold shadow-2xs" style="background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE; font-size: 0.74rem;">
+                                            <i class="fas fa-landmark me-1"></i> Dekanat Fakultas
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge rounded-pill px-2.5 py-1 fw-semibold shadow-2xs" style="background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; font-size: 0.74rem;">
+                                            <i class="fas fa-graduation-cap me-1"></i> <?= htmlspecialchars($pDoc['jenjang'] ?? 'S1') ?> <?= htmlspecialchars($pDoc['nama_prodi'] ?? 'Prodi') ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($pDoc['uploader_name'])): ?>
+                                        <div class="text-muted small mt-0.5" style="font-size: 0.7rem;">
+                                            <i class="fas fa-user-pen me-0.5 opacity-75"></i> <?= htmlspecialchars($pDoc['uploader_name']) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1.5 mb-1">
+                                        <?= siklus_badge($pDoc['siklus']) ?>
+                                    </div>
+                                    <div class="text-muted small text-truncate" style="max-width: 220px;" title="<?= htmlspecialchars($pDoc['nama_bidang'] ?? '') ?>">
+                                        <?= htmlspecialchars($pDoc['nama_bidang'] ?? 'Standar Mutu') ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-dark small fw-medium"><?= date('d M Y', strtotime($pDoc['created_at'])) ?></div>
+                                    <div class="text-muted small" style="font-size: 0.7rem;"><?= date('H:i', strtotime($pDoc['created_at'])) ?> WIB</div>
+                                </td>
+                                <td class="text-center pe-3">
+                                    <a href="<?= base_url('gpm/dokumen?search=' . urlencode($pDoc['nama_dokumen'])) ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3 py-1 fw-bold shadow-2xs d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                                        <i class="fas fa-clipboard-check"></i>
+                                        <span>Review</span>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <!-- Section: Rekapitulasi Status per Unit (Dekanat & Program Studi) -->
     <div class="row g-4 mb-4">
@@ -573,8 +672,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <i class="fas fa-calendar-xmark fa-3x mb-3 text-secondary opacity-50 d-block"></i>
                 <h6 class="fw-bold text-dark">Tidak ada dokumen yang diunggah hari ini</h6>
                 <p class="small text-muted mb-3">Belum ada dokumen mutu yang diunggah pada hari ini (<?= date('d M Y') ?>). Daftar ini menampilkan dokumen yang diunggah pada hari yang sama dan otomatis berganti saat berganti hari.</p>
-                <a href="<?= base_url('gpm/dokumen/create') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5">
-                    <i class="fas fa-cloud-arrow-up me-1"></i> Unggah Dokumen Baru
+                <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3.5 fw-bold">
+                    <i class="fas fa-clipboard-check me-1"></i> Buka Review Dokumen Mutu
                 </a>
             </div>
         <?php else: ?>

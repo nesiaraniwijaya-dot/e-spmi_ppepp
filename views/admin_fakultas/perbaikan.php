@@ -272,10 +272,15 @@ $totalDocs = count($documents);
                                             <?php endif; ?>
                                         </td>
                                         <td class="pe-4 py-3 text-center">
-                                            <a href="<?= base_url('fakultas/dokumen/edit/' . $pDoc['id']) ?>" class="btn btn-sm btn-danger rounded-pill px-3.5 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5 text-nowrap" style="font-size: 0.8rem;">
-                                                <i class="fas fa-wrench"></i>
-                                                <span>Perbaiki</span>
-                                            </a>
+                                            <div class="d-inline-flex align-items-center gap-1.5">
+                                                <a href="<?= base_url('fakultas/dokumen/edit/' . $pDoc['id']) ?>" class="btn btn-sm btn-danger rounded-pill px-3 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1 text-nowrap" style="font-size: 0.78rem;">
+                                                    <i class="fas fa-wrench"></i>
+                                                    <span>Perbaiki</span>
+                                                </a>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $pDoc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-history text-secondary"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -367,10 +372,8 @@ $totalDocs = count($documents);
                                                 </div>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="py-3 px-3" style="border-end: 1px solid #F1F5F9;">
-                                            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
-                                                <i class="fas fa-hourglass-half"></i> Dalam Antrean LPM
-                                            </span>
+                                        <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
+                                            <?= render_review_status_badge($sDoc['status_review'], $sDoc['tahap_review'] ?? null) ?>
                                             <div class="text-muted small mt-1" style="font-size: 0.72rem;">
                                                 <i class="far fa-clock text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($sDoc['updated_at'])) ?> WIB
                                             </div>
@@ -411,10 +414,15 @@ $totalDocs = count($documents);
                                             <?php endif; ?>
                                         </td>
                                         <td class="pe-4 py-3 text-center">
-                                            <a href="<?= base_url('fakultas/dokumen/edit/' . $sDoc['id']) ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-nowrap shadow-2xs" style="font-size: 0.8rem;">
-                                                <i class="fas fa-pen-to-square"></i>
-                                                <span>Ubah Berkas</span>
-                                            </a>
+                                            <div class="d-inline-flex align-items-center gap-1.5">
+                                                <a href="<?= base_url('fakultas/dokumen/edit/' . $sDoc['id']) ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-nowrap shadow-2xs" style="font-size: 0.8rem;">
+                                                    <i class="fas fa-pen-to-square"></i>
+                                                    <span>Ubah Berkas</span>
+                                                </a>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $sDoc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-history text-secondary"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -483,15 +491,7 @@ $totalDocs = count($documents);
                                             </div>
                                         </td>
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
-                                            <?php if ($isPerlu): ?>
-                                                <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-wrench me-1"></i> Perlu Perbaikan
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="badge rounded-pill bg-primary text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-clock-rotate-left me-1"></i> Menunggu Review LPM
-                                                </span>
-                                            <?php endif; ?>
+                                            <?= render_review_status_badge($doc['status_review'], $doc['tahap_review'] ?? null) ?>
                                         </td>
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
                                             <?= siklus_badge($doc['siklus']) ?>
@@ -523,17 +523,22 @@ $totalDocs = count($documents);
                                             </button>
                                         </td>
                                         <td class="pe-4 py-3 text-center">
-                                            <?php if ($isPerlu): ?>
-                                                <a href="<?= base_url('fakultas/dokumen/edit/' . $doc['id']) ?>" class="btn btn-sm btn-danger rounded-pill px-3.5 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5 text-nowrap" style="font-size: 0.8rem;">
-                                                    <i class="fas fa-wrench"></i>
-                                                    <span>Perbaiki</span>
-                                                </a>
-                                            <?php else: ?>
-                                                <a href="<?= base_url('fakultas/dokumen/edit/' . $doc['id']) ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-nowrap shadow-2xs" style="font-size: 0.8rem;">
-                                                    <i class="fas fa-pen-to-square"></i>
-                                                    <span>Ubah Berkas</span>
-                                                </a>
-                                            <?php endif; ?>
+                                            <div class="d-inline-flex align-items-center gap-1.5">
+                                                <?php if ($isPerlu): ?>
+                                                    <a href="<?= base_url('fakultas/dokumen/edit/' . $doc['id']) ?>" class="btn btn-sm btn-danger rounded-pill px-3 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1 text-nowrap" style="font-size: 0.78rem;">
+                                                        <i class="fas fa-wrench"></i>
+                                                        <span>Perbaiki</span>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <a href="<?= base_url('fakultas/dokumen/edit/' . $doc['id']) ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1 text-nowrap shadow-2xs" style="font-size: 0.78rem;">
+                                                        <i class="fas fa-pen-to-square"></i>
+                                                        <span>Ubah Berkas</span>
+                                                    </a>
+                                                <?php endif; ?>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-history text-secondary"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

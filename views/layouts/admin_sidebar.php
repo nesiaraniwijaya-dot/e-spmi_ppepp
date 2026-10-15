@@ -21,17 +21,11 @@ try {
     if (Auth::isProdi() && $sidebarProdiId > 0) {
         $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE prodi_id = ? AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
+            WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
         ");
         $stmtRevisi->execute([$sidebarProdiId]);
         $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();
-
-        $stmtPerlu = $sidebarDb->prepare("
-            SELECT COUNT(*) FROM ppepp_documents 
-            WHERE prodi_id = ? AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL
-        ");
-        $stmtPerlu->execute([$sidebarProdiId]);
-        $sidebarPerluPerbaikanCount = (int)$stmtPerlu->fetchColumn();
+        $sidebarPerluPerbaikanCount = $sidebarRevisiCount;
 
         $stmtDraft = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
@@ -42,17 +36,11 @@ try {
     } elseif (Auth::isFakultas() && $sidebarFakultasId > 0) {
         $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
+            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
         ");
         $stmtRevisi->execute([$sidebarFakultasId]);
         $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();
-
-        $stmtPerlu = $sidebarDb->prepare("
-            SELECT COUNT(*) FROM ppepp_documents 
-            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL
-        ");
-        $stmtPerlu->execute([$sidebarFakultasId]);
-        $sidebarPerluPerbaikanCount = (int)$stmtPerlu->fetchColumn();
+        $sidebarPerluPerbaikanCount = $sidebarRevisiCount;
 
         $stmtDraft = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
@@ -61,33 +49,29 @@ try {
         $stmtDraft->execute([$sidebarFakultasId]);
         $sidebarDraftCount = (int)$stmtDraft->fetchColumn();
     } elseif (($role === 'gpm' || Auth::isGpm()) && $sidebarFakultasId > 0) {
+        // Dokumen baru menunggu telaah/review GPM
+        $stmtPendingGpm = $sidebarDb->prepare("
+            SELECT COUNT(*) FROM ppepp_documents 
+            WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
+              AND status_review IN ('menunggu_review_gpm', 'belum_direview') AND deleted_at IS NULL
+        ");
+        $stmtPendingGpm->execute([$sidebarFakultasId, $sidebarFakultasId]);
+        $sidebarPendingGpmCount = (int)$stmtPendingGpm->fetchColumn();
+        $sidebarPerluPerbaikanCount = $sidebarPendingGpmCount;
+
+        // Dokumen dalam masa revisi
         $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
             WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
-              AND status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND deleted_at IS NULL
+              AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
         ");
         $stmtRevisi->execute([$sidebarFakultasId, $sidebarFakultasId]);
         $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();
-
-        $stmtPerlu = $sidebarDb->prepare("
-            SELECT COUNT(*) FROM ppepp_documents 
-            WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
-              AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL
-        ");
-        $stmtPerlu->execute([$sidebarFakultasId, $sidebarFakultasId]);
-        $sidebarPerluPerbaikanCount = (int)$stmtPerlu->fetchColumn();
-
-        $stmtDraft = $sidebarDb->prepare("
-            SELECT COUNT(*) FROM ppepp_documents 
-            WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
-              AND status_review = 'draft' AND deleted_at IS NULL
-        ");
-        $stmtDraft->execute([$sidebarFakultasId, $sidebarFakultasId]);
-        $sidebarDraftCount = (int)$stmtDraft->fetchColumn();
+        $sidebarDraftCount = 0;
     } elseif (Auth::isLpm()) {
         $stmtPending = $sidebarDb->query("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE status_review IN ('belum_direview', 'sudah_diperbaiki') AND deleted_at IS NULL
+            WHERE status_review IN ('menunggu_review_lpm', 'sudah_diperbaiki') AND deleted_at IS NULL
         ");
         $sidebarPendingReviewCount = (int)$stmtPending->fetchColumn();
     }
@@ -361,8 +345,8 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/dashboard') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-gauge"></i></span>
                     <span>Dashboard GPM</span>
-                    <?php if ($sidebarPerluPerbaikanCount > 0): ?>
-                        <span class="ms-auto sidebar-pulse-dot" title="<?= $sidebarPerluPerbaikanCount ?> dokumen perlu perbaikan"></span>
+                    <?php if (!empty($sidebarPendingGpmCount) && $sidebarPendingGpmCount > 0): ?>
+                        <span class="ms-auto sidebar-pulse-dot" title="<?= $sidebarPendingGpmCount ?> dokumen menunggu review GPM"></span>
                     <?php endif; ?>
                 </a>
                 <a href="<?= base_url('gpm/rekapitulasi') ?>"
@@ -372,48 +356,31 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 </a>
             </div>
 
-            <!-- GPM: Dokumen PPEPP (Fakultas & Prodi) -->
+            <!-- GPM: Telaah & Review Dokumen Mutu -->
             <div class="admin-nav-group">
-                <div class="admin-nav-label">Dokumen Mutu (Fakultas &amp; Prodi)</div>
+                <div class="admin-nav-label">Telaah Dokumen Mutu</div>
                 <a href="<?= base_url('gpm/dokumen') ?>"
-                   class="admin-nav-link <?= (str_contains($currentUri, 'gpm/dokumen') && !str_contains($currentUri, 'create') && !str_contains($currentUri, 'arsip')) ? 'active' : '' ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-folder-open"></i></span>
-                    <span>Daftar Dokumen Mutu</span>
+                   class="admin-nav-link <?= (str_contains($currentUri, 'gpm/dokumen') || str_contains($currentUri, 'gpm/review')) ? 'active' : '' ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-clipboard-check text-warning"></i></span>
+                    <span>Review Dokumen Mutu</span>
+                    <?php if (!empty($sidebarPendingGpmCount) && $sidebarPendingGpmCount > 0): ?>
+                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPendingGpmCount ?> dokumen menunggu telaah GPM">
+                            <span class="sidebar-pulse-dot"></span>
+                            <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5 fw-bold shadow-xs" style="font-size: 0.68rem; letter-spacing: 0.2px;"><?= $sidebarPendingGpmCount ?></span>
+                        </span>
+                    <?php endif; ?>
                 </a>
                 <a href="<?= base_url('gpm/perbaikan') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/perbaikan') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-wrench"></i></span>
-                    <span>Perbaikan Dokumen</span>
-                    <?php if ($sidebarPerluPerbaikanCount > 0): ?>
-                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPerluPerbaikanCount ?> dokumen perlu perbaikan segera">
-                            <span class="sidebar-pulse-dot"></span>
-                            <span class="badge bg-danger rounded-pill px-2 py-0.5 text-white fw-bold shadow-xs" style="font-size: 0.68rem; letter-spacing: 0.2px;"><?= $sidebarPerluPerbaikanCount ?></span>
-                        </span>
-                    <?php elseif ($sidebarRevisiCount > 0): ?>
-                        <span class="ms-auto badge bg-secondary rounded-pill px-2 py-0.5" style="font-size:0.65rem;"><?= $sidebarRevisiCount ?></span>
+                    <span class="nav-icon-wrap"><i class="fas fa-clock-rotate-left text-danger"></i></span>
+                    <span>Monitoring Dokumen Revisi</span>
+                    <?php if (!empty($sidebarRevisiCount) && $sidebarRevisiCount > 0): ?>
+                        <span class="ms-auto badge bg-danger rounded-pill px-2 py-0.5 text-white" style="font-size:0.65rem;"><?= $sidebarRevisiCount ?></span>
                     <?php endif; ?>
-                </a>
-                <a href="<?= base_url('gpm/draft') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/draft') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-file-pen"></i></span>
-                    <span>Draf Dokumen</span>
-                    <?php if ($sidebarDraftCount > 0): ?>
-                        <span class="ms-auto badge bg-secondary rounded-pill" style="font-size:0.62rem; padding: 0.25em 0.5em;"><?= $sidebarDraftCount ?></span>
-                    <?php endif; ?>
-                </a>
-                <a href="<?= base_url('gpm/dokumen/create') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/dokumen/create') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-cloud-arrow-up"></i></span>
-                    <span>Unggah Dokumen Mutu</span>
-                </a>
-                <a href="<?= base_url('gpm/dokumen/arsip') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/dokumen/arsip') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-trash-can"></i></span>
-                    <span>Dokumen Terhapus</span>
                 </a>
             </div>
 
-            <!-- GPM: Pengaturan Akun (Tanpa Dekanat & Tanpa Kaprodi) -->
+            <!-- GPM: Pengaturan Akun -->
             <div class="admin-nav-group">
                 <div class="admin-nav-label">Pengaturan Akun</div>
                 <a href="<?= base_url('gpm/profile') ?>"

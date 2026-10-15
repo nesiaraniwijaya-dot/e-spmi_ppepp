@@ -62,24 +62,36 @@ class GpmController extends Controller {
         ];
         $cycleStats['total'] = $cycleStats['penetapan'] + $cycleStats['pelaksanaan'] + $cycleStats['evaluasi'] + $cycleStats['pengendalian'] + $cycleStats['peningkatan'];
 
-        // Statistik per status review
+        // Statistik per status review (Mendukung alur bertingkat GPM -> LPM)
+        $menungguGpmCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('menunggu_review_gpm', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
+        $menungguLpmCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'menunggu_review_lpm' AND deleted_at IS NULL")->fetchColumn();
+        $revisiGpmCount   = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'revisi_gpm' AND deleted_at IS NULL")->fetchColumn();
+        $revisiLpmCount   = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
+        $sesuaiCount      = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'sesuai' AND deleted_at IS NULL")->fetchColumn();
+        $draftCount       = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
+
         $reviewStats = [
-            'perlu_perbaikan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review='perlu_perbaikan' AND deleted_at IS NULL")->fetchColumn(),
-            'sudah_diperbaiki' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review='sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn(),
-            'belum_direview'   => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review='belum_direview' AND deleted_at IS NULL")->fetchColumn(),
-            'sesuai'           => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review='sesuai' AND deleted_at IS NULL")->fetchColumn(),
-            'draft'            => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review='draft' AND deleted_at IS NULL")->fetchColumn(),
+            'menunggu_review_gpm' => $menungguGpmCount,
+            'menunggu_review_lpm' => $menungguLpmCount,
+            'revisi_gpm'          => $revisiGpmCount,
+            'revisi_lpm'          => $revisiLpmCount,
+            'perlu_perbaikan'     => $revisiGpmCount + $revisiLpmCount,
+            'sudah_diperbaiki'    => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn(),
+            'belum_direview'      => $menungguGpmCount,
+            'sesuai'              => $sesuaiCount,
+            'draft'               => $draftCount,
         ];
 
         // Ringkasan Dokumen Tingkat Fakultas
         $fakultasDocCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND deleted_at IS NULL")->fetchColumn();
-        $fakultasPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL")->fetchColumn();
+        $fakultasPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
 
         // Ringkasan per Program Studi
         $stmtProdis = $this->db->prepare("
             SELECT p.*, 
                    COUNT(DISTINCT CASE WHEN d.deleted_at IS NULL THEN d.id END) as total_doc,
-                   COUNT(DISTINCT CASE WHEN d.status_review = 'perlu_perbaikan' AND d.deleted_at IS NULL THEN d.id END) as perbaikan_doc,
+                   COUNT(DISTINCT CASE WHEN d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND d.deleted_at IS NULL THEN d.id END) as perbaikan_doc,
+                   COUNT(DISTINCT CASE WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview') AND d.deleted_at IS NULL THEN d.id END) as pending_review_doc,
                    COUNT(DISTINCT CASE WHEN d.status_review = 'draft' AND d.deleted_at IS NULL THEN d.id END) as draft_doc
             FROM prodis p 
             LEFT JOIN ppepp_documents d ON p.id = d.prodi_id 
@@ -90,19 +102,38 @@ class GpmController extends Controller {
         $stmtProdis->execute([$this->fakultasId]);
         $prodiSummary = $stmtProdis->fetchAll();
 
-        // Dokumen yang perlu perbaikan dari LPM
+        // Antrean Dokumen yang Menunggu Review GPM (Prioritas Utama GPM)
+        $stmtPending = $this->db->prepare("
+            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas, u.name as uploader_name
+            FROM ppepp_documents d 
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
+            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN fakultas f ON d.fakultas_id = f.id
+            LEFT JOIN users u ON d.user_id = u.id
+            WHERE {$scopeWhereAlias} AND d.status_review IN ('menunggu_review_gpm', 'belum_direview') AND d.deleted_at IS NULL 
+            ORDER BY d.created_at ASC 
+            LIMIT 10
+        ");
+        $stmtPending->execute();
+        $pendingReviewDocs = $stmtPending->fetchAll();
+        $this->attachFilesToDocs($pendingReviewDocs);
+
+        // Dokumen yang dalam status revisi / perbaikan
         $stmtRevisi = $this->db->prepare("
-            SELECT d.*, b.nama_bidang, p.nama_prodi, p.jenjang, u.name as reviewer_name 
+            SELECT d.*, b.nama_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas, u.name as reviewer_name 
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN fakultas f ON d.fakultas_id = f.id
             LEFT JOIN users u ON d.reviewed_by = u.id
-            WHERE {$scopeWhereAlias} AND d.status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
-            ORDER BY FIELD(d.status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            WHERE {$scopeWhereAlias} AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
+            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
             LIMIT 10
         ");
         $stmtRevisi->execute();
         $revisiDocs = $stmtRevisi->fetchAll();
+        $this->attachFilesToDocs($revisiDocs);
 
         // Dokumen yang diunggah HARI INI
         $stmtRecent = $this->db->prepare("
@@ -131,6 +162,7 @@ class GpmController extends Controller {
             'prodiSummary'           => $prodiSummary,
             'fakultasSummary'        => $rekapData['fakultasSummary'],
             'prodiSummaries'         => $rekapData['prodiSummaries'],
+            'pendingReviewDocs'      => $pendingReviewDocs,
             'revisiDocs'             => $revisiDocs,
             'recentDocs'             => $recentDocs
         ]);
@@ -160,10 +192,11 @@ class GpmController extends Controller {
         $stmtFak = $this->db->prepare("
             SELECT f.id, f.kode_fakultas, f.nama_fakultas, f.nama_dekan,
                    COUNT(d.id) as total_dokumen_fakultas,
-                   SUM(CASE WHEN d.status_review IN ('belum_direview', 'sudah_diperbaiki') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as perlu_review_count,
-                   SUM(CASE WHEN d.status_review = 'belum_direview' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as belum_direview_count,
+                   SUM(CASE WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview', 'sudah_diperbaiki') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as perlu_review_count,
+                   SUM(CASE WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as belum_direview_count,
+                   SUM(CASE WHEN d.status_review = 'menunggu_review_lpm' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as menunggu_lpm_count,
                    SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sudah_diperbaiki_count,
-                   SUM(CASE WHEN d.status_review = 'perlu_perbaikan' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
+                   SUM(CASE WHEN d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
                    SUM(CASE WHEN d.status_review = 'sesuai' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sesuai_count
             FROM fakultas f
             LEFT JOIN ppepp_documents d ON f.id = d.fakultas_id AND d.level = 'fakultas' AND d.deleted_at IS NULL AND d.status_review != 'draft'
@@ -179,6 +212,7 @@ class GpmController extends Controller {
             'total_dokumen_fakultas' => 0,
             'perlu_review_count' => 0,
             'belum_direview_count' => 0,
+            'menunggu_lpm_count' => 0,
             'sudah_diperbaiki_count' => 0,
             'revisi_count' => 0,
             'sesuai_count' => 0
@@ -188,10 +222,11 @@ class GpmController extends Controller {
         $stmtProdi = $this->db->prepare("
             SELECT p.id, p.kode_prodi, p.nama_prodi, p.jenjang, p.fakultas_id, f.nama_fakultas, f.kode_fakultas, p.nama_kaprodi,
                    COUNT(d.id) as total_dokumen,
-                   SUM(CASE WHEN d.status_review IN ('belum_direview', 'sudah_diperbaiki') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as perlu_review_count,
-                   SUM(CASE WHEN d.status_review = 'belum_direview' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as belum_direview_count,
+                   SUM(CASE WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview', 'sudah_diperbaiki') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as perlu_review_count,
+                   SUM(CASE WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as belum_direview_count,
+                   SUM(CASE WHEN d.status_review = 'menunggu_review_lpm' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as menunggu_lpm_count,
                    SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sudah_diperbaiki_count,
-                   SUM(CASE WHEN d.status_review = 'perlu_perbaikan' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
+                   SUM(CASE WHEN d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
                    SUM(CASE WHEN d.status_review = 'sesuai' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sesuai_count
             FROM prodis p
             JOIN fakultas f ON p.fakultas_id = f.id
@@ -223,13 +258,15 @@ class GpmController extends Controller {
         $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
 
         $sql = "
-            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas, u.name as reviewer_name
+            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas, u.name as reviewer_name,
+                   up.name as uploader_name
             FROM ppepp_documents d
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN prodis p ON d.prodi_id = p.id
             LEFT JOIN fakultas f ON d.fakultas_id = f.id
             LEFT JOIN users u ON d.reviewed_by = u.id
+            LEFT JOIN users up ON d.user_id = up.id
             WHERE d.deleted_at IS NULL
         ";
         $params = [];
@@ -257,9 +294,21 @@ class GpmController extends Controller {
             $params[] = $bidangFilter;
         }
 
-        if ($statusFilter && in_array($statusFilter, ['draft', 'belum_direview', 'perlu_perbaikan', 'sudah_diperbaiki', 'sesuai'])) {
-            $sql .= " AND d.status_review = ?";
-            $params[] = $statusFilter;
+        if ($statusFilter) {
+            if ($statusFilter === 'menunggu_review_gpm') {
+                $sql .= " AND d.status_review IN ('menunggu_review_gpm', 'belum_direview')";
+            } elseif ($statusFilter === 'revisi_gpm') {
+                $sql .= " AND d.status_review = 'revisi_gpm'";
+            } elseif ($statusFilter === 'menunggu_review_lpm') {
+                $sql .= " AND d.status_review = 'menunggu_review_lpm'";
+            } elseif ($statusFilter === 'revisi_lpm') {
+                $sql .= " AND d.status_review IN ('revisi_lpm', 'perlu_perbaikan')";
+            } elseif ($statusFilter === 'perlu_perbaikan') {
+                $sql .= " AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+            } elseif (in_array($statusFilter, ['draft', 'sesuai', 'sudah_diperbaiki'])) {
+                $sql .= " AND d.status_review = ?";
+                $params[] = $statusFilter;
+            }
         }
 
         if ($search) {
@@ -270,7 +319,14 @@ class GpmController extends Controller {
             $params[] = "%{$search}%";
         }
 
-        $sql .= " ORDER BY d.created_at DESC";
+        // Urutan: Prioritaskan dokumen yang Menunggu Review GPM terlebih dahulu, lalu revisi, lalu menunggu LPM, lalu lainnya
+        $sql .= " ORDER BY 
+            CASE 
+                WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview') THEN 0
+                WHEN d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') THEN 1
+                WHEN d.status_review = 'menunggu_review_lpm' THEN 2
+                ELSE 3
+            END, d.updated_at DESC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -282,109 +338,160 @@ class GpmController extends Controller {
 
         // Hitung dokumen notifikasi aksi dalam lingkup GPM
         $scopeWhereSimple = "( (fakultas_id = {$this->fakultasId} AND level = 'fakultas') OR prodi_id IN ({$prodiIdPlaceholder}) )";
-        $gpmPerluCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL")->fetchColumn();
-        $gpmSudahCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn();
-        $gpmDraftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
+        $gpmPendingReviewCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('menunggu_review_gpm', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
+        $gpmWaitingLpmCount    = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'menunggu_review_lpm' AND deleted_at IS NULL")->fetchColumn();
+        $gpmRevisiGpmCount     = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'revisi_gpm' AND deleted_at IS NULL")->fetchColumn();
+        $gpmRevisiLpmCount     = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review IN ('revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
+        $gpmPerluCount         = $gpmRevisiGpmCount + $gpmRevisiLpmCount;
+        $gpmSesuaiCount        = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'sesuai' AND deleted_at IS NULL")->fetchColumn();
+        $gpmDraftCount         = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhereSimple} AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
 
         $this->render('gpm/documents', [
-            'pageTitle'     => 'Daftar Dokumen Mutu PPEPP | GPM ' . $this->fakultas['nama_fakultas'],
-            'fakultas'      => $this->fakultas,
-            'prodisList'    => $this->prodisList,
-            'documents'     => $documents,
-            'bidangList'    => $bidangList,
-            'unitFilter'    => $unitFilter,
-            'siklusFilter'  => $siklusFilter,
-            'bidangFilter'  => $bidangFilter,
-            'statusFilter'  => $statusFilter,
-            'search'        => $search,
-            'gpmPerluCount' => $gpmPerluCount,
-            'gpmSudahCount' => $gpmSudahCount,
-            'gpmDraftCount' => $gpmDraftCount
+            'pageTitle'              => 'Review Dokumen Mutu PPEPP | GPM ' . $this->fakultas['nama_fakultas'],
+            'fakultas'               => $this->fakultas,
+            'prodisList'             => $this->prodisList,
+            'documents'              => $documents,
+            'bidangList'             => $bidangList,
+            'unitFilter'             => $unitFilter,
+            'siklusFilter'           => $siklusFilter,
+            'bidangFilter'           => $bidangFilter,
+            'statusFilter'           => $statusFilter,
+            'search'                 => $search,
+            'gpmPendingReviewCount'  => $gpmPendingReviewCount,
+            'gpmWaitingLpmCount'     => $gpmWaitingLpmCount,
+            'gpmRevisiGpmCount'      => $gpmRevisiGpmCount,
+            'gpmRevisiLpmCount'      => $gpmRevisiLpmCount,
+            'gpmPerluCount'          => $gpmPerluCount,
+            'gpmSesuaiCount'         => $gpmSesuaiCount,
+            'gpmDraftCount'          => $gpmDraftCount
         ]);
     }
 
     /**
-     * Halaman Unggah Dokumen Baru
+     * Submit Review Dokumen oleh GPM
+     * Alur: Dokumen Prodi/Fakultas -> Direview GPM -> Jika Sesuai, Diteruskan ke LPM -> Jika Belum, Minta Revisi ke Pengunggah
      */
-    public function createDocument(): void {
-        $bidangStandar = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
-        $subBidangStandar = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active = 1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
+    public function submitReview(): void {
+        $docId         = !empty($_POST['document_id']) ? (int)$_POST['document_id'] : 0;
+        $statusReview  = trim($_POST['status_review'] ?? '');
+        $catatanReview = trim($_POST['catatan_review'] ?? '');
+        $redirectUrl   = trim($_POST['redirect_to'] ?? 'gpm/dokumen');
 
-        $academicYears = [
-            '2026/2027', '2025/2026', '2024/2025', '2023/2024', '2022/2023', '2021/2022'
-        ];
-
-        $this->render('gpm/document_form', [
-            'pageTitle'        => 'Unggah Dokumen Mutu Baru | GPM ' . $this->fakultas['nama_fakultas'],
-            'isEdit'           => false,
-            'fakultas'         => $this->fakultas,
-            'prodisList'       => $this->prodisList,
-            'bidangStandar'    => $bidangStandar,
-            'subBidangStandar' => $subBidangStandar,
-            'academicYears'    => $academicYears,
-            'doc'              => []
-        ]);
-    }
-
-    /**
-     * Halaman Edit Dokumen
-     */
-    public function editDocument(string $id): void {
-        $docId = (int)$id;
-        $doc = $this->findDocWithScope($docId);
-
-        if (!$doc) {
-            Auth::setFlash('danger', 'Dokumen tidak ditemukan atau berada di luar lingkup fakultas Anda.');
-            redirect('gpm/dokumen');
+        // Validasi Status Keputusan Review GPM:
+        // 1. 'menunggu_review_lpm' : Rekomendasikan / Teruskan ke Review LPM
+        // 2. 'revisi_gpm'          : Kembalikan ke Prodi / Fakultas untuk direvisi
+        $allowedStatuses = ['menunggu_review_lpm', 'revisi_gpm'];
+        if (!$docId || !in_array($statusReview, $allowedStatuses)) {
+            Auth::setFlash('danger', 'Keputusan review dokumen tidak valid.');
+            redirect($redirectUrl);
             return;
         }
 
-        // Ambil lampiran berkas dokumen
-        $stmtFiles = $this->db->prepare("SELECT * FROM ppepp_document_files WHERE document_id = ? ORDER BY sort_order ASC, id ASC");
-        $stmtFiles->execute([$docId]);
-        $doc['files'] = $stmtFiles->fetchAll();
-
-        if (empty($doc['files']) && !empty($doc['file_path'])) {
-            $doc['files'] = [
-                [
-                    'id' => 0,
-                    'document_id' => $doc['id'],
-                    'file_name' => basename($doc['file_path']),
-                    'file_path' => $doc['file_path'],
-                    'file_size' => $doc['file_size'] ?? '',
-                    'file_extension' => $doc['file_extension'] ?? 'pdf',
-                    'narasi' => ''
-                ]
-            ];
+        // Pastikan dokumen ada dan dalam ruang lingkup fakultas / prodi binaan GPM
+        $doc = $this->findDocWithScope($docId);
+        if (!$doc) {
+            Auth::setFlash('danger', 'Dokumen tidak ditemukan atau di luar wewenang review GPM fakultas Anda.');
+            redirect($redirectUrl);
+            return;
         }
 
-        $bidangStandar = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
-        $subBidangStandar = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active = 1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
+        if ($statusReview === 'revisi_gpm' && empty($catatanReview)) {
+            Auth::setFlash('danger', 'Catatan / rekomendasi perbaikan wajib diisi jika meminta revisi dokumen.');
+            redirect($redirectUrl);
+            return;
+        }
 
-        $academicYears = [
-            '2026/2027', '2025/2026', '2024/2025', '2023/2024', '2022/2023', '2021/2022'
-        ];
+        $reviewerId           = Auth::id();
+        $officialReviewerName = 'GPM ' . ($this->fakultas['nama_fakultas'] ?? 'Fakultas');
+        $oldStatus            = $doc['status_review'];
+        $finalStatus          = $statusReview;
+        $tahapReview          = ($statusReview === 'menunggu_review_lpm') ? 'lpm' : 'gpm';
+        $finalCatatan         = ($statusReview === 'menunggu_review_lpm')
+            ? ($catatanReview ?: 'Disetujui oleh GPM tingkat Fakultas dan diteruskan ke LPM untuk review akhir.')
+            : $catatanReview;
 
-        $this->render('gpm/document_form', [
-            'pageTitle'        => 'Edit Dokumen: ' . htmlspecialchars($doc['nama_dokumen']),
-            'isEdit'           => true,
-            'doc'              => $doc,
-            'fakultas'         => $this->fakultas,
-            'prodisList'       => $this->prodisList,
-            'bidangStandar'    => $bidangStandar,
-            'subBidangStandar' => $subBidangStandar,
-            'academicYears'    => $academicYears
+        // 1. Update Dokumen PPEPP
+        $stmtUpdate = $this->db->prepare("
+            UPDATE ppepp_documents 
+            SET status_review = ?,
+                tahap_review = ?,
+                catatan_review = ?,
+                gpm_reviewed_by = ?,
+                gpm_reviewed_at = NOW(),
+                gpm_catatan = ?,
+                updated_at = NOW()
+            WHERE id = ?
+        ");
+        $stmtUpdate->execute([
+            $finalStatus,
+            $tahapReview,
+            $finalCatatan,
+            $reviewerId,
+            $finalCatatan,
+            $docId
         ]);
+
+        // 2. Catat Riwayat Review ke ppepp_document_reviews
+        $stmtLog = $this->db->prepare("
+            INSERT INTO ppepp_document_reviews 
+            (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
+            VALUES (?, ?, 'gpm', ?, 'gpm', ?, ?, ?, NOW())
+        ");
+        $stmtLog->execute([
+            $docId,
+            $reviewerId,
+            $officialReviewerName,
+            $oldStatus,
+            $finalStatus,
+            $finalCatatan
+        ]);
+
+        // 3. Catat ke Audit Logger
+        $unitName = ($doc['level'] === 'fakultas') 
+            ? ($this->fakultas['nama_fakultas'] ?? 'Dekanat Fakultas') 
+            : 'Program Studi';
+        AuditLogger::log('UPDATE', 'Review Dokumen GPM', (string)$docId, $doc['nama_dokumen'], $doc, [
+            'status_review'  => $finalStatus,
+            'tahap_review'   => $tahapReview,
+            'catatan_review' => $finalCatatan,
+            'reviewer_role'  => 'gpm',
+            'reviewer'       => $officialReviewerName,
+            'verifikator'    => Auth::user()['name'] ?? 'Petugas GPM'
+        ], (int)($doc['prodi_id'] ?? 0), $unitName);
+
+        if ($finalStatus === 'menunggu_review_lpm') {
+            Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' telah berhasil disetujui oleh GPM dan diteruskan ke antrean review LPM.");
+        } else {
+            Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' dikembalikan dengan catatan perbaikan untuk ditindaklanjuti oleh unit pengunggah.");
+        }
+
+        redirect($redirectUrl);
     }
 
     /**
-     * Simpan Dokumen (Batch Create 1-10 Kartu ATAU Single Edit)
+     * GPM tidak lagi mengelola pengunggahan dokumen mandiri.
+     * Pengunggahan dilakukan oleh Dekanat Fakultas atau Program Studi binaan.
+     */
+    public function createDocument(): void {
+        Auth::setFlash('info', 'GPM kini bertugas mereview dokumen mutu tingkat Fakultas dan Program Studi. Pengunggahan dokumen dilakukan langsung oleh Dekanat Fakultas atau Program Studi terkait.');
+        redirect('gpm/dokumen');
+    }
+
+    public function editDocument(string $id): void {
+        Auth::setFlash('info', 'GPM tidak memiliki izin mengedit dokumen. Untuk memberi arahan atau perbaikan, silakan gunakan tombol Review Dokumen.');
+        redirect('gpm/dokumen');
+    }
+
+    /**
+     * Simpan Dokumen (Dinonaktifkan untuk GPM)
      */
     public function saveDocument(): void {
-        $isEdit = !empty($_POST['id']);
-        $isDraft = (isset($_POST['action_submit']) && $_POST['action_submit'] === 'draft');
-        $allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
-        $validProdiIds = array_column($this->prodisList, 'id');
+        Auth::setFlash('info', 'GPM bertugas sebagai penelaah mutu dan tidak memiliki wewenang untuk mengunggah atau mengubah berkas dokumen.');
+        redirect('gpm/dokumen');
+        return;
+    }
+
+    private function _legacySaveDocument(): void {
 
         // =======================================================
         // 1. BATCH MULTI-UPLOAD GPM (CREATE 1-10 DOKUMEN)
@@ -1041,7 +1148,7 @@ class GpmController extends Controller {
     }
 
     /**
-     * Halaman Perbaikan Dokumen (Revisi dari LPM)
+     * Halaman Monitoring Dokumen Revisi dalam Lingkup Fakultas & Prodi
      */
     public function perbaikan(): void {
         $unitFilter = trim($_GET['unit'] ?? 'all');
@@ -1049,14 +1156,16 @@ class GpmController extends Controller {
         $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
 
         $sql = "
-            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas, u.name as reviewer_name 
+            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas, u.name as reviewer_name,
+                   up.name as uploader_name
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id 
             LEFT JOIN prodis p ON d.prodi_id = p.id
             LEFT JOIN fakultas f ON d.fakultas_id = f.id
             LEFT JOIN users u ON d.reviewed_by = u.id
-            WHERE d.status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
+            LEFT JOIN users up ON d.user_id = up.id
+            WHERE d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
         ";
         $params = [];
 
@@ -1071,7 +1180,7 @@ class GpmController extends Controller {
             $params[] = $this->fakultasId;
         }
 
-        $sql .= " ORDER BY FIELD(d.status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC";
+        $sql .= " ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -1080,237 +1189,60 @@ class GpmController extends Controller {
 
         // Hitung statistik ringkas perbaikan
         $scopeWhere = "( (fakultas_id = {$this->fakultasId} AND level = 'fakultas') OR prodi_id IN ({$prodiIdPlaceholder}) )";
-        $totalPerlu = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL")->fetchColumn();
-        $totalSudah = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review = 'sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn();
-        $fakultasPerlu = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL")->fetchColumn();
-        $prodiPerlu = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE prodi_id IN ({$prodiIdPlaceholder}) AND level = 'prodi' AND status_review = 'perlu_perbaikan' AND deleted_at IS NULL")->fetchColumn();
+        $totalRevisiGpm = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review = 'revisi_gpm' AND deleted_at IS NULL")->fetchColumn();
+        $totalRevisiLpm = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review IN ('revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
+        $totalSudah     = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review = 'sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn();
+        $totalPerlu     = $totalRevisiGpm + $totalRevisiLpm;
+
+        $fakultasPerlu = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
+        $prodiPerlu    = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE prodi_id IN ({$prodiIdPlaceholder}) AND level = 'prodi' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
 
         $this->render('gpm/perbaikan', [
-            'pageTitle'     => 'Pusat Perbaikan Dokumen Mutu | GPM ' . $this->fakultas['nama_fakultas'],
-            'fakultas'      => $this->fakultas,
-            'prodisList'    => $this->prodisList,
-            'revisiDocs'    => $revisiDocs,
-            'unitFilter'    => $unitFilter,
-            'totalPerlu'    => $totalPerlu,
-            'totalSudah'    => $totalSudah,
-            'fakultasPerlu' => $fakultasPerlu,
-            'prodiPerlu'    => $prodiPerlu
+            'pageTitle'      => 'Monitoring Dokumen Revisi | GPM ' . $this->fakultas['nama_fakultas'],
+            'fakultas'       => $this->fakultas,
+            'prodisList'     => $this->prodisList,
+            'revisiDocs'     => $revisiDocs,
+            'unitFilter'     => $unitFilter,
+            'totalPerlu'     => $totalPerlu,
+            'totalRevisiGpm' => $totalRevisiGpm,
+            'totalRevisiLpm' => $totalRevisiLpm,
+            'totalSudah'     => $totalSudah,
+            'fakultasPerlu'  => $fakultasPerlu,
+            'prodiPerlu'     => $prodiPerlu
         ]);
     }
 
     /**
-     * Halaman Draf Dokumen
+     * Draf dokumen dikelola langsung oleh unit pengunggah (Dekanat & Prodi).
      */
     public function draft(): void {
-        $unitFilter = trim($_GET['unit'] ?? 'all');
-        $prodiIds = array_column($this->prodisList, 'id');
-        $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
-
-        $sql = "
-            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas
-            FROM ppepp_documents d
-            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
-            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
-            LEFT JOIN prodis p ON d.prodi_id = p.id
-            LEFT JOIN fakultas f ON d.fakultas_id = f.id
-            WHERE d.status_review = 'draft' AND d.deleted_at IS NULL
-        ";
-        $params = [];
-
-        if ($unitFilter === 'fakultas') {
-            $sql .= " AND d.fakultas_id = ? AND d.level = 'fakultas'";
-            $params[] = $this->fakultasId;
-        } elseif (is_numeric($unitFilter) && in_array((int)$unitFilter, $prodiIds)) {
-            $sql .= " AND d.prodi_id = ? AND d.level = 'prodi'";
-            $params[] = (int)$unitFilter;
-        } else {
-            $sql .= " AND ( (d.fakultas_id = ? AND d.level = 'fakultas') OR d.prodi_id IN ({$prodiIdPlaceholder}) )";
-            $params[] = $this->fakultasId;
-        }
-
-        $sql .= " ORDER BY d.updated_at DESC";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-        $draftDocs = $stmt->fetchAll();
-        $this->attachFilesToDocs($draftDocs);
-
-        $this->render('gpm/draft', [
-            'pageTitle'  => 'Draf Dokumen Mutu | GPM ' . $this->fakultas['nama_fakultas'],
-            'fakultas'   => $this->fakultas,
-            'prodisList' => $this->prodisList,
-            'draftDocs'  => $draftDocs,
-            'unitFilter' => $unitFilter
-        ]);
+        Auth::setFlash('info', 'Menu draf dokumen dikelola langsung oleh Dekanat dan Program Studi.');
+        redirect('gpm/dokumen');
     }
 
-    /**
-     * Ajukan Dokumen dari Draf ke LPM
-     */
     public function ajukanDraft(string $id): void {
-        $docId = (int)$id;
-        $doc = $this->findDocWithScope($docId);
-
-        if (!$doc) {
-            Auth::setFlash('danger', 'Dokumen tidak ditemukan.');
-            redirect('gpm/draft');
-            return;
-        }
-
-        // Cek kelengkapan berkas/link
-        $fileCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_document_files WHERE document_id = {$docId}")->fetchColumn();
-        $hasLink = !empty($doc['external_link']);
-
-        if ($doc['jenis_upload'] === 'file' && $fileCount === 0) {
-            Auth::setFlash('danger', 'Dokumen draf belum memiliki berkas terunggah. Silakan edit dokumen untuk melampirkan berkas sebelum mengajukan.');
-            redirect('gpm/draft');
-            return;
-        }
-
-        if ($doc['jenis_upload'] === 'link' && !$hasLink) {
-            Auth::setFlash('danger', 'Dokumen draf belum memiliki tautan Google Drive. Silakan edit dokumen sebelum mengajukan.');
-            redirect('gpm/draft');
-            return;
-        }
-
-        $stmt = $this->db->prepare("UPDATE ppepp_documents SET status_review = 'belum_direview', updated_at = NOW() WHERE id = ?");
-        $stmt->execute([$docId]);
-
-        AuditLogger::log(
-            aksi: 'UPDATE',
-            modul: 'Dokumen PPEPP GPM',
-            targetId: (string)$docId,
-            targetName: $doc['nama_dokumen'],
-            oldValues: ['status' => 'draft'],
-            newValues: ['status' => 'belum_direview']
-        );
-
-        Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' berhasil diajukan ke LPM untuk ditinjau.");
-        redirect('gpm/draft');
+        Auth::setFlash('info', 'Pengajuan draf dokumen dilakukan oleh pengunggah (Dekanat / Prodi).');
+        redirect('gpm/dokumen');
     }
 
-    /**
-     * Halaman Arsip / Riwayat Terhapus
-     */
     public function arsip(): void {
-        $prodiIds = array_column($this->prodisList, 'id');
-        $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
-
-        $stmt = $this->db->prepare("
-            SELECT d.*, b.nama_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas 
-            FROM ppepp_documents d 
-            LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
-            LEFT JOIN prodis p ON d.prodi_id = p.id
-            LEFT JOIN fakultas f ON d.fakultas_id = f.id
-            WHERE ( (d.fakultas_id = ? AND d.level = 'fakultas') OR d.prodi_id IN ({$prodiIdPlaceholder}) )
-              AND d.deleted_at IS NOT NULL 
-            ORDER BY d.deleted_at DESC
-        ");
-        $stmt->execute([$this->fakultasId]);
-        $arsipDocs = $stmt->fetchAll();
-        $this->attachFilesToDocs($arsipDocs);
-
-        $this->render('gpm/arsip', [
-            'pageTitle'  => 'Arsip & Riwayat Hapus Dokumen | GPM ' . $this->fakultas['nama_fakultas'],
-            'fakultas'   => $this->fakultas,
-            'arsipDocs'  => $arsipDocs
-        ]);
+        Auth::setFlash('info', 'Arsip dan riwayat dokumen terhapus dikelola oleh Dekanat dan Program Studi.');
+        redirect('gpm/dokumen');
     }
 
-    /**
-     * Soft Delete Dokumen
-     */
     public function softDeleteDocument(string $id): void {
-        $docId = (int)$id;
-        $doc = $this->findDocWithScope($docId);
-
-        if (!$doc) {
-            Auth::setFlash('danger', 'Dokumen tidak ditemukan.');
-            redirect('gpm/dokumen');
-            return;
-        }
-
-        $stmt = $this->db->prepare("UPDATE ppepp_documents SET deleted_at = NOW() WHERE id = ?");
-        $stmt->execute([$docId]);
-
-        AuditLogger::log('DELETE', 'Dokumen PPEPP GPM', (string)$docId, $doc['nama_dokumen'], ['deleted_at' => null], ['deleted_at' => date('Y-m-d H:i:s')]);
-        Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' telah dipindahkan ke Arsip.");
-
-        $referer = $_SERVER['HTTP_REFERER'] ?? 'gpm/dokumen';
-        redirect(str_contains($referer, 'draft') ? 'gpm/draft' : 'gpm/dokumen');
+        Auth::setFlash('danger', 'GPM tidak memiliki wewenang untuk menghapus dokumen mutu.');
+        redirect('gpm/dokumen');
     }
 
-    /**
-     * Restore Dokumen
-     */
     public function restoreDocument(string $id): void {
-        $docId = (int)$id;
-        $stmt = $this->db->prepare("SELECT * FROM ppepp_documents WHERE id = ? AND deleted_at IS NOT NULL");
-        $stmt->execute([$docId]);
-        $doc = $stmt->fetch();
-
-        if (!$doc || !$this->isDocInScope($doc)) {
-            Auth::setFlash('danger', 'Dokumen tidak ditemukan dalam arsip fakultas Anda.');
-            redirect('gpm/dokumen/arsip');
-            return;
-        }
-
-        $stmtUpd = $this->db->prepare("UPDATE ppepp_documents SET deleted_at = NULL WHERE id = ?");
-        $stmtUpd->execute([$docId]);
-
-        AuditLogger::log('RESTORE', 'Dokumen PPEPP GPM', (string)$docId, $doc['nama_dokumen'], ['deleted_at' => $doc['deleted_at']], ['deleted_at' => null]);
-        Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' berhasil dipulihkan ke daftar aktif.");
-        redirect('gpm/dokumen/arsip');
+        Auth::setFlash('danger', 'GPM tidak memiliki wewenang untuk memulihkan dokumen terhapus.');
+        redirect('gpm/dokumen');
     }
 
-    /**
-     * Hapus Dokumen Secara Permanen dari Arsip (Hard Delete)
-     */
     public function forceDeleteDocument(string $id): void {
-        $docId = (int)$id;
-        $stmt = $this->db->prepare("SELECT * FROM ppepp_documents WHERE id = ? AND deleted_at IS NOT NULL");
-        $stmt->execute([$docId]);
-        $doc = $stmt->fetch();
-
-        if (!$doc || !$this->isDocInScope($doc)) {
-            Auth::setFlash('danger', 'Dokumen tidak ditemukan dalam arsip fakultas Anda atau Anda tidak memiliki akses.');
-            redirect('gpm/dokumen/arsip');
-            return;
-        }
-
-        // 1. Ambil seluruh file lampiran di ppepp_document_files
-        $stmtFiles = $this->db->prepare("SELECT file_path FROM ppepp_document_files WHERE document_id = ?");
-        $stmtFiles->execute([$docId]);
-        $files = $stmtFiles->fetchAll();
-
-        foreach ($files as $f) {
-            if (!empty($f['file_path'])) {
-                $realPath = ROOT_PATH . '/' . ltrim($f['file_path'], '/\\');
-                if (file_exists($realPath) && is_file($realPath)) {
-                    @unlink($realPath);
-                }
-            }
-        }
-
-        // 2. Berkas lama jika ada
-        if (!empty($doc['file_path'])) {
-            $legacyPath = ROOT_PATH . '/' . ltrim($doc['file_path'], '/\\');
-            if (file_exists($legacyPath) && is_file($legacyPath)) {
-                @unlink($legacyPath);
-            }
-        }
-
-        // 3. Hapus record file
-        $this->db->prepare("DELETE FROM ppepp_document_files WHERE document_id = ?")->execute([$docId]);
-
-        // 4. Hapus data dokumen utama
-        $this->db->prepare("DELETE FROM ppepp_documents WHERE id = ?")->execute([$docId]);
-
-        // 5. Catat audit trail
-        AuditLogger::log('DELETE', 'Dokumen PPEPP GPM (Permanen)', (string)$docId, $doc['nama_dokumen'], $doc, null);
-
-        Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' dan seluruh berkas lampirannya telah berhasil dihapus secara permanen.");
-        redirect('gpm/dokumen/arsip');
+        Auth::setFlash('danger', 'GPM tidak memiliki wewenang untuk menghapus dokumen secara permanen.');
+        redirect('gpm/dokumen');
     }
 
     // ==========================================

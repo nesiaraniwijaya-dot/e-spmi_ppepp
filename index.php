@@ -148,6 +148,12 @@ $router->post('gpm/dokumen/restore/{id:\d+}', ['GpmController', 'restoreDocument
 $router->post('gpm/dokumen/force-delete/{id:\d+}', ['GpmController', 'forceDeleteDocument']);
 $router->get('gpm/dokumen/arsip', ['GpmController', 'arsip']);
 
+// GPM Review Submission
+$router->post('gpm/review/submit', ['GpmController', 'submitReview']);
+
+// API Global: Riwayat Catatan Review PPEPP
+$router->get('api/document-review-history/{id:\d+}', ['SuperAdminController', 'reviewHistoryJson']);
+
 // Profil & Foto GPM (Hanya Profil Akun, Tanpa Dekanat / Kaprodi)
 $router->get('gpm/profile', ['ProfileController', 'index']);
 $router->post('gpm/profile/update', ['ProfileController', 'update']);

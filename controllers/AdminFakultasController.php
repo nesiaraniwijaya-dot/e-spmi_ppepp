@@ -55,8 +55,8 @@ class AdminFakultasController extends Controller {
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN users u ON d.reviewed_by = u.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
-            ORDER BY FIELD(d.status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
+            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
         ");
         $stmtRevisi->execute([$this->fakultasId]);
         $revisiDocs = $stmtRevisi->fetchAll();
@@ -160,7 +160,7 @@ class AdminFakultasController extends Controller {
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review = 'perlu_perbaikan' AND d.deleted_at IS NULL
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND d.deleted_at IS NULL
             ORDER BY d.reviewed_at DESC, d.updated_at DESC
         ");
         $stmtPerlu->execute([$this->fakultasId]);
@@ -168,7 +168,7 @@ class AdminFakultasController extends Controller {
         $this->attachFilesToDocs($perluPerbaikanDocs);
         $perluPerbaikanCount = count($perluPerbaikanDocs);
 
-        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn();
+        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm') AND deleted_at IS NULL")->fetchColumn();
 
         $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
 
@@ -199,15 +199,15 @@ class AdminFakultasController extends Controller {
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
-            ORDER BY FIELD(d.status_review, 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
+            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
         ");
         $stmt->execute([$this->fakultasId]);
         $documents = $stmt->fetchAll();
         $this->attachFilesToDocs($documents);
 
-        $perluDocs = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
-        $sudahDocs = array_values(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
+        $perluDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
+        $sudahDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm'])));
 
         $this->render('admin_fakultas/perbaikan', [
             'pageTitle' => 'Perbaikan Dokumen Mutu - ' . $this->fakultas['nama_fakultas'],
@@ -270,17 +270,18 @@ class AdminFakultasController extends Controller {
             return;
         }
 
-        $stmtUpd = $this->db->prepare("UPDATE ppepp_documents SET status_review = 'belum_direview', updated_at = NOW() WHERE id = ?");
+        $stmtUpd = $this->db->prepare("UPDATE ppepp_documents SET status_review = 'menunggu_review_gpm', tahap_review = 'gpm', updated_at = NOW() WHERE id = ?");
         $stmtUpd->execute([$docId]);
 
         AuditLogger::log('UPDATE', 'Dokumen PPEPP Fakultas', (string)$docId, $doc['nama_dokumen'], [
             'status_review' => 'draft'
         ], [
-            'status_review' => 'belum_direview',
+            'status_review' => 'menunggu_review_gpm',
+            'tahap_review' => 'gpm',
             'action' => 'publish_draft'
         ]);
 
-        Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' berhasil diajukan ke Lembaga Penjaminan Mutu (LPM) untuk diverifikasi.");
+        Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' berhasil diajukan ke Gugus Penjaminan Mutu (GPM) Fakultas untuk direview.");
         redirect('fakultas/dokumen');
     }
 
@@ -559,7 +560,8 @@ class AdminFakultasController extends Controller {
                         $externalLink = null;
                     }
 
-                    $statusReview = $isDraft ? 'draft' : 'belum_direview';
+                    $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
+                    $tahapReview  = $isDraft ? null : 'gpm';
 
                     // Insert ke tabel `ppepp_documents` dengan level = 'fakultas'
                     $stmt = $this->db->prepare("
@@ -568,13 +570,13 @@ class AdminFakultasController extends Controller {
                             nama_dokumen, nomor_dokumen, siklus, tahun_akademik,
                             tanggal_berlaku_mulai, tanggal_berlaku_selesai,
                             jenis_upload, file_path, file_size, file_extension, external_link,
-                            public_page_limit, can_download_public, status_review, level, created_at
+                            public_page_limit, can_download_public, status_review, tahap_review, level, created_at
                         ) VALUES (
                             ?, NULL, ?, ?, ?,
                             ?, ?, ?, ?,
                             ?, ?,
                             ?, ?, ?, ?, ?,
-                            ?, ?, ?, 'fakultas', NOW()
+                            ?, ?, ?, ?, 'fakultas', NOW()
                         )
                     ");
                     $stmt->execute([
@@ -582,7 +584,7 @@ class AdminFakultasController extends Controller {
                         $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik,
                         $startDate, $endDate,
                         $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
-                        $publicPageLimit, $canDownloadPublic, $statusReview
+                        $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview
                     ]);
                     $docId = (int)$this->db->lastInsertId();
 
@@ -949,14 +951,18 @@ class AdminFakultasController extends Controller {
             }
 
             // Status review handling
-            $newStatusReview = $existing['status_review'] ?? 'belum_direview';
+            $newStatusReview = $existing['status_review'] ?? 'menunggu_review_gpm';
+            $newTahapReview  = $existing['tahap_review'] ?? 'gpm';
             if ($isDraft) {
                 $newStatusReview = 'draft';
+                $newTahapReview  = null;
             } else {
-                if ($newStatusReview === 'perlu_perbaikan') {
-                    $newStatusReview = 'sudah_diperbaiki';
-                } elseif ($newStatusReview === 'draft') {
-                    $newStatusReview = 'belum_direview';
+                if (in_array($newStatusReview, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'])) {
+                    $newStatusReview = 'menunggu_review_gpm';
+                    $newTahapReview  = 'gpm';
+                } elseif (in_array($newStatusReview, ['draft', 'belum_direview'])) {
+                    $newStatusReview = 'menunggu_review_gpm';
+                    $newTahapReview  = 'gpm';
                 }
             }
 
@@ -965,14 +971,14 @@ class AdminFakultasController extends Controller {
                     nama_dokumen = ?, nomor_dokumen = ?, bidang_id = ?, sub_bidang_id = ?,
                     siklus = ?, tahun_akademik = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?,
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, external_link = ?,
-                    public_page_limit = ?, can_download_public = ?, status_review = ?, updated_at = NOW()
+                    public_page_limit = ?, can_download_public = ?, status_review = ?, tahap_review = ?, updated_at = NOW()
                 WHERE id = ? AND fakultas_id = ? AND level = 'fakultas'
             ");
             $stmtUpdate->execute([
                 $namaDokumen, $nomorDokumen, $bidangId, $subBidangId,
                 $siklus, $tahunAkademik, $startDate, $endDate,
                 $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
-                $publicPageLimit, $canDownloadPublic, $newStatusReview,
+                $publicPageLimit, $canDownloadPublic, $newStatusReview, $newTahapReview,
                 $id, $this->fakultasId
             ]);
 
@@ -985,7 +991,7 @@ class AdminFakultasController extends Controller {
                 targetId: (string)$id,
                 targetName: $namaDokumen,
                 oldValues: ['nama' => $existing['nama_dokumen'], 'siklus' => $existing['siklus']],
-                newValues: ['nama' => $namaDokumen, 'siklus' => $siklus, 'status_review' => $newStatusReview]
+                newValues: ['nama' => $namaDokumen, 'siklus' => $siklus, 'status_review' => $newStatusReview, 'tahap_review' => $newTahapReview]
             );
 
             if ($isDraft) {
@@ -994,10 +1000,10 @@ class AdminFakultasController extends Controller {
                 return;
             }
 
-            $msg = ($newStatusReview === 'sudah_diperbaiki')
-                ? "Dokumen '{$namaDokumen}' berhasil diperbarui dan statusnya kini 'Menunggu Review Ulang' oleh Admin LPM."
+            $msg = in_array($existing['status_review'], ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])
+                ? "Dokumen '{$namaDokumen}' berhasil diperbaiki dan statusnya kini 'Menunggu Review GPM' untuk ditinjau oleh Gugus Penjaminan Mutu Fakultas."
                 : (($existing['status_review'] === 'draft')
-                    ? "Dokumen '{$namaDokumen}' berhasil diajukan ke LPM untuk diverifikasi."
+                    ? "Dokumen '{$namaDokumen}' berhasil diajukan ke GPM Fakultas untuk direview."
                     : "Dokumen mutu fakultas berhasil diperbarui.");
 
             Auth::setFlash('success', $msg);

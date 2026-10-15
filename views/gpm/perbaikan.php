@@ -15,7 +15,7 @@ $totalSudah    = $totalSudah ?? 0;
 $fakultasPerlu = $fakultasPerlu ?? 0;
 $prodiPerlu    = $prodiPerlu ?? 0;
 
-$perluDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
+$perluDocs = array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
 $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
 ?>
 
@@ -38,14 +38,11 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
             </p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="<?= base_url('gpm/dokumen/create') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5 py-2 shadow-sm bg-scu-blue border-0 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
-                <i class="fas fa-plus"></i> Unggah Dokumen Baru
+            <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5 py-2 shadow-sm bg-scu-blue border-0 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+                <i class="fas fa-clipboard-check"></i> Review Dokumen Mutu
             </a>
-            <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-2 shadow-2xs fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
-                <i class="fas fa-folder-open"></i> Seluruh Dokumen PPEPP
-            </a>
-            <a href="<?= base_url('gpm/draft') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 py-2 shadow-2xs fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
-                <i class="fas fa-file-pen"></i> Draf Dokumen
+            <a href="<?= base_url('gpm/dashboard') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-2 shadow-2xs fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+                <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
             </a>
         </div>
     </div>
@@ -304,7 +301,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                         <!-- Nama Dokumen Mutu -->
                                         <td class="py-3 px-3.5" style="border-end: 1px solid #F1F5F9;">
                                             <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.4;">
-                                                <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="text-decoration-none text-dark-blue hover-primary">
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="text-decoration-none text-dark-blue hover-primary">
                                                     <?= htmlspecialchars($doc['nama_dokumen']) ?>
                                                 </a>
                                             </div>
@@ -359,7 +356,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                                     data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '') ?>"
                                                     data-status="perlu_perbaikan"
-                                                    data-edit-url="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>">
+                                                    data-edit-url="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>">
                                                 <i class="fas fa-comment-dots text-danger"></i>
                                                 <span>Lihat Catatan</span>
                                             </button>
@@ -384,10 +381,14 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
 
                                         <!-- Aksi -->
                                         <td class="pe-4 py-3 text-center">
-                                            <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-sm btn-danger rounded-pill px-3.5 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5 text-nowrap" style="font-size: 0.8rem;">
-                                                <i class="fas fa-wrench"></i>
-                                                <span>Perbaiki</span>
-                                            </a>
+                                            <div class="d-inline-flex align-items-center gap-1.5">
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                                                    <i class="fas fa-clipboard-check"></i> Review
+                                                </a>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-history text-secondary"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -472,7 +473,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                         <!-- Nama Dokumen Mutu -->
                                         <td class="py-3 px-3.5" style="border-end: 1px solid #F1F5F9;">
                                             <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.4;">
-                                                <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="text-decoration-none text-dark-blue hover-primary">
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="text-decoration-none text-dark-blue hover-primary">
                                                     <?= htmlspecialchars($doc['nama_dokumen']) ?>
                                                 </a>
                                             </div>
@@ -526,7 +527,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                                     data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '') ?>"
                                                     data-status="sudah_diperbaiki"
-                                                    data-edit-url="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>">
+                                                    data-edit-url="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>">
                                                 <i class="fas fa-comment-dots text-primary"></i>
                                                 <span>Lihat Catatan</span>
                                             </button>
@@ -551,10 +552,14 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
 
                                         <!-- Aksi -->
                                         <td class="pe-4 py-3 text-center">
-                                            <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-nowrap shadow-2xs" style="font-size: 0.8rem;">
-                                                <i class="fas fa-pen-to-square"></i>
-                                                <span>Ubah Berkas</span>
-                                            </a>
+                                            <div class="d-inline-flex align-items-center gap-1.5">
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                                                    <i class="fas fa-eye"></i> Tinjau
+                                                </a>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-history text-secondary"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -633,7 +638,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                         <!-- Nama Dokumen Mutu -->
                                         <td class="py-3 px-3.5" style="border-end: 1px solid #F1F5F9;">
                                             <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.4;">
-                                                <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="text-decoration-none text-dark-blue hover-primary">
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="text-decoration-none text-dark-blue hover-primary">
                                                     <?= htmlspecialchars($doc['nama_dokumen']) ?>
                                                 </a>
                                             </div>
@@ -646,17 +651,9 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                             </div>
                                         </td>
 
-                                        <!-- Status Review LPM -->
+                                        <!-- Status Review & Tahap -->
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
-                                            <?php if ($isPerlu): ?>
-                                                <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-wrench me-1"></i> Perlu Perbaikan
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="badge rounded-pill bg-primary text-white px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-clock-rotate-left me-1"></i> Menunggu Review LPM
-                                                </span>
-                                            <?php endif; ?>
+                                            <?= render_review_status_badge($doc['status_review'], $doc['tahap_review'] ?? null) ?>
                                         </td>
 
                                         <!-- Siklus PPEPP -->
@@ -690,7 +687,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
                                                     data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '') ?>"
                                                     data-status="<?= $isPerlu ? 'perlu_perbaikan' : 'sudah_diperbaiki' ?>"
-                                                    data-edit-url="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>">
+                                                    data-edit-url="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>">
                                                 <i class="fas fa-comment-dots <?= $isPerlu ? 'text-danger' : 'text-primary' ?>"></i>
                                                 <span>Lihat Catatan</span>
                                             </button>
@@ -698,17 +695,14 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
 
                                         <!-- Aksi -->
                                         <td class="pe-4 py-3 text-center">
-                                            <?php if ($isPerlu): ?>
-                                                <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-sm btn-danger rounded-pill px-3.5 py-1.5 fw-bold shadow-xs d-inline-flex align-items-center gap-1.5 text-nowrap" style="font-size: 0.8rem;">
-                                                    <i class="fas fa-wrench"></i>
-                                                    <span>Perbaiki</span>
+                                            <div class="d-inline-flex align-items-center gap-1.5">
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                                                    <i class="fas fa-eye"></i> Detail
                                                 </a>
-                                            <?php else: ?>
-                                                <a href="<?= base_url('gpm/dokumen/edit/' . $doc['id']) ?>" class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-nowrap shadow-2xs" style="font-size: 0.8rem;">
-                                                    <i class="fas fa-pen-to-square"></i>
-                                                    <span>Ubah Berkas</span>
-                                                </a>
-                                            <?php endif; ?>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-history text-secondary"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -781,11 +775,14 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
             </div>
             <div class="modal-footer border-top py-2.5 px-4 bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                <a href="#" id="evalModalEditBtn" class="btn btn-danger btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2">
-                    <i class="fas fa-wrench me-1"></i>
-                    <span>Perbaiki Dokumen Sekarang</span>
+                <a href="#" id="evalModalEditBtn" class="btn btn-primary bg-scu-blue border-0 btn-sm rounded-pill px-4 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2">
+                    <i class="fas fa-clipboard-check me-1"></i>
+                    <span>Buka Dokumen di Ruang Review</span>
                 </a>
             </div>
+        </div>
+    </div>
+</div>
         </div>
     </div>
 </div>

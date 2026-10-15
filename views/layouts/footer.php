@@ -113,6 +113,58 @@
                     </div>
                 </div>
 
+    <!-- ============================================================
+         GLOBAL MODAL: Riwayat Catatan Revisi & Evaluasi Dokumen
+    ============================================================ -->
+    <div class="modal fade" id="reviewHistoryModal" tabindex="-1" aria-labelledby="reviewHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header text-white px-4 py-3 border-0 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);">
+                    <div class="d-flex align-items-center gap-2.5 overflow-hidden me-2">
+                        <div class="p-2 rounded-3 bg-white bg-opacity-15 text-white flex-shrink-0">
+                            <i class="fas fa-clock-rotate-left fa-lg"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <h5 class="modal-title fs-6 fw-bold mb-0 text-white text-truncate" id="reviewHistoryModalLabel">
+                                Riwayat Catatan Revisi &amp; Verifikasi Dokumen
+                            </h5>
+                            <div class="d-flex align-items-center gap-2 mt-0.5 small text-white-50 text-truncate">
+                                <span id="revHistDocName" class="text-truncate fw-medium text-white"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Status Header Card -->
+                    <div class="card border rounded-3 p-3 mb-3 bg-white shadow-2xs d-flex flex-row align-items-center justify-content-between gap-3">
+                        <div>
+                            <div class="text-muted small mb-0.5" style="font-size: 0.72rem;">STATUS DOKUMEN SAAT INI:</div>
+                            <div id="revHistCurrentBadge"></div>
+                        </div>
+                        <div class="text-end text-muted small" id="revHistTotalCount" style="font-size: 0.75rem;">
+                        </div>
+                    </div>
+
+                    <!-- Timeline Content -->
+                    <div id="revHistLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Memuat riwayat...</span>
+                        </div>
+                        <div class="text-muted small mt-2">Mengambil riwayat catatan revisi...</div>
+                    </div>
+                    <div id="revHistEmpty" class="text-center py-5 d-none">
+                        <div class="text-muted opacity-50 mb-2"><i class="fas fa-comments fa-3x"></i></div>
+                        <h6 class="fw-bold text-secondary mb-1">Belum Ada Riwayat Catatan</h6>
+                        <p class="text-muted small mb-0">Dokumen ini belum memiliki riwayat catatan revisi atau telaah sebelumnya.</p>
+                    </div>
+                    <div id="revHistTimeline" class="review-history-timeline d-none">
+                        <!-- Items injected dynamically via JS -->
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top px-4 py-2.5">
+                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                </div>
             </div>
         </div>
     </div>
@@ -374,6 +426,105 @@
     <script src="<?= asset('js/app.js') ?>"></script>
     <script src="<?= asset('js/ppepp_form.js') ?>"></script>
     <script src="<?= asset('js/sub_standar_picker.js') ?>"></script>
+
+    <!-- Global Review History Modal Handler -->
+    <script>
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-review-history');
+        if (!btn) return;
+        e.preventDefault();
+        const docId = btn.getAttribute('data-doc-id');
+        const docName = btn.getAttribute('data-doc-name') || '';
+        if (!docId) return;
+
+        const modalEl = document.getElementById('reviewHistoryModal');
+        if (!modalEl) return;
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        
+        document.getElementById('revHistDocName').textContent = docName;
+        document.getElementById('revHistLoading').classList.remove('d-none');
+        document.getElementById('revHistEmpty').classList.add('d-none');
+        document.getElementById('revHistTimeline').classList.add('d-none');
+        document.getElementById('revHistTimeline').innerHTML = '';
+        document.getElementById('revHistCurrentBadge').innerHTML = '';
+        document.getElementById('revHistTotalCount').textContent = '';
+
+        modal.show();
+
+        fetch('<?= base_url("api/document-review-history/") ?>' + docId)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('revHistLoading').classList.add('d-none');
+                if (!data || !data.success) {
+                    document.getElementById('revHistEmpty').classList.remove('d-none');
+                    return;
+                }
+
+                if (data.document) {
+                    document.getElementById('revHistDocName').textContent = data.document.nama_dokumen || docName;
+                    document.getElementById('revHistCurrentBadge').innerHTML = data.document.status_badge || '';
+                }
+
+                const items = data.history || [];
+                document.getElementById('revHistTotalCount').textContent = items.length + ' Catatan / Evaluasi';
+
+                if (items.length === 0) {
+                    document.getElementById('revHistEmpty').classList.remove('d-none');
+                    return;
+                }
+
+                let html = '<div class="d-flex flex-column gap-3">';
+                items.forEach((item, idx) => {
+                    const isGpm = (item.reviewer_role === 'gpm' || item.tahap === 'gpm');
+                    const isLpm = (item.reviewer_role === 'lpm' || item.reviewer_role === 'super_admin' || item.reviewer_role === 'kepala_lpm');
+                    const isResubmit = (item.tahap === 'resubmission');
+
+                    const roleBadge = isGpm 
+                        ? '<span class="badge rounded-pill px-2.5 py-1" style="background:#F3E8FF; color:#7E22CE; border:1px solid #E9D5FF;"><i class="fas fa-shield-halved me-1"></i> GPM Fakultas</span>'
+                        : (isLpm 
+                            ? '<span class="badge rounded-pill px-2.5 py-1" style="background:#DBEAFE; color:#1E40AF; border:1px solid #BFDBFE;"><i class="fas fa-award me-1"></i> Lembaga Penjaminan Mutu (LPM)</span>'
+                            : '<span class="badge rounded-pill px-2.5 py-1 bg-secondary text-white"><i class="fas fa-cloud-arrow-up me-1"></i> Pengunggah</span>');
+
+                    let statusBadge = '';
+                    if (item.status_hasil === 'revisi_gpm') {
+                        statusBadge = '<span class="badge bg-danger rounded-pill px-2.5 py-1 text-white"><i class="fas fa-wrench me-1"></i> Minta Perbaikan (GPM)</span>';
+                    } else if (item.status_hasil === 'menunggu_review_lpm') {
+                        statusBadge = '<span class="badge bg-primary rounded-pill px-2.5 py-1 text-white"><i class="fas fa-paper-plane me-1"></i> Diteruskan ke LPM</span>';
+                    } else if (item.status_hasil === 'revisi_lpm' || item.status_hasil === 'perlu_perbaikan') {
+                        statusBadge = '<span class="badge bg-danger rounded-pill px-2.5 py-1 text-white"><i class="fas fa-triangle-exclamation me-1"></i> Minta Perbaikan (LPM)</span>';
+                    } else if (item.status_hasil === 'sesuai') {
+                        statusBadge = '<span class="badge bg-success rounded-pill px-2.5 py-1 text-white"><i class="fas fa-circle-check me-1"></i> Disetujui LPM</span>';
+                    } else {
+                        statusBadge = '<span class="badge bg-secondary rounded-pill px-2.5 py-1 text-white">' + (item.status_hasil || '') + '</span>';
+                    }
+
+                    html += `
+                        <div class="card border rounded-3 p-3.5 bg-white shadow-2xs position-relative">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-2 border-bottom">
+                                <div class="d-flex align-items-center gap-2">
+                                    ${roleBadge}
+                                    <span class="fw-bold text-dark small">${item.reviewer_name || 'Verifikator'}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    ${statusBadge}
+                                    <span class="text-muted small" style="font-size:0.75rem;"><i class="far fa-calendar-alt me-1"></i>${item.created_at || ''}</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 rounded-3 bg-light border text-dark small" style="line-height:1.6; white-space:pre-wrap; font-size:0.83rem;">${item.catatan || '(Tidak ada catatan tertulis)'}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                document.getElementById('revHistTimeline').innerHTML = html;
+                document.getElementById('revHistTimeline').classList.remove('d-none');
+            })
+            .catch(err => {
+                document.getElementById('revHistLoading').classList.add('d-none');
+                document.getElementById('revHistEmpty').classList.remove('d-none');
+            });
+    });
+    </script>
 
     <!-- Navbar scroll effect -->
     <script>

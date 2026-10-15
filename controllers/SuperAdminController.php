@@ -34,9 +34,9 @@ class SuperAdminController extends Controller {
         ];
 
         // Review Statistics for Executive Summary
-        $belumDireviewCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review = 'belum_direview' AND deleted_at IS NULL")->fetchColumn();
+        $belumDireviewCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE (status_review IN ('belum_direview', 'menunggu_review_lpm') OR (status_review = 'menunggu_review' AND tahap_review = 'lpm')) AND deleted_at IS NULL")->fetchColumn();
         $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review = 'sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn();
-        $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review = 'perlu_perbaikan' AND deleted_at IS NULL")->fetchColumn();
+        $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review IN ('perlu_perbaikan', 'revisi_lpm', 'revisi_gpm') AND deleted_at IS NULL")->fetchColumn();
         $sesuaiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE status_review = 'sesuai' AND deleted_at IS NULL")->fetchColumn();
 
         $reviewStats = [
@@ -55,14 +55,16 @@ class SuperAdminController extends Controller {
                    sb.nama_sub_bidang, sb.kode_sub_bidang, 
                    p.nama_prodi, p.kode_prodi, p.jenjang,
                    f.id as calculated_fakultas_id, f.nama_fakultas, f.kode_fakultas,
-                   u.name as uploader_name
+                   u.name as uploader_name,
+                   gpm_u.name as gpm_reviewer_name
             FROM ppepp_documents d
             LEFT JOIN prodis p ON d.prodi_id = p.id
             LEFT JOIN fakultas f ON (f.id = COALESCE(d.fakultas_id, p.fakultas_id))
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
-            WHERE d.status_review IN ('belum_direview', 'sudah_diperbaiki') AND d.deleted_at IS NULL
+            LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
+            WHERE (d.status_review IN ('belum_direview', 'sudah_diperbaiki', 'menunggu_review_lpm') OR (d.status_review = 'menunggu_review' AND d.tahap_review = 'lpm')) AND d.deleted_at IS NULL
             ORDER BY 
               CASE WHEN d.status_review = 'sudah_diperbaiki' THEN 1 ELSE 2 END ASC,
               d.created_at DESC
@@ -703,7 +705,8 @@ class SuperAdminController extends Controller {
                    p.nama_prodi, p.kode_prodi, p.jenjang,
                    f.id as calculated_fakultas_id, f.nama_fakultas, f.kode_fakultas,
                    u.name as uploader_name, 
-                   r.name as reviewer_name
+                   r.name as reviewer_name,
+                   gpm_u.name as gpm_reviewer_name
             FROM ppepp_documents d
             LEFT JOIN prodis p ON d.prodi_id = p.id
             LEFT JOIN fakultas f ON (f.id = COALESCE(d.fakultas_id, p.fakultas_id))
@@ -711,12 +714,13 @@ class SuperAdminController extends Controller {
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
+            LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
             WHERE d.deleted_at IS NULL AND d.status_review != 'draft'
             ORDER BY 
               CASE 
-                WHEN d.status_review = 'belum_direview' THEN 1
+                WHEN d.status_review IN ('belum_direview', 'menunggu_review_lpm') THEN 1
                 WHEN d.status_review = 'sudah_diperbaiki' THEN 2
-                WHEN d.status_review = 'perlu_perbaikan' THEN 3
+                WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm', 'revisi_gpm') THEN 3
                 WHEN d.status_review = 'sesuai' THEN 4
                 ELSE 5
               END ASC,
@@ -829,12 +833,14 @@ class SuperAdminController extends Controller {
 
         // Ambil semua dokumen aktif prodi ini
         $stmtDocs = $this->db->prepare("
-            SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, u.name as uploader_name, r.name as reviewer_name
+            SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, 
+                   u.name as uploader_name, r.name as reviewer_name, gpm_u.name as gpm_reviewer_name
             FROM ppepp_documents d
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
+            LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
             WHERE d.prodi_id = ? AND d.deleted_at IS NULL AND d.status_review != 'draft'
             ORDER BY d.created_at DESC
         ");
@@ -900,12 +906,14 @@ class SuperAdminController extends Controller {
 
         // Ambil semua dokumen aktif fakultas ini (level = 'fakultas')
         $stmtDocs = $this->db->prepare("
-            SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, u.name as uploader_name, r.name as reviewer_name
+            SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, 
+                   u.name as uploader_name, r.name as reviewer_name, gpm_u.name as gpm_reviewer_name
             FROM ppepp_documents d
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
+            LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
             WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.deleted_at IS NULL AND d.status_review != 'draft'
             ORDER BY d.created_at DESC
         ");
@@ -1006,24 +1014,55 @@ class SuperAdminController extends Controller {
         $reviewerId = Auth::id();
         $officialReviewerName = 'Pusat Penjaminan Mutu LPM';
 
+        $oldStatus = $doc['status_review'];
+        $finalStatus = ($statusReview === 'sesuai') ? 'sesuai' : 'revisi_lpm';
+        $tahapReview = ($statusReview === 'sesuai') ? 'selesai' : 'gpm';
+        $finalCatatan = ($statusReview === 'sesuai') ? ($catatanReview ?: 'Disetujui dan sesuai standar mutu.') : $catatanReview;
+
         // Update status review (disahkan atas nama Pusat Penjaminan Mutu LPM)
         $stmtUpdate = $this->db->prepare("
             UPDATE ppepp_documents 
-            SET status_review = ?, catatan_review = ?, reviewed_by = ?, reviewed_at = NOW()
+            SET status_review = ?,
+                tahap_review = ?,
+                catatan_review = ?,
+                lpm_reviewed_by = ?,
+                lpm_reviewed_at = NOW(),
+                lpm_catatan = ?,
+                reviewed_by = ?,
+                reviewed_at = NOW(),
+                updated_at = NOW()
             WHERE id = ?
         ");
         $stmtUpdate->execute([
-            $statusReview,
-            $statusReview === 'sesuai' ? ($catatanReview ?: 'Disetujui dan sesuai standar mutu.') : $catatanReview,
+            $finalStatus,
+            $tahapReview,
+            $finalCatatan,
+            $reviewerId,
+            $finalCatatan,
             $reviewerId,
             $docId
         ]);
 
-        $statusLabel = ($statusReview === 'sesuai') ? 'Sesuai Standar Mutu' : 'Perlu Perbaikan';
+        // Catat riwayat ke ppepp_document_reviews
+        $stmtLogRev = $this->db->prepare("
+            INSERT INTO ppepp_document_reviews 
+            (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
+            VALUES (?, ?, 'lpm', ?, 'lpm', ?, ?, ?, NOW())
+        ");
+        $stmtLogRev->execute([
+            $docId,
+            $reviewerId,
+            $officialReviewerName,
+            $oldStatus,
+            $finalStatus,
+            $finalCatatan
+        ]);
+
+        $statusLabel = ($finalStatus === 'sesuai') ? 'Sesuai Standar Mutu' : 'Perlu Perbaikan (LPM)';
         $unitName = $isFakultasDoc ? ($doc['nama_fakultas'] ?? 'Fakultas') : ($doc['nama_prodi'] ?? 'Program Studi');
         AuditLogger::log('UPDATE', 'Review Dokumen PPEPP', (string)$docId, $doc['nama_dokumen'], $doc, [
-            'status_review' => $statusReview,
-            'catatan_review' => $catatanReview,
+            'status_review' => $finalStatus,
+            'catatan_review' => $finalCatatan,
             'pengesahan' => 'Atas Nama Pusat Penjaminan Mutu LPM',
             'reviewer' => $officialReviewerName,
             'verifikator' => Auth::user()['name'] ?? 'Admin LPM'
@@ -1031,6 +1070,51 @@ class SuperAdminController extends Controller {
 
         Auth::setFlash('success', "Review dokumen '{$doc['nama_dokumen']}' berhasil disimpan atas nama Pusat Penjaminan Mutu LPM (Status: {$statusLabel}).");
         redirect($redirectUrl);
+    }
+
+    /**
+     * API JSON: Mengambil Riwayat Catatan Revisi Dokumen dari tabel ppepp_document_reviews
+     */
+    public function reviewHistoryJson(string $id): void {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $docId = (int)$id;
+            $stmtDoc = $this->db->prepare("SELECT id, nama_dokumen, nomor_dokumen, status_review, level, prodi_id, fakultas_id FROM ppepp_documents WHERE id = ? AND deleted_at IS NULL");
+            $stmtDoc->execute([$docId]);
+            $doc = $stmtDoc->fetch();
+
+            if (!$doc) {
+                echo json_encode(['success' => false, 'message' => 'Dokumen tidak ditemukan.']);
+                exit;
+            }
+
+            $stmtHist = $this->db->prepare("
+                SELECT r.*, u.name as reviewer_user_name, u.role as reviewer_user_role
+                FROM ppepp_document_reviews r
+                LEFT JOIN users u ON r.reviewer_id = u.id
+                WHERE r.document_id = ?
+                ORDER BY r.created_at ASC, r.id ASC
+            ");
+            $stmtHist->execute([$docId]);
+            $history = $stmtHist->fetchAll();
+
+            echo json_encode([
+                'success' => true,
+                'document' => [
+                    'id' => $doc['id'],
+                    'nama_dokumen' => $doc['nama_dokumen'],
+                    'nomor_dokumen' => $doc['nomor_dokumen'],
+                    'status_review' => $doc['status_review'],
+                    'status_badge' => render_review_status_badge($doc['status_review']),
+                    'status_label' => get_review_status_label($doc['status_review'])
+                ],
+                'history' => $history
+            ]);
+            exit;
+        } catch (\Throwable $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            exit;
+        }
     }
 
     /**

@@ -465,46 +465,31 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         <!-- Status Review -->
                                         <td class="text-center">
                                             <div class="d-flex flex-column align-items-center gap-1">
-                                                <?php if ($st === 'perlu_perbaikan'): ?>
-                                                    <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                        <i class="fas fa-triangle-exclamation text-danger"></i> Perlu Revisi Unit
-                                                    </span>
-                                                    <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs" 
+                                                <?= render_review_status_badge($st, $doc['tahap_review'] ?? null) ?>
+
+                                                <?php if (!empty($doc['gpm_catatan'])): ?>
+                                                    <div class="p-1 rounded text-start mt-1" style="background: #FEF3C7; border: 1px solid #FCD34D; max-width: 170px;">
+                                                        <div class="fw-bold text-warning-emphasis d-flex align-items-center gap-1" style="font-size: 0.65rem;">
+                                                            <i class="fas fa-shield-halved text-warning"></i> GPM:
+                                                        </div>
+                                                        <div class="text-truncate text-secondary" style="font-size: 0.65rem;" title="<?= htmlspecialchars($doc['gpm_catatan']) ?>">
+                                                            <?= htmlspecialchars($doc['gpm_catatan']) ?>
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
+
+                                                <?php if (!empty($doc['catatan_review'])): ?>
+                                                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs mt-0.5" 
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#viewLpmNoteModal"
                                                             data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                             data-notes="<?= htmlspecialchars($doc['catatan_review'] ?? '', ENT_QUOTES) ?>"
                                                             data-reviewer="<?= htmlspecialchars($doc['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM', ENT_QUOTES) ?>"
                                                             data-date="<?= !empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : '' ?>"
-                                                            data-status="perlu_perbaikan"
-                                                            style="font-size: 0.7rem;">
-                                                        <i class="fas fa-comment-dots"></i> Lihat Catatan
+                                                            data-status="<?= htmlspecialchars($st) ?>"
+                                                            style="font-size: 0.68rem;">
+                                                        <i class="fas fa-comment-dots text-primary"></i> Catatan LPM
                                                     </button>
-                                                <?php elseif ($st === 'sudah_diperbaiki'): ?>
-                                                    <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                        <i class="fas fa-clock text-warning"></i> Sudah Diperbaiki
-                                                    </span>
-                                                    <?php if (!empty($doc['catatan_review'])): ?>
-                                                        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs" 
-                                                                data-bs-toggle="modal" 
-                                                                data-bs-target="#viewLpmNoteModal"
-                                                                data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
-                                                                data-notes="<?= htmlspecialchars($doc['catatan_review'] ?? '', ENT_QUOTES) ?>"
-                                                                data-reviewer="<?= htmlspecialchars($doc['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM', ENT_QUOTES) ?>"
-                                                                data-date="<?= !empty($doc['updated_at']) ? date('d/m/Y H:i', strtotime($doc['updated_at'])) : '' ?>"
-                                                                data-status="sudah_diperbaiki"
-                                                                style="font-size: 0.7rem;">
-                                                            <i class="fas fa-history"></i> Catatan Lalu
-                                                        </button>
-                                                    <?php endif; ?>
-                                                <?php elseif ($st === 'sesuai'): ?>
-                                                    <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                        <i class="fas fa-circle-check text-success"></i> Sesuai Standar
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                        <i class="fas fa-clock text-warning"></i> Belum Direview
-                                                    </span>
                                                 <?php endif; ?>
                                             </div>
                                         </td>
@@ -542,6 +527,14 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                         data-bs-target="#docModal<?= $doc['id'] ?>"
                                                         title="Lihat Rincian Dokumen">
                                                     <i class="fas fa-eye"></i> Rincian
+                                                </button>
+
+                                                <!-- Tombol Riwayat Review -->
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 w-100 btn-review-history d-inline-flex align-items-center justify-content-center gap-1 shadow-2xs" 
+                                                        data-doc-id="<?= $doc['id'] ?>" 
+                                                        title="Lihat Jejak Audit & Riwayat Review" 
+                                                        style="font-size: 0.72rem;">
+                                                    <i class="fas fa-history text-secondary"></i> Riwayat
                                                 </button>
                                             </div>
                                         </td>
@@ -583,7 +576,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                             <span class="small text-muted d-block mb-1">Siklus PPEPP & Status:</span>
                                                             <div class="d-flex align-items-center gap-2">
                                                                 <?= siklus_badge($doc['siklus']) ?>
-                                                                <?= review_status_badge($st) ?>
+                                                                <?= render_review_status_badge($st, $doc['tahap_review'] ?? null) ?>
                                                             </div>
                                                         </div>
                                                         <div class="col-12">
@@ -605,6 +598,26 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                             <div class="fw-semibold text-dark">TA <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></div>
                                                         </div>
                                                     </div>
+
+                                                    <!-- Catatan Evaluasi GPM (Tier-1) jika ada -->
+                                                    <?php if (!empty($doc['gpm_catatan'])): ?>
+                                                        <div class="p-3 rounded-3 mb-3 border border-warning" style="background: #FFFBEB; border-left: 4px solid #D97706 !important;">
+                                                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                                                <span class="small fw-bold text-uppercase text-warning-emphasis" style="font-size: 0.74rem;">
+                                                                    <i class="fas fa-shield-halved text-warning me-1"></i> Catatan Review GPM (Tier-1):
+                                                                </span>
+                                                                <span class="badge bg-warning bg-opacity-25 text-warning-emphasis border border-warning border-opacity-25 px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
+                                                                    <i class="fas fa-user-check me-0.5"></i> <?= htmlspecialchars($doc['gpm_reviewer_name'] ?? 'Gugus Penjaminan Mutu') ?>
+                                                                </span>
+                                                            </div>
+                                                            <div class="small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($doc['gpm_catatan']) ?></div>
+                                                            <?php if (!empty($doc['gpm_reviewed_at'])): ?>
+                                                                <div class="small text-muted pt-1 border-top" style="font-size: 0.72rem; border-color: rgba(0,0,0,0.06) !important;">
+                                                                    <i class="far fa-clock text-secondary me-1"></i>Direview GPM pada <?= date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'])) ?> WIB
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <?php endif; ?>
 
                                                     <!-- Catatan Evaluasi LPM -->
                                                     <?php if (!empty($doc['catatan_review'])): ?>

@@ -438,39 +438,27 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                     </div>
                                 </td>
 
-                                <!-- Status Review LPM Column -->
+                                <!-- Status & Tahap Review Column -->
                                 <td>
-                                    <?php if ($reviewStatus === 'perlu_perbaikan'): ?>
-                                        <div class="d-flex flex-column align-items-start gap-1">
-                                            <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                <i class="fas fa-triangle-exclamation text-danger"></i> Perlu Perbaikan
-                                            </span>
+                                    <div class="d-flex flex-column align-items-start gap-1">
+                                        <?= render_review_status_badge($reviewStatus, $doc['tahap_review'] ?? null) ?>
+
+                                        <?php if (in_array($reviewStatus, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']) && (!empty($reviewNotes) || !empty($doc['gpm_catatan']) || !empty($doc['lpm_catatan']))): ?>
                                             <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-0.5 d-inline-flex align-items-center gap-1 btn-view-review-notes" 
                                                     data-title="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
                                                     data-status="<?= $reviewStatus ?>"
-                                                    data-reviewer="<?= htmlspecialchars($reviewerName) ?>"
+                                                    data-reviewer="<?= ($reviewStatus === 'revisi_gpm') ? 'GPM Fakultas' : 'LPM Universitas' ?>"
                                                     data-reviewed-at="<?= $reviewedAt ?>"
-                                                    data-notes="<?= htmlspecialchars($reviewNotes) ?>"
+                                                    data-notes="<?= htmlspecialchars($reviewNotes ?: ($doc['gpm_catatan'] ?? $doc['lpm_catatan'] ?? '')) ?>"
                                                     style="font-size: 0.7rem;">
-                                                <i class="fas fa-comment-dots"></i> Lihat Catatan
+                                                <i class="fas fa-comment-dots"></i> Lihat Catatan <?= ($reviewStatus === 'revisi_gpm') ? 'GPM' : 'LPM' ?>
                                             </button>
-                                        </div>
-                                    <?php elseif ($reviewStatus === 'sudah_diperbaiki'): ?>
-                                        <div class="d-flex flex-column align-items-start gap-1">
-                                            <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #EFF6FF; color: #1E40AF; border: 1px solid #93C5FD; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                                <i class="fas fa-rotate text-primary"></i> Sudah Diperbaiki
-                                            </span>
-                                            <span class="text-muted" style="font-size: 0.68rem;">Menunggu Review Ulang</span>
-                                        </div>
-                                    <?php elseif ($reviewStatus === 'sesuai'): ?>
-                                        <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                            <i class="fas fa-circle-check text-success"></i> Sesuai Standar
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size: 0.72rem; font-weight: 700; padding: 0.35em 0.75em;">
-                                            <i class="fas fa-clock text-warning"></i> Belum Direview
-                                        </span>
-                                    <?php endif; ?>
+                                        <?php endif; ?>
+
+                                        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5 btn-review-history d-inline-flex align-items-center gap-1 mt-0.5 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" style="font-size: 0.68rem;">
+                                            <i class="fas fa-history text-secondary"></i> Riwayat Review
+                                        </button>
+                                    </div>
                                 </td>
 
                                 <!-- Aksi Column -->
