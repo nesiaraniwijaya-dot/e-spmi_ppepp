@@ -508,6 +508,10 @@ class AdminFakultasController extends Controller {
                             $tLink = trim($linkItem);
                             $tNarasi = trim($linkNarasis[$lIdx] ?? ($d['external_link_narasi'][$lIdx] ?? ''));
                             if (!empty($tLink)) {
+                                $errLink = validate_document_external_url($tLink);
+                                if ($errLink !== null) {
+                                    throw new \Exception("Dokumen #{$docNumber} (Tautan #" . ($lIdx + 1) . "): {$errLink}");
+                                }
                                 if (!$isDraft && empty($tNarasi)) {
                                     throw new \Exception("Narasi untuk tautan Google Drive pada Dokumen #{$docNumber} wajib diisi.");
                                 }
@@ -530,6 +534,10 @@ class AdminFakultasController extends Controller {
                     } elseif (!empty($d['external_link'])) {
                         $tLink = trim($d['external_link']);
                         if (!empty($tLink)) {
+                            $errLink = validate_document_external_url($tLink);
+                            if ($errLink !== null) {
+                                throw new \Exception("Dokumen #{$docNumber}: {$errLink}");
+                            }
                             $rawLinks[] = [
                                 'url' => $tLink, 
                                 'narasi' => '', 
@@ -825,6 +833,12 @@ class AdminFakultasController extends Controller {
                     $tLink = trim($linkItem);
                     $tNarasi = trim($linkNarasis[$lIdx] ?? ($_POST['external_link_narasi'][$lIdx] ?? ''));
                     if (!empty($tLink)) {
+                        $errLink = validate_document_external_url($tLink);
+                        if ($errLink !== null) {
+                            Auth::setFlash('danger', "Tautan Berkas #" . ($lIdx + 1) . ": {$errLink}");
+                            redirect('fakultas/dokumen/edit/' . $id);
+                            return;
+                        }
                         if (!$isDraft && empty($tNarasi)) {
                             Auth::setFlash('danger', 'Narasi untuk setiap tautan Google Drive wajib diisi.');
                             redirect('fakultas/dokumen/edit/' . $id);
@@ -849,6 +863,12 @@ class AdminFakultasController extends Controller {
             } elseif (!empty($_POST['external_link'])) {
                 $tLink = trim($_POST['external_link']);
                 if (!empty($tLink)) {
+                    $errLink = validate_document_external_url($tLink);
+                    if ($errLink !== null) {
+                        Auth::setFlash('danger', $errLink);
+                        redirect('fakultas/dokumen/edit/' . $id);
+                        return;
+                    }
                     $rawLinks[] = [
                         'url' => $tLink,
                         'narasi' => '',

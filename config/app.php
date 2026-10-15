@@ -164,6 +164,42 @@ function parse_external_links(?string $raw): array {
     return $result;
 }
 
+/**
+ * Validasi tautan berkas dokumen luar (khusus Google Drive/Docs).
+ * Tautan folder TIDAK DIPERBOLEHKAN, wajib berupa tautan langsung ke file dokumen.
+ *
+ * @param string|null $url
+ * @return string|null Pesan error jika tidak valid, null jika valid.
+ */
+function validate_document_external_url(?string $url): ?string {
+    if (!$url) return null;
+    $url = trim($url);
+    if ($url === '') return null;
+
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return 'Format tautan berkas tidak valid. Harap gunakan URL lengkap (contoh: https://...).';
+    }
+
+    // Pengecekan khusus ekosistem Google Drive / Docs
+    if (preg_match('/(drive|docs)\.google\.com/i', $url)) {
+        // Larang keras tautan folder
+        if (preg_match('/\/folders\//i', $url) || preg_match('/drive\/.*folders/i', $url)) {
+            return 'Tautan berupa FOLDER Google Drive tidak diperbolehkan. Harap buka file dokumen di dalam Google Drive, lalu salin tautan file spesifik tersebut (contoh: https://drive.google.com/file/d/...).';
+        }
+
+        // Pastikan mengarah ke dokumen/file spesifik
+        $isDocOrFile = preg_match('/\/(file|document|spreadsheets|presentation|forms|drawings)\/d\/[a-zA-Z0-9_-]+/i', $url)
+                    || preg_match('/drive\.google\.com\/open\?id=[a-zA-Z0-9_-]+/i', $url)
+                    || preg_match('/drive\.google\.com\/uc\?id=[a-zA-Z0-9_-]+/i', $url);
+
+        if (!$isDocOrFile) {
+            return 'Tautan Google Drive harus berupa link dokumen/file langsung (contoh: drive.google.com/file/d/..., docs.google.com/document/d/...), bukan tautan folder atau halaman utama Google Drive.';
+        }
+    }
+
+    return null;
+}
+
 function is_user_logged_in(): bool {
     return class_exists('Auth') && Auth::check();
 }

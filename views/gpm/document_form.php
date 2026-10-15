@@ -501,11 +501,15 @@ $siklusDefinitions = [
                                             </div>
                                             <div class="mt-2.5 mb-2">
                                                 <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                                    <i class="fas fa-link text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
+                                                    <i class="fas fa-file-lines text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
                                                 </label>
                                                 <div class="input-group">
                                                     <span class="input-group-text bg-light text-primary px-3"><i class="fas fa-link"></i></span>
-                                                    <input type="url" class="form-control py-2" name="external_links[]" placeholder="https://drive.google.com/file/d/...">
+                                                    <input type="url" class="form-control py-2 gdrive-doc-input" name="external_links[]" placeholder="https://drive.google.com/file/d/... (Khusus dokumen, bukan folder)" oninput="validateGdriveDocInput(this)" onblur="validateGdriveDocInput(this)">
+                                                </div>
+                                                <div class="gdrive-validation-feedback text-danger small mt-1 fw-semibold" style="display: none; font-size: 0.76rem;"></div>
+                                                <div class="form-text text-muted small mt-1" style="font-size: 0.74rem;">
+                                                    <i class="fas fa-circle-info text-primary me-1"></i> Khusus tautan <strong>dokumen / file langsung</strong> (contoh: <code>drive.google.com/file/d/...</code> atau Google Docs/Sheets). <strong>Tautan folder tidak diperbolehkan.</strong>
                                                 </div>
                                             </div>
                                             <div class="mb-2">
@@ -569,11 +573,15 @@ $siklusDefinitions = [
                                              </div>
                                              <div class="mt-2.5 mb-2">
                                                  <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                                     <i class="fas fa-link text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
+                                                     <i class="fas fa-file-lines text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
                                                  </label>
                                                  <div class="input-group">
                                                      <span class="input-group-text bg-light text-primary px-3"><i class="fas fa-link"></i></span>
-                                                     <input type="url" class="form-control py-2" name="external_links[]" value="<?= htmlspecialchars($lItem['url']) ?>" placeholder="https://drive.google.com/file/d/...">
+                                                     <input type="url" class="form-control py-2 gdrive-doc-input" name="external_links[]" value="<?= htmlspecialchars($lItem['url']) ?>" placeholder="https://drive.google.com/file/d/... (Khusus dokumen, bukan folder)" oninput="validateGdriveDocInput(this)" onblur="validateGdriveDocInput(this)">
+                                                 </div>
+                                                 <div class="gdrive-validation-feedback text-danger small mt-1 fw-semibold" style="display: none; font-size: 0.76rem;"></div>
+                                                 <div class="form-text text-muted small mt-1" style="font-size: 0.74rem;">
+                                                     <i class="fas fa-circle-info text-primary me-1"></i> Khusus tautan <strong>dokumen / file langsung</strong> (contoh: <code>drive.google.com/file/d/...</code> atau Google Docs/Sheets). <strong>Tautan folder tidak diperbolehkan.</strong>
                                                  </div>
                                              </div>
                                              <div class="mb-2">
@@ -1048,11 +1056,15 @@ function addSingleGdriveLinkRow() {
         </div>
         <div class="mt-2.5 mb-2">
             <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                <i class="fas fa-link text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
+                <i class="fas fa-file-lines text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
             </label>
             <div class="input-group">
                 <span class="input-group-text bg-light text-primary px-3"><i class="fas fa-link"></i></span>
-                <input type="url" class="form-control py-2" name="external_links[]" placeholder="https://drive.google.com/file/d/...">
+                <input type="url" class="form-control py-2 gdrive-doc-input" name="external_links[]" placeholder="https://drive.google.com/file/d/... (Khusus dokumen, bukan folder)" oninput="validateGdriveDocInput(this)" onblur="validateGdriveDocInput(this)">
+            </div>
+            <div class="gdrive-validation-feedback text-danger small mt-1 fw-semibold" style="display: none; font-size: 0.76rem;"></div>
+            <div class="form-text text-muted small mt-1" style="font-size: 0.74rem;">
+                <i class="fas fa-circle-info text-primary me-1"></i> Khusus tautan <strong>dokumen / file langsung</strong> (contoh: <code>drive.google.com/file/d/...</code>). <strong>Tautan folder tidak diperbolehkan.</strong>
             </div>
         </div>
         <div class="mb-2">
@@ -1368,11 +1380,15 @@ function createDocCardTemplate(idx) {
                                 </div>
                                 <div class="mt-2.5 mb-2">
                                     <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                        <i class="fas fa-link text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
+                                        <i class="fas fa-file-lines text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
                                     </label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light text-primary px-3"><i class="fas fa-link"></i></span>
-                                        <input type="url" class="form-control py-2" name="docs[${idx}][external_links][]" placeholder="https://drive.google.com/file/d/...">
+                                        <input type="url" class="form-control py-2 gdrive-doc-input" name="docs[${idx}][external_links][]" placeholder="https://drive.google.com/file/d/... (Khusus dokumen, bukan folder)" oninput="validateGdriveDocInput(this)" onblur="validateGdriveDocInput(this)">
+                                    </div>
+                                    <div class="gdrive-validation-feedback text-danger small mt-1 fw-semibold" style="display: none; font-size: 0.76rem;"></div>
+                                    <div class="form-text text-muted small mt-1" style="font-size: 0.74rem;">
+                                        <i class="fas fa-circle-info text-primary me-1"></i> Khusus tautan <strong>dokumen / file langsung</strong> (contoh: <code>drive.google.com/file/d/...</code> atau Google Docs/Sheets). <strong>Tautan folder tidak diperbolehkan.</strong>
                                     </div>
                                 </div>
                                 <div class="mb-2">
@@ -1727,11 +1743,15 @@ function addCardGdriveLink(idx) {
         </div>
         <div class="mt-2.5 mb-2">
             <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                <i class="fas fa-link text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
+                <i class="fas fa-file-lines text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
             </label>
             <div class="input-group">
                 <span class="input-group-text bg-light text-primary px-3"><i class="fas fa-link"></i></span>
-                <input type="url" class="form-control py-2" name="docs[${idx}][external_links][]" placeholder="https://drive.google.com/file/d/...">
+                <input type="url" class="form-control py-2 gdrive-doc-input" name="docs[${idx}][external_links][]" placeholder="https://drive.google.com/file/d/... (Khusus dokumen, bukan folder)" oninput="validateGdriveDocInput(this)" onblur="validateGdriveDocInput(this)">
+            </div>
+            <div class="gdrive-validation-feedback text-danger small mt-1 fw-semibold" style="display: none; font-size: 0.76rem;"></div>
+            <div class="form-text text-muted small mt-1" style="font-size: 0.74rem;">
+                <i class="fas fa-circle-info text-primary me-1"></i> Khusus tautan <strong>dokumen / file langsung</strong> (contoh: <code>drive.google.com/file/d/...</code>). <strong>Tautan folder tidak diperbolehkan.</strong>
             </div>
         </div>
         <div class="mb-2">
@@ -1890,7 +1910,105 @@ document.addEventListener('DOMContentLoaded', function() {
             }, false);
         }
     }
+
+    // Attach form submit validation
+    const batchForm = document.getElementById('batchDocForm');
+    if (batchForm) {
+        batchForm.addEventListener('submit', function(e) {
+            if (!validateAllGdriveInputs(batchForm)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+
+    const singleEditForm = document.getElementById('editDocForm') || document.querySelector('form[action*="/update/"]');
+    if (singleEditForm) {
+        singleEditForm.addEventListener('submit', function(e) {
+            if (!validateAllGdriveInputs(singleEditForm)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
 });
+
+/**
+ * Validasi tautan Google Drive / Eksternal (khusus dokumen, menolak tautan folder)
+ */
+function validateGdriveDocInput(input) {
+    if (!input) return true;
+    const val = (input.value || '').trim();
+    const parent = input.closest('.mb-2') || input.parentElement.parentElement;
+    let feedback = parent.querySelector('.gdrive-validation-feedback');
+    if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.className = 'gdrive-validation-feedback text-danger small mt-1 fw-semibold';
+        feedback.style.fontSize = '0.76rem';
+        const group = input.closest('.input-group');
+        if (group) group.after(feedback);
+        else input.after(feedback);
+    }
+
+    if (!val) {
+        input.classList.remove('is-invalid', 'is-valid');
+        feedback.style.display = 'none';
+        feedback.textContent = '';
+        return true;
+    }
+
+    // Cek apakah tautan berupa folder Google Drive
+    const isFolder = /\/folders\//i.test(val) || /drive\/.*folders/i.test(val);
+    if (isFolder) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+        feedback.innerHTML = '<i class="fas fa-triangle-exclamation me-1"></i> <strong>Tautan Folder Tidak Diperbolehkan!</strong> Harap buka file dokumen di Google Drive, lalu salin tautan file/dokumen spesifik tersebut (contoh: <code>drive.google.com/file/d/...</code>).';
+        feedback.style.display = 'block';
+        return false;
+    }
+
+    // Jika tautan Google Drive / Docs, cek apakah pola link dokumen terpenuhi
+    if (/(drive|docs)\.google\.com/i.test(val)) {
+        const isDocPattern = /\/(file|document|spreadsheets|presentation|forms|drawings)\/d\/[a-zA-Z0-9_-]+/i.test(val)
+                          || /drive\.google\.com\/open\?id=[a-zA-Z0-9_-]+/i.test(val)
+                          || /drive\.google\.com\/uc\?id=[a-zA-Z0-9_-]+/i.test(val);
+        if (!isDocPattern) {
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+            feedback.innerHTML = '<i class="fas fa-triangle-exclamation me-1"></i> Tautan harus berupa link dokumen spesifik (contoh: <code>https://drive.google.com/file/d/...</code> atau Google Docs), bukan folder atau halaman beranda Google Drive.';
+            feedback.style.display = 'block';
+            return false;
+        }
+    }
+
+    // Valid
+    input.classList.remove('is-invalid');
+    input.classList.add('is-valid');
+    feedback.style.display = 'none';
+    feedback.textContent = '';
+    return true;
+}
+
+function validateAllGdriveInputs(container) {
+    const inputs = (container || document).querySelectorAll('input[name*="external_links"], .gdrive-doc-input');
+    let hasError = false;
+    let firstErrorInput = null;
+
+    inputs.forEach(inp => {
+        if (!validateGdriveDocInput(inp)) {
+            hasError = true;
+            if (!firstErrorInput) firstErrorInput = inp;
+        }
+    });
+
+    if (hasError && firstErrorInput) {
+        firstErrorInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorInput.focus();
+        alert('Terdapat tautan Google Drive yang berupa FOLDER atau tidak valid.\n\nSistem hanya menerima tautan dokumen/file langsung (bukan folder). Harap periksa dan ganti tautan tersebut.');
+        return false;
+    }
+    return true;
+}
 </script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>
