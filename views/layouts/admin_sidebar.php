@@ -238,11 +238,27 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                         <span class="ms-auto badge bg-secondary rounded-pill" style="font-size:0.62rem; padding: 0.25em 0.5em;"><?= $sidebarDraftCount ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="<?= base_url('fakultas/dokumen/create') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'fakultas/dokumen/create') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-cloud-arrow-up"></i></span>
-                    <span>Unggah Dokumen Baru</span>
-                </a>
+                <!-- Dropdown Unggah Dokumen Fakultas -->
+                <div class="admin-nav-dropdown <?= (str_contains($currentUri, 'fakultas/dokumen/create') || str_contains($currentUri, 'fakultas/dokumen/cycles')) ? 'active open' : '' ?>">
+                    <a href="<?= base_url('fakultas/dokumen/create') ?>"
+                       class="admin-nav-link admin-nav-dropdown-toggle <?= (str_contains($currentUri, 'fakultas/dokumen/create') || str_contains($currentUri, 'fakultas/dokumen/cycles')) ? 'active' : '' ?>">
+                        <span class="nav-icon-wrap"><i class="fas fa-cloud-arrow-up"></i></span>
+                        <span>Unggah Dokumen</span>
+                        <i class="fas fa-chevron-down ms-auto chevron-icon"></i>
+                    </a>
+                    <div class="admin-nav-submenu">
+                        <a href="<?= base_url('fakultas/dokumen/create') ?>"
+                           class="admin-nav-sublink <?= sidebarIsActive($currentUri, 'fakultas/dokumen/create') ?>">
+                            <i class="fas fa-file-circle-plus"></i>
+                            <span>Unggah Dokumen Baru</span>
+                        </a>
+                        <a href="<?= base_url('fakultas/dokumen/cycles') ?>"
+                           class="admin-nav-sublink <?= sidebarIsActive($currentUri, 'fakultas/dokumen/cycles') ?>">
+                            <i class="fas fa-folder-tree"></i>
+                            <span>Judul yang Sudah Ada</span>
+                        </a>
+                    </div>
+                </div>
                 <a href="<?= base_url('fakultas/dokumen/arsip') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'fakultas/dokumen/arsip') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-trash-can"></i></span>
@@ -284,7 +300,7 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
             <div class="admin-nav-group">
                 <div class="admin-nav-label">Dokumen PPEPP</div>
                 <a href="<?= base_url('prodi/dokumen') ?>"
-                   class="admin-nav-link <?= (str_contains($currentUri, 'prodi/dokumen') && !str_contains($currentUri, 'create') && !str_contains($currentUri, 'arsip')) ? 'active' : '' ?>">
+                   class="admin-nav-link <?= (str_contains($currentUri, 'prodi/dokumen') && !str_contains($currentUri, 'create') && !str_contains($currentUri, 'cycles') && !str_contains($currentUri, 'arsip')) ? 'active' : '' ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-folder-open"></i></span>
                     <span>Daftar Dokumen</span>
                 </a>
@@ -309,11 +325,27 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                         <span class="ms-auto badge bg-secondary rounded-pill" style="font-size:0.62rem; padding: 0.25em 0.5em;"><?= $sidebarDraftCount ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="<?= base_url('prodi/dokumen/create') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'prodi/dokumen/create') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-cloud-arrow-up"></i></span>
-                    <span>Unggah Dokumen Baru</span>
-                </a>
+                <!-- Dropdown Unggah Dokumen Prodi -->
+                <div class="admin-nav-dropdown <?= (str_contains($currentUri, 'prodi/dokumen/create') || str_contains($currentUri, 'prodi/dokumen/cycles')) ? 'active open' : '' ?>">
+                    <a href="<?= base_url('prodi/dokumen/create') ?>"
+                       class="admin-nav-link admin-nav-dropdown-toggle <?= (str_contains($currentUri, 'prodi/dokumen/create') || str_contains($currentUri, 'prodi/dokumen/cycles')) ? 'active' : '' ?>">
+                        <span class="nav-icon-wrap"><i class="fas fa-cloud-arrow-up"></i></span>
+                        <span>Unggah Dokumen</span>
+                        <i class="fas fa-chevron-down ms-auto chevron-icon"></i>
+                    </a>
+                    <div class="admin-nav-submenu">
+                        <a href="<?= base_url('prodi/dokumen/create') ?>"
+                           class="admin-nav-sublink <?= sidebarIsActive($currentUri, 'prodi/dokumen/create') ?>">
+                            <i class="fas fa-file-circle-plus"></i>
+                            <span>Unggah Dokumen Baru</span>
+                        </a>
+                        <a href="<?= base_url('prodi/dokumen/cycles') ?>"
+                           class="admin-nav-sublink <?= sidebarIsActive($currentUri, 'prodi/dokumen/cycles') ?>">
+                            <i class="fas fa-folder-tree"></i>
+                            <span>Judul yang Sudah Ada</span>
+                        </a>
+                    </div>
+                </div>
                 <a href="<?= base_url('prodi/dokumen/arsip') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'prodi/dokumen/arsip') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-trash-can"></i></span>

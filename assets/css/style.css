@@ -2243,6 +2243,115 @@ body.public-page>.scu-footer {
   color: #F59E0B;
 }
 
+/* --- SIDEBAR DROPDOWN & SUBMENU HOVER --- */
+.admin-nav-dropdown {
+  position: relative;
+  margin-bottom: 3px;
+}
+
+.admin-nav-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.86rem;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  text-decoration: none;
+  position: relative;
+}
+
+.admin-nav-dropdown-toggle .chevron-icon {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.25s ease;
+}
+
+.admin-nav-dropdown:hover .admin-nav-dropdown-toggle,
+.admin-nav-dropdown.active .admin-nav-dropdown-toggle {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+.admin-nav-dropdown:hover .admin-nav-dropdown-toggle .nav-icon-wrap,
+.admin-nav-dropdown.active .admin-nav-dropdown-toggle .nav-icon-wrap {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.admin-nav-dropdown.active .admin-nav-dropdown-toggle {
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.25) 0%, rgba(30, 62, 98, 0.35) 100%);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 #F59E0B;
+}
+
+.admin-nav-dropdown.active .admin-nav-dropdown-toggle .nav-icon-wrap {
+  background: rgba(245, 158, 11, 0.22);
+  color: #F59E0B;
+}
+
+.admin-nav-dropdown.active .admin-nav-dropdown-toggle .chevron-icon {
+  color: #F59E0B;
+}
+
+.admin-nav-submenu {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0 4px 24px;
+  margin-top: 2px;
+  margin-left: 6px;
+  border-left: 1.5px dashed rgba(255, 255, 255, 0.18);
+}
+
+.admin-nav-dropdown:hover .admin-nav-submenu,
+.admin-nav-dropdown.active .admin-nav-submenu,
+.admin-nav-dropdown.open .admin-nav-submenu {
+  display: flex;
+  animation: fadeInSubmenu 0.22s ease-in-out;
+}
+
+.admin-nav-dropdown:hover .admin-nav-dropdown-toggle .chevron-icon,
+.admin-nav-dropdown.active .admin-nav-dropdown-toggle .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.admin-nav-sublink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.42rem 0.75rem;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.81rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.admin-nav-sublink:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  padding-left: 0.9rem;
+}
+
+.admin-nav-sublink.active {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.15);
+  font-weight: 600;
+}
+
+@keyframes fadeInSubmenu {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .admin-sidebar-footer {
   padding: 1rem 1.25rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);

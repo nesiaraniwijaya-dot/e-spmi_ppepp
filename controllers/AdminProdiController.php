@@ -262,13 +262,9 @@ class AdminProdiController extends Controller {
     }
 
     /**
-     * Form Tambah Dokumen
+     * Helper: Ambil daftar siklus PPEPP beserta dokumen per tahap untuk prodi ini
      */
-    public function createDocument(): void {
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
-        $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active = 1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
-
-        // 1. Ambil daftar judul siklus PPEPP yang sudah dibuat untuk prodi ini
+    private function getExistingCyclesWithStages(): array {
         $stmtCycles = $this->db->prepare("
             SELECT c.*, b.nama_bidang, sb.nama_sub_bidang
             FROM ppepp_cycles c
@@ -280,7 +276,6 @@ class AdminProdiController extends Controller {
         $stmtCycles->execute([$this->prodiId]);
         $cycles = $stmtCycles->fetchAll() ?: [];
 
-        // 2. Ambil dokumen mutu aktif prodi ini yang memiliki cycle_id
         $stmtDocs = $this->db->prepare("
             SELECT d.id, d.cycle_id, d.nama_dokumen, d.nomor_dokumen, d.siklus, d.status_review, d.tahap_review, d.file_path, d.external_link, d.updated_at
             FROM ppepp_documents d
@@ -331,6 +326,31 @@ class AdminProdiController extends Controller {
                 'updated_at' => $c['updated_at'] ?? $c['created_at']
             ];
         }
+
+        return $existingCyclesWithStages;
+    }
+
+    /**
+     * Halaman Khusus: Judul yang Sudah Ada & Kelengkapan Tahapan PPEPP
+     */
+    public function cycles(): void {
+        $existingCyclesWithStages = $this->getExistingCyclesWithStages();
+
+        $this->render('admin_prodi/cycles', [
+            'pageTitle' => 'Judul yang Sudah Ada - Tahapan Siklus PPEPP',
+            'prodi' => $this->prodi,
+            'existingCycles' => $existingCyclesWithStages
+        ]);
+    }
+
+    /**
+     * Form Tambah Dokumen
+     */
+    public function createDocument(): void {
+        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active = 1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
+
+        $existingCyclesWithStages = $this->getExistingCyclesWithStages();
 
         // Cek parameter pre-fill jika datang dari link lanjutan
         $targetCycleId = isset($_GET['cycle_id']) ? (int)$_GET['cycle_id'] : null;

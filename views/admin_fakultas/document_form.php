@@ -620,168 +620,26 @@ $siklusDefinitions = [
 
     <?php else: ?>
         <!-- ========================================== -->
-        <!-- DAFTAR JUDUL SIKLUS & TAHAPAN PPEPP        -->
+        <!-- INFO TAUTAN KE JUDUL SIKLUS PPEPP          -->
         <!-- ========================================== -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
-            <div class="card-header bg-white border-bottom p-3.5 p-md-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 rounded-top-4">
-                <div>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge rounded-pill px-2.5 py-1 fw-bold" style="background: #EEF2FF; color: #4F46E5; border: 1px solid #C7D2FE; font-size: 0.74rem;">
-                            <i class="fas fa-arrows-spin me-1"></i> Progres Siklus PPEPP Fakultas
-                        </span>
-                        <span class="badge bg-light text-secondary border"><?= count($existingCycles ?? []) ?> Judul Terdaftar</span>
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important; background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);">
+            <div class="card-body p-3.5 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary flex-shrink-0" style="width: 44px; height: 44px;">
+                        <i class="fas fa-folder-tree fa-lg"></i>
                     </div>
-                    <h5 class="fw-bold text-dark-blue mb-1" style="letter-spacing: -0.2px;">
-                        Daftar Judul &amp; Kelengkapan Tahapan PPEPP
-                    </h5>
-                    <p class="text-muted small mb-0">
-                        Dokumen diunggah bertahap (Penetapan &rarr; Pelaksanaan &rarr; Evaluasi &rarr; Pengendalian &rarr; Peningkatan). Klik icon <span class="badge bg-primary bg-opacity-10 text-primary fw-bold"><i class="fas fa-plus"></i></span> pada tahap yang belum ada dokumen untuk mengunggah dokumen lanjutan bagi judul tersebut.
-                    </p>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <div class="input-group input-group-sm" style="max-width: 250px;">
-                        <span class="input-group-text bg-light text-secondary border-end-0"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control border-start-0" id="searchCycleInput" placeholder="Cari judul siklus..." oninput="filterCycleList(this.value)">
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 flex-shrink-0" onclick="resetFormToNewCycle()">
-                        <i class="fas fa-plus-circle"></i> <span>Buat Judul Baru</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="card-body p-3.5 p-md-4">
-                <?php if (empty($existingCycles)): ?>
-                    <div class="text-center py-4 px-3">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary mb-3" style="width: 52px; height: 52px;">
-                            <i class="fas fa-folder-open fa-2x"></i>
+                    <div>
+                        <div class="fw-bold text-dark-blue small mb-0.5">Ingin Melanjutkan Dokumen dari Judul yang Sudah Ada?</div>
+                        <div class="text-muted" style="font-size: 0.78rem;">
+                            Setiap judul siklus PPEPP dapat dilengkapi bertahap (Penetapan &rarr; Pelaksanaan &rarr; Evaluasi &rarr; Pengendalian &rarr; Peningkatan). Anda dapat melihat progres kelengkapan judul siklus dan menambahkan dokumen lanjutan di menu terpisah.
                         </div>
-                        <h6 class="fw-bold text-dark mb-1">Belum Ada Judul Siklus PPEPP Fakultas</h6>
-                        <p class="text-muted small mb-0" style="max-width: 520px; margin: 0 auto;">
-                            Saat Anda mengunggah dokumen baru melalui formulir di bawah, judul siklus fakultas akan otomatis dicatat. Anda kemudian dapat melanjutkan tahapan Pelaksanaan hingga Peningkatan secara bertahap kapan saja.
-                        </p>
                     </div>
-                <?php else: ?>
-                    <div class="d-flex flex-column gap-3" id="cycleListContainer">
-                        <?php foreach ($existingCycles as $cyc): 
-                            $cId = $cyc['id'];
-                            $cJudul = htmlspecialchars($cyc['judul_siklus']);
-                            $cBidang = htmlspecialchars($cyc['nama_bidang']);
-                            $cSub = htmlspecialchars($cyc['nama_sub_bidang'] ?: 'Umum');
-                            $cTahun = htmlspecialchars($cyc['tahun_akademik']);
-                            $cProgress = (int)$cyc['progress_percent'];
-                            $cCompleted = (int)$cyc['completed_count'];
-                        ?>
-                            <div class="cycle-item-card p-3 p-md-3.5 rounded-4 border bg-white shadow-2xs transition-all" id="cycle_card_<?= $cId ?>" data-cycle-title="<?= strtolower($cJudul) ?>">
-                                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 pb-2.5 border-bottom mb-2.5">
-                                    <div class="d-flex align-items-start gap-2.5">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary bg-opacity-10 text-primary flex-shrink-0 p-2" style="width: 36px; height: 36px; font-size: 0.88rem;">
-                                            <i class="fas fa-folder-tree"></i>
-                                        </span>
-                                        <div>
-                                            <div class="d-flex align-items-center gap-2 flex-wrap mb-0.5">
-                                                <h6 class="fw-bold text-dark-blue mb-0" style="font-size: 0.92rem;"><?= $cJudul ?></h6>
-                                                <span class="badge rounded-pill bg-light text-secondary border fw-normal" style="font-size: 0.72rem;">
-                                                    <i class="far fa-calendar-alt me-1"></i> TA <?= $cTahun ?>
-                                                </span>
-                                                <span class="badge rounded-pill px-2.5 py-0.5 fw-semibold" style="background: #F1F5F9; color: #475569; font-size: 0.72rem;">
-                                                    <?= $cBidang ?> &bull; <?= $cSub ?>
-                                                </span>
-                                            </div>
-                                            <div class="text-muted small" style="font-size: 0.74rem;">
-                                                Terakhir diperbarui: <?= date('d M Y H:i', strtotime($cyc['updated_at'])) ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="text-end d-none d-sm-block">
-                                            <div class="small fw-bold text-dark-blue" style="font-size: 0.78rem;"><?= $cCompleted ?> dari 5 Tahap Lengkap</div>
-                                            <div class="text-muted" style="font-size: 0.7rem;"><?= $cProgress ?>% Kelengkapan Siklus</div>
-                                        </div>
-                                        <div class="progress" style="width: 100px; height: 8px; border-radius: 999px; background: #E2E8F0;">
-                                            <div class="progress-bar <?= $cProgress == 100 ? 'bg-success' : ($cProgress >= 60 ? 'bg-primary' : 'bg-warning') ?>" role="progressbar" style="width: <?= $cProgress ?>%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- 5 Stages Stepper -->
-                                <div class="row g-2">
-                                    <?php 
-                                    $stageCards = [
-                                        'penetapan' => ['label' => 'Penetapan', 'code' => 'P1', 'color' => '#2563EB', 'bg' => '#EFF6FF'],
-                                        'pelaksanaan' => ['label' => 'Pelaksanaan', 'code' => 'P2', 'color' => '#059669', 'bg' => '#ECFDF5'],
-                                        'evaluasi' => ['label' => 'Evaluasi', 'code' => 'E', 'color' => '#D97706', 'bg' => '#FFFBEB'],
-                                        'pengendalian' => ['label' => 'Pengendalian', 'code' => 'P3', 'color' => '#7C3AED', 'bg' => '#F5F3FF'],
-                                        'peningkatan' => ['label' => 'Peningkatan', 'code' => 'P4', 'color' => '#0891B2', 'bg' => '#ECFEFF'],
-                                    ];
-                                    foreach ($stageCards as $sKey => $sMeta): 
-                                        $stageInfo = $cyc['stages'][$sKey] ?? ['has_doc' => false, 'docs' => []];
-                                        $hasDoc = $stageInfo['has_doc'];
-                                        $docItem = $hasDoc ? $stageInfo['primary_doc'] : null;
-                                    ?>
-                                        <div class="col-12 col-sm-6 col-md col-lg">
-                                            <div class="stage-cell p-2.5 rounded-3 border h-100 d-flex flex-column justify-content-between position-relative transition-all <?= $hasDoc ? 'bg-light-subtle' : 'border-dashed bg-white' ?>">
-                                                <div>
-                                                    <div class="d-flex align-items-center justify-content-between mb-1.5">
-                                                        <span class="badge rounded-pill px-2 py-0.5 fw-bold" style="background: <?= $sMeta['bg'] ?>; color: <?= $sMeta['color'] ?>; font-size: 0.7rem;">
-                                                            <?= $sMeta['code'] ?>
-                                                        </span>
-                                                        <?php if ($hasDoc): ?>
-                                                            <span class="badge rounded-circle p-1 bg-success text-white d-inline-flex align-items-center justify-content-center" style="width: 18px; height: 18px; font-size: 0.65rem;" title="Dokumen sudah diunggah">
-                                                                <i class="fas fa-check"></i>
-                                                            </span>
-                                                        <?php else: ?>
-                                                            <span class="badge rounded-circle p-1 bg-secondary bg-opacity-10 text-secondary d-inline-flex align-items-center justify-content-center" style="width: 18px; height: 18px; font-size: 0.65rem;" title="Belum diunggah">
-                                                                <i class="fas fa-minus"></i>
-                                                            </span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <div class="fw-bold text-dark text-truncate" style="font-size: 0.8rem;" title="<?= $sMeta['label'] ?>">
-                                                        <?= $sMeta['label'] ?>
-                                                    </div>
-                                                </div>
-
-                                                <div class="mt-2 pt-2 border-top" style="border-color: #F1F5F9 !important;">
-                                                    <?php if ($hasDoc && $docItem): 
-                                                        $statRev = $docItem['status_review'] ?? 'draft';
-                                                        $statBadgeClass = 'bg-secondary bg-opacity-10 text-secondary';
-                                                        $statText = 'Draf';
-                                                        if ($statRev === 'disetujui_lpm') {
-                                                            $statBadgeClass = 'bg-success bg-opacity-10 text-success';
-                                                            $statText = 'Disetujui';
-                                                        } elseif (str_contains($statRev, 'menunggu')) {
-                                                            $statBadgeClass = 'bg-warning bg-opacity-10 text-warning-emphasis';
-                                                            $statText = 'Direview';
-                                                        } elseif (str_contains($statRev, 'revisi') || str_contains($statRev, 'perbaikan')) {
-                                                            $statBadgeClass = 'bg-danger bg-opacity-10 text-danger';
-                                                            $statText = 'Perlu Revisi';
-                                                        }
-                                                    ?>
-                                                        <div class="d-flex align-items-center justify-content-between gap-1">
-                                                            <span class="badge rounded-pill <?= $statBadgeClass ?> text-truncate px-2 py-0.5" style="font-size: 0.68rem; max-width: 90px;" title="<?= htmlspecialchars($docItem['nama_dokumen']) ?>">
-                                                                <?= $statText ?>
-                                                            </span>
-                                                            <a href="<?= base_url('fakultas/dokumen/detail/' . $docItem['id']) ?>" target="_blank" class="btn btn-xs btn-outline-secondary rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.65rem;" title="Lihat Dokumen">
-                                                                <i class="fas fa-eye"></i>
-                                                            </a>
-                                                        </div>
-                                                    <?php else: ?>
-                                                        <button type="button" class="btn btn-sm btn-primary w-100 rounded-pill py-1 px-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1 shadow-2xs btn-add-cycle-stage" 
-                                                                style="font-size: 0.72rem; background: #0284C7; border-color: #0284C7;"
-                                                                onclick='continueCycleUpload(<?= json_encode($cyc, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>, "<?= $sKey ?>")'>
-                                                            <i class="fas fa-plus"></i>
-                                                            <span>Tambah</span>
-                                                        </button>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                </div>
+                <a href="<?= base_url('fakultas/dokumen/cycles') ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3.5 py-2 fw-semibold d-inline-flex align-items-center gap-2 flex-shrink-0 text-nowrap shadow-2xs">
+                    <i class="fas fa-list-check"></i>
+                    <span>Lihat Judul yang Sudah Ada</span>
+                    <i class="fas fa-arrow-right ms-1 small"></i>
+                </a>
             </div>
         </div>
 
