@@ -42,7 +42,6 @@ class AuthController extends Controller {
             $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com', 'lpm@unika.ac.id', 'tu.lpm@unika.ac.id', 'admin.lpm@unika.ac.id'];
             if (in_array(strtolower($email), $multiRoleEmails) || Auth::role() === 'testing' || !empty($_SESSION['is_multi_role_testing'])) {
                 $_SESSION['is_multi_role_testing'] = true;
-                Auth::setFlash('info', 'Login Berhasil! Silakan pilih peran yang ingin Anda gunakan untuk simulasi/pengujian.');
                 redirect('auth/select-role');
             }
 
@@ -157,7 +156,6 @@ class AuthController extends Controller {
             $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com', 'lpm@unika.ac.id', 'tu.lpm@unika.ac.id', 'admin.lpm@unika.ac.id'];
             if (in_array($googleEmail, $multiRoleEmails) || Auth::role() === 'testing' || in_array(Auth::role(), ['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu'])) {
                 $_SESSION['is_multi_role_testing'] = true;
-                Auth::setFlash('info', 'Login Google SSO Berhasil! Silakan pilih peran yang ingin Anda gunakan untuk simulasi/pengujian.');
                 redirect('auth/select-role');
             }
             Auth::setFlash('success', 'Selamat datang kembali, ' . htmlspecialchars($_SESSION['user_name']) . '! (Login via Google SSO)');
@@ -173,8 +171,12 @@ class AuthController extends Controller {
             redirect('login');
         }
 
+        // Konsumsi flash sebelumnya jika ada, agar halaman pemilihan peran tetap bersih
+        Auth::getFlash();
+
         $this->render('auth/select_role', [
-            'pageTitle' => 'Pilih Peran Akses Sistem - MITRA'
+            'pageTitle' => 'Pilih Peran Akses Sistem - MITRA',
+            'flash'     => null
         ]);
     }
 

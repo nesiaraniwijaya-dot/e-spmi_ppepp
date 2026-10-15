@@ -66,6 +66,7 @@ $router->get('admin/monitoring-dokumen', ['SuperAdminController', 'monitoringDok
 $router->get('admin/review-prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
 $router->get('admin/review-fakultas/{id:\d+}', ['SuperAdminController', 'reviewFakultas']);
 $router->post('admin/review-dokumen/submit', ['SuperAdminController', 'submitReview']);
+$router->get('api/dokumen-revisi/{id:\d+}', ['SuperAdminController', 'getDocumentRevisions']);
 
 // Manajemen Pengguna & Hak Akses
 $router->get('admin/users', ['SuperAdminController', 'users']);

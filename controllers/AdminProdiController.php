@@ -541,16 +541,37 @@ class AdminProdiController extends Controller {
                     $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
                     $tahapReview  = $isDraft ? null : 'gpm';
 
+                    // Pastikan terhubung ke ppepp_cycles (Siklus Berkelanjutan)
+                    $cycleId = !empty($d['cycle_id']) ? (int)$d['cycle_id'] : null;
+                    if (!$cycleId) {
+                        $stmtCheckCyc = $this->db->prepare("SELECT id FROM ppepp_cycles WHERE judul_siklus = ? AND prodi_id = ? AND deleted_at IS NULL LIMIT 1");
+                        $stmtCheckCyc->execute([$namaDokumen, $this->prodiId]);
+                        $foundCyc = $stmtCheckCyc->fetchColumn();
+                        if ($foundCyc) {
+                            $cycleId = (int)$foundCyc;
+                        } else {
+                            $stmtInsCyc = $this->db->prepare("
+                                INSERT INTO ppepp_cycles (judul_siklus, level, prodi_id, fakultas_id, bidang_id, sub_bidang_id, tahun_akademik, deskripsi, created_by, created_at)
+                                VALUES (?, 'prodi', ?, ?, ?, ?, ?, ?, ?, NOW())
+                            ");
+                            $stmtInsCyc->execute([
+                                $namaDokumen, $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0),
+                                $bidangId, $subBidangId, $tahunAkademik, $deskripsi, Auth::id()
+                            ]);
+                            $cycleId = (int)$this->db->lastInsertId();
+                        }
+                    }
+
                     // Insert into ppepp_documents
                     $stmt = $this->db->prepare("
                         INSERT INTO ppepp_documents 
-                        (prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, 
+                        (cycle_id, prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, 
                          tanggal_berlaku_mulai, tanggal_berlaku_selesai, jenis_upload, file_path, file_size, 
                          file_extension, external_link, public_page_limit, can_download_public, status_review, tahap_review, deskripsi)
-                        VALUES (?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
                     $stmt->execute([
-                        $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), Auth::id(), $bidangId, $subBidangId, $namaDokumen, $nomorDokumen,
+                        $cycleId, $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), Auth::id(), $bidangId, $subBidangId, $namaDokumen, $nomorDokumen,
                         $siklus, $tahunAkademik, $startDate, $endDate, $jenisUpload,
                         $filePath, $fileSize, $fileExt, $externalLink,
                         $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview, $deskripsi
@@ -1054,6 +1075,24 @@ class AdminProdiController extends Controller {
                 $allDocSubIds = [(int)$subBidangId];
             }
             sync_document_sub_bidang($this->db, (int)$id, $allDocSubIds);
+
+            // Jika statusnya adalah perbaikan atas revisi yang diminta, catat ke riwayat revisi
+            if ($newStatusReview === 'sudah_diperbaiki') {
+                $curUser = Auth::user();
+                $uploaderName = ($curUser['name'] ?? 'Admin Prodi') . ' (' . ($this->prodi['nama_prodi'] ?? 'Prodi') . ')';
+                $stmtRevUp = $this->db->prepare("
+                    UPDATE ppepp_document_revisions 
+                    SET uploader_id = ?, uploader_name = ?, uploader_role = ?, status_review = 'sudah_diperbaiki', revised_at = NOW() 
+                    WHERE document_id = ? AND revised_at IS NULL 
+                    ORDER BY id DESC LIMIT 1
+                ");
+                $stmtRevUp->execute([
+                    Auth::id(),
+                    $uploaderName,
+                    Auth::role(),
+                    $id
+                ]);
+            }
 
             AuditLogger::log('UPDATE', 'Dokumen PPEPP', (string)$id, $namaDokumen, $oldDoc, [
                 'nama' => $namaDokumen,

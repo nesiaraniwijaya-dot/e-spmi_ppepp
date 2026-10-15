@@ -766,7 +766,7 @@ class SuperAdminController extends Controller {
         $prodiList = $this->db->query("SELECT id, fakultas_id, nama_prodi, kode_prodi, jenjang FROM prodis ORDER BY nama_prodi ASC")->fetchAll();
         $bidangList = $this->db->query("SELECT id, nama_bidang, kode_bidang FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
-        // Data Ringkasan Kepatuhan per Unit (Prodi & Fakultas) untuk Tab 2
+        // Data Ringkasan Kepatuhan per Unit (Prodi) untuk Tab 2
         $stmtProdiSummary = $this->db->query("
             SELECT p.id, p.kode_prodi, p.nama_prodi, p.jenjang, p.fakultas_id, f.nama_fakultas, f.kode_fakultas, p.nama_kaprodi,
                    COUNT(d.id) as total_dokumen,
@@ -783,21 +783,96 @@ class SuperAdminController extends Controller {
         ");
         $prodiSummaries = $stmtProdiSummary->fetchAll();
 
-        // Fakultas PPEPP summary (dokumen level = 'fakultas')
-        $stmtFakPpepp = $this->db->query("
-            SELECT f.id, f.kode_fakultas, f.nama_fakultas, f.nama_dekan,
-                   COUNT(d.id) as total_dokumen_fakultas,
-                   SUM(CASE WHEN d.status_review IN ('belum_direview', 'sudah_diperbaiki') AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as perlu_review_count,
-                   SUM(CASE WHEN d.status_review = 'belum_direview' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as belum_direview_count,
-                   SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sudah_diperbaiki_count,
-                   SUM(CASE WHEN d.status_review = 'perlu_perbaikan' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as revisi_count,
-                   SUM(CASE WHEN d.status_review = 'sesuai' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as sesuai_count
-            FROM fakultas f
-            LEFT JOIN ppepp_documents d ON f.id = d.fakultas_id AND d.level = 'fakultas' AND d.deleted_at IS NULL AND d.status_review != 'draft'
-            GROUP BY f.id
-            ORDER BY f.nama_fakultas ASC
-        ");
-        $fakultasSummaries = $stmtFakPpepp->fetchAll();
+        // Rekapitulasi Tingkat Fakultas & Siklus Berkelanjutan (Dengan Dropdown Aspek Judul & Skor 20% per Tahap Disetujui)
+        $fakultasRows = $this->db->query("SELECT id, kode_fakultas, nama_fakultas, nama_dekan FROM fakultas ORDER BY id ASC")->fetchAll();
+        $fakultasSummaries = [];
+
+        foreach ($fakultasRows as $fak) {
+            $fakId = (int)$fak['id'];
+
+            // Ambil seluruh cycle di fakultas ini (baik level fakultas maupun prodi di bawahnya)
+            $stmtCycles = $this->db->prepare("
+                SELECT c.*, p.nama_prodi, p.jenjang
+                FROM ppepp_cycles c
+                LEFT JOIN prodis p ON c.prodi_id = p.id
+                WHERE (c.fakultas_id = ? OR p.fakultas_id = ?) AND c.deleted_at IS NULL
+                ORDER BY c.created_at DESC
+            ");
+            $stmtCycles->execute([$fakId, $fakId]);
+            $cycles = $stmtCycles->fetchAll();
+
+            $totalFakultasPct = 0;
+            $totalFakultasDocs = 0;
+            $fakPerluReview = 0;
+            $fakPerluRevisi = 0;
+            $fakSesuai = 0;
+            $processedCycles = [];
+
+            foreach ($cycles as $c) {
+                $cycleId = (int)$c['id'];
+
+                $stmtDocs = $this->db->prepare("
+                    SELECT id, nama_dokumen, nomor_dokumen, siklus, status_review, catatan_review, reviewed_by, reviewed_at,
+                           file_path, external_link, created_at, updated_at
+                    FROM ppepp_documents
+                    WHERE cycle_id = ? AND deleted_at IS NULL
+                    ORDER BY id ASC
+                ");
+                $stmtDocs->execute([$cycleId]);
+                $docs = $stmtDocs->fetchAll();
+
+                $stages = [
+                    'penetapan'    => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                    'pelaksanaan'  => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                    'evaluasi'     => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                    'pengendalian' => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                    'peningkatan'  => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                ];
+
+                $cycleDocsCount = count($docs);
+                $totalFakultasDocs += $cycleDocsCount;
+
+                foreach ($docs as $d) {
+                    $cy = $d['siklus'];
+                    if (isset($stages[$cy])) {
+                        $stages[$cy]['exists'] = true;
+                        $stages[$cy]['status'] = $d['status_review'];
+                        $stages[$cy]['doc'] = $d;
+
+                        // Aturan Klien: Bobot 20% HANYA jika status_review == 'sesuai' (ACC)
+                        if ($d['status_review'] === 'sesuai') {
+                            $stages[$cy]['score'] = 20;
+                            $fakSesuai++;
+                        } elseif ($d['status_review'] === 'perlu_perbaikan') {
+                            $fakPerluRevisi++;
+                        } elseif (in_array($d['status_review'], ['belum_direview', 'sudah_diperbaiki'])) {
+                            $fakPerluReview++;
+                        }
+                    }
+                }
+
+                // Skor per judul = akumulasi 20% per tahapan yang ACC
+                $cycleScore = array_sum(array_column($stages, 'score'));
+                $totalFakultasPct += $cycleScore;
+
+                $c['stages'] = $stages;
+                $c['total_score'] = $cycleScore;
+                $c['docs_count'] = $cycleDocsCount;
+                $c['all_docs'] = $docs;
+                $processedCycles[] = $c;
+            }
+
+            $numCycles = count($processedCycles);
+            $fak['cycles'] = $processedCycles;
+            $fak['total_cycles'] = $numCycles;
+            $fak['total_dokumen_fakultas'] = $totalFakultasDocs;
+            $fak['perlu_review_count'] = $fakPerluReview;
+            $fak['revisi_count'] = $fakPerluRevisi;
+            $fak['sesuai_count'] = $fakSesuai;
+            $fak['progres_kepatuhan'] = $numCycles > 0 ? round($totalFakultasPct / $numCycles) : 0;
+
+            $fakultasSummaries[] = $fak;
+        }
 
         $this->render('super_admin/review_hub', [
             'pageTitle' => 'Pusat Review Dokumen Mutu PPEPP',
@@ -1043,7 +1118,7 @@ class SuperAdminController extends Controller {
             $docId
         ]);
 
-        // Catat riwayat ke ppepp_document_reviews
+        // Catat riwayat ke ppepp_document_reviews (GPM multi-tier workflow)
         $stmtLogRev = $this->db->prepare("
             INSERT INTO ppepp_document_reviews 
             (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
@@ -1057,6 +1132,34 @@ class SuperAdminController extends Controller {
             $finalStatus,
             $finalCatatan
         ]);
+
+        // Simpan juga ke riwayat revisi (ppepp_document_revisions) untuk tracking siklus & timeline revisi
+        try {
+            $revNumberStmt = $this->db->prepare("SELECT COUNT(*) FROM ppepp_document_revisions WHERE document_id = ?");
+            $revNumberStmt->execute([$docId]);
+            $nextRevNumber = (int)$revNumberStmt->fetchColumn() + 1;
+
+            $reviewerUser = Auth::user();
+            $reviewerDisplayName = ($reviewerUser['name'] ?? 'Verifikator LPM') . ' (' . ($reviewerUser['role'] === 'super_admin' ? 'Admin LPM' : strtoupper(str_replace('_', ' ', $reviewerUser['role'] ?? ''))) . ')';
+
+            $stmtInsRev = $this->db->prepare("
+                INSERT INTO ppepp_document_revisions 
+                (document_id, cycle_id, revisi_ke, reviewer_id, reviewer_name, reviewer_role, status_review, catatan_review, reviewed_at, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ");
+            $stmtInsRev->execute([
+                $docId,
+                $doc['cycle_id'] ?? null,
+                $nextRevNumber,
+                $reviewerId,
+                $reviewerDisplayName,
+                $reviewerUser['role'] ?? 'super_admin',
+                $finalStatus,
+                $finalCatatan
+            ]);
+        } catch (\Throwable $e) {
+            // Abaikan jika tabel revisi belum dimigrasi
+        }
 
         $statusLabel = ($finalStatus === 'sesuai') ? 'Sesuai Standar Mutu' : 'Perlu Perbaikan (LPM)';
         $unitName = $isFakultasDoc ? ($doc['nama_fakultas'] ?? 'Fakultas') : ($doc['nama_prodi'] ?? 'Program Studi');
@@ -1115,6 +1218,53 @@ class SuperAdminController extends Controller {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
             exit;
         }
+    }
+
+    /**
+     * Endpoint API JSON untuk mengambil riwayat revisi dokumen
+     */
+    public function getDocumentRevisions(string $idStr): void {
+        $id = (int)$idStr;
+        if (!Auth::check()) {
+            $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+            return;
+        }
+
+        // Ambil info dokumen
+        $stmtDoc = $this->db->prepare("
+            SELECT d.id, d.nama_dokumen, d.nomor_dokumen, d.siklus, d.status_review, d.catatan_review,
+                   c.judul_siklus, f.nama_fakultas, p.nama_prodi
+            FROM ppepp_documents d
+            LEFT JOIN ppepp_cycles c ON d.cycle_id = c.id
+            LEFT JOIN fakultas f ON d.fakultas_id = f.id
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            WHERE d.id = ? AND d.deleted_at IS NULL
+        ");
+        $stmtDoc->execute([$id]);
+        $doc = $stmtDoc->fetch();
+
+        if (!$doc) {
+            $this->json(['status' => 'error', 'message' => 'Dokumen tidak ditemukan'], 404);
+            return;
+        }
+
+        // Ambil riwayat revisi
+        $stmtRev = $this->db->prepare("
+            SELECT r.*,
+                   DATE_FORMAT(r.reviewed_at, '%d %b %Y, %H:%i') as reviewed_at_formatted,
+                   DATE_FORMAT(r.revised_at, '%d %b %Y, %H:%i') as revised_at_formatted
+            FROM ppepp_document_revisions r
+            WHERE r.document_id = ?
+            ORDER BY r.revisi_ke ASC, r.id ASC
+        ");
+        $stmtRev->execute([$id]);
+        $revisions = $stmtRev->fetchAll();
+
+        $this->json([
+            'status' => 'success',
+            'document' => $doc,
+            'revisions' => $revisions
+        ]);
     }
 
     /**

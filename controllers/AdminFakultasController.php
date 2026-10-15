@@ -563,16 +563,37 @@ class AdminFakultasController extends Controller {
                     $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
                     $tahapReview  = $isDraft ? null : 'gpm';
 
+                    // Pastikan terhubung ke ppepp_cycles (Siklus Berkelanjutan Tingkat Fakultas)
+                    $cycleId = !empty($d['cycle_id']) ? (int)$d['cycle_id'] : null;
+                    if (!$cycleId) {
+                        $stmtCheckCyc = $this->db->prepare("SELECT id FROM ppepp_cycles WHERE judul_siklus = ? AND fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL LIMIT 1");
+                        $stmtCheckCyc->execute([$namaDokumen, $this->fakultasId]);
+                        $foundCyc = $stmtCheckCyc->fetchColumn();
+                        if ($foundCyc) {
+                            $cycleId = (int)$foundCyc;
+                        } else {
+                            $stmtInsCyc = $this->db->prepare("
+                                INSERT INTO ppepp_cycles (judul_siklus, level, prodi_id, fakultas_id, bidang_id, sub_bidang_id, tahun_akademik, deskripsi, created_by, created_at)
+                                VALUES (?, 'fakultas', NULL, ?, ?, ?, ?, ?, ?, NOW())
+                            ");
+                            $stmtInsCyc->execute([
+                                $namaDokumen, $this->fakultasId,
+                                $bidangId, $subBidangId, $tahunAkademik, $deskripsi, Auth::id()
+                            ]);
+                            $cycleId = (int)$this->db->lastInsertId();
+                        }
+                    }
+
                     // Insert ke tabel `ppepp_documents` dengan level = 'fakultas'
                     $stmt = $this->db->prepare("
                         INSERT INTO ppepp_documents (
-                            fakultas_id, prodi_id, user_id, bidang_id, sub_bidang_id,
+                            cycle_id, fakultas_id, prodi_id, user_id, bidang_id, sub_bidang_id,
                             nama_dokumen, nomor_dokumen, siklus, tahun_akademik,
                             tanggal_berlaku_mulai, tanggal_berlaku_selesai,
                             jenis_upload, file_path, file_size, file_extension, external_link,
                             public_page_limit, can_download_public, status_review, tahap_review, level, created_at
                         ) VALUES (
-                            ?, NULL, ?, ?, ?,
+                            ?, ?, NULL, ?, ?, ?,
                             ?, ?, ?, ?,
                             ?, ?,
                             ?, ?, ?, ?, ?,
@@ -580,7 +601,7 @@ class AdminFakultasController extends Controller {
                         )
                     ");
                     $stmt->execute([
-                        $this->fakultasId, Auth::id(), $bidangId, $subBidangId,
+                        $cycleId, $this->fakultasId, Auth::id(), $bidangId, $subBidangId,
                         $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik,
                         $startDate, $endDate,
                         $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
@@ -984,6 +1005,24 @@ class AdminFakultasController extends Controller {
 
             // Sinkronisasi seluruh sub bidang ke dokumen induk
             sync_document_sub_bidang($this->db, (int)$id, $allDocSubIds);
+
+            // Jika statusnya adalah perbaikan atas revisi yang diminta, catat ke riwayat revisi
+            if ($newStatusReview === 'sudah_diperbaiki') {
+                $curUser = Auth::user();
+                $uploaderName = ($curUser['name'] ?? 'Admin Fakultas') . ' (Dekanat ' . ($this->fakultas['nama_fakultas'] ?? 'Fakultas') . ')';
+                $stmtRevUp = $this->db->prepare("
+                    UPDATE ppepp_document_revisions 
+                    SET uploader_id = ?, uploader_name = ?, uploader_role = ?, status_review = 'sudah_diperbaiki', revised_at = NOW() 
+                    WHERE document_id = ? AND revised_at IS NULL 
+                    ORDER BY id DESC LIMIT 1
+                ");
+                $stmtRevUp->execute([
+                    Auth::id(),
+                    $uploaderName,
+                    Auth::role(),
+                    $id
+                ]);
+            }
 
             AuditLogger::log(
                 aksi: 'UPDATE',
