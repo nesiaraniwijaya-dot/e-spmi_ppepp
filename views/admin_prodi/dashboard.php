@@ -287,7 +287,6 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         <span><i class="far fa-calendar-check text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($reviewerDate)) ?> WIB</span>
                                     <?php endif; ?>
                                 </div>
-                                </div>
                             </div>
                         </div>
 

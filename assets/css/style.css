@@ -3715,14 +3715,16 @@ body.public-page>.scu-footer {
 }
 
 .dashboard-revision-header {
-  padding: 1.4rem 2rem;
+  padding: 1.25rem 1.75rem !important;
   border-bottom: 1px solid #FEE2E2;
 }
 
 .dashboard-revision-item {
-  padding: 1.5rem 2rem !important;
+  padding: 1.25rem 1.75rem !important;
   border-bottom: 1px solid #F1F5F9;
   transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-revision-item:last-child {
@@ -3734,7 +3736,7 @@ body.public-page>.scu-footer {
 }
 
 .dashboard-revision-footer {
-  padding: 1.15rem 2rem;
+  padding: 1rem 1.75rem !important;
   background-color: rgba(248, 250, 252, 0.85);
   border-top: 1px solid #F1F5F9;
 }
@@ -3743,41 +3745,51 @@ body.public-page>.scu-footer {
 .dashboard-revision-actions {
   display: flex;
   align-items: center;
-  gap: 1.15rem !important;
+  gap: 0.65rem !important;
   flex-shrink: 0;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 @media (min-width: 992px) {
   .dashboard-revision-actions {
-    min-width: 325px;
+    max-width: 330px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .dashboard-revision-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
 .btn-revision-note {
-  width: 146px !important;
-  min-width: 146px !important;
+  min-width: 130px !important;
+  width: auto !important;
   height: 38px !important;
+  padding: 0.45rem 1rem !important;
   font-size: 0.82rem !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   white-space: nowrap !important;
   border-radius: 50rem !important;
-  gap: 0.5rem !important;
+  gap: 0.45rem !important;
 }
 
 .btn-revision-action {
-  width: 154px !important;
-  min-width: 154px !important;
+  min-width: 130px !important;
+  width: auto !important;
   height: 38px !important;
+  padding: 0.45rem 1.15rem !important;
   font-size: 0.82rem !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   white-space: nowrap !important;
   border-radius: 50rem !important;
-  gap: 0.5rem !important;
+  gap: 0.45rem !important;
 }
 
 .btn-revision-note i,

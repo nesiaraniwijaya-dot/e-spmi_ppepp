@@ -17,7 +17,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
         $stmt = $headerDb->prepare("
-            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, status_review, reviewed_at, gpm_reviewed_at, updated_at
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
             ORDER BY updated_at DESC
@@ -33,7 +33,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
         $stmt = $headerDb->prepare("
-            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, status_review, reviewed_at, gpm_reviewed_at, updated_at
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
             ORDER BY updated_at DESC
@@ -49,7 +49,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
         $stmt = $headerDb->prepare("
-            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
               AND status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL
@@ -66,7 +66,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
         $stmt = $headerDb->query("
-            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, status_review, reviewed_at, updated_at
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE status_review = 'menunggu_review_lpm' AND deleted_at IS NULL
             ORDER BY updated_at DESC
@@ -200,7 +200,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                         <?php if ($perluActionCount > 0): ?>
                             <li class="px-3 py-2 bg-danger bg-opacity-10 border-bottom d-flex align-items-center gap-2 text-danger" style="font-size:0.75rem;">
                                 <i class="fas fa-circle-exclamation flex-shrink-0"></i>
-                                <span>Ada dokumen dengan catatan evaluasi admin LPM yang perlu diperbaiki.</span>
+                                <span>Ada dokumen dengan catatan evaluasi (GPM / LPM) yang perlu diperbaiki.</span>
                             </li>
                         <?php endif; ?>
                         <div style="max-height: 320px; overflow-y: auto;">
@@ -231,16 +231,28 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                             <div class="d-flex align-items-center justify-content-between gap-1 mb-1">
                                                 <?= render_review_status_badge($notifDoc['status_review']) ?>
                                                 <span class="text-muted" style="font-size: 0.68rem;">
-                                                    <?= !empty($notifDoc['updated_at']) ? date('d M', strtotime($notifDoc['updated_at'])) : '' ?>
+                                                    <?php 
+                                                    $notifDate = ($notifDoc['status_review'] ?? '') === 'revisi_lpm'
+                                                        ? (!empty($notifDoc['lpm_reviewed_at']) ? $notifDoc['lpm_reviewed_at'] : ($notifDoc['reviewed_at'] ?? $notifDoc['updated_at']))
+                                                        : (!empty($notifDoc['gpm_reviewed_at']) ? $notifDoc['gpm_reviewed_at'] : ($notifDoc['reviewed_at'] ?? $notifDoc['updated_at']));
+                                                    echo !empty($notifDate) ? date('d M', strtotime($notifDate)) : '';
+                                                    ?>
                                                 </span>
                                             </div>
                                             <div class="fw-bold text-dark text-truncate mb-1" style="max-width: 250px;" title="<?= htmlspecialchars($notifDoc['nama_dokumen']) ?>">
                                                 <?= htmlspecialchars($notifDoc['nama_dokumen']) ?>
                                             </div>
                                             <?php 
-                                            $notifNote = !empty($notifDoc['gpm_catatan']) ? $notifDoc['gpm_catatan'] : ($notifDoc['catatan_review'] ?? '');
+                                            $notifStatus = $notifDoc['status_review'] ?? '';
+                                            if ($notifStatus === 'revisi_gpm') {
+                                                $notifNote = trim($notifDoc['gpm_catatan'] ?: ($notifDoc['catatan_review'] ?? ''));
+                                            } elseif ($notifStatus === 'revisi_lpm') {
+                                                $notifNote = trim($notifDoc['lpm_catatan'] ?: ($notifDoc['catatan_review'] ?: ($notifDoc['gpm_catatan'] ?? '')));
+                                            } else {
+                                                $notifNote = trim($notifDoc['lpm_catatan'] ?: ($notifDoc['gpm_catatan'] ?: ($notifDoc['catatan_review'] ?? '')));
+                                            }
                                             if (!empty($notifNote)): ?>
-                                                <div class="text-muted text-truncate small fst-italic" style="font-size: 0.72rem; max-width: 250px;">
+                                                <div class="text-muted text-truncate small fst-italic" style="font-size: 0.72rem; max-width: 250px;" title="<?= htmlspecialchars($notifNote) ?>">
                                                     "<?= htmlspecialchars($notifNote) ?>"
                                                 </div>
                                             <?php endif; ?>
