@@ -150,8 +150,6 @@ class GpmController extends Controller {
         $recentDocs = $stmtRecent->fetchAll();
         $this->attachFilesToDocs($recentDocs);
 
-        $rekapData = $this->getRekapitulasiData();
-
         $this->render('gpm/dashboard', [
             'pageTitle'              => 'Dashboard GPM ' . $this->fakultas['nama_fakultas'],
             'fakultas'               => $this->fakultas,
@@ -162,8 +160,6 @@ class GpmController extends Controller {
             'fakultasPendingCount'   => $fakultasPendingCount,
             'fakultasPerbaikanCount' => $fakultasPerbaikanCount,
             'prodiSummary'           => $prodiSummary,
-            'fakultasSummary'        => $rekapData['fakultasSummary'],
-            'prodiSummaries'         => $rekapData['prodiSummaries'],
             'pendingReviewDocs'      => $pendingReviewDocs,
             'revisiDocs'             => $revisiDocs,
             'recentDocs'             => $recentDocs
@@ -245,6 +241,7 @@ class GpmController extends Controller {
         $siklusFilter = trim($_GET['siklus'] ?? '');
         $bidangFilter = !empty($_GET['bidang_id']) ? (int)$_GET['bidang_id'] : 0;
         $statusFilter = trim($_GET['status_review'] ?? '');
+        $tahunFilter  = trim($_GET['tahun_akademik'] ?? '');
         $search       = trim($_GET['search'] ?? '');
 
         $prodiIds = array_column($this->prodisList, 'id');
@@ -304,6 +301,11 @@ class GpmController extends Controller {
             }
         }
 
+        if ($tahunFilter) {
+            $sql .= " AND d.tahun_akademik = ?";
+            $params[] = $tahunFilter;
+        }
+
         if ($search) {
             $sql .= " AND (d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR b.nama_bidang LIKE ? OR p.nama_prodi LIKE ?)";
             $params[] = "%{$search}%";
@@ -349,6 +351,7 @@ class GpmController extends Controller {
             'siklusFilter'           => $siklusFilter,
             'bidangFilter'           => $bidangFilter,
             'statusFilter'           => $statusFilter,
+            'tahunFilter'            => $tahunFilter,
             'search'                 => $search,
             'gpmPendingReviewCount'  => $gpmPendingReviewCount,
             'gpmWaitingLpmCount'     => $gpmWaitingLpmCount,

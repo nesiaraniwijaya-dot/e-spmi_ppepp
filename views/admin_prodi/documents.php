@@ -178,24 +178,33 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </ul>
 
         <!-- Filter Toolbar -->
-        <div class="row g-3 align-items-center mb-4">
-            <div class="col-lg-5 col-md-6">
+        <div class="row g-2.5 align-items-center mb-4">
+            <div class="col-xl-4 col-lg-3 col-md-6">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
                     <input type="text" id="tableSearchInput" class="form-control bg-light border-start-0 ps-0" placeholder="Cari nama dokumen, nomor SK...">
                 </div>
             </div>
-            <div class="col-lg-4 col-md-4">
+            <div class="col-xl-3 col-lg-3 col-md-6">
                 <select id="tableBidangFilter" class="form-select bg-light">
-                    <option value="">-- Semua Bidang --</option>
+                    <option value="">Semua Bidang</option>
                     <?php foreach ($bidangList as $b): ?>
                         <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-lg-3 col-md-2 d-flex justify-content-md-end align-items-center gap-2">
+            <div class="col-xl-3 col-lg-3 col-md-6">
+                <?php $distinctTahunList = get_distinct_tahun_akademik(); ?>
+                <select id="tableTahunFilter" class="form-select bg-light">
+                    <option value="">Semua Tahun Akademik</option>
+                    <?php foreach ($distinctTahunList as $ta): ?>
+                        <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-xl-2 col-lg-3 col-md-6 ms-auto d-flex justify-content-md-end align-items-center gap-2">
                 <label for="tablePerPageSelect" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 108px; width: auto; font-size: 0.8rem;">
+                <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 90px; width: auto; font-size: 0.8rem;">
                     <option value="10" selected>10 data</option>
                     <option value="25">25 data</option>
                     <option value="50">50 data</option>
@@ -242,6 +251,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 data-nomor="<?= htmlspecialchars($doc['nomor_dokumen'] ?? '') ?>" 
                                 data-bidang-id="<?= $doc['bidang_id'] ?? '' ?>"
                                 data-siklus="<?= $doc['siklus'] ?>"
+                                data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                 data-status-review="<?= $status ?>"
                                 style="<?= $isPerluPerbaikan ? 'border-left: 4px solid #DC2626 !important; background: #FFFBFB;' : '' ?>">
                                 <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>

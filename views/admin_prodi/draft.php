@@ -150,7 +150,7 @@ $totalDraft = $totalDraft ?? count($documents);
                 <div class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end flex-wrap">
                     <div class="d-flex align-items-center gap-1.5">
                         <label for="perPageDraftProdi" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                        <select id="perPageDraftProdi" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 108px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeDraftProdiPageSize(this.value)">
+                        <select id="perPageDraftProdi" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 95px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeDraftProdiPageSize(this.value)">
                             <option value="10" selected>10 data</option>
                             <option value="25">25 data</option>
                             <option value="50">50 data</option>
@@ -158,9 +158,17 @@ $totalDraft = $totalDraft ?? count($documents);
                             <option value="all">Semua</option>
                         </select>
                     </div>
-                    <div class="input-group input-group-sm" style="max-width: 260px;">
+                    <div class="flex-shrink-0" style="min-width: 200px;">
+                        <select id="filterTahunDraftProdi" class="form-select form-select-sm shadow-none" style="font-size: 0.8rem; border-color: #CBD5E1;" onchange="filterDraftTable()">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
                         <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control border-start-0 ps-1" style="border-color: #CBD5E1;" id="searchDraftInput" placeholder="Cari draf dokumen..." oninput="filterDraftTable()">
+                        <input type="text" class="form-control border-start-0 ps-1" style="border-color: #CBD5E1;" id="searchDraftInput" placeholder="Cari draf..." oninput="filterDraftTable()">
                     </div>
                 </div>
             </div>
@@ -188,7 +196,7 @@ $totalDraft = $totalDraft ?? count($documents);
                             $isKombinasi = ($doc['jenis_upload'] === 'kombinasi') || ($hasFiles && $hasLinks);
                             $hasAnyAttachment = ($hasFiles || $hasLinks);
                         ?>
-                            <tr class="draft-table-row" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? ''))) ?>" style="border-bottom: 1px solid #E2E8F0;">
+                            <tr class="draft-table-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? ''))) ?>" style="border-bottom: 1px solid #E2E8F0;">
                                 <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
                                 <td class="py-3.5 px-3.5" style="border-end: 1px solid #F1F5F9;">
                                     <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.4;">
@@ -315,12 +323,18 @@ function changeDraftProdiPageSize(val) {
 
 function filterDraftTable() {
     const query = (document.getElementById('searchDraftInput')?.value || '').toLowerCase().trim();
+    const filterTahun = document.getElementById('filterTahunDraftProdi');
+    const selectedTahun = filterTahun ? filterTahun.value.trim() : '';
     const rows = Array.from(document.querySelectorAll('#draftTable tbody tr.draft-table-row'));
 
     const matchedRows = [];
     rows.forEach(row => {
         const text = (row.getAttribute('data-search') || row.innerText).toLowerCase();
-        if (!query || text.includes(query)) {
+        const rowTahun = row.getAttribute('data-tahun') || '';
+        const matchQuery = !query || text.includes(query);
+        const matchTahun = !selectedTahun || rowTahun === selectedTahun;
+
+        if (matchQuery && matchTahun) {
             matchedRows.push(row);
         } else {
             row.style.display = 'none';

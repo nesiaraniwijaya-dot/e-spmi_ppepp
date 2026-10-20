@@ -256,7 +256,7 @@ foreach ($documents as $d) {
             <input type="hidden" name="siklus" value="<?= htmlspecialchars($siklusFilter) ?>">
 
             <!-- Filter Bidang -->
-            <div class="col-md-3">
+            <div class="col-xl-2 col-lg-3 col-md-6">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-bookmark"></i></span>
                     <select name="bidang_id" class="form-select border-start-0" onchange="this.form.submit()">
@@ -271,7 +271,7 @@ foreach ($documents as $d) {
             </div>
 
             <!-- Filter Status Review -->
-            <div class="col-md-3">
+            <div class="col-xl-3 col-lg-3 col-md-6">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-shield"></i></span>
                     <select name="status_review" class="form-select border-start-0" onchange="this.form.submit()">
@@ -287,8 +287,23 @@ foreach ($documents as $d) {
                 </div>
             </div>
 
+            <!-- Filter Tahun Akademik -->
+            <div class="col-xl-3 col-lg-3 col-md-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-calendar-alt"></i></span>
+                    <select name="tahun_akademik" class="form-select border-start-0" onchange="this.form.submit()">
+                        <option value="">Semua Tahun Akademik</option>
+                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                            <option value="<?= htmlspecialchars($ta) ?>" <?= ($tahunFilter ?? '') === $ta ? 'selected' : '' ?>>
+                                Tahun Akademik <?= htmlspecialchars($ta) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
             <!-- Keyword Search -->
-            <div class="col-md-4">
+            <div class="col-xl-3 col-lg-3 col-md-6">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-magnifying-glass"></i></span>
                     <input type="text" name="search" class="form-control border-start-0" placeholder="Cari nama, kode, prodi..." value="<?= htmlspecialchars($search) ?>">
@@ -297,10 +312,10 @@ foreach ($documents as $d) {
             </div>
 
             <!-- Reset Button -->
-            <div class="col-md-2 text-md-end">
-                <?php if (!empty($unitFilter !== 'all') || !empty($siklusFilter) || !empty($bidangFilter) || !empty($statusFilter) || !empty($search)): ?>
-                    <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-outline-secondary btn-sm rounded-pill w-100 fw-semibold" style="font-size: 0.78rem;">
-                        <i class="fas fa-rotate-left me-1"></i> Reset Filter
+            <div class="col-xl-1 col-lg-12 col-md-12 text-md-end">
+                <?php if (!empty($unitFilter !== 'all') || !empty($siklusFilter) || !empty($bidangFilter) || !empty($statusFilter) || !empty($tahunFilter) || !empty($search)): ?>
+                    <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-outline-secondary btn-sm rounded-pill w-100 fw-semibold" style="font-size: 0.78rem;" title="Reset Filter">
+                        <i class="fas fa-rotate-left me-1"></i> Reset
                     </a>
                 <?php endif; ?>
             </div>

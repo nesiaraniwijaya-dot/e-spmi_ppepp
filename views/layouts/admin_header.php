@@ -101,6 +101,49 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     <script>
         window.IS_USER_LOGGED_IN = <?= Auth::check() ? 'true' : 'false' ?>;
         window.LOGIN_URL = '<?= base_url("login") ?>';
+        window.autoPairTahunAkademik = function(input, event) {
+            if (!input) return;
+            if (event && (
+                event.inputType === 'deleteContentBackward' || 
+                event.inputType === 'deleteContentForward' || 
+                event.key === 'Backspace' || 
+                event.key === 'Delete'
+            )) {
+                return;
+            }
+            let val = (input.value || '').trim();
+            if (!val) return;
+            let formatted = null;
+            if (/^\d{4}$/.test(val)) {
+                const y1 = parseInt(val, 10);
+                if (y1 >= 1990 && y1 <= 2099) formatted = y1 + '/' + (y1 + 1);
+            } else if (/^(\d{4})[\/-]$/.test(val)) {
+                const y1 = parseInt(val.substring(0, 4), 10);
+                if (y1 >= 1990 && y1 <= 2099) formatted = y1 + '/' + (y1 + 1);
+            } else if (/^(\d{4})-(\d{4})$/.test(val)) {
+                const m = val.match(/^(\d{4})-(\d{4})$/);
+                formatted = m[1] + '/' + m[2];
+            } else if (/^(\d{4})[\/-](\d{2})$/.test(val)) {
+                const m = val.match(/^(\d{4})[\/-](\d{2})$/);
+                const century = m[1].substring(0, 2);
+                formatted = m[1] + '/' + century + m[2];
+            } else if (event && (event.type === 'blur' || event.type === 'focusout' || event.type === 'change')) {
+                const match4 = val.match(/^(\d{4})/);
+                if (match4) {
+                    const y1 = parseInt(match4[1], 10);
+                    if (y1 >= 1990 && y1 <= 2099) formatted = y1 + '/' + (y1 + 1);
+                }
+            }
+            if (formatted && formatted !== input.value) {
+                input.value = formatted;
+                try {
+                    if (typeof input.setSelectionRange === 'function') {
+                        input.setSelectionRange(input.value.length, input.value.length);
+                    }
+                } catch (err) {}
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        };
         (function() {
             var isDesktop = window.innerWidth > 991.98;
             var storedCollapsed = localStorage.getItem('admin_sidebar_collapsed');

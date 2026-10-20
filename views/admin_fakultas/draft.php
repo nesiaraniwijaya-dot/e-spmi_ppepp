@@ -156,6 +156,14 @@ $totalDraft = $totalDraft ?? count($documents);
                             <option value="all">Semua</option>
                         </select>
                     </div>
+                    <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                        <select id="filterTahunDraft" class="form-select form-select-sm shadow-none" style="min-width: 200px; font-size: 0.8rem; border-color: #CBD5E1;" onchange="currentDraftFakultasPage = 1; filterDraftTable();">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <div class="input-group input-group-sm" style="max-width: 260px;">
                         <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
                         <input type="text" class="form-control border-start-0 ps-1" style="border-color: #CBD5E1;" id="searchDraftInput" placeholder="Cari draf dokumen..." oninput="filterDraftTable()">
@@ -186,7 +194,7 @@ $totalDraft = $totalDraft ?? count($documents);
                             $isKombinasi = ($doc['jenis_upload'] === 'kombinasi') || ($hasFiles && $hasLinks);
                             $hasAnyAttachment = ($hasFiles || $hasLinks);
                         ?>
-                            <tr class="draft-table-row" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? ''))) ?>" style="border-bottom: 1px solid #E2E8F0;">
+                            <tr class="draft-table-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? ''))) ?>" style="border-bottom: 1px solid #E2E8F0;">
                                 <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
                                 <td class="py-3.5 px-3.5" style="border-end: 1px solid #F1F5F9;">
                                     <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.4;">
@@ -313,12 +321,17 @@ function changeDraftFakultasPageSize(val) {
 
 function filterDraftTable() {
     const query = (document.getElementById('searchDraftInput')?.value || '').toLowerCase().trim();
+    const filterTahun = (document.getElementById('filterTahunDraft')?.value || '').trim();
     const rows = Array.from(document.querySelectorAll('#draftTable tbody tr.draft-table-row'));
 
     const matchedRows = [];
     rows.forEach(row => {
         const text = (row.getAttribute('data-search') || row.innerText).toLowerCase();
-        if (!query || text.includes(query)) {
+        const rowTahun = (row.getAttribute('data-tahun') || '').trim();
+        const matchSearch = !query || text.includes(query);
+        const matchTahun = !filterTahun || rowTahun === filterTahun;
+
+        if (matchSearch && matchTahun) {
             matchedRows.push(row);
         } else {
             row.style.display = 'none';

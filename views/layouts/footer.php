@@ -585,5 +585,93 @@
     })();
     </script>
 
+    <!-- Global Helper: Auto-Pair Format Tahun Akademik YYYY/YYYY (misal ketik 2025 langsung jadi 2025/2026) -->
+    <script>
+    window.autoPairTahunAkademik = function(input, event) {
+        if (!input) return;
+
+        // Cegah auto-pair jika user sedang menekan tombol Backspace atau Delete saat mengetik
+        if (event && (
+            event.inputType === 'deleteContentBackward' || 
+            event.inputType === 'deleteContentForward' || 
+            event.key === 'Backspace' || 
+            event.key === 'Delete'
+        )) {
+            return;
+        }
+
+        let val = (input.value || '').trim();
+        if (!val) return;
+
+        let formatted = null;
+
+        // 1. Ketik 4 digit tahun awal persis (contoh: "2025", "2021", "2026")
+        if (/^\d{4}$/.test(val)) {
+            const y1 = parseInt(val, 10);
+            if (y1 >= 1990 && y1 <= 2099) {
+                formatted = y1 + '/' + (y1 + 1);
+            }
+        }
+        // 2. Ketik 4 digit diikuti slash atau dash (contoh: "2025/", "2025-")
+        else if (/^(\d{4})[\/-]$/.test(val)) {
+            const y1 = parseInt(val.substring(0, 4), 10);
+            if (y1 >= 1990 && y1 <= 2099) {
+                formatted = y1 + '/' + (y1 + 1);
+            }
+        }
+        // 3. Format 2025-2026 -> 2025/2026
+        else if (/^(\d{4})-(\d{4})$/.test(val)) {
+            const m = val.match(/^(\d{4})-(\d{4})$/);
+            formatted = m[1] + '/' + m[2];
+        }
+        // 4. Format 2025/26 atau 2025-26 -> 2025/2026
+        else if (/^(\d{4})[\/-](\d{2})$/.test(val)) {
+            const m = val.match(/^(\d{4})[\/-](\d{2})$/);
+            const century = m[1].substring(0, 2);
+            formatted = m[1] + '/' + century + m[2];
+        }
+        // 5. Khusus saat blur / focusout: jika masih berupa 4 digit atau format parsial
+        else if (event && (event.type === 'blur' || event.type === 'focusout' || event.type === 'change')) {
+            const match4 = val.match(/^(\d{4})/);
+            if (match4) {
+                const y1 = parseInt(match4[1], 10);
+                if (y1 >= 1990 && y1 <= 2099) {
+                    formatted = y1 + '/' + (y1 + 1);
+                }
+            }
+        }
+
+        if (formatted && formatted !== input.value) {
+            input.value = formatted;
+            // Letakkan kursor di akhir
+            try {
+                if (typeof input.setSelectionRange === 'function') {
+                    input.setSelectionRange(input.value.length, input.value.length);
+                }
+            } catch (err) {}
+            // Trigger change event agar live preview / validasi sinkron
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    };
+
+    (function() {
+        function isTahunAkademikInput(el) {
+            if (!el || el.tagName !== 'INPUT') return false;
+            return el.classList.contains('input-tahun-akademik') ||
+                   el.id === 'tahun_akademik' ||
+                   (el.name && el.name.includes('tahun_akademik'));
+        }
+
+        // Global Event Delegation di seluruh document
+        ['input', 'keyup', 'focusout', 'change', 'paste'].forEach(function(evtName) {
+            document.addEventListener(evtName, function(e) {
+                const el = e.target;
+                if (!isTahunAkademikInput(el)) return;
+                window.autoPairTahunAkademik(el, e);
+            });
+        });
+    })();
+    </script>
+
 </body>
 </html>

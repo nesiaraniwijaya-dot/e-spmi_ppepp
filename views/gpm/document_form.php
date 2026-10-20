@@ -218,10 +218,11 @@ $siklusDefinitions = [
                                 <label for="tahun_akademik" class="form-label fw-semibold small text-secondary">
                                     Tahun Akademik <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control" id="tahun_akademik" name="tahun_akademik" 
+                                <input type="text" class="form-control input-tahun-akademik" id="tahun_akademik" name="tahun_akademik" 
                                        value="<?= htmlspecialchars($currentTahun) ?>" 
-                                       placeholder="Contoh: 2024/2025" required>
-                                <div class="form-text small" style="font-size: 0.72rem;">Format: YYYY/YYYY (Wajib)</div>
+                                       placeholder="Contoh: 2026/2027" maxlength="9" required
+                                       oninput="autoPairTahunAkademik(this, event)" onblur="autoPairTahunAkademik(this, event)">
+                                <div class="form-text small" style="font-size: 0.72rem;">Format: <code>YYYY/YYYY</code> (Ketik 4 angka tahun awal, otomatis dipasangkan)</div>
                             </div>
                         </div>
 
@@ -1223,8 +1224,9 @@ function createDocCardTemplate(idx) {
                             <input type="text" class="form-control" name="docs[${idx}][nomor_dokumen]" placeholder="Contoh: SK-FIK/2026/01">
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label fw-semibold small text-secondary">Tahun Akademik *</label>
-                            <input type="text" class="form-control" name="docs[${idx}][tahun_akademik]" value="<?= htmlspecialchars($defaultTahun) ?>" required>
+                            <label class="form-label fw-semibold small text-secondary">Tahun Akademik <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control input-tahun-akademik" name="docs[${idx}][tahun_akademik]" value="<?= htmlspecialchars($defaultTahun) ?>" placeholder="Contoh: 2026/2027" maxlength="9" required oninput="autoPairTahunAkademik(this, event)" onblur="autoPairTahunAkademik(this, event)">
+                            <div class="form-text small" style="font-size: 0.68rem;">Format: <code>YYYY/YYYY</code> (Otomatis berpasangan)</div>
                         </div>
                     </div>
 

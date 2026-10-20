@@ -29,8 +29,26 @@ $fakultas  = $fakultas ?? [];
 
     <!-- Table Card -->
     <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
+        <!-- Filter Toolbar -->
+        <div class="row g-2 mb-3 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                    <input type="text" id="arsipGpmSearch" class="form-control border-start-0" placeholder="Cari dokumen terhapus..." oninput="filterArsipGpmTable()">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select id="arsipGpmTahun" class="form-select form-select-sm" onchange="filterArsipGpmTable()">
+                    <option value="">Semua Tahun Akademik</option>
+                    <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                        <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0" id="arsipGpmTable">
                 <thead class="table-light text-uppercase small text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">
                     <tr>
                         <th class="ps-3 py-3" style="width: 50px;">No</th>
@@ -44,7 +62,7 @@ $fakultas  = $fakultas ?? [];
                 </thead>
                 <tbody class="divide-y">
                     <?php if (empty($arsipDocs)): ?>
-                        <tr>
+                        <tr id="emptyArsipGpmRow">
                             <td colspan="7" class="text-center py-5 text-muted">
                                 <div class="py-4">
                                     <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; font-size: 1.8rem;">
@@ -57,8 +75,8 @@ $fakultas  = $fakultas ?? [];
                         </tr>
                     <?php else: ?>
                         <?php $no = 1; foreach ($arsipDocs as $doc): ?>
-                            <tr>
-                                <td class="ps-3 align-top py-3 text-center text-muted fw-semibold small"><?= $no++ ?></td>
+                            <tr class="arsip-gpm-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_prodi'] ?? 'fakultas'))) ?>">
+                                <td class="ps-3 align-top py-3 text-center text-muted fw-semibold small row-no"><?= $no++ ?></td>
 
                                 <!-- Unit Kerja Badge -->
                                 <td class="align-top py-3">
@@ -78,9 +96,15 @@ $fakultas  = $fakultas ?? [];
                                     <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.9rem;">
                                         <?= htmlspecialchars($doc['nama_dokumen']) ?>
                                     </div>
-                                    <?php if (!empty($doc['nomor_dokumen'])): ?>
-                                        <div class="small text-muted"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
-                                    <?php endif; ?>
+                                    <div class="d-flex flex-wrap align-items-center gap-1.5 small text-muted" style="font-size: 0.72rem;">
+                                        <?php if (!empty($doc['nomor_dokumen'])): ?>
+                                            <span><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
+                                            <span>&bull;</span>
+                                        <?php endif; ?>
+                                        <?php if (!empty($doc['tahun_akademik'])): ?>
+                                            <span class="badge bg-light text-secondary border px-1.5 py-0.5">TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
 
                                 <!-- Bidang Standar -->
@@ -121,5 +145,30 @@ $fakultas  = $fakultas ?? [];
         </div>
     </div>
 </div>
+
+<script>
+function filterArsipGpmTable() {
+    const q = (document.getElementById('arsipGpmSearch')?.value || '').toLowerCase().trim();
+    const ta = (document.getElementById('arsipGpmTahun')?.value || '').trim();
+    const rows = document.querySelectorAll('#arsipGpmTable tbody tr.arsip-gpm-row');
+    let visible = 0;
+
+    rows.forEach(row => {
+        const text = (row.getAttribute('data-search') || '').toLowerCase();
+        const rowTa = (row.getAttribute('data-tahun') || '').trim();
+        const matchQ = !q || text.includes(q);
+        const matchTa = !ta || rowTa === ta;
+
+        if (matchQ && matchTa) {
+            row.style.display = '';
+            visible++;
+            const noEl = row.querySelector('.row-no');
+            if (noEl) noEl.textContent = visible;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

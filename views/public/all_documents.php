@@ -109,7 +109,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 </span>
             </div>
 
-            <!-- Toolbar: Pencarian, Filter Fakultas, Filter Prodi, Filter Bidang, Tampilkan -->
+            <!-- Toolbar: Pencarian, Filter Fakultas, Filter Prodi, Filter Bidang, Filter Tahun Akademik, Tampilkan -->
             <div class="row g-2.5 align-items-center mb-4">
                 <div class="col-lg-3 col-md-6">
                     <div class="input-group">
@@ -121,10 +121,10 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 </div>
 
                 <!-- Filter Fakultas -->
-                <div class="col-lg-3 col-md-6">
+                <div class="col-lg-2 col-md-6">
                     <select id="tableFakultasFilter" class="form-select bg-light">
-                        <option value="">-- Semua Fakultas &amp; Unit --</option>
-                        <option value="tingkat_fakultas">🏢 Dokumen Tingkat Fakultas (Dekanat)</option>
+                        <option value="">Semua Fakultas</option>
+                        <option value="tingkat_fakultas">🏢 Tingkat Fakultas (Dekanat)</option>
                         <?php foreach (($fakultasList ?? []) as $f): ?>
                             <option value="<?= $f['id'] ?>"><?= htmlspecialchars($f['nama_fakultas']) ?></option>
                         <?php endforeach; ?>
@@ -134,7 +134,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 <!-- Filter Program Studi -->
                 <div class="col-lg-2 col-md-4">
                     <select id="tableProdiFilter" class="form-select bg-light">
-                        <option value="">-- Semua Program Studi --</option>
+                        <option value="">Semua Prodi</option>
                         <?php foreach (($prodiList ?? []) as $p): ?>
                             <option value="<?= $p['id'] ?>" data-fakultas-id="<?= $p['fakultas_id'] ?? '' ?>">
                                 <?= htmlspecialchars($p['nama_prodi']) ?> (<?= htmlspecialchars($p['jenjang']) ?>)
@@ -146,17 +146,27 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 <!-- Filter Bidang Standar -->
                 <div class="col-lg-2 col-md-4">
                     <select id="tableBidangFilter" class="form-select bg-light">
-                        <option value="">-- Semua Bidang --</option>
+                        <option value="">Semua Bidang</option>
                         <?php foreach (($bidangList ?? []) as $b): ?>
                             <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
+                <!-- Filter Tahun Akademik -->
+                <div class="col-lg-2 col-md-4">
+                    <?php $distinctTahunList = get_distinct_tahun_akademik(); ?>
+                    <select id="tableTahunFilter" class="form-select bg-light">
+                        <option value="">Semua Tahun Akademik</option>
+                        <?php foreach ($distinctTahunList as $ta): ?>
+                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <!-- Per Page Selector -->
-                <div class="col-lg-2 col-md-4 d-flex justify-content-md-end align-items-center gap-1.5">
-                    <label for="tablePerPageSelect" class="form-label small text-muted text-nowrap mb-0">Tampilkan:</label>
-                    <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 108px; width: auto;">
+                <div class="col-lg-1 col-md-4 d-flex justify-content-md-end align-items-center gap-1">
+                    <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 90px; width: 100%;">
                         <option value="10">10 data</option>
                         <option value="20">20 data</option>
                         <option value="50">50 data</option>
@@ -199,6 +209,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                     data-fakultas-id="<?= $doc['computed_fakultas_id'] ?? $doc['fakultas_id'] ?? '' ?>"
                                     data-level="<?= $doc['level'] ?? '' ?>"
                                     data-bidang-id="<?= htmlspecialchars(implode(',', $adaptive['bidang_ids'])) ?>"
+                                    data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                     data-siklus="<?= htmlspecialchars(strtolower($doc['siklus'] ?? '')) ?>">
                                     <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
                                     <td>
@@ -497,6 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fakultasFilter = document.getElementById('tableFakultasFilter');
     const prodiFilter = document.getElementById('tableProdiFilter');
     const bidangFilter = document.getElementById('tableBidangFilter');
+    const tahunFilter = document.getElementById('tableTahunFilter');
     const perPageSelect = document.getElementById('tablePerPageSelect');
     const rows = Array.from(document.querySelectorAll('#ppeppDocumentTable tbody tr.doc-row'));
     const infoEl = document.getElementById('tableInfo');
@@ -511,6 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedFakultas = fakultasFilter ? fakultasFilter.value.trim() : '';
         const selectedProdi = prodiFilter ? prodiFilter.value.trim() : '';
         const selectedBidang = bidangFilter ? bidangFilter.value.trim() : '';
+        const selectedTahun = tahunFilter ? tahunFilter.value.trim() : '';
 
         return rows.filter(row => {
             const title = row.getAttribute('data-title') || '';
@@ -521,6 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const rowLevel = row.getAttribute('data-level') || '';
             const rowSiklus = row.getAttribute('data-siklus') || '';
             const rowBidangIds = (row.getAttribute('data-bidang-id') || '').split(',').map(s => s.trim());
+            const rowTahun = row.getAttribute('data-tahun-akademik') || '';
 
             const matchQuery = !query || title.includes(query) || nomor.includes(query) || prodi.includes(query);
             const matchSiklus = !currentPublicSiklus || rowSiklus === currentPublicSiklus;
@@ -534,8 +548,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const matchProdi = !selectedProdi || rowProdiId === selectedProdi;
             const matchBidang = !selectedBidang || rowBidangIds.includes(selectedBidang);
+            const matchTahun = !selectedTahun || rowTahun === selectedTahun;
 
-            return matchQuery && matchSiklus && matchFakultas && matchProdi && matchBidang;
+            return matchQuery && matchSiklus && matchFakultas && matchProdi && matchBidang && matchTahun;
         });
     }
 
@@ -646,6 +661,7 @@ document.addEventListener('DOMContentLoaded', function() {
     searchInput.addEventListener('input', () => { currentPage = 1; renderTable(); });
     if (prodiFilter) prodiFilter.addEventListener('change', () => { currentPage = 1; renderTable(); });
     if (bidangFilter) bidangFilter.addEventListener('change', () => { currentPage = 1; renderTable(); });
+    if (tahunFilter) tahunFilter.addEventListener('change', () => { currentPage = 1; renderTable(); });
     perPageSelect.addEventListener('change', () => {
         perPage = parseInt(perPageSelect.value, 10);
         currentPage = 1;

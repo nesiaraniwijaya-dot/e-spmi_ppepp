@@ -183,45 +183,55 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
     </div>
 
     <!-- Status Tabs, Jumlah Tampilan & Live Search Box -->
-    <div class="card shadow-2xs rounded-4 p-3 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
-        <div class="d-flex flex-column flex-xxl-row justify-content-between align-items-start align-items-xxl-center gap-3">
-            <!-- Tabs Status Filter (Horizontal single-row pill group) -->
-            <div class="nav nav-pills d-flex flex-nowrap align-items-center gap-2 overflow-x-auto w-100 w-xxl-auto pb-1 pb-xxl-0" id="perbaikanTabs" role="tablist">
-                <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-all-btn" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" style="font-size: 0.84rem;">
-                    <i class="fas fa-layer-group text-secondary"></i>
-                    <span>Semua Status (<?= count($revisiDocs) ?>)</span>
-                </button>
-                <button class="nav-link rounded-pill active fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-perlu-btn" data-bs-toggle="pill" data-bs-target="#tab-perlu" type="button" role="tab" style="font-size: 0.84rem;">
-                    <i class="fas fa-circle-exclamation text-danger"></i>
-                    <span>Perlu Tindakan</span>
-                    <span class="badge rounded-pill bg-danger text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($perluDocs) ?></span>
-                </button>
-                <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
-                    <i class="fas fa-clock-rotate-left text-primary"></i>
-                    <span>Sudah Diperbaiki (Telaah GPM)</span>
-                    <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($sudahDocs) ?></span>
-                </button>
+    <div class="card shadow-2xs rounded-4 p-3.5 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
+        <div class="d-flex flex-column gap-3">
+            <!-- Baris 1: Status Tabs Filter -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-2.5 border-bottom" style="border-color: #F1F5F9 !important;">
+                <div class="nav nav-pills d-flex flex-wrap align-items-center gap-2" id="perbaikanTabs" role="tablist">
+                    <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-all-btn" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" style="font-size: 0.84rem;">
+                        <i class="fas fa-layer-group text-secondary"></i>
+                        <span>Semua Status (<?= count($revisiDocs) ?>)</span>
+                    </button>
+                    <button class="nav-link rounded-pill active fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-perlu-btn" data-bs-toggle="pill" data-bs-target="#tab-perlu" type="button" role="tab" style="font-size: 0.84rem;">
+                        <i class="fas fa-circle-exclamation text-danger"></i>
+                        <span>Perlu Tindakan</span>
+                        <span class="badge rounded-pill bg-danger text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($perluDocs) ?></span>
+                    </button>
+                    <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
+                        <i class="fas fa-clock-rotate-left text-primary"></i>
+                        <span>Sudah Diperbaiki (Telaah GPM)</span>
+                        <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($sudahDocs) ?></span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Controls: Per Page + Live Search -->
-            <div class="d-flex align-items-center gap-2.5 w-100 w-xxl-auto justify-content-between justify-content-xxl-end flex-wrap flex-sm-nowrap">
-                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+            <!-- Baris 2: Controls Toolbar (Search + Filter Tahun Akademik + Per Page) -->
+            <div class="row g-2.5 align-items-center justify-content-between">
+                <div class="col-lg-5 col-md-12">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0 text-muted ps-3">
+                            <i class="fas fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" id="liveSearchPerbaikan" class="form-control bg-light border-start-0 py-2 small" placeholder="Cari nama/nomor dokumen..." style="font-size: 0.82rem;">
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-7 col-sm-8">
+                    <select id="filterTahunPerbaikanGpm" class="form-select form-select-sm shadow-none w-100" style="font-size: 0.82rem; border-color: #CBD5E1;" onchange="filterPerbaikanList()">
+                        <option value="">Semua Tahun Akademik</option>
+                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-5 col-sm-4 text-sm-end d-flex justify-content-sm-end align-items-center gap-1.5">
                     <label for="perPagePerbaikan" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                    <select id="perPagePerbaikan" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 105px; font-size: 0.8rem; border-color: #CBD5E1;">
+                    <select id="perPagePerbaikan" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 95px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;">
                         <option value="10" selected>10 data</option>
                         <option value="25">25 data</option>
                         <option value="50">50 data</option>
                         <option value="100">100 data</option>
                         <option value="all">Semua</option>
                     </select>
-                </div>
-
-                <!-- Instant Search Input -->
-                <div class="input-group" style="min-width: 240px; max-width: 320px;">
-                    <span class="input-group-text bg-light border-end-0 text-muted rounded-start-pill ps-3">
-                        <i class="fas fa-magnifying-glass"></i>
-                    </span>
-                    <input type="text" id="liveSearchPerbaikan" class="form-control bg-light border-start-0 rounded-end-pill py-2 small" placeholder="Cari nama/nomor dokumen..." style="font-size: 0.82rem;">
                 </div>
             </div>
         </div>
@@ -291,7 +301,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                     }
                                     $unitLabel = ($doc['level'] === 'fakultas') ? 'Tingkat Fakultas' : (($doc['jenjang'] ?? 'S1') . ' ' . ($doc['nama_prodi'] ?? ''));
                                 ?>
-                                    <tr class="perbaikan-row" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['nama_prodi'] ?? 'fakultas') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
+                                    <tr class="perbaikan-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['nama_prodi'] ?? 'fakultas') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
                                         <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
                                         
                                         <!-- Unit Sasaran -->
@@ -473,7 +483,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                     }
                                     $unitLabel = ($doc['level'] === 'fakultas') ? 'Tingkat Fakultas' : (($doc['jenjang'] ?? 'S1') . ' ' . ($doc['nama_prodi'] ?? ''));
                                 ?>
-                                    <tr class="perbaikan-row" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['nama_prodi'] ?? 'fakultas') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
+                                    <tr class="perbaikan-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['nama_prodi'] ?? 'fakultas') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
                                         <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
                                         
                                         <!-- Unit Sasaran -->
@@ -648,7 +658,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                     }
                                     $unitLabel = ($doc['level'] === 'fakultas') ? 'Tingkat Fakultas' : (($doc['jenjang'] ?? 'S1') . ' ' . ($doc['nama_prodi'] ?? ''));
                                 ?>
-                                    <tr class="perbaikan-row" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['nama_prodi'] ?? 'fakultas') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
+                                    <tr class="perbaikan-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['nama_prodi'] ?? 'fakultas') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
                                         <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
                                         
                                         <!-- Unit Sasaran -->
@@ -840,10 +850,15 @@ function paginateTab(tabId, page) {
     const allRows = Array.from(tabEl.querySelectorAll('tbody tr.perbaikan-row'));
     if (allRows.length === 0) return;
 
-    // Filter by search query
+    const filterTahun = document.getElementById('filterTahunPerbaikanGpm') ? document.getElementById('filterTahunPerbaikanGpm').value.trim() : '';
+
+    // Filter by search query and tahun
     const filteredRows = allRows.filter(row => {
         const text = (row.getAttribute('data-search') || '').toLowerCase();
-        return !query || text.includes(query);
+        const rowTahun = (row.getAttribute('data-tahun') || '').trim();
+        const matchSearch = !query || text.includes(query);
+        const matchTahun = !filterTahun || rowTahun === filterTahun;
+        return matchSearch && matchTahun;
     });
 
     const totalVisible = filteredRows.length;

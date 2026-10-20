@@ -172,9 +172,9 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
             <div class="card-body p-4">
 
 
-                <div class="row g-3 align-items-center mb-4">
+                <div class="row g-2.5 align-items-center mb-4">
                     <!-- Search Input -->
-                    <div class="col-lg-5 col-md-6">
+                    <div class="col-xl-4 col-lg-3 col-md-6">
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
                             <input type="text" id="tableSearchInput" class="form-control bg-light border-start-0 ps-0" placeholder="Cari nama dokumen, nomor SK, kata kunci...">
@@ -182,19 +182,30 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                     </div>
 
                     <!-- Bidang Filter -->
-                    <div class="col-lg-4 col-md-4">
+                    <div class="col-xl-3 col-lg-3 col-md-6">
                         <select id="tableBidangFilter" class="form-select bg-light">
-                            <option value="">-- Semua Bidang --</option>
+                            <option value="">Semua Bidang</option>
                             <?php foreach ($bidangList as $b): ?>
                                 <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
+                    <!-- Filter Tahun Akademik -->
+                    <div class="col-xl-3 col-lg-3 col-md-6">
+                        <?php $distinctTahunList = get_distinct_tahun_akademik(); ?>
+                        <select id="tableTahunFilter" class="form-select bg-light">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach ($distinctTahunList as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
                     <!-- Per Page Pagination Selector -->
-                    <div class="col-lg-3 col-md-2 d-flex justify-content-md-end align-items-center gap-2">
+                    <div class="col-xl-2 col-lg-3 col-md-6 ms-auto d-flex justify-content-md-end align-items-center gap-1.5">
                         <label for="tablePerPageSelect" class="form-label small text-muted text-nowrap mb-0">Tampilkan:</label>
-                        <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 108px; width: auto;">
+                        <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 90px; width: auto;">
                             <option value="10" selected>10 data</option>
                             <option value="20">20 data</option>
                             <option value="50">50 data</option>
@@ -285,7 +296,8 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                         <tr class="doc-row" 
                             data-title="<?= htmlspecialchars($doc['nama_dokumen'] . ' ' . $adaptive['standards_text']) ?>" 
                             data-nomor="<?= htmlspecialchars($doc['nomor_dokumen'] ?? '') ?>" 
-                            data-bidang-id="<?= htmlspecialchars(implode(',', $adaptive['bidang_ids'])) ?>">
+                            data-bidang-id="<?= htmlspecialchars(implode(',', $adaptive['bidang_ids'])) ?>"
+                            data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
                             <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
                             <td>
                                 <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen']) ?></div>
@@ -293,7 +305,7 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                     <div class="small text-muted mb-1"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
                                 <?php endif; ?>
                                 <?php if ($doc['tahun_akademik']): ?>
-                                    <span class="badge bg-light text-secondary border me-1" style="font-size: 0.7rem;">TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
+                                    <span class="badge bg-light text-secondary border me-1" style="font-size: 0.7rem;">Tahun Akademik <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
                                 <?php endif; ?>
                                 <?php if (!empty($adaptive['standards_html'])): ?>
                                     <div class="mt-1">

@@ -120,13 +120,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
         <!-- Filter Toolbar -->
         <div class="row g-3 align-items-center mb-4 pb-3 border-bottom">
-            <div class="col-lg-6 col-md-6">
+            <div class="col-lg-4 col-md-6">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
                     <input type="text" id="reviewSearchInput" class="form-control bg-light border-start-0 ps-0" placeholder="Cari nama dokumen, nomor SK, pengunggah..." onkeyup="filterReviewTable()">
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6">
+            <div class="col-lg-3 col-md-6">
                 <select id="reviewStatusFilter" class="form-select bg-light" onchange="filterReviewTable()">
                     <option value="">-- Semua Status Review --</option>
                     <option value="belum_direview">⏳ Belum Direview</option>
@@ -135,7 +135,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <option value="sesuai">✅ Sesuai Standar</option>
                 </select>
             </div>
-            <div class="col-lg-2 col-md-12 text-lg-end">
+            <div class="col-lg-3 col-md-6">
+                <select id="reviewTahunFilter" class="form-select bg-light" onchange="filterReviewTable()">
+                    <option value="">Semua Tahun Akademik</option>
+                    <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                        <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6 text-lg-end">
                 <span class="text-muted small" id="docCountLabel">Total <?= count($documents) ?> Dokumen</span>
             </div>
         </div>
@@ -172,6 +180,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 data-nomor="<?= htmlspecialchars(strtolower($doc['nomor_dokumen'] ?? '')) ?>"
                                 data-uploader="<?= htmlspecialchars(strtolower($doc['uploader_name'] ?? '')) ?>"
                                 data-siklus="<?= $doc['siklus'] ?>"
+                                data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                 data-status="<?= $status ?>">
                                 <td class="text-center text-muted fw-semibold"><?= $no++ ?></td>
                                 <td>
@@ -781,6 +790,7 @@ function selectReviewSiklusTab(btn, siklus) {
 function filterReviewTable() {
     const searchVal = document.getElementById('reviewSearchInput').value.toLowerCase().trim();
     const statusVal = document.getElementById('reviewStatusFilter').value;
+    const tahunVal = document.getElementById('reviewTahunFilter') ? document.getElementById('reviewTahunFilter').value.trim() : '';
     const rows = document.querySelectorAll('.review-row');
 
     let visibleCount = 0;
@@ -790,12 +800,14 @@ function filterReviewTable() {
         const uploader = row.getAttribute('data-uploader') || '';
         const siklus = row.getAttribute('data-siklus') || '';
         const status = row.getAttribute('data-status') || '';
+        const tahun = row.getAttribute('data-tahun') || '';
 
         const matchSearch = (!searchVal || title.includes(searchVal) || nomor.includes(searchVal) || uploader.includes(searchVal));
         const matchSiklus = (!currentReviewSiklus || siklus === currentReviewSiklus);
         const matchStatus = (!statusVal || status === statusVal);
+        const matchTahun = (!tahunVal || tahun === tahunVal);
 
-        if (matchSearch && matchSiklus && matchStatus) {
+        if (matchSearch && matchSiklus && matchStatus && matchTahun) {
             row.style.display = '';
             visibleCount++;
         } else {

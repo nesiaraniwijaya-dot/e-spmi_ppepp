@@ -178,8 +178,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-secondary">Judul Highlight Emas (Baris 2 - Gradasi Emas)</label>
                                             <div class="input-group">
-                                                <span class="input-group-text bg-dark border-end-0 text-warning"><i class="fas fa-sparkles"></i></span>
-                                                <input type="text" name="settings[hero_highlight]" id="inputHeroHighlight" class="form-control border-start-0 ps-0 fw-bold text-warning" style="background: #0A192F;" value="<?= htmlspecialchars($settings['hero_highlight'] ?? '') ?>" placeholder="Siklus PPEPP Berkelanjutan" required>
+                                                <span class="input-group-text bg-white border-end-0 text-warning"><i class="fas fa-sparkles"></i></span>
+                                                <input type="text" name="settings[hero_highlight]" id="inputHeroHighlight" class="form-control border-start-0 ps-0 fw-bold text-dark" value="<?= htmlspecialchars($settings['hero_highlight'] ?? '') ?>" placeholder="Siklus PPEPP Berkelanjutan" required>
                                             </div>
                                             <div class="form-text small">Baris kedua dengan gradasi warna emas/amber yang menyala.</div>
                                         </div>

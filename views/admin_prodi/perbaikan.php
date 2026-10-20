@@ -97,41 +97,53 @@ $totalDocs = count($documents);
     </div>
 
     <!-- Filter & Navigation Bar -->
-    <div class="card shadow-sm rounded-4 p-3 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
-        <div class="d-flex flex-column flex-xxl-row justify-content-between align-items-start align-items-xxl-center gap-3">
-            <!-- Tabs (Horizontal single-row pill group) -->
-            <div class="nav nav-pills d-flex flex-nowrap align-items-center gap-2 overflow-x-auto w-100 w-xxl-auto pb-1 pb-xxl-0" id="perbaikanTabs" role="tablist">
-                <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-all-btn" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" style="font-size: 0.84rem;">
-                    <i class="fas fa-layer-group text-secondary"></i>
-                    <span>Semua (<?= $totalDocs ?>)</span>
-                </button>
-                <button class="nav-link rounded-pill active fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-perlu-btn" data-bs-toggle="pill" data-bs-target="#tab-perlu" type="button" role="tab" style="font-size: 0.84rem;">
-                    <i class="fas fa-circle-exclamation text-danger"></i>
-                    <span>Perlu Tindakan</span>
-                    <span class="badge rounded-pill bg-danger text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= $perluCount ?></span>
-                </button>
-                <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 text-nowrap" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
-                    <i class="fas fa-clock-rotate-left text-primary"></i>
-                    <span>Menunggu Review LPM</span>
-                    <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= $sudahCount ?></span>
-                </button>
+    <div class="card shadow-sm rounded-4 p-3.5 mb-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
+        <div class="d-flex flex-column gap-3">
+            <!-- Baris 1: Status Tabs Navigation -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-2.5 border-bottom" style="border-color: #F1F5F9 !important;">
+                <div class="nav nav-pills d-flex flex-wrap align-items-center gap-2" id="perbaikanTabs" role="tablist">
+                    <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-all-btn" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" style="font-size: 0.84rem;">
+                        <i class="fas fa-layer-group text-secondary"></i>
+                        <span>Semua (<?= $totalDocs ?>)</span>
+                    </button>
+                    <button class="nav-link rounded-pill active fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-perlu-btn" data-bs-toggle="pill" data-bs-target="#tab-perlu" type="button" role="tab" style="font-size: 0.84rem;">
+                        <i class="fas fa-circle-exclamation text-danger"></i>
+                        <span>Perlu Tindakan</span>
+                        <span class="badge rounded-pill bg-danger text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= $perluCount ?></span>
+                    </button>
+                    <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
+                        <i class="fas fa-clock-rotate-left text-primary"></i>
+                        <span>Menunggu Review LPM</span>
+                        <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= $sudahCount ?></span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Controls: Per Page + Live Search -->
-            <div class="d-flex align-items-center gap-2.5 w-100 w-xxl-auto justify-content-between justify-content-xxl-end flex-wrap flex-sm-nowrap">
-                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+            <!-- Baris 2: Controls Toolbar (Search + Filter Tahun Akademik + Per Page) -->
+            <div class="row g-2.5 align-items-center justify-content-between">
+                <div class="col-lg-5 col-md-12">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted border-end-0" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-1" id="searchPerbaikanInput" placeholder="Cari nama dokumen / nomor SK..." oninput="filterPerbaikanList()" style="border-color: #CBD5E1;">
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-7 col-sm-8">
+                    <select id="filterTahunPerbaikanProdi" class="form-select form-select-sm shadow-none w-100" style="font-size: 0.82rem; border-color: #CBD5E1;" onchange="filterPerbaikanList()">
+                        <option value="">-- Semua Tahun Akademik --</option>
+                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-5 col-sm-4 text-sm-end d-flex justify-content-sm-end align-items-center gap-1.5">
                     <label for="perPagePerbaikanProdi" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                    <select id="perPagePerbaikanProdi" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 105px; font-size: 0.8rem; border-color: #CBD5E1;">
+                    <select id="perPagePerbaikanProdi" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 95px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;">
                         <option value="10" selected>10 data</option>
                         <option value="25">25 data</option>
                         <option value="50">50 data</option>
                         <option value="100">100 data</option>
                         <option value="all">Semua</option>
                     </select>
-                </div>
-                <div class="input-group input-group-sm" style="min-width: 240px; max-width: 320px;">
-                    <span class="input-group-text bg-light text-muted border-end-0" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-1" id="searchPerbaikanInput" placeholder="Cari nama dokumen / catatan..." oninput="filterPerbaikanList()" style="border-color: #CBD5E1;">
                 </div>
             </div>
         </div>
@@ -197,7 +209,7 @@ $totalDocs = count($documents);
                                         $noteExcerpt = trim($pDoc['lpm_catatan'] ?: ($pDoc['catatan_review'] ?: ($pDoc['gpm_catatan'] ?? 'Silakan sesuaikan isi dan lampiran dokumen mutu sesuai standar penjaminan mutu.')));
                                     }
                                 ?>
-                                    <tr class="perbaikan-table-row" data-search="<?= strtolower(htmlspecialchars($pDoc['nama_dokumen'] . ' ' . ($pDoc['nomor_dokumen'] ?? '') . ' ' . ($pDoc['nama_bidang'] ?? '') . ' ' . ($pDoc['reviewer_name'] ?? ''))) ?>">
+                                    <tr class="perbaikan-table-row" data-tahun="<?= htmlspecialchars($pDoc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($pDoc['nama_dokumen'] . ' ' . ($pDoc['nomor_dokumen'] ?? '') . ' ' . ($pDoc['nama_bidang'] ?? '') . ' ' . ($pDoc['reviewer_name'] ?? ''))) ?>">
                                         <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
                                         <td class="py-3 px-3.5" style="border-end: 1px solid #F1F5F9;">
                                             <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.4;">
@@ -364,7 +376,7 @@ $totalDocs = count($documents);
                                         $sNote = trim($sDoc['lpm_catatan'] ?: ($sDoc['catatan_review'] ?: ($sDoc['gpm_catatan'] ?? 'Menunggu review ulang.')));
                                     }
                                 ?>
-                                    <tr class="perbaikan-table-row" data-search="<?= strtolower(htmlspecialchars($sDoc['nama_dokumen'] . ' ' . ($sDoc['nomor_dokumen'] ?? '') . ' ' . ($sDoc['nama_bidang'] ?? '') . ' ' . ($sDoc['reviewer_name'] ?? ''))) ?>">
+                                    <tr class="perbaikan-table-row" data-tahun="<?= htmlspecialchars($sDoc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($sDoc['nama_dokumen'] . ' ' . ($sDoc['nomor_dokumen'] ?? '') . ' ' . ($sDoc['nama_bidang'] ?? '') . ' ' . ($sDoc['reviewer_name'] ?? ''))) ?>">
                                         <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
                                         <td class="py-3 px-3.5" style="border-end: 1px solid #F1F5F9;">
                                             <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.4;">
@@ -505,7 +517,7 @@ $totalDocs = count($documents);
                                         $noteExcerpt = trim($doc['lpm_catatan'] ?: ($doc['catatan_review'] ?: ($doc['gpm_catatan'] ?? ($isPerlu ? 'Silakan sesuaikan isi dokumen sesuai arahan.' : 'Menunggu review ulang.'))));
                                     }
                                 ?>
-                                    <tr class="perbaikan-table-row" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
+                                    <tr class="perbaikan-table-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . ($doc['reviewer_name'] ?? ''))) ?>">
                                         <td class="ps-4 text-center text-muted small fw-semibold" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
                                         <td class="py-3 px-3.5" style="border-end: 1px solid #F1F5F9;">
                                             <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.4;">
@@ -672,13 +684,18 @@ function paginateProdiTab(tabId, page) {
 
     const searchInput = document.getElementById('searchPerbaikanInput');
     const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const filterTahun = document.getElementById('filterTahunPerbaikanProdi');
+    const selectedTahun = filterTahun ? filterTahun.value.trim() : '';
 
     const allRows = Array.from(tabEl.querySelectorAll('tbody tr.perbaikan-table-row'));
     if (allRows.length === 0) return;
 
     const filteredRows = allRows.filter(row => {
         const text = (row.getAttribute('data-search') || '').toLowerCase();
-        return !query || text.includes(query);
+        const rowTahun = row.getAttribute('data-tahun') || '';
+        const matchQuery = !query || text.includes(query);
+        const matchTahun = !selectedTahun || rowTahun === selectedTahun;
+        return matchQuery && matchTahun;
     });
 
     const totalVisible = filteredRows.length;

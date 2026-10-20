@@ -14,3 +14,8 @@ uploads/avatars/*
 Thumbs.db
 .idea/
 .vscode/
+
+# Temporary / Scratch & Archive Files
+scratch/
+*.zip
+

@@ -519,6 +519,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function initDocumentTable(table) {
     const searchInput = document.getElementById('tableSearchInput');
     const bidangFilter = document.getElementById('tableBidangFilter');
+    const tahunFilter = document.getElementById('tableTahunFilter');
     const perPageSelect = document.getElementById('tablePerPageSelect') || document.getElementById('tablePageSize');
     const tableInfo = document.getElementById('tableInfo');
     const paginationContainer = document.getElementById('tablePagination');
@@ -546,21 +547,24 @@ function initDocumentTable(table) {
     function applyFilters() {
         const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
         const selectedBidang = bidangFilter ? bidangFilter.value : '';
+        const selectedTahun = tahunFilter ? tahunFilter.value.trim() : '';
 
         filteredRows = allRows.filter(row => {
             const title = (row.getAttribute('data-title') || '').toLowerCase();
             const nomor = (row.getAttribute('data-nomor') || '').toLowerCase();
             const bidangIds = (row.getAttribute('data-bidang-id') || '').split(',').map(s => s.trim());
+            const tahun = row.getAttribute('data-tahun-akademik') || '';
             const siklus = row.getAttribute('data-siklus') || '';
             const status = row.getAttribute('data-status-review') || '';
             const textContent = row.textContent.toLowerCase();
 
             const matchesSearch = !query || title.includes(query) || nomor.includes(query) || textContent.includes(query);
             const matchesBidang = !selectedBidang || bidangIds.includes(selectedBidang);
+            const matchesTahun = !selectedTahun || tahun === selectedTahun;
             const matchesSiklus = !selectedCycle || siklus === selectedCycle;
             const matchesStatus = !selectedReviewStatus || status === selectedReviewStatus;
 
-            return matchesSearch && matchesBidang && matchesSiklus && matchesStatus;
+            return matchesSearch && matchesBidang && matchesTahun && matchesSiklus && matchesStatus;
         });
 
         currentPage = 1;
@@ -596,7 +600,7 @@ function initDocumentTable(table) {
                 tr.innerHTML = `<td colspan="7" class="text-center py-5 text-muted">
                     <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                     <h6 class="fw-bold">Tidak ada dokumen yang sesuai</h6>
-                    <p class="small mb-0">Coba ubah kata kunci pencarian atau filter bidang yang dipilih.</p>
+                    <p class="small mb-0">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
                 </td>`;
                 tbody.appendChild(tr);
             } else {
@@ -683,6 +687,9 @@ function initDocumentTable(table) {
     }
     if (bidangFilter) {
         bidangFilter.addEventListener('change', applyFilters);
+    }
+    if (tahunFilter) {
+        tahunFilter.addEventListener('change', applyFilters);
     }
     if (perPageSelect) {
         perPageSelect.addEventListener('change', function () {

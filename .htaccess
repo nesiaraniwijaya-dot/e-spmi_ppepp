@@ -1,11 +1,14 @@
+# Set default index file agar tidak 403 Forbidden di hosting
+DirectoryIndex index.php index.html
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
-
-    # Direct access to assets, uploads, and existing files
+    
+    # Izinkan akses langsung ke file atau folder yang ada (assets, css, js, uploads, dll)
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # Rewrite all other requests to index.php (Works on both Localhost and Hosting)
+    # Arahkan semua URL lainnya ke index.php
     RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>

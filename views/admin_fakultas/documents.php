@@ -171,24 +171,32 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
         </ul>
 
         <!-- Search Bar and Bidang Filter -->
-        <div class="row g-3 align-items-center mb-4">
-            <div class="col-md-5">
+        <div class="row g-2.5 align-items-center mb-4">
+            <div class="col-xl-4 col-lg-3 col-md-6">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
                     <input type="text" class="form-control border-start-0 ps-1" id="filterSearch" placeholder="Cari nama dokumen, nomor SK, deskripsi..." oninput="handleTableFilter()">
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-xl-3 col-lg-3 col-md-6">
                 <select class="form-select form-select-sm" id="filterBidang" onchange="handleTableFilter()">
-                    <option value="">-- Semua Bidang --</option>
+                    <option value="">Semua Bidang</option>
                     <?php foreach ($bidangList as $b): ?>
                         <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-3 text-end d-flex justify-content-md-end align-items-center gap-2">
+            <div class="col-xl-3 col-lg-3 col-md-6">
+                <select class="form-select form-select-sm" id="filterTahun" onchange="handleTableFilter()">
+                    <option value="">Semua Tahun Akademik</option>
+                    <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                        <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-xl-2 col-lg-3 col-md-6 text-md-end d-flex justify-content-md-end align-items-center gap-2">
                 <label for="pageSizeSelect" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                <select class="form-select form-select-sm form-select-perpage" id="pageSizeSelect" style="min-width: 108px; width: auto;" onchange="changePageSize(this.value)">
+                <select class="form-select form-select-sm form-select-perpage" id="pageSizeSelect" style="min-width: 95px; width: auto;" onchange="changePageSize(this.value)">
                     <option value="10" selected>10 data</option>
                     <option value="25">25 data</option>
                     <option value="50">50 data</option>
@@ -240,6 +248,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                             <tr class="doc-row <?= $isPerluPerbaikan ? 'table-row-revision' : '' ?>" 
                                 data-siklus="<?= $siklusKey ?>" 
                                 data-bidang-id="<?= $doc['bidang_id'] ?? '' ?>"
+                                data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                 data-review-status="<?= $reviewStatus ?>"
                                 data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . $doc['nomor_dokumen'] . ' ' . ($doc['nama_bidang'] ?? ''))) ?>"
                                 style="<?= $isPerluPerbaikan ? 'border-left: 4px solid #DC2626 !important; background: #FFFBFB;' : '' ?>">
@@ -817,21 +826,24 @@ function filterByReviewStatus(status) {
 function handleTableFilter() {
     const searchVal = document.getElementById('filterSearch').value.toLowerCase().trim();
     const bidangVal = document.getElementById('filterBidang').value;
+    const tahunVal = document.getElementById('filterTahun') ? document.getElementById('filterTahun').value.trim() : '';
     const allRows = document.querySelectorAll('.doc-row');
     let visibleRows = [];
 
     allRows.forEach(row => {
         const rowSiklus = row.getAttribute('data-siklus') || '';
         const rowBidang = row.getAttribute('data-bidang-id') || '';
+        const rowTahun = row.getAttribute('data-tahun') || '';
         const rowStatus = row.getAttribute('data-review-status') || '';
         const rowSearch = row.getAttribute('data-search') || '';
 
         const matchSiklus = !activeSiklus || rowSiklus === activeSiklus;
         const matchBidang = !bidangVal || rowBidang === bidangVal;
+        const matchTahun = !tahunVal || rowTahun === tahunVal;
         const matchStatus = !filterReviewStatusVal || rowStatus === filterReviewStatusVal;
         const matchSearch = !searchVal || rowSearch.includes(searchVal);
 
-        if (matchSiklus && matchBidang && matchStatus && matchSearch) {
+        if (matchSiklus && matchBidang && matchTahun && matchStatus && matchSearch) {
             visibleRows.push(row);
         } else {
             row.style.display = 'none';

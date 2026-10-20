@@ -85,6 +85,19 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
    - **Defensive Error Handling**: Ditambahkan blok `try-catch` pada `SuperAdminController`, `AdminProdiController`, dan `AdminFakultasController` agar akses modul tetap aman tanpa unhandled PDOException.
    - Skrip maintenance: `database/reset_reviews_to_gpm_and_cleanup.php`.
 
+10. **Standardisasi Format Tahun Akademik & Kesiapan Dual-Environment (20 Oktober 2026)**:
+    - **Format Otomatis Input Tahun Akademik (`YYYY/YYYY`)**:
+      - Ditambahkan helper `autoPairTahunAkademik(input, event)` di `views/layouts/admin_header.php` dan `footer.php`.
+      - Saat pengguna mengetik 4 digit tahun awal (misal `2026`), sistem secara otomatis menambahkan garis miring dan tahun berikutnya (`2026/2027`).
+    - **Perapian Dropdown & Toolbar Filter Tahun Akademik**:
+      - Memisahkan baris status tab dan baris toolbar kontrol pada halaman perbaikan dokumen (`admin_fakultas/perbaikan.php`, `admin_prodi/perbaikan.php`, `gpm/perbaikan.php`) agar label dan kontrol tidak bertubrukan/menumpuk.
+      - Memperlebar alokasi kolom grid dropdown Tahun Akademik menjadi `col-xl-3 col-lg-3 col-md-6` (dan `min-width: 200px` pada draf) sehingga teks `Semua Tahun Akademik` dan opsi tahun tidak terpotong.
+    - **Dukungan Konfigurasi Dual-Environment (Localhost & Hosting)**:
+      - Diperkenalkan fungsi `is_localhost()` di `config/app.php` yang secara otomatis mengenali apakah aplikasi berjalan di Localhost (Laragon) atau Server Hosting Online (ProFreeHost / cPanel).
+      - File konfigurasi `config/env.php` memisahkan konfigurasi database lokal dan hosting secara otomatis tanpa perlu mengubah kode saat deployment.
+    - **Pembaruan Master Database SQL**:
+      - Master dump `database/spmi_ppepp.sql` telah disinkronkan dan memuat seluruh data terbaru (10 fakultas, 27 prodi, akun demo `pengguna@unika.ac.id`, kolom `password_plain`, dan riwayat dokumen).
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
@@ -95,4 +108,5 @@ mysql -u root spmi_ppepp < database/spmi_ppepp.sql
 atau melalui phpMyAdmin:
 1. Buat/pilih database `spmi_ppepp`.
 2. Klik tab **Import**, pilih berkas `database/spmi_ppepp.sql`, lalu klik **Import**.
+
 

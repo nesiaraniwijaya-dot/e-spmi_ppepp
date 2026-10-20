@@ -45,6 +45,28 @@ if (!defined('APP_NAME')) {
     define('GOOGLE_REDIRECT_URI', BASE_URL . '/auth/google/callback');
 }
 
+// Global Environment Detection Function
+function is_localhost(): bool {
+    $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? '');
+    if ($host !== '') {
+        $hostClean = preg_replace('/:\d+$/', '', $host);
+        return in_array($hostClean, ['localhost', '127.0.0.1', '::1'])
+            || str_ends_with($hostClean, '.test')
+            || str_ends_with($hostClean, '.local');
+    }
+    return (php_sapi_name() === 'cli');
+}
+
+// Adaptif Error Reporting: Aktif di Localhost, Aman di Hosting
+if (is_localhost()) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', '1');
+} else {
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT);
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+}
+
 // Global Helper Functions
 function base_url(string $path = ''): string {
     return BASE_URL . ($path ? '/' . ltrim($path, '/') : '');
@@ -690,6 +712,70 @@ function get_review_status_label(string $status): string {
     };
 }
 
+/**
+ * Ambil seluruh daftar tahun akademik yang pernah diinput secara dinamis
+ * Menggabungkan seluruh data dari ppepp_documents dan ppepp_cycles
+ */
+function get_distinct_tahun_akademik(?PDO $db = null): array {
+    static $cached = null;
+    if ($cached !== null && $db === null) {
+        return $cached;
+    }
+    try {
+        if ($db === null) {
+            require_once ROOT_PATH . '/config/database.php';
+            $db = Database::getInstance()->getConnection();
+        }
+        $sql = "
+            SELECT DISTINCT tahun_akademik FROM (
+                SELECT DISTINCT tahun_akademik FROM ppepp_documents 
+                WHERE tahun_akademik IS NOT NULL AND TRIM(tahun_akademik) != '' AND deleted_at IS NULL
+                UNION
+                SELECT DISTINCT tahun_akademik FROM ppepp_cycles 
+                WHERE tahun_akademik IS NOT NULL AND TRIM(tahun_akademik) != '' AND deleted_at IS NULL
+            ) t 
+            WHERE tahun_akademik REGEXP '^[0-9]{4}/[0-9]{4}$'
+            ORDER BY tahun_akademik DESC
+        ";
+        $results = $db->query($sql)->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $cleaned = array_values(array_unique(array_filter(array_map('trim', $results))));
+        rsort($cleaned);
+        $cached = $cleaned;
+        return $cleaned;
+    } catch (\Throwable $e) {
+        return [];
+    }
+}
 
+/**
+ * Normalisasi format tahun akademik menjadi format konsisten YYYY/YYYY (contoh: 2026/2027)
+ */
+function normalize_tahun_akademik(?string $input): string {
+    if ($input === null) return '';
+    $raw = trim($input);
+    if ($raw === '') return '';
 
+    // Jika sudah format YYYY/YYYY (misal 2026/2027)
+    if (preg_match('/^(\d{4})\/(\d{4})$/', $raw, $m)) {
+        return $m[1] . '/' . $m[2];
+    }
 
+    // Jika hanya 4 angka tahun (misal 2026) -> otomatis dipasangkan dengan tahun berikutnya
+    if (preg_match('/^(\d{4})$/', $raw, $m)) {
+        $year = (int)$m[1];
+        return $year . '/' . ($year + 1);
+    }
+
+    // Jika format 2026-2027
+    if (preg_match('/^(\d{4})-(\d{4})$/', $raw, $m)) {
+        return $m[1] . '/' . $m[2];
+    }
+
+    // Jika format 2026/27 atau 2026-27
+    if (preg_match('/^(\d{4})[\/-](\d{2})$/', $raw, $m)) {
+        $century = substr($m[1], 0, 2);
+        return $m[1] . '/' . ($century . $m[2]);
+    }
+
+    return $raw;
+}

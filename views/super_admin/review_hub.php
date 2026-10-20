@@ -231,6 +231,16 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         </select>
                     </div>
 
+                    <!-- Filter Tahun Akademik -->
+                    <div class="col-lg-2 col-md-6">
+                        <select class="form-select form-select-sm filter-hub-select" id="tahunFilter" onchange="filterHubTable()">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
                     <!-- Reset Filter Button -->
                     <div class="col-lg-1 col-md-12 text-lg-end text-center">
                         <button type="button" class="btn btn-outline-secondary btn-sm w-100 rounded-pill" onclick="resetHubFilters()" title="Reset semua filter ke default">
@@ -298,6 +308,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         data-prodi-id="<?= $unitPrdId ?>"
                                         data-siklus="<?= $siklus ?>"
                                         data-bidang-id="<?= $doc['bidang_id'] ?? '' ?>"
+                                        data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                         data-title="<?= htmlspecialchars(strtolower($doc['nama_dokumen'])) ?>"
                                         data-nomor="<?= htmlspecialchars(strtolower($doc['nomor_dokumen'] ?? '')) ?>"
                                         data-uploader="<?= htmlspecialchars(strtolower($doc['uploader_name'] ?? '')) ?>"
@@ -1578,6 +1589,7 @@ function resetHubFilters() {
     document.getElementById('prodiFilter').value = '';
     document.getElementById('siklusFilter').value = '';
     document.getElementById('bidangFilter').value = '';
+    if (document.getElementById('tahunFilter')) document.getElementById('tahunFilter').value = '';
 
     // Show all prodi options
     document.querySelectorAll('#prodiFilter option').forEach(opt => opt.style.display = '');
@@ -1592,6 +1604,7 @@ function filterHubTable() {
     const prodiVal = document.getElementById('prodiFilter').value;
     const siklusVal = document.getElementById('siklusFilter').value;
     const bidangVal = document.getElementById('bidangFilter').value;
+    const tahunVal = document.getElementById('tahunFilter') ? document.getElementById('tahunFilter').value.trim() : '';
 
     const rows = document.querySelectorAll('.hub-doc-row');
     let visibleCount = 0;
@@ -1603,6 +1616,7 @@ function filterHubTable() {
         const rowProdi = row.getAttribute('data-prodi-id') || '';
         const rowSiklus = row.getAttribute('data-siklus') || '';
         const rowBidang = row.getAttribute('data-bidang-id') || '';
+        const rowTahun = row.getAttribute('data-tahun') || '';
 
         const title = row.getAttribute('data-title') || '';
         const nomor = row.getAttribute('data-nomor') || '';
@@ -1628,6 +1642,7 @@ function filterHubTable() {
         const matchProdi = (!prodiVal || rowProdi === prodiVal);
         const matchSiklus = (!siklusVal || rowSiklus === siklusVal);
         const matchBidang = (!bidangVal || rowBidang === bidangVal);
+        const matchTahun = (!tahunVal || rowTahun === tahunVal);
 
         // Search match
         const matchSearch = (!searchVal || 
@@ -1637,7 +1652,7 @@ function filterHubTable() {
             unit.includes(searchVal)
         );
 
-        if (matchStatus && matchFakultas && matchProdi && matchSiklus && matchBidang && matchSearch) {
+        if (matchStatus && matchFakultas && matchProdi && matchSiklus && matchBidang && matchTahun && matchSearch) {
             row.style.display = '';
             const noEl = row.querySelector('.row-number');
             if (noEl) noEl.textContent = runningNo++;

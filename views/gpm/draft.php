@@ -222,6 +222,14 @@ foreach ($draftDocs as $d) {
                             <option value="all">Semua</option>
                         </select>
                     </div>
+                    <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                        <select id="filterTahunDraftGpm" class="form-select form-select-sm shadow-none" style="min-width: 200px; font-size: 0.8rem; border-color: #CBD5E1;" onchange="currentDraftGpmPage = 1; filterDraftGpmTable();">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <div class="input-group input-group-sm" style="max-width: 250px;">
                         <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
                         <input type="text" class="form-control border-start-0 ps-1" id="searchDraftGpmInput" placeholder="Cari draf dokumen..." oninput="filterDraftGpmTable()" style="border-color: #CBD5E1;">
@@ -248,7 +256,7 @@ foreach ($draftDocs as $d) {
                             $links = parse_external_links($doc['external_link'] ?? '');
                             $hasAttached = (!empty($files) || !empty($links) || !empty($doc['file_path']));
                             ?>
-                            <tr class="draft-gpm-row">
+                            <tr class="draft-gpm-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
                                 <!-- Unit Sasaran Badge -->
                                 <td class="ps-4 align-top py-3">
                                     <?php if ($doc['level'] === 'fakultas'): ?>
@@ -432,12 +440,17 @@ function changeDraftGpmPageSize(val) {
 
 function filterDraftGpmTable() {
     const q = (document.getElementById('searchDraftGpmInput')?.value || '').toLowerCase().trim();
+    const filterTahun = (document.getElementById('filterTahunDraftGpm')?.value || '').trim();
     const rows = Array.from(document.querySelectorAll('#draftGpmTable tbody tr.draft-gpm-row'));
     
     const matchedRows = [];
     rows.forEach(row => {
         const text = row.innerText.toLowerCase();
-        if (!q || text.includes(q)) {
+        const rowTahun = (row.getAttribute('data-tahun') || '').trim();
+        const matchSearch = !q || text.includes(q);
+        const matchTahun = !filterTahun || rowTahun === filterTahun;
+
+        if (matchSearch && matchTahun) {
             matchedRows.push(row);
         } else {
             row.style.display = 'none';

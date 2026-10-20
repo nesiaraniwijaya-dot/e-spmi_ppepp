@@ -491,7 +491,7 @@ class AdminFakultasController extends Controller {
                     $bidangId = !empty($d['bidang_id']) ? (int)$d['bidang_id'] : null;
                     $subBidangId = !empty($d['sub_bidang_id']) ? (int)$d['sub_bidang_id'] : null;
                     $siklus = trim($d['siklus'] ?? '');
-                    $tahunAkademik = trim($d['tahun_akademik'] ?? '');
+                    $tahunAkademik = normalize_tahun_akademik($d['tahun_akademik'] ?? '');
                     $startDate = null;
                     $endDate = null;
                     $jenisUpload = trim($d['jenis_upload'] ?? 'file');
@@ -816,7 +816,7 @@ class AdminFakultasController extends Controller {
             $bidangId = !empty($_POST['bidang_id']) ? (int)$_POST['bidang_id'] : null;
             $subBidangId = !empty($_POST['sub_bidang_id']) ? (int)$_POST['sub_bidang_id'] : null;
             $siklus = trim($_POST['siklus'] ?? '');
-            $tahunAkademik = trim($_POST['tahun_akademik'] ?? '');
+            $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
             $startDate = null;
             $endDate = null;
             $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
