@@ -66,6 +66,7 @@ $router->get('admin/monitoring-dokumen', ['SuperAdminController', 'monitoringDok
 $router->get('admin/monitoring-berkas', ['SuperAdminController', 'monitoringBerkas']);
 $router->get('admin/monitoring-lalulintas', ['SuperAdminController', 'monitoringBerkas']);
 $router->get('admin/monitoring-gpm', ['SuperAdminController', 'monitoringGpm']);
+$router->get('admin/monitoring-gpm/history/{id:\d+}', ['SuperAdminController', 'gpmReviewHistory']);
 $router->get('admin/review-prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
 $router->get('admin/review-fakultas/{id:\d+}', ['SuperAdminController', 'reviewFakultas']);
 $router->post('admin/review-dokumen/submit', ['SuperAdminController', 'submitReview']);

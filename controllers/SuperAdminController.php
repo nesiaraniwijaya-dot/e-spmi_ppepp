@@ -1798,7 +1798,7 @@ class SuperAdminController extends Controller {
      */
     public function monitoringGpm(): void {
         $gpmMembers = $this->db->query("
-            SELECT u.id, u.name, u.email, u.fakultas_id, u.created_at as member_since,
+            SELECT u.id, u.name, u.email, u.avatar, u.fakultas_id, u.created_at as member_since,
                    f.nama_fakultas, f.kode_fakultas,
                    -- Total dokumen dalam cakupan fakultas GPM ini
                    (SELECT COUNT(*) FROM ppepp_documents d 
@@ -1810,12 +1810,18 @@ class SuperAdminController extends Controller {
                    -- Dokumen yang masih pending / antre di meja GPM
                    (SELECT COUNT(*) FROM ppepp_documents d 
                     WHERE (d.fakultas_id = u.fakultas_id OR d.prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = u.fakultas_id))
-                      AND d.status_review = 'menunggu_review_gpm' AND d.deleted_at IS NULL
+                      AND d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND d.deleted_at IS NULL
                    ) as pending_review,
                    -- Dokumen yang dikembalikan revisi oleh GPM ini
-                   (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.status_review = 'revisi_gpm' AND d.deleted_at IS NULL) as total_revisi,
-                   -- Dokumen yang disetujui & diteruskan ke LPM oleh GPM ini
-                   (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.status_review IN ('menunggu_review_lpm', 'sesuai') AND d.deleted_at IS NULL) as total_diteruskan,
+                   GREATEST(
+                       (SELECT COUNT(*) FROM ppepp_document_reviews r WHERE r.reviewer_id = u.id AND r.status_hasil = 'revisi_gpm'),
+                       (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.status_review = 'revisi_gpm' AND d.deleted_at IS NULL)
+                   ) as total_revisi,
+                   -- Dokumen yang disetujui & diteruskan ke LPM oleh GPM ini (Approve)
+                   GREATEST(
+                       (SELECT COUNT(*) FROM ppepp_document_reviews r WHERE r.reviewer_id = u.id AND r.status_hasil IN ('menunggu_review_lpm', 'sesuai')),
+                       (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.status_review IN ('menunggu_review_lpm', 'sesuai') AND d.deleted_at IS NULL)
+                   ) as total_diteruskan,
                    -- Tanggal review terakhir
                    (SELECT MAX(d.gpm_reviewed_at) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.deleted_at IS NULL) as last_reviewed_at,
                    -- Rata-rata durasi review dalam jam
@@ -1838,6 +1844,68 @@ class SuperAdminController extends Controller {
             'totalReviewedAll' => $totalReviewedAll,
             'totalPendingAll' => $totalPendingAll
         ]);
+    }
+
+    /**
+     * API JSON: Riwayat Review Dokumen per Anggota GPM (More Detail)
+     */
+    public function gpmReviewHistory(string $id): void {
+        header('Content-Type: application/json');
+        $gpmId = (int)$id;
+
+        $stmtGpm = $this->db->prepare("
+            SELECT u.id, u.name, u.email, u.avatar, f.nama_fakultas 
+            FROM users u 
+            LEFT JOIN fakultas f ON u.fakultas_id = f.id 
+            WHERE u.id = ? AND u.role = 'gpm'
+        ");
+        $stmtGpm->execute([$gpmId]);
+        $gpm = $stmtGpm->fetch();
+
+        if (!$gpm) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Anggota GPM tidak ditemukan.']);
+            exit;
+        }
+
+        // Ambil riwayat dari ppepp_document_reviews
+        $stmtRev = $this->db->prepare("
+            SELECT r.id, r.document_id, r.status_hasil, r.catatan, r.created_at,
+                   d.nama_dokumen, d.nomor_dokumen, d.level, d.siklus, d.tahun_akademik,
+                   f.nama_fakultas, p.nama_prodi, p.jenjang
+            FROM ppepp_document_reviews r
+            JOIN ppepp_documents d ON r.document_id = d.id
+            LEFT JOIN fakultas f ON d.fakultas_id = f.id
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            WHERE r.reviewer_id = ?
+            ORDER BY r.created_at DESC
+        ");
+        $stmtRev->execute([$gpmId]);
+        $history = $stmtRev->fetchAll() ?: [];
+
+        // Fallback: Jika di ppepp_document_reviews belum ada data, ambil dari ppepp_documents yang pernah direview
+        if (empty($history)) {
+            $stmtDoc = $this->db->prepare("
+                SELECT d.id as document_id, d.status_review as status_hasil, d.gpm_catatan as catatan, 
+                       d.gpm_reviewed_at as created_at,
+                       d.nama_dokumen, d.nomor_dokumen, d.level, d.siklus, d.tahun_akademik,
+                       f.nama_fakultas, p.nama_prodi, p.jenjang
+                FROM ppepp_documents d
+                LEFT JOIN fakultas f ON d.fakultas_id = f.id
+                LEFT JOIN prodis p ON d.prodi_id = p.id
+                WHERE d.gpm_reviewed_by = ? AND d.deleted_at IS NULL
+                ORDER BY d.gpm_reviewed_at DESC
+            ");
+            $stmtDoc->execute([$gpmId]);
+            $history = $stmtDoc->fetchAll() ?: [];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'gpm' => $gpm,
+            'history' => $history
+        ]);
+        exit;
     }
 
     /**
