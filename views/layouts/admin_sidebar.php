@@ -176,9 +176,6 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-gpm') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-users-viewfinder"></i></span>
                     <span>Monitoring Kinerja GPM</span>
-                    <?php if (!empty($sidebarPendingGpmCount) && $sidebarPendingGpmCount > 0): ?>
-                        <span class="badge bg-warning text-dark border border-warning rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingGpmCount ?> dokumen antre telaah GPM"><?= $sidebarPendingGpmCount ?></span>
-                    <?php endif; ?>
                 </a>
             </div>
 
