@@ -407,27 +407,34 @@ foreach ($documents as $d) {
                                             <?php if (count($files) === 1): 
                                                 $singleF = $files[0];
                                             ?>
-                                                <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#pdfPreviewModal" 
-                                                        data-pdf-url="<?= base_url($singleF['file_path']) ?>" 
-                                                        data-doc-title="<?= htmlspecialchars($singleF['file_name']) ?>" 
-                                                        data-doc-narasi="<?= htmlspecialchars($singleF['narasi'] ?? '') ?>" 
-                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleF['sub_bidang_ids'] ?? null)) ?>" 
-                                                        data-public-limit="0" 
-                                                        data-can-download="1"
-                                                        data-can-access="1"
-                                                        style="font-size: 0.72rem;" title="Pratinjau Berkas PDF">
-                                                    <i class="fas fa-file-pdf"></i> PDF
-                                                </button>
+                                                <div class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                                    <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#pdfPreviewModal" 
+                                                            data-pdf-url="<?= base_url($singleF['file_path']) ?>" 
+                                                            data-doc-title="<?= htmlspecialchars($singleF['file_name']) ?>" 
+                                                            data-doc-narasi="<?= htmlspecialchars($singleF['narasi'] ?? '') ?>" 
+                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleF['sub_bidang_ids'] ?? null)) ?>" 
+                                                            data-public-limit="0" 
+                                                            data-can-download="1"
+                                                            data-can-access="1"
+                                                            style="font-size: 0.72rem;" title="Pratinjau Berkas">
+                                                        <i class="<?= ($singleF['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf' ?>"></i> <?= ($singleF['file_category'] ?? '') === 'photo' ? 'Foto' : 'PDF' ?>
+                                                    </button>
+                                                    <?php if (!empty($singleF['folder_name'])): ?>
+                                                        <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.62rem;" title="Folder: <?= htmlspecialchars($singleF['folder_name']) ?>">
+                                                            <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleF['folder_name']) ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             <?php else: ?>
                                                 <div class="dropdown d-inline-block">
                                                     <button class="btn btn-xs btn-outline-danger dropdown-toggle rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
                                                             type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.72rem;">
-                                                        <i class="fas fa-file-pdf text-danger"></i> <?= count($files) ?> PDF
+                                                        <i class="fas fa-folder-open text-danger"></i> <?= count($files) ?> Berkas
                                                     </button>
-                                                    <ul class="dropdown-menu shadow-lg border-0 p-2 rounded-3" style="min-width: 260px; max-width: 360px; font-size: 0.78rem;">
-                                                        <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS PDF:</li>
+                                                    <ul class="dropdown-menu shadow-lg border-0 p-2 rounded-3" style="min-width: 280px; max-width: 380px; font-size: 0.78rem;">
+                                                        <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS:</li>
                                                         <?php foreach ($files as $fItem): ?>
                                                             <li class="mb-1">
                                                                 <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
@@ -440,9 +447,16 @@ foreach ($documents as $d) {
                                                                         data-public-limit="0"
                                                                         data-can-download="1"
                                                                         data-can-access="1">
-                                                                    <div class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate">
-                                                                        <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
-                                                                        <span class="text-truncate"><?= htmlspecialchars($fItem['file_name']) ?></span>
+                                                                    <div class="d-flex align-items-center justify-content-between gap-1.5 mb-0.5">
+                                                                        <div class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate">
+                                                                            <i class="<?= ($fItem['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf text-danger' ?> flex-shrink-0"></i>
+                                                                            <span class="text-truncate" style="max-width: 180px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
+                                                                        </div>
+                                                                        <?php if (!empty($fItem['folder_name'])): ?>
+                                                                            <span class="badge bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0" style="font-size: 0.60rem;">
+                                                                                <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($fItem['folder_name']) ?>
+                                                                            </span>
+                                                                        <?php endif; ?>
                                                                     </div>
                                                                 </button>
                                                             </li>
@@ -456,26 +470,33 @@ foreach ($documents as $d) {
                                             <?php if (count($links) === 1): 
                                                 $singleL = $links[0];
                                             ?>
-                                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#pdfPreviewModal" 
-                                                        data-is-link="1" 
-                                                        data-link-url="<?= htmlspecialchars($singleL['url']) ?>" 
-                                                        data-doc-title="<?= htmlspecialchars($singleL['narasi'] ?: $doc['nama_dokumen']) ?>" 
-                                                        data-doc-narasi="<?= htmlspecialchars($singleL['narasi'] ?? '') ?>" 
-                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleL['sub_bidang_ids'] ?? null)) ?>" 
-                                                        data-can-access="1" 
-                                                        data-can-download="1"
-                                                        style="font-size: 0.72rem;" title="Pratinjau Link GDrive">
-                                                    <i class="fab fa-google-drive"></i> GDrive
-                                                </button>
+                                                <div class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#pdfPreviewModal" 
+                                                            data-is-link="1" 
+                                                            data-link-url="<?= htmlspecialchars($singleL['url']) ?>" 
+                                                            data-doc-title="<?= htmlspecialchars($singleL['label'] ?: ($singleL['narasi'] ?: $doc['nama_dokumen'])) ?>" 
+                                                            data-doc-narasi="<?= htmlspecialchars($singleL['narasi'] ?? '') ?>" 
+                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleL['sub_bidang_ids'] ?? null)) ?>" 
+                                                            data-can-access="1" 
+                                                            data-can-download="1"
+                                                            style="font-size: 0.72rem;" title="Pratinjau Link GDrive">
+                                                        <i class="fab fa-google-drive"></i> GDrive
+                                                    </button>
+                                                    <?php if (!empty($singleL['folder_name'])): ?>
+                                                        <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.62rem;" title="Folder: <?= htmlspecialchars($singleL['folder_name']) ?>">
+                                                            <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleL['folder_name']) ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             <?php else: ?>
                                                 <div class="dropdown d-inline-block">
                                                     <button class="btn btn-xs btn-outline-primary dropdown-toggle rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
                                                             type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.72rem;">
                                                         <i class="fab fa-google-drive text-primary"></i> <?= count($links) ?> Drive
                                                     </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 260px; max-width: 360px; font-size: 0.78rem;">
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 280px; max-width: 380px; font-size: 0.78rem;">
                                                         <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH TAUTAN DRIVE:</li>
                                                         <?php foreach ($links as $lIdx => $lItem): ?>
                                                             <li class="mb-1">
@@ -484,14 +505,21 @@ foreach ($documents as $d) {
                                                                         data-bs-target="#pdfPreviewModal" 
                                                                         data-is-link="1" 
                                                                         data-link-url="<?= htmlspecialchars($lItem['url']) ?>" 
-                                                                        data-doc-title="<?= htmlspecialchars($lItem['narasi'] ?: ('Tautan GDrive #' . ($lIdx + 1))) ?>" 
+                                                                        data-doc-title="<?= htmlspecialchars($lItem['label'] ?: ($lItem['narasi'] ?: ('Tautan GDrive #' . ($lIdx + 1)))) ?>" 
                                                                         data-doc-narasi="<?= htmlspecialchars($lItem['narasi'] ?? '') ?>" 
                                                                         data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($lItem['sub_bidang_ids'] ?? null)) ?>" 
                                                                         data-can-access="1" 
                                                                         data-can-download="1">
-                                                                    <div class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
-                                                                        <i class="fab fa-google-drive"></i>
-                                                                        <span class="text-truncate"><?= htmlspecialchars($lItem['narasi'] ?: ('Tautan GDrive #' . ($lIdx + 1))) ?></span>
+                                                                    <div class="d-flex align-items-center justify-content-between gap-1.5 mb-0.5">
+                                                                        <div class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
+                                                                            <i class="fab fa-google-drive flex-shrink-0"></i>
+                                                                            <span class="text-truncate" style="max-width: 180px;"><?= htmlspecialchars($lItem['label'] ?: ($lItem['narasi'] ?: ('Tautan GDrive #' . ($lIdx + 1)))) ?></span>
+                                                                        </div>
+                                                                        <?php if (!empty($lItem['folder_name'])): ?>
+                                                                            <span class="badge bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0" style="font-size: 0.60rem;">
+                                                                                <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($lItem['folder_name']) ?>
+                                                                            </span>
+                                                                        <?php endif; ?>
                                                                     </div>
                                                                 </button>
                                                             </li>

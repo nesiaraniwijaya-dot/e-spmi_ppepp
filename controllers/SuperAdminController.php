@@ -1545,4 +1545,280 @@ class SuperAdminController extends Controller {
         Auth::setFlash('success', 'Konten beranda publik berhasil dikembalikan ke standar awal.');
         redirect('admin/landing-settings');
     }
+
+    /**
+     * Manajemen Buka / Tutup Jatah Upload per Tahun Akademik (LPM)
+     */
+    public function tahunAkademik(): void {
+        $tahunList = $this->db->query("
+            SELECT t.*, 
+                   (SELECT COUNT(*) FROM ppepp_documents d WHERE d.tahun_akademik = t.tahun_akademik AND d.deleted_at IS NULL) as total_dokumen
+            FROM tahun_akademik_settings t
+            ORDER BY t.tahun_akademik DESC
+        ")->fetchAll();
+
+        $this->render('super_admin/tahun_akademik', [
+            'pageTitle' => 'Manajemen Tahun Akademik & Periode Upload',
+            'tahunList' => $tahunList
+        ]);
+    }
+
+    public function toggleTahunAkademik(string $id): void {
+        $id = (int)$id;
+        $stmt = $this->db->prepare("SELECT * FROM tahun_akademik_settings WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            Auth::setFlash('danger', 'Tahun akademik tidak ditemukan.');
+            redirect('admin/tahun-akademik');
+            return;
+        }
+
+        $newStatus = $row['is_open'] ? 0 : 1;
+        $upd = $this->db->prepare("UPDATE tahun_akademik_settings SET is_open = ? WHERE id = ?");
+        $upd->execute([$newStatus, $id]);
+
+        $statusText = $newStatus ? 'DIBUKA' : 'DITUTUP';
+        AuditLogger::log('UPDATE', 'Tahun Akademik', "ID {$id}", "Mengubah status upload TA {$row['tahun_akademik']} menjadi {$statusText}");
+        Auth::setFlash('success', "Periode upload untuk Tahun Akademik {$row['tahun_akademik']} berhasil {$statusText}.");
+        redirect('admin/tahun-akademik');
+    }
+
+    public function saveTahunAkademik(): void {
+        $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+        $tahunAkademik = trim($_POST['tahun_akademik'] ?? '');
+        $catatan = trim($_POST['catatan'] ?? '');
+        $isOpen = isset($_POST['is_open']) ? 1 : 0;
+
+        if (empty($tahunAkademik)) {
+            Auth::setFlash('danger', 'Tahun akademik wajib diisi (Contoh: 2026/2027).');
+            redirect('admin/tahun-akademik');
+            return;
+        }
+
+        // Format TA: 1 September s/d 31 Agustus
+        if (preg_match('/^(\d{4})\/(\d{4})$/', $tahunAkademik, $m)) {
+            $tglMulai = $m[1] . '-09-01';
+            $tglSelesai = $m[2] . '-08-31';
+        } else {
+            $tglMulai = !empty($_POST['tanggal_mulai']) ? $_POST['tanggal_mulai'] : date('Y') . '-09-01';
+            $tglSelesai = !empty($_POST['tanggal_selesai']) ? $_POST['tanggal_selesai'] : (date('Y') + 1) . '-08-31';
+        }
+
+        if ($id) {
+            $stmt = $this->db->prepare("
+                UPDATE tahun_akademik_settings 
+                SET tahun_akademik = ?, tanggal_mulai = ?, tanggal_selesai = ?, is_open = ?, catatan = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([$tahunAkademik, $tglMulai, $tglSelesai, $isOpen, $catatan, $id]);
+            Auth::setFlash('success', "Tahun Akademik {$tahunAkademik} berhasil diperbarui.");
+        } else {
+            $stmt = $this->db->prepare("
+                INSERT INTO tahun_akademik_settings (tahun_akademik, tanggal_mulai, tanggal_selesai, is_open, catatan)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([$tahunAkademik, $tglMulai, $tglSelesai, $isOpen, $catatan]);
+            Auth::setFlash('success', "Tahun Akademik {$tahunAkademik} berhasil ditambahkan (Periode 1 Sept - 31 Agt).");
+        }
+
+        redirect('admin/tahun-akademik');
+    }
+
+    /**
+     * Halaman Monitoring Lalu Lintas Dokumen LPM
+     * Memantau status file, antrean review GPM, durasi turnaround (jarak tanggal upload vs review),
+     * serta unit yang belum mengunggah dokumen.
+     */
+    public function monitoringLaluLintas(): void {
+        $tahunList = $this->db->query("SELECT tahun_akademik, is_open FROM tahun_akademik_settings ORDER BY tahun_akademik DESC")->fetchAll();
+        $defaultTA = '';
+        foreach ($tahunList as $t) {
+            if ($t['is_open']) { $defaultTA = $t['tahun_akademik']; break; }
+        }
+        if (empty($defaultTA) && !empty($tahunList)) {
+            $defaultTA = $tahunList[0]['tahun_akademik'];
+        }
+
+        $activeTA = trim($_GET['tahun_akademik'] ?? $defaultTA);
+        $level = trim($_GET['level'] ?? '');
+        $fakultasId = !empty($_GET['fakultas_id']) ? (int)$_GET['fakultas_id'] : '';
+        $prodiId = !empty($_GET['prodi_id']) ? (int)$_GET['prodi_id'] : '';
+        $siklus = trim($_GET['siklus'] ?? '');
+        $statusReview = trim($_GET['status_review'] ?? '');
+        $trafficFilter = trim($_GET['kategori_traffic'] ?? '');
+
+        // Query Utama Dokumen Lalu Lintas
+        $sql = "
+            SELECT d.*, 
+                   b.nama_bidang, b.kode_bidang,
+                   sb.nama_sub_bidang, sb.kode_sub_bidang,
+                   f.nama_fakultas, f.kode_fakultas,
+                   p.nama_prodi, p.kode_prodi, p.jenjang,
+                   u_upload.name as uploader_name, u_upload.role as uploader_role,
+                   u_gpm.name as gpm_reviewer_name,
+                   u_lpm.name as lpm_reviewer_name,
+                   TIMESTAMPDIFF(HOUR, d.created_at, d.gpm_reviewed_at) as diff_hours_upload_to_gpm,
+                   TIMESTAMPDIFF(DAY, d.created_at, d.gpm_reviewed_at) as diff_days_upload_to_gpm,
+                   TIMESTAMPDIFF(DAY, d.created_at, NOW()) as pending_days_gpm,
+                   TIMESTAMPDIFF(DAY, d.gpm_reviewed_at, NOW()) as pending_days_lpm
+            FROM ppepp_documents d
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
+            LEFT JOIN fakultas f ON d.fakultas_id = f.id
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN users u_upload ON d.user_id = u_upload.id
+            LEFT JOIN users u_gpm ON d.gpm_reviewed_by = u_gpm.id
+            LEFT JOIN users u_lpm ON d.lpm_reviewed_by = u_lpm.id
+            WHERE d.deleted_at IS NULL AND d.status_review != 'draft'
+        ";
+        $params = [];
+
+        if ($activeTA && $activeTA !== 'all') {
+            $sql .= " AND d.tahun_akademik = ?";
+            $params[] = $activeTA;
+        }
+        if ($level && in_array($level, ['fakultas', 'prodi'])) {
+            $sql .= " AND d.level = ?";
+            $params[] = $level;
+        }
+        if ($fakultasId) {
+            $sql .= " AND (d.fakultas_id = ? OR p.fakultas_id = ?)";
+            $params[] = $fakultasId;
+            $params[] = $fakultasId;
+        }
+        if ($prodiId) {
+            $sql .= " AND d.prodi_id = ?";
+            $params[] = $prodiId;
+        }
+        if ($siklus && in_array($siklus, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $sql .= " AND d.siklus = ?";
+            $params[] = $siklus;
+        }
+        if ($statusReview) {
+            $sql .= " AND d.status_review = ?";
+            $params[] = $statusReview;
+        }
+
+        // Kategori Filter Khusus Lalu Lintas
+        if ($trafficFilter === 'menunggu_gpm') {
+            $sql .= " AND d.status_review = 'menunggu_review_gpm'";
+        } elseif ($trafficFilter === 'revisi_unit') {
+            $sql .= " AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+        } elseif ($trafficFilter === 'menunggu_lpm') {
+            $sql .= " AND d.status_review = 'menunggu_review_lpm'";
+        } elseif ($trafficFilter === 'sesuai') {
+            $sql .= " AND d.status_review = 'sesuai'";
+        }
+
+        $sql .= " ORDER BY FIELD(d.status_review, 'menunggu_review_gpm', 'menunggu_review_lpm', 'revisi_gpm', 'revisi_lpm', 'sudah_diperbaiki', 'sesuai'), d.created_at DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $documents = $stmt->fetchAll();
+
+        // Lampirkan data file ke masing-masing dokumen
+        $this->attachFilesToDocs($documents);
+
+        // Hitung KPI Lalu Lintas
+        $whereTA = ($activeTA && $activeTA !== 'all') ? " AND tahun_akademik = " . $this->db->quote($activeTA) : "";
+        $stats = [
+            'total_berjalan' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE deleted_at IS NULL AND status_review != 'draft' {$whereTA}")->fetchColumn(),
+            'menunggu_gpm' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE deleted_at IS NULL AND status_review = 'menunggu_review_gpm' {$whereTA}")->fetchColumn(),
+            'revisi_unit' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE deleted_at IS NULL AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') {$whereTA}")->fetchColumn(),
+            'menunggu_lpm' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE deleted_at IS NULL AND status_review = 'menunggu_review_lpm' {$whereTA}")->fetchColumn(),
+            'sesuai' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE deleted_at IS NULL AND status_review = 'sesuai' {$whereTA}")->fetchColumn(),
+            'avg_gpm_days' => (float)$this->db->query("SELECT COALESCE(AVG(TIMESTAMPDIFF(HOUR, created_at, gpm_reviewed_at)), 0) / 24 FROM ppepp_documents WHERE gpm_reviewed_at IS NOT NULL AND deleted_at IS NULL {$whereTA}")->fetchColumn()
+        ];
+
+        // Daftar Unit yang BELUM mengunggah dokumen pada tahun akademik ini
+        $fakultasBelumUpload = [];
+        $prodiBelumUpload = [];
+        if ($activeTA && $activeTA !== 'all') {
+            $fakultasBelumUpload = $this->db->query("
+                SELECT f.id, f.kode_fakultas, f.nama_fakultas,
+                       (SELECT COUNT(*) FROM ppepp_documents d WHERE d.fakultas_id = f.id AND d.level = 'fakultas' AND d.tahun_akademik = {$this->db->quote($activeTA)} AND d.deleted_at IS NULL AND d.status_review != 'draft') as total_doc
+                FROM fakultas f
+                HAVING total_doc = 0
+                ORDER BY f.nama_fakultas ASC
+            ")->fetchAll();
+
+            $prodiBelumUpload = $this->db->query("
+                SELECT p.id, p.kode_prodi, p.nama_prodi, p.jenjang, f.nama_fakultas,
+                       (SELECT COUNT(*) FROM ppepp_documents d WHERE d.prodi_id = p.id AND d.tahun_akademik = {$this->db->quote($activeTA)} AND d.deleted_at IS NULL AND d.status_review != 'draft') as total_doc
+                FROM prodis p
+                JOIN fakultas f ON p.fakultas_id = f.id
+                HAVING total_doc = 0
+                ORDER BY f.nama_fakultas ASC, p.nama_prodi ASC
+            ")->fetchAll();
+        }
+
+        $fakultasList = $this->db->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas ORDER BY nama_fakultas ASC")->fetchAll();
+        $prodiList = $this->db->query("SELECT id, fakultas_id, nama_prodi, kode_prodi, jenjang FROM prodis ORDER BY nama_prodi ASC")->fetchAll();
+
+        $this->render('super_admin/monitoring_lalulintas', [
+            'pageTitle' => 'Monitoring Lalu Lintas Berkas & Turnaround SPMI',
+            'documents' => $documents,
+            'stats' => $stats,
+            'tahunList' => $tahunList,
+            'activeTA' => $activeTA,
+            'level' => $level,
+            'fakultasId' => $fakultasId,
+            'prodiId' => $prodiId,
+            'siklus' => $siklus,
+            'statusReview' => $statusReview,
+            'trafficFilter' => $trafficFilter,
+            'fakultasList' => $fakultasList,
+            'prodiList' => $prodiList,
+            'fakultasBelumUpload' => $fakultasBelumUpload,
+            'prodiBelumUpload' => $prodiBelumUpload
+        ]);
+    }
+
+    /**
+     * Halaman Monitoring Kinerja Anggota GPM
+     */
+    public function monitoringGpm(): void {
+        $gpmMembers = $this->db->query("
+            SELECT u.id, u.name, u.email, u.fakultas_id, u.created_at as member_since,
+                   f.nama_fakultas, f.kode_fakultas,
+                   -- Total dokumen dalam cakupan fakultas GPM ini
+                   (SELECT COUNT(*) FROM ppepp_documents d 
+                    WHERE (d.fakultas_id = u.fakultas_id OR d.prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = u.fakultas_id))
+                      AND d.deleted_at IS NULL AND d.status_review != 'draft'
+                   ) as total_dokumen_scope,
+                   -- Dokumen yang sudah ditelaah/direview oleh GPM ini
+                   (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.deleted_at IS NULL) as total_reviewed,
+                   -- Dokumen yang masih pending / antre di meja GPM
+                   (SELECT COUNT(*) FROM ppepp_documents d 
+                    WHERE (d.fakultas_id = u.fakultas_id OR d.prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = u.fakultas_id))
+                      AND d.status_review = 'menunggu_review_gpm' AND d.deleted_at IS NULL
+                   ) as pending_review,
+                   -- Dokumen yang dikembalikan revisi oleh GPM ini
+                   (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.status_review = 'revisi_gpm' AND d.deleted_at IS NULL) as total_revisi,
+                   -- Dokumen yang disetujui & diteruskan ke LPM oleh GPM ini
+                   (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.status_review IN ('menunggu_review_lpm', 'sesuai') AND d.deleted_at IS NULL) as total_diteruskan,
+                   -- Tanggal review terakhir
+                   (SELECT MAX(d.gpm_reviewed_at) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.deleted_at IS NULL) as last_reviewed_at,
+                   -- Rata-rata durasi review dalam jam
+                   (SELECT AVG(TIMESTAMPDIFF(HOUR, d.created_at, d.gpm_reviewed_at)) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.gpm_reviewed_at IS NOT NULL) as avg_review_hours
+            FROM users u
+            LEFT JOIN fakultas f ON u.fakultas_id = f.id
+            WHERE u.role = 'gpm'
+            ORDER BY f.id ASC, u.name ASC
+        ")->fetchAll();
+
+        // Hitung rangkuman global
+        $totalGpm = count($gpmMembers);
+        $totalReviewedAll = array_sum(array_column($gpmMembers, 'total_reviewed'));
+        $totalPendingAll = array_sum(array_column($gpmMembers, 'pending_review'));
+
+        $this->render('super_admin/monitoring_gpm', [
+            'pageTitle' => 'Monitoring Kinerja Anggota GPM',
+            'gpmMembers' => $gpmMembers,
+            'totalGpm' => $totalGpm,
+            'totalReviewedAll' => $totalReviewedAll,
+            'totalPendingAll' => $totalPendingAll
+        ]);
+    }
 }

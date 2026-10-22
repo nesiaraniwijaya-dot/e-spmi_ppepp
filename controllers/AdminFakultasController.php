@@ -478,7 +478,7 @@ class AdminFakultasController extends Controller {
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $isEdit = !empty($id);
         $isDraft = (isset($_POST['action_submit']) && $_POST['action_submit'] === 'draft');
-        $allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
+        $allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'webp'];
 
         // =======================================================
         // 1. BATCH MULTI-UPLOAD TINGKAT FAKULTAS (CREATE UP TO 10)
@@ -511,6 +511,7 @@ class AdminFakultasController extends Controller {
                     // Validasi tautan Google Drive
                     $rawLinks = [];
                     $batchLinkSubs = $d['external_link_sub_bidang'] ?? [];
+                    $batchLinkFolders = !empty($d['external_link_folder']) && is_array($d['external_link_folder']) ? array_values($d['external_link_folder']) : [];
                     if (!empty($d['external_links']) && is_array($d['external_links'])) {
                         $linkNarasis = !empty($d['external_link_narasi']) && is_array($d['external_link_narasi']) ? array_values($d['external_link_narasi']) : [];
                         $linkCanDls = !empty($d['external_link_can_download']) && is_array($d['external_link_can_download']) ? array_values($d['external_link_can_download']) : [];
@@ -533,9 +534,12 @@ class AdminFakultasController extends Controller {
                                 $isLim = isset($linkIsLims[$lIdx]) ? (!empty($linkIsLims[$lIdx]) ? 1 : 0) : 1;
                                 $pLim = isset($linkPLims[$lIdx]) ? max(1, (int)$linkPLims[$lIdx]) : 1;
                                 $canDl = !empty($linkCanDls[$lIdx]) ? 1 : 0;
+                                $tFolder = trim($batchLinkFolders[$lIdx] ?? 'Utama') ?: 'Utama';
                                 $rawLinks[] = [
                                     'url' => $tLink,
                                     'narasi' => $tNarasi,
+                                    'folder_name' => $tFolder,
+                                    'file_category' => 'link',
                                     'is_page_limited' => $isLim,
                                     'public_page_limit' => $pLim,
                                     'can_download_public' => $canDl,
@@ -553,6 +557,8 @@ class AdminFakultasController extends Controller {
                             $rawLinks[] = [
                                 'url' => $tLink, 
                                 'narasi' => '', 
+                                'folder_name' => 'Utama',
+                                'file_category' => 'link',
                                 'is_page_limited' => 1,
                                 'public_page_limit' => 1,
                                 'can_download_public' => 0,
@@ -580,6 +586,9 @@ class AdminFakultasController extends Controller {
                     $uploadedFilesList = [];
                     $fileKey = "files_{$cardIdx}";
                     $batchFileSubs = $d['file_sub_bidang'] ?? [];
+                    $batchFileFolders = !empty($d['file_folder']) && is_array($d['file_folder']) ? array_values($d['file_folder']) : [];
+                    $batchFileCats = !empty($d['file_category']) && is_array($d['file_category']) ? array_values($d['file_category']) : [];
+
                     if (!empty($_FILES[$fileKey]['name']) && is_array($_FILES[$fileKey]['name'])) {
                         foreach ($_FILES[$fileKey]['name'] as $fIdx => $origName) {
                             if (!empty($origName) && $_FILES[$fileKey]['error'][$fIdx] === UPLOAD_ERR_OK) {
@@ -597,12 +606,16 @@ class AdminFakultasController extends Controller {
                                     $size = $_FILES[$fileKey]['size'][$fIdx];
                                     $fileName = 'FAK_' . $this->fakultasId . '_' . time() . '_' . uniqid() . '.' . $ext;
                                     $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
+                                    $fFolder = trim($batchFileFolders[$fIdx] ?? 'Utama') ?: 'Utama';
+                                    $fCat = !empty($batchFileCats[$fIdx]) ? $batchFileCats[$fIdx] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : 'file');
                                     if (move_uploaded_file($tmpName, $targetFile)) {
                                         $uploadedFilesList[] = [
                                             'file_name' => $origName,
                                             'file_path' => 'uploads/documents/' . $fileName,
                                             'file_size' => round($size / (1024 * 1024), 2) . ' MB',
                                             'file_extension' => $ext,
+                                            'folder_name' => $fFolder,
+                                            'file_category' => $fCat,
                                             'narasi' => $fNarasi,
                                             'sub_bidang_ids' => $fSubs
                                         ];
@@ -638,11 +651,15 @@ class AdminFakultasController extends Controller {
                                     $fileName = 'FAK_' . $this->fakultasId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                                     $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                                     if (file_put_contents($targetFile, $bin) !== false) {
+                                        $fFolder = trim($b64Item['folder_name'] ?? ($batchFileFolders[$fIdx] ?? 'Utama')) ?: 'Utama';
+                                        $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : 'file');
                                         $uploadedFilesList[] = [
                                             'file_name' => $origName,
                                             'file_path' => 'uploads/documents/' . $fileName,
                                             'file_size' => round($size / (1024 * 1024), 2) . ' MB',
                                             'file_extension' => $ext,
+                                            'folder_name' => $fFolder,
+                                            'file_category' => $fCat,
                                             'narasi' => $fNarasi,
                                             'sub_bidang_ids' => $fSubs
                                         ];
@@ -675,9 +692,22 @@ class AdminFakultasController extends Controller {
                         $bidangId = (int)$stmtB->fetchColumn();
                     }
 
-                    // Validasi isian wajib (judul, tahun, siklus tetap wajib)
                     if (empty($namaDokumen)) throw new \Exception("Nama dokumen pada Dokumen #{$docNumber} wajib diisi.");
                     if (empty($tahunAkademik)) throw new \Exception("Tahun akademik pada Dokumen #{$docNumber} wajib diisi.");
+
+                    // Validasi Jatah Buka / Tutup Upload Tahun Akademik oleh LPM
+                    $stmtCheckTA = $this->db->prepare("SELECT is_open, tanggal_mulai, tanggal_selesai FROM tahun_akademik_settings WHERE tahun_akademik = ?");
+                    $stmtCheckTA->execute([$tahunAkademik]);
+                    $taSetting = $stmtCheckTA->fetch();
+                    if ($taSetting && (int)$taSetting['is_open'] === 0) {
+                        throw new \Exception("Pengunggahan dokumen untuk Tahun Akademik {$tahunAkademik} saat ini sedang DITUTUP oleh LPM.");
+                    }
+                    if ($taSetting && !empty($startDate)) {
+                        if ($startDate < $taSetting['tanggal_mulai'] || $startDate > $taSetting['tanggal_selesai']) {
+                            throw new \Exception("Tanggal dokumen ({$startDate}) pada Dokumen #{$docNumber} berada di luar rentang resmi Tahun Akademik {$tahunAkademik} (" . date('d/m/Y', strtotime($taSetting['tanggal_mulai'])) . " s/d " . date('d/m/Y', strtotime($taSetting['tanggal_selesai'])) . ").");
+                        }
+                    }
+
                     if (empty($siklus)) throw new \Exception("Kategori Siklus PPEPP pada Dokumen #{$docNumber} wajib dipilih.");
                     if (empty($bidangId)) throw new \Exception("Bidang standar mutu pada Dokumen #{$docNumber} wajib dipilih.");
 
@@ -781,12 +811,12 @@ class AdminFakultasController extends Controller {
                     sync_document_sub_bidang($this->db, $docId, $allDocSubIds);
 
                     // Simpan lampiran berkas ke tabel `ppepp_document_files`
+                    $fSort = 1;
                     if (!empty($uploadedFilesList)) {
                         $stmtFileInsert = $this->db->prepare("
-                            INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                            INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, folder_name, file_category, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                         ");
-                        $fSort = 1;
                         $batchFileIsLim = $d['file_is_limited'] ?? [];
                         $batchFilePLim = $d['file_page_limit'] ?? [];
                         $batchFileCanDl = $d['file_can_download'] ?? [];
@@ -798,11 +828,33 @@ class AdminFakultasController extends Controller {
                             $fSubsJson = json_encode($fItem['sub_bidang_ids']);
 
                             $stmtFileInsert->execute([
-                                $docId, $fItem['file_name'], $fItem['file_path'], $fItem['file_size'], $fItem['file_extension'], $fItem['narasi'], $fSubsJson, $fSort++,
+                                $docId, $fItem['file_name'], $fItem['file_path'], $fItem['file_size'], $fItem['file_extension'],
+                                $fItem['folder_name'] ?? 'Utama', $fItem['file_category'] ?? 'file',
+                                $fItem['narasi'], $fSubsJson, $fSort++,
                                 $fIsLim, $fPLim, $fCanDl
                             ]);
                             $newFileId = (int)$this->db->lastInsertId();
                             sync_file_sub_bidang($this->db, $newFileId, $fItem['sub_bidang_ids']);
+                        }
+                    }
+
+                    // Simpan juga tautan Google Drive ke tabel `ppepp_document_files`
+                    if (!empty($rawLinks)) {
+                        $stmtLinkInsert = $this->db->prepare("
+                            INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, folder_name, file_category, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
+                            VALUES (?, 'Tautan Google Drive', ?, 'Link', 'url', ?, 'link', ?, ?, ?, ?, ?, ?, NOW())
+                        ");
+                        foreach ($rawLinks as $rl) {
+                            $rlSubsJson = json_encode($rl['sub_bidang_ids'] ?? []);
+                            $stmtLinkInsert->execute([
+                                $docId, $rl['url'], $rl['folder_name'] ?? 'Utama',
+                                $rl['narasi'] ?? '', $rlSubsJson, $fSort++,
+                                $rl['is_page_limited'] ?? 1, $rl['public_page_limit'] ?? 1, $rl['can_download_public'] ?? 0
+                            ]);
+                            $newLinkId = (int)$this->db->lastInsertId();
+                            if (!empty($rl['sub_bidang_ids'])) {
+                                sync_file_sub_bidang($this->db, $newLinkId, $rl['sub_bidang_ids']);
+                            }
                         }
                     }
 
@@ -869,6 +921,19 @@ class AdminFakultasController extends Controller {
             $subBidangId = !empty($_POST['sub_bidang_id']) ? (int)$_POST['sub_bidang_id'] : null;
             $siklus = trim($_POST['siklus'] ?? '');
             $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+
+            // Validasi jika mengubah ke Tahun Akademik yang ditutup
+            if ($tahunAkademik !== ($existing['tahun_akademik'] ?? '')) {
+                $stmtCheckTA = $this->db->prepare("SELECT is_open FROM tahun_akademik_settings WHERE tahun_akademik = ?");
+                $stmtCheckTA->execute([$tahunAkademik]);
+                $taSetting = $stmtCheckTA->fetch();
+                if ($taSetting && (int)$taSetting['is_open'] === 0) {
+                    Auth::setFlash('danger', "Tahun Akademik {$tahunAkademik} saat ini sedang DITUTUP oleh LPM.");
+                    redirect("fakultas/dokumen/edit/{$id}");
+                    return;
+                }
+            }
+
             $startDate = null;
             $endDate = null;
             $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
@@ -1034,13 +1099,14 @@ class AdminFakultasController extends Controller {
                 $deletedIds = array_map('intval', $_POST['delete_file_ids'] ?? []);
                 $stmtUpdNarasi = $this->db->prepare("
                     UPDATE ppepp_document_files 
-                    SET narasi = ?, is_page_limited = ?, public_page_limit = ?, can_download_public = ? 
+                    SET narasi = ?, folder_name = ?, is_page_limited = ?, public_page_limit = ?, can_download_public = ? 
                     WHERE id = ? AND document_id = ?
                 ");
                 $exIsLim = $_POST['existing_file_is_limited'] ?? [];
                 $exPLim = $_POST['existing_file_page_limit'] ?? [];
                 $exCanDl = $_POST['existing_file_can_download'] ?? [];
                 $exSubs = $_POST['existing_file_sub_bidang'] ?? [];
+                $exFolders = $_POST['existing_file_folder'] ?? [];
 
                 foreach ($_POST['existing_file_narasi'] as $fId => $fNarasi) {
                     $fId = (int)$fId;
@@ -1048,8 +1114,9 @@ class AdminFakultasController extends Controller {
                     $fIsLimVal = !empty($exIsLim[$fId]) ? 1 : 0;
                     $fPLimVal = $fIsLimVal ? max(1, (int)($exPLim[$fId] ?? 1)) : 1;
                     $fCanDlVal = !empty($exCanDl[$fId]) ? 1 : 0;
+                    $fFolderVal = trim($exFolders[$fId] ?? 'Utama') ?: 'Utama';
 
-                    $stmtUpdNarasi->execute([trim($fNarasi), $fIsLimVal, $fPLimVal, $fCanDlVal, $fId, $id]);
+                    $stmtUpdNarasi->execute([trim($fNarasi), $fFolderVal, $fIsLimVal, $fPLimVal, $fCanDlVal, $fId, $id]);
 
                     $fSubArray = !empty($exSubs[$fId]) && is_array($exSubs[$fId])
                         ? array_values(array_filter(array_map('intval', $exSubs[$fId])))
@@ -1061,14 +1128,16 @@ class AdminFakultasController extends Controller {
             // Upload berkas baru jika ada
             if (!empty($_FILES['files']['name']) && is_array($_FILES['files']['name'])) {
                 $stmtNewFile = $this->db->prepare("
-                    INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                    INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, folder_name, file_category, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 ");
                 $newNarasis = !empty($_POST['new_file_narasi']) && is_array($_POST['new_file_narasi']) ? array_values($_POST['new_file_narasi']) : [];
                 $newIsLim = $_POST['new_file_is_limited'] ?? [];
                 $newPLim = $_POST['new_file_page_limit'] ?? [];
                 $newCanDl = $_POST['new_file_can_download'] ?? [];
                 $newSubs = $_POST['new_file_sub_bidang'] ?? [];
+                $newFolders = !empty($_POST['new_file_folder']) && is_array($_POST['new_file_folder']) ? array_values($_POST['new_file_folder']) : [];
+                $newCats = !empty($_POST['new_file_category']) && is_array($_POST['new_file_category']) ? array_values($_POST['new_file_category']) : [];
                 $nextSort = 1;
 
                 foreach ($_FILES['files']['name'] as $idx => $origName) {
@@ -1086,6 +1155,8 @@ class AdminFakultasController extends Controller {
                                 ? array_values(array_filter(array_map('intval', $newSubs[$idx])))
                                 : ($subBidangId ? [(int)$subBidangId] : []);
                             $fSubsJson = json_encode($fSubArray);
+                            $fFolder = trim($newFolders[$idx] ?? 'Utama') ?: 'Utama';
+                            $fCat = !empty($newCats[$idx]) ? $newCats[$idx] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : 'file');
 
                             $tmpName = $_FILES['files']['tmp_name'][$idx];
                             $size = $_FILES['files']['size'][$idx];
@@ -1094,7 +1165,9 @@ class AdminFakultasController extends Controller {
                             if (move_uploaded_file($tmpName, $targetFile)) {
                                 $stmtNewFile->execute([
                                     $id, $origName, 'uploads/documents/' . $fileName,
-                                    round($size / (1024 * 1024), 2) . ' MB', $ext, $fNarasi, $fSubsJson, $nextSort++,
+                                    round($size / (1024 * 1024), 2) . ' MB', $ext,
+                                    $fFolder, $fCat,
+                                    $fNarasi, $fSubsJson, $nextSort++,
                                     $fIsLimVal, $fPLimVal, $fCanDlVal
                                 ]);
                                 $newFid = (int)$this->db->lastInsertId();
@@ -1108,14 +1181,16 @@ class AdminFakultasController extends Controller {
             // Dukungan upload berkas baru via Base64 untuk Single Edit (mengatasi blokir 403 OpenResty WAF)
             if (!empty($_POST['new_files_base64']) && is_array($_POST['new_files_base64'])) {
                 $stmtNewFile = $this->db->prepare("
-                    INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                    INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, folder_name, file_category, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 ");
                 $newNarasis = !empty($_POST['new_file_narasi']) && is_array($_POST['new_file_narasi']) ? array_values($_POST['new_file_narasi']) : [];
                 $newIsLim = $_POST['new_file_is_limited'] ?? [];
                 $newPLim = $_POST['new_file_page_limit'] ?? [];
                 $newCanDl = $_POST['new_file_can_download'] ?? [];
                 $newSubs = $_POST['new_file_sub_bidang'] ?? [];
+                $newFolders = !empty($_POST['new_file_folder']) && is_array($_POST['new_file_folder']) ? array_values($_POST['new_file_folder']) : [];
+                $newCats = !empty($_POST['new_file_category']) && is_array($_POST['new_file_category']) ? array_values($_POST['new_file_category']) : [];
                 $nextSort = 1;
 
                 foreach ($_POST['new_files_base64'] as $idx => $b64Item) {
@@ -1135,6 +1210,8 @@ class AdminFakultasController extends Controller {
                             ? array_values(array_filter(array_map('intval', $newSubs[$idx])))
                             : ($subBidangId ? [(int)$subBidangId] : []);
                         $fSubsJson = json_encode($fSubArray);
+                        $fFolder = trim($b64Item['folder_name'] ?? ($newFolders[$idx] ?? 'Utama')) ?: 'Utama';
+                        $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : 'file');
 
                         if (preg_match('/^data:.*?;base64,/', $rawB64, $m)) {
                             $rawB64 = substr($rawB64, strlen($m[0]));
@@ -1147,7 +1224,9 @@ class AdminFakultasController extends Controller {
                             if (file_put_contents($targetFile, $bin) !== false) {
                                 $stmtNewFile->execute([
                                     $id, $origName, 'uploads/documents/' . $fileName,
-                                    round($size / (1024 * 1024), 2) . ' MB', $ext, $fNarasi, $fSubsJson, $nextSort++,
+                                    round($size / (1024 * 1024), 2) . ' MB', $ext,
+                                    $fFolder, $fCat,
+                                    $fNarasi, $fSubsJson, $nextSort++,
                                     $fIsLimVal, $fPLimVal, $fCanDlVal
                                 ]);
                                 $newFid = (int)$this->db->lastInsertId();

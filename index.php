@@ -63,10 +63,17 @@ $router->post('admin/sub-bidang/delete/{id}', ['SuperAdminController', 'deleteSu
 $router->get('admin/review', ['SuperAdminController', 'reviewHub']);
 $router->get('admin/review-dokumen', ['SuperAdminController', 'reviewHub']);
 $router->get('admin/monitoring-dokumen', ['SuperAdminController', 'monitoringDokumen']);
+$router->get('admin/monitoring-lalulintas', ['SuperAdminController', 'monitoringLaluLintas']);
+$router->get('admin/monitoring-gpm', ['SuperAdminController', 'monitoringGpm']);
 $router->get('admin/review-prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
 $router->get('admin/review-fakultas/{id:\d+}', ['SuperAdminController', 'reviewFakultas']);
 $router->post('admin/review-dokumen/submit', ['SuperAdminController', 'submitReview']);
 $router->get('api/dokumen-revisi/{id:\d+}', ['SuperAdminController', 'getDocumentRevisions']);
+
+// Manajemen Buka / Tutup Jatah Upload per Tahun Akademik (LPM)
+$router->get('admin/tahun-akademik', ['SuperAdminController', 'tahunAkademik']);
+$router->post('admin/tahun-akademik/save', ['SuperAdminController', 'saveTahunAkademik']);
+$router->post('admin/tahun-akademik/toggle/{id:\d+}', ['SuperAdminController', 'toggleTahunAkademik']);
 
 // Manajemen Pengguna & Hak Akses
 $router->get('admin/users', ['SuperAdminController', 'users']);

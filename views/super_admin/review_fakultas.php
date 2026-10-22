@@ -239,10 +239,17 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                         data-can-download="1">
                                                                     <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                                                         <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($fItem['file_name']) ?>">
-                                                                            <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
-                                                                            <span class="text-truncate" style="max-width: 220px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
+                                                                            <i class="<?= ($fItem['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf text-danger' ?> flex-shrink-0"></i>
+                                                                            <span class="text-truncate" style="max-width: 200px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
                                                                         </span>
-                                                                        <span class="badge bg-light text-muted border flex-shrink-0" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
+                                                                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                                                            <?php if (!empty($fItem['folder_name'])): ?>
+                                                                                <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.62rem;" title="Folder: <?= htmlspecialchars($fItem['folder_name']) ?>">
+                                                                                    <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($fItem['folder_name']) ?>
+                                                                                </span>
+                                                                            <?php endif; ?>
+                                                                            <span class="badge bg-light text-muted border" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
+                                                                        </div>
                                                                     </div>
                                                                     <?= render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null) ?>
                                                                     <?php if (!empty($fItem['narasi'])): ?>
@@ -258,16 +265,23 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <?php else: ?>
                                                 <?php $singleFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => '']; ?>
                                                 <div class="d-inline-flex flex-column align-items-start gap-1">
-                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
-                                                            data-bs-toggle="modal" data-bs-target="#pdfPreviewModal"
-                                                            data-pdf-url="<?= base_url($singleFile['file_path']) ?>"
-                                                            data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
-                                                            data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
-                                                            data-public-limit="0"
-                                                            data-can-download="1"
-                                                            style="font-size: 0.72rem; height: 26px; line-height: 1;">
-                                                        <i class="fas fa-file-pdf"></i> <?= $isKombinasi ? 'File PDF' : 'Lihat PDF' ?>
-                                                    </button>
+                                                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
+                                                                data-bs-toggle="modal" data-bs-target="#pdfPreviewModal"
+                                                                data-pdf-url="<?= base_url($singleFile['file_path']) ?>"
+                                                                data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
+                                                                data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
+                                                                data-public-limit="0"
+                                                                data-can-download="1"
+                                                                style="font-size: 0.72rem; height: 26px; line-height: 1;">
+                                                            <i class="<?= ($singleFile['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf' ?>"></i> <?= $isKombinasi ? 'File' : 'Lihat Berkas' ?>
+                                                        </button>
+                                                        <?php if (!empty($singleFile['folder_name'])): ?>
+                                                            <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.63rem;">
+                                                                <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleFile['folder_name']) ?>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </div>
                                                     <?= render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null) ?>
                                                     <?php if (!empty($singleFile['narasi'])): ?>
                                                         <span class="badge bg-light text-muted border px-1.5 py-0.5 text-truncate" style="max-width: 140px; font-size: 0.65rem;" title="<?= htmlspecialchars($singleFile['narasi']) ?>">
@@ -294,9 +308,16 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                     <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                                                         <span class="fw-semibold text-primary d-flex align-items-center gap-1 text-truncate">
                                                                             <i class="fab fa-google-drive flex-shrink-0"></i>
-                                                                            <span class="text-truncate" style="max-width: 220px;"><?= htmlspecialchars($lItem['label'] ?: 'Berkas ' . ($idx + 1)) ?></span>
+                                                                            <span class="text-truncate" style="max-width: 200px;"><?= htmlspecialchars($lItem['label'] ?: 'Berkas ' . ($idx + 1)) ?></span>
                                                                         </span>
-                                                                        <i class="fas fa-external-link-alt text-muted small flex-shrink-0"></i>
+                                                                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                                                            <?php if (!empty($lItem['folder_name'])): ?>
+                                                                                <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.62rem;">
+                                                                                    <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($lItem['folder_name']) ?>
+                                                                                </span>
+                                                                            <?php endif; ?>
+                                                                            <i class="fas fa-external-link-alt text-muted small"></i>
+                                                                        </div>
                                                                     </div>
                                                                     <?= render_sub_standar_badges($lItem['sub_bidang_ids'] ?? null) ?>
                                                                     <?php if (!empty($lItem['narasi'])): ?>
@@ -312,11 +333,18 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <?php else: ?>
                                                 <?php $singleLink = !empty($gdriveLinks) ? $gdriveLinks[0] : ['url' => $doc['external_link'], 'label' => 'Buka Link', 'narasi' => '']; ?>
                                                 <div class="d-inline-flex flex-column align-items-start gap-1">
-                                                    <a href="<?= htmlspecialchars($singleLink['url']) ?>" target="_blank" rel="noopener noreferrer" 
-                                                       class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs" 
-                                                       style="font-size: 0.72rem; height: 26px; line-height: 1;">
-                                                        <i class="fab fa-google-drive"></i> <?= $isKombinasi ? 'GDrive' : 'Buka Link' ?>
-                                                    </a>
+                                                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                                                        <a href="<?= htmlspecialchars($singleLink['url']) ?>" target="_blank" rel="noopener noreferrer" 
+                                                           class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs" 
+                                                           style="font-size: 0.72rem; height: 26px; line-height: 1;">
+                                                            <i class="fab fa-google-drive"></i> <?= $isKombinasi ? 'GDrive' : 'Buka Link' ?>
+                                                        </a>
+                                                        <?php if (!empty($singleLink['folder_name'])): ?>
+                                                            <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.63rem;">
+                                                                <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleLink['folder_name']) ?>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </div>
                                                     <?= render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null) ?>
                                                     <?php if (!empty($singleLink['narasi'])): ?>
                                                         <span class="badge bg-light text-muted border px-1.5 py-0.5 text-truncate" style="max-width: 140px; font-size: 0.65rem;" title="<?= htmlspecialchars($singleLink['narasi']) ?>">

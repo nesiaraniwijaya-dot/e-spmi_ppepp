@@ -1502,193 +1502,29 @@ function createDocCardTemplate(idx, presetData = null) {
                     </div>
                 </div>
 
-                <!-- Bagian 2: Berkas & Kontrol Akses -->
+                <!-- Bagian 2: Folder Berkas Lampiran (File Dokumen, Foto & Google Drive) -->
                 <div class="p-3.5 p-md-4 rounded-4 border shadow-2xs" style="background: #F8FAFC !important; border-color: #E2E8F0 !important;">
-                    <div class="d-flex align-items-center justify-content-between pb-2.5 mb-3.5 border-bottom">
-                        <h6 class="fw-bold text-dark-blue mb-0">
-                            Bagian 2: Berkas Lampiran &amp; Hak Akses Publik
-                        </h6>
-                    </div>
-
-                    <!-- Interactive Method Cards for Batch Card (3 Pilihan) -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small text-dark mb-2.5 d-flex align-items-center gap-1.5">
-                            <i class="fas fa-layer-group text-primary"></i> Pilih Metode Penyediaan Berkas <span class="text-danger">*</span>
-                        </label>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <div class="method-card p-3 rounded-3 border bg-white cursor-pointer h-100 transition-all shadow-2xs position-relative active" 
-                                     id="method_card_file_${idx}" onclick="toggleCardMethod(${idx}, 'file')">
-                                    <input type="radio" class="d-none" name="docs[${idx}][jenis_upload]" id="card_jenis_file_${idx}" value="file" checked>
-                                    <div class="d-flex align-items-center gap-2.5">
-                                        <span class="method-card-icon rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #FEE2E2; color: #DC2626; font-size: 0.9rem;">
-                                            <i class="fas fa-file-arrow-up"></i>
-                                        </span>
-                                        <div class="lh-sm">
-                                            <div class="fw-bold text-dark-blue" style="font-size: 0.85rem;">Berkas Dokumen</div>
-                                            <div class="text-muted" style="font-size: 0.72rem;">PDF, DOCX, XLSX</div>
-                                        </div>
-                                    </div>
-                                    <div class="method-check-badge position-absolute top-0 end-0 p-2" id="badge_check_file_${idx}">
-                                        <i class="fas fa-circle-check text-primary" style="font-size: 0.85rem;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="method-card p-3 rounded-3 border bg-white cursor-pointer h-100 transition-all shadow-2xs position-relative" 
-                                     id="method_card_link_${idx}" onclick="toggleCardMethod(${idx}, 'link')">
-                                    <input type="radio" class="d-none" name="docs[${idx}][jenis_upload]" id="card_jenis_link_${idx}" value="link">
-                                    <div class="d-flex align-items-center gap-2.5">
-                                        <span class="method-card-icon rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #E0F2FE; color: #0284C7; font-size: 0.9rem;">
-                                            <i class="fab fa-google-drive"></i>
-                                        </span>
-                                        <div class="lh-sm">
-                                            <div class="fw-bold text-dark-blue" style="font-size: 0.85rem;">Google Drive</div>
-                                            <div class="text-muted" style="font-size: 0.72rem;">Tautan Berbagi Link</div>
-                                        </div>
-                                    </div>
-                                    <div class="method-check-badge position-absolute top-0 end-0 p-2" id="badge_check_link_${idx}" style="display: none;">
-                                        <i class="fas fa-circle-check text-primary" style="font-size: 0.85rem;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="method-card p-3 rounded-3 border bg-white cursor-pointer h-100 transition-all shadow-2xs position-relative" 
-                                     id="method_card_kombinasi_${idx}" onclick="toggleCardMethod(${idx}, 'kombinasi')">
-                                    <input type="radio" class="d-none" name="docs[${idx}][jenis_upload]" id="card_jenis_kombinasi_${idx}" value="kombinasi">
-                                    <div class="d-flex align-items-center gap-2.5">
-                                        <span class="method-card-icon rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #F3E8FF; color: #7E22CE; font-size: 0.9rem;">
-                                            <i class="fas fa-layer-group"></i>
-                                        </span>
-                                        <div class="lh-sm">
-                                            <div class="fw-bold text-dark-blue" style="font-size: 0.85rem;">Kombinasi</div>
-                                            <div class="text-muted" style="font-size: 0.72rem;">Berkas &amp; Link GDrive</div>
-                                        </div>
-                                    </div>
-                                    <div class="method-check-badge position-absolute top-0 end-0 p-2" id="badge_check_kombinasi_${idx}" style="display: none;">
-                                        <i class="fas fa-circle-check text-primary" style="font-size: 0.85rem;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Dropzone File Card -->
-                    <div id="card_section_file_${idx}">
-                        <div class="d-flex justify-content-between align-items-center mb-2.5">
-                            <label class="form-label fw-bold small text-dark mb-0 d-flex align-items-center gap-1.5">
-                                <i class="fas fa-file-arrow-up text-secondary"></i> Berkas Dokumen <span class="text-danger">*</span>
-                            </label>
-                            <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">Bisa > 1 File</span>
-                        </div>
-                        <div class="upload-dropzone-box text-center cursor-pointer shadow-2xs mb-2" onclick="triggerAddMoreCardFiles(${idx})">
-                            <div class="mb-2">
-                                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary shadow-2xs" style="width: 50px; height: 50px;">
-                                    <i class="fas fa-cloud-arrow-up fa-lg"></i>
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 pb-2.5 mb-3.5 border-bottom">
+                        <div>
+                            <h6 class="fw-bold text-dark-blue mb-0 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary p-2" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                                    <i class="fas fa-folder-tree"></i>
                                 </span>
-                            </div>
-                            <div class="fw-bold small text-dark mb-2">Pilih Berkas Dokumen &amp; Lampiran</div>
-                            <div class="d-flex justify-content-center gap-1.5 flex-wrap my-2.5">
-                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">PDF</span>
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">DOCX</span>
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">XLSX</span>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-0.5" style="font-size: 0.7rem;">Maks 25MB</span>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-4 py-2 cursor-pointer fw-semibold shadow-xs my-1" style="font-size: 0.8rem;" onclick="event.stopPropagation(); triggerAddMoreCardFiles(${idx})">
-                                <i class="fas fa-plus me-1"></i> Telusuri Berkas
-                            </button>
-                            <div class="text-muted mt-2.5 d-flex align-items-center justify-content-center gap-1.5" style="font-size: 0.73rem;">
-                                <i class="fas fa-lightbulb text-warning"></i> <span>Klik tombol di atas untuk menambah berkas</span>
+                                <span>Bagian 2: Folder Berkas, Foto &amp; Tautan Lampiran</span>
+                            </h6>
+                            <div class="text-muted small mt-1" style="font-size: 0.74rem;">
+                                Kelola folder untuk bidang ini. Anda dapat menambahkan lebih dari 1 folder, dan di setiap folder bisa diunggah file dokumen, foto, maupun tautan Google Drive.
                             </div>
                         </div>
-                        <input type="file" id="card_files_input_${idx}" name="files_${idx}[]" multiple class="d-none" accept=".pdf,.doc,.docx,.xls,.xlsx" onchange="handleCardFileInput(${idx}, this)">
-                        <div id="card_files_preview_${idx}" class="d-flex flex-column gap-2 mt-2"></div>
-                        <button type="button" id="card_add_more_btn_${idx}" class="btn btn-sm btn-outline-primary rounded-pill w-100 py-2 fw-semibold mt-2" style="display:none;" onclick="triggerAddMoreCardFiles(${idx})">
-                            <i class="fas fa-plus me-1.5"></i> Tambah Berkas Lainnya
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs flex-shrink-0" onclick="addFolderToCard(${idx})">
+                            <i class="fas fa-folder-plus"></i>
+                            <span>+ Tambah Folder</span>
                         </button>
                     </div>
 
-                    <!-- GDrive Link Card -->
-                    <div id="card_section_link_${idx}" style="display: none;">
-                        <div class="alert alert-info border-0 p-3 rounded-3 mb-3 d-flex align-items-start gap-2.5 shadow-2xs" style="background: #EFF6FF; border-left: 3.5px solid #3B82F6 !important;">
-                            <i class="fas fa-circle-info text-primary mt-1 flex-shrink-0" style="font-size: 0.9rem;"></i>
-                            <div style="font-size: 0.75rem; line-height: 1.45; color: #1E40AF;">
-                                Pastikan setelan berbagi Google Drive: <strong>"Siapa saja yang memiliki tautan"</strong> (Akses Pelihat/Viewer) agar berkas dapat ditinjau oleh pihak LPM & Auditor.
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-2.5">
-                            <label class="form-label fw-bold small text-dark mb-0 d-flex align-items-center gap-1.5">
-                                <i class="fab fa-google-drive text-primary"></i> Tautan Google Drive <span class="text-danger">*</span>
-                            </label>
-                            <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">Bisa > 1 Tautan</span>
-                        </div>
-                        <div id="card_gdrive_links_${idx}" class="d-flex flex-column gap-3 mb-3">
-                            <div class="card-gdrive-row card p-3.5 bg-white border rounded-4 shadow-2xs">
-                                <div class="d-flex align-items-center justify-content-between pb-2.5 border-bottom">
-                                    <span class="fw-bold text-dark-blue d-flex align-items-center gap-2 card-gdrive-title" style="font-size: 0.88rem;">
-                                        <div class="p-1.5 rounded-3 bg-success bg-opacity-10 text-success flex-shrink-0">
-                                            <i class="fab fa-google-drive"></i>
-                                        </div>
-                                        <span>Tautan Berkas #1</span>
-                                    </span>
-                                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill fw-semibold" style="font-size: 0.78rem;" onclick="removeCardGdriveLink(this, ${idx})" title="Batalkan / Hapus tautan ini">
-                                        <i class="fas fa-trash-can me-1"></i> Hapus
-                                    </button>
-                                </div>
-                                <div class="mt-2.5 mb-2">
-                                    <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                        <i class="fas fa-file-lines text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light text-primary px-3"><i class="fas fa-link"></i></span>
-                                        <input type="url" class="form-control py-2 gdrive-doc-input" name="docs[${idx}][external_links][]" placeholder="https://drive.google.com/file/d/... (Khusus dokumen, bukan folder)" oninput="validateGdriveDocInput(this)" onblur="validateGdriveDocInput(this)">
-                                    </div>
-                                    <div class="gdrive-validation-feedback text-danger small mt-1 fw-semibold" style="display: none; font-size: 0.76rem;"></div>
-                                    <div class="form-text text-muted small mt-1" style="font-size: 0.74rem;">
-                                        <i class="fas fa-circle-info text-primary me-1"></i> Khusus tautan <strong>dokumen / file langsung</strong> (contoh: <code>drive.google.com/file/d/...</code> atau Google Docs/Sheets). <strong>Tautan folder tidak diperbolehkan.</strong>
-                                    </div>
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                        <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan: <span class="text-danger">*</span>
-                                    </label>
-                                    <textarea class="form-control py-2" name="docs[${idx}][external_link_narasi][]" rows="1" placeholder="Narasi / Keterangan Tautan..."></textarea>
-                                </div>
-                                ${initCardLinkPicker}
-
-                                <!-- Per-Link Access Settings -->
-                                <div class="row g-2.5 mt-2.5">
-                                    <div class="col-md-7">
-                                        <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
-                                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="card_link_limit_sw_${idx}_0" name="docs[${idx}][external_link_is_limited][0]" value="1" checked onchange="document.getElementById('card_link_limit_wrap_${idx}_0').style.display = this.checked ? 'inline-flex' : 'none'" style="width: 2.2em; height: 1.2em;">
-                                                <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="card_link_limit_sw_${idx}_0" style="font-size: 0.82rem;">
-                                                    Batasi Pratinjau
-                                                </label>
-                                            </div>
-                                            <div class="input-group input-group-sm" id="card_link_limit_wrap_${idx}_0" style="width: 100px;">
-                                                <input type="number" class="form-control text-center py-1 fw-bold" name="docs[${idx}][external_link_page_limit][0]" min="1" max="50" value="1" style="font-size: 0.78rem;">
-                                                <span class="input-group-text px-1.5 text-muted small">Hlm</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-5">
-                                        <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
-                                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="card_link_dl_sw_${idx}_0" name="docs[${idx}][external_link_can_download][0]" value="1" style="width: 2.2em; height: 1.2em;">
-                                                <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="card_link_dl_sw_${idx}_0" style="font-size: 0.82rem;">
-                                                    Unduh Publik
-                                                </label>
-                                            </div>
-                                            <span class="badge bg-light text-muted border small d-none d-sm-inline">Publik</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill w-100 py-2.5 fw-semibold mb-2" onclick="addCardGdriveLink(${idx})">
-                            <i class="fas fa-plus me-1.5"></i> Tambah Tautan Lain
-                        </button>
+                    <!-- Container Folder-Folder pada Kartu Ini -->
+                    <div id="card_folders_container_${idx}" class="d-flex flex-column gap-3 mb-1">
+                        <!-- Konten folder akan dirender oleh renderCardFolders(${idx}) -->
                     </div>
                 </div>
             </div>
@@ -1767,261 +1603,382 @@ function toggleCardCollapse(idx, evt) {
 }
 
 // ==========================================
-// BATCH STAGING LOGIC
+// BATCH FOLDERS & MULTI-FILE/PHOTO/GDRIVE STAGING
 // ==========================================
-function saveCardStagedState(idx) {
-    const files = batchStagedFiles[idx] || [];
-    const state = [];
-    files.forEach((_, fIdx) => {
-        const narasiEl = document.querySelector(`textarea[name="docs[${idx}][file_narasi][${fIdx}]"]`);
-        const limitSw = document.getElementById(`card_limit_sw_${idx}_${fIdx}`);
-        const limitVal = document.querySelector(`input[name="docs[${idx}][file_page_limit][${fIdx}]"]`);
-        const dlSw = document.getElementById(`card_dl_sw_${idx}_${fIdx}`);
-        
-        const checkedSub = [];
-        document.querySelectorAll(`input[name="docs[${idx}][file_sub_bidang][${fIdx}][]"]:checked`).forEach(cb => {
-            checkedSub.push(parseInt(cb.value));
-        });
+let batchCardFolders = {}; // cardIdx => [ { id: 'f_...', name: 'Folder Utama' }, ... ]
+let batchStagedFiles = {}; // cardIdx => [ File with _folder_id, _folder_name, _category, _narasi, etc. ]
+let batchCardLinks = {};   // cardIdx => [ { id, folder_id, folder_name, url, narasi, ... } ]
 
-        state[fIdx] = {
-            narasi: narasiEl ? narasiEl.value : '',
-            is_limited: limitSw ? limitSw.checked : true,
-            page_limit: limitVal ? limitVal.value : '1',
-            can_download: dlSw ? dlSw.checked : false,
-            sub_bidang_ids: checkedSub
-        };
+function initCardFolders(idx) {
+    if (!batchCardFolders[idx] || batchCardFolders[idx].length === 0) {
+        batchCardFolders[idx] = [
+            { id: 'f_' + idx + '_default', name: 'Folder Utama' }
+        ];
+    }
+    if (!batchStagedFiles[idx]) batchStagedFiles[idx] = [];
+    if (!batchCardLinks[idx]) batchCardLinks[idx] = [];
+}
+
+function addFolderToCard(idx) {
+    initCardFolders(idx);
+    const count = batchCardFolders[idx].length + 1;
+    const newFolderId = 'f_' + idx + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    batchCardFolders[idx].push({
+        id: newFolderId,
+        name: 'Folder ' + count
     });
-    return state;
+    renderCardFolders(idx);
 }
 
-function syncCardInputFiles(idx) {
-    const input = document.getElementById(`card_files_input_${idx}`);
-    if (!input) return;
-    const dt = new DataTransfer();
-    const files = batchStagedFiles[idx] || [];
-    files.forEach(f => dt.items.add(f));
-    input.files = dt.files;
+function removeFolderFromCard(idx, folderId) {
+    if (!batchCardFolders[idx] || batchCardFolders[idx].length <= 1) {
+        alert('Minimal harus ada 1 folder dalam dokumen ini.');
+        return;
+    }
+    const targetFolder = batchCardFolders[idx].find(f => f.id === folderId);
+    const folderName = targetFolder ? targetFolder.name : 'Folder ini';
+    if (!confirm('Apakah Anda yakin ingin menghapus ' + folderName + ' beserta semua berkas & tautan di dalamnya?')) {
+        return;
+    }
+    batchCardFolders[idx] = batchCardFolders[idx].filter(f => f.id !== folderId);
+    if (batchStagedFiles[idx]) {
+        batchStagedFiles[idx] = batchStagedFiles[idx].filter(f => f._folder_id !== folderId);
+    }
+    if (batchCardLinks[idx]) {
+        batchCardLinks[idx] = batchCardLinks[idx].filter(l => l.folder_id !== folderId);
+    }
+    renderCardFolders(idx);
 }
 
-function triggerAddMoreCardFiles(idx) {
+function updateCardFolderTitle(idx, folderId, newName) {
+    const folder = (batchCardFolders[idx] || []).find(f => f.id === folderId);
+    if (folder) {
+        folder.name = newName.trim() || 'Folder';
+        (batchStagedFiles[idx] || []).forEach(f => {
+            if (f._folder_id === folderId) f._folder_name = folder.name;
+        });
+        (batchCardLinks[idx] || []).forEach(l => {
+            if (l.folder_id === folderId) l.folder_name = folder.name;
+        });
+        const box = document.getElementById(`folder_box_${idx}_${folderId}`);
+        if (box) {
+            box.querySelectorAll(`input[name="docs[${idx}][file_folder][]"]`).forEach(i => i.value = folder.name);
+            box.querySelectorAll(`input[name="docs[${idx}][external_link_folder][]"]`).forEach(i => i.value = folder.name);
+        }
+    }
+}
+
+function triggerAddFolderFiles(idx, folderId, category) {
+    initCardFolders(idx);
+    const folder = (batchCardFolders[idx] || []).find(f => f.id === folderId);
+    const folderName = folder ? folder.name : 'Utama';
+
     const tempInput = document.createElement('input');
     tempInput.type = 'file';
     tempInput.multiple = true;
-    tempInput.accept = '.pdf,.doc,.docx,.xls,.xlsx';
+    if (category === 'photo') {
+        tempInput.accept = 'image/*,.jpg,.jpeg,.png,.webp';
+    } else {
+        tempInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx';
+    }
     tempInput.onchange = function() {
         if (tempInput.files && tempInput.files.length > 0) {
-            if (!batchStagedFiles[idx]) batchStagedFiles[idx] = [];
-            const savedState = saveCardStagedState(idx);
             Array.from(tempInput.files).forEach(f => {
+                f._file_id = 'fl_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+                f._folder_id = folderId;
+                f._folder_name = folderName;
+                f._category = category; // 'file' or 'photo'
+                f._narasi = '';
+                f._is_limited = true;
+                f._page_limit = 1;
+                f._can_download = false;
+                f._sub_bidang_ids = [];
                 batchStagedFiles[idx].push(f);
             });
-            syncCardInputFiles(idx);
-            renderCardStagedFiles(idx, savedState);
+            renderCardFolders(idx);
         }
     };
     tempInput.click();
 }
 
-function handleCardFileInput(idx, input) {
-    if (!input.files || input.files.length === 0) return;
-    if (!batchStagedFiles[idx]) batchStagedFiles[idx] = [];
-    const savedState = saveCardStagedState(idx);
-    Array.from(input.files).forEach(f => {
-        batchStagedFiles[idx].push(f);
+function addDriveLinkToFolder(idx, folderId) {
+    initCardFolders(idx);
+    const folder = (batchCardFolders[idx] || []).find(f => f.id === folderId);
+    const folderName = folder ? folder.name : 'Utama';
+    batchCardLinks[idx].push({
+        id: 'link_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        folder_id: folderId,
+        folder_name: folderName,
+        url: '',
+        narasi: '',
+        sub_bidang_ids: [],
+        is_limited: true,
+        page_limit: 1,
+        can_download: false
     });
-    syncCardInputFiles(idx);
-    renderCardStagedFiles(idx, savedState);
+    renderCardFolders(idx);
 }
 
-function removeCardStagedFile(cardIdx, fileIndex) {
-    if (!batchStagedFiles[cardIdx]) return;
-    const savedState = saveCardStagedState(cardIdx);
-    batchStagedFiles[cardIdx].splice(fileIndex, 1);
-    savedState.splice(fileIndex, 1);
-    syncCardInputFiles(cardIdx);
-    renderCardStagedFiles(cardIdx, savedState);
+function removeFileFromFolder(idx, fileId) {
+    if (!batchStagedFiles[idx]) return;
+    saveCardFolderInputStates(idx);
+    batchStagedFiles[idx] = batchStagedFiles[idx].filter(f => f._file_id !== fileId);
+    renderCardFolders(idx);
 }
 
-function renderCardStagedFiles(idx, savedState = []) {
-    const preview = document.getElementById(`card_files_preview_${idx}`);
-    const addMoreBtn = document.getElementById(`card_add_more_btn_${idx}`);
-    if (!preview) return;
-    preview.innerHTML = '';
-    const files = batchStagedFiles[idx] || [];
-    if (files.length > 0) {
-        if (addMoreBtn) addMoreBtn.style.display = 'block';
-    } else {
-        if (addMoreBtn) addMoreBtn.style.display = 'none';
-    }
+function removeLinkFromFolder(idx, linkId) {
+    if (!batchCardLinks[idx]) return;
+    saveCardFolderInputStates(idx);
+    batchCardLinks[idx] = batchCardLinks[idx].filter(l => l.id !== linkId);
+    renderCardFolders(idx);
+}
+
+function saveCardFolderInputStates(idx) {
+    (batchStagedFiles[idx] || []).forEach(f => {
+        const wrap = document.getElementById(`file_row_${idx}_${f._file_id}`);
+        if (wrap) {
+            const narasiEl = wrap.querySelector('textarea.file-narasi-inp');
+            if (narasiEl) f._narasi = narasiEl.value;
+            const limSw = wrap.querySelector('input.file-limit-sw');
+            if (limSw) f._is_limited = limSw.checked;
+            const limVal = wrap.querySelector('input.file-limit-val');
+            if (limVal) f._page_limit = limVal.value;
+            const dlSw = wrap.querySelector('input.file-dl-sw');
+            if (dlSw) f._can_download = dlSw.checked;
+            const subs = [];
+            wrap.querySelectorAll('input.sub-check-input:checked').forEach(c => {
+                subs.push(parseInt(c.value));
+            });
+            f._sub_bidang_ids = subs;
+        }
+    });
+
+    (batchCardLinks[idx] || []).forEach(l => {
+        const wrap = document.getElementById(`link_row_${idx}_${l.id}`);
+        if (wrap) {
+            const urlEl = wrap.querySelector('input.gdrive-doc-input');
+            if (urlEl) l.url = urlEl.value;
+            const narasiEl = wrap.querySelector('textarea.link-narasi-inp');
+            if (narasiEl) l.narasi = narasiEl.value;
+            const limSw = wrap.querySelector('input.link-limit-sw');
+            if (limSw) l.is_limited = limSw.checked;
+            const limVal = wrap.querySelector('input.link-limit-val');
+            if (limVal) l.page_limit = limVal.value;
+            const dlSw = wrap.querySelector('input.link-dl-sw');
+            if (dlSw) l.can_download = dlSw.checked;
+            const subs = [];
+            wrap.querySelectorAll('input.sub-check-input:checked').forEach(c => {
+                subs.push(parseInt(c.value));
+            });
+            l.sub_bidang_ids = subs;
+        }
+    });
+}
+
+function renderCardFolders(idx) {
+    initCardFolders(idx);
+    const container = document.getElementById(`card_folders_container_${idx}`);
+    if (!container) return;
+
+    saveCardFolderInputStates(idx);
+
     const card = document.getElementById(`docCard_${idx}`);
     const cardBidangId = card ? card.querySelector(`select[name="docs[${idx}][bidang_id]"]`)?.value : null;
 
-    files.forEach((file, fIdx) => {
-        const st = savedState[fIdx] || {};
-        const ext = file.name.split('.').pop().toLowerCase();
-        let iconClass = 'fa-file-pdf text-danger';
-        let bgClass = 'bg-danger bg-opacity-10';
-        if (['doc', 'docx'].includes(ext)) {
-            iconClass = 'fa-file-word text-primary';
-            bgClass = 'bg-primary bg-opacity-10';
-        } else if (['xls', 'xlsx'].includes(ext)) {
-            iconClass = 'fa-file-excel text-success';
-            bgClass = 'bg-success bg-opacity-10';
+    const folders = batchCardFolders[idx] || [];
+    let foldersHtml = '';
+
+    folders.forEach(folder => {
+        const folderFiles = (batchStagedFiles[idx] || []).filter(f => f._folder_id === folder.id);
+        const folderLinks = (batchCardLinks[idx] || []).filter(l => l.folder_id === folder.id);
+        const totalItems = folderFiles.length + folderLinks.length;
+
+        let itemsHtml = '';
+        if (totalItems === 0) {
+            itemsHtml = `
+                <div class="p-3 text-center rounded-3 border border-dashed bg-light-subtle text-muted small">
+                    <i class="fas fa-folder-open text-secondary mb-1 fa-lg d-block opacity-50"></i>
+                    <span>Folder ini masih kosong. Klik tombol <strong>+ Dokumen</strong>, <strong>+ Foto</strong>, atau <strong>+ Link GDrive</strong> di atas untuk menambahkan berkas.</span>
+                </div>
+            `;
+        } else {
+            folderFiles.forEach(file => {
+                const ext = (file.name || '').split('.').pop().toLowerCase();
+                const isPhoto = file._category === 'photo' || ['jpg', 'jpeg', 'png', 'webp'].includes(ext);
+                let badgeType = isPhoto ? '<span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-0.5" style="font-size:0.68rem;"><i class="fas fa-image me-1"></i> Foto / Gambar</span>' : '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size:0.68rem;"><i class="fas fa-file-lines me-1"></i> Berkas Dokumen</span>';
+                let iconClass = isPhoto ? 'fa-image text-info' : (['doc', 'docx'].includes(ext) ? 'fa-file-word text-primary' : (['xls', 'xlsx'].includes(ext) ? 'fa-file-excel text-success' : 'fa-file-pdf text-danger'));
+                let bgClass = isPhoto ? 'bg-info bg-opacity-10' : (['doc', 'docx'].includes(ext) ? 'bg-primary bg-opacity-10' : (['xls', 'xlsx'].includes(ext) ? 'bg-success bg-opacity-10' : 'bg-danger bg-opacity-10'));
+                const pickerHtml = renderSubStandarPicker(`docs[${idx}][file_sub_bidang][${file._file_id}][]`, file._sub_bidang_ids || [], `card_${idx}_file_${file._file_id}`, cardBidangId);
+
+                itemsHtml += `
+                    <div class="card p-3 bg-white border rounded-3 shadow-2xs mb-2.5" id="file_row_${idx}_${file._file_id}">
+                        <div class="d-flex align-items-center justify-content-between pb-2 border-bottom gap-2">
+                            <div class="d-flex align-items-center gap-2 text-truncate" style="min-width: 0;">
+                                <div class="p-2 rounded-2 ${bgClass} flex-shrink-0">
+                                    <i class="fas ${iconClass}"></i>
+                                </div>
+                                <div class="text-truncate">
+                                    <div class="text-truncate fw-bold text-dark" style="font-size:0.84rem;">${escapeHtml(file.name)}</div>
+                                    <div class="d-flex align-items-center gap-1.5 mt-0.5">
+                                        ${badgeType}
+                                        <span class="badge bg-light text-muted border" style="font-size: 0.68rem;">${(file.size / (1024*1024)).toFixed(2)} MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2.5 rounded-pill fw-semibold flex-shrink-0" style="font-size: 0.74rem;" onclick="removeFileFromFolder(${idx}, '${file._file_id}')">
+                                <i class="fas fa-trash-can me-1"></i> Hapus
+                            </button>
+                        </div>
+                        <input type="hidden" name="docs[${idx}][file_folder][]" value="${escapeHtml(file._folder_name || folder.name)}">
+                        <input type="hidden" name="docs[${idx}][file_category][]" value="${escapeHtml(file._category || 'file')}">
+                        <div class="mt-2 mb-2">
+                            <label class="form-label fw-bold text-dark mb-1 small d-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                                <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas: <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control form-control-sm py-1.5 file-narasi-inp" name="docs[${idx}][file_narasi][]" rows="1" placeholder="Keterangan / narasi berkas ini..." required>${escapeHtml(file._narasi || '')}</textarea>
+                        </div>
+                        ${pickerHtml}
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-7">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 border bg-light-subtle h-100">
+                                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                        <input class="form-check-input file-limit-sw cursor-pointer" type="checkbox" role="switch" name="docs[${idx}][file_is_limited][]" value="1" ${file._is_limited ? 'checked' : ''} onchange="this.closest('.row').querySelector('.file-limit-wrap').style.display = this.checked ? 'inline-flex' : 'none'" style="width: 2em; height: 1.1em;">
+                                        <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" style="font-size: 0.78rem;">Batasi Pratinjau</label>
+                                    </div>
+                                    <div class="input-group input-group-sm file-limit-wrap" style="width: 90px; ${file._is_limited ? 'display:inline-flex;' : 'display:none;'}">
+                                        <input type="number" class="form-control form-control-sm text-center py-1 fw-bold file-limit-val" name="docs[${idx}][file_page_limit][]" min="1" max="50" value="${file._page_limit || 1}" style="font-size: 0.75rem;">
+                                        <span class="input-group-text px-1 text-muted small">Hlm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 border bg-light-subtle h-100">
+                                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                        <input class="form-check-input file-dl-sw cursor-pointer" type="checkbox" role="switch" name="docs[${idx}][file_can_download][]" value="1" ${file._can_download ? 'checked' : ''} style="width: 2em; height: 1.1em;">
+                                        <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" style="font-size: 0.78rem;">Unduh Publik</label>
+                                    </div>
+                                    <span class="badge bg-light text-muted border small d-none d-sm-inline">Publik</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            folderLinks.forEach(link => {
+                const pickerHtml = renderSubStandarPicker(`docs[${idx}][external_link_sub_bidang][${link.id}][]`, link.sub_bidang_ids || [], `card_${idx}_link_${link.id}`, cardBidangId);
+
+                itemsHtml += `
+                    <div class="card p-3 bg-white border rounded-3 shadow-2xs mb-2.5" id="link_row_${idx}_${link.id}">
+                        <div class="d-flex align-items-center justify-content-between pb-2 border-bottom gap-2">
+                            <div class="d-flex align-items-center gap-2 text-truncate" style="min-width: 0;">
+                                <div class="p-2 rounded-2 bg-success bg-opacity-10 text-success flex-shrink-0">
+                                    <i class="fab fa-google-drive"></i>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-0.5" style="font-size:0.68rem;">
+                                        <i class="fab fa-google-drive me-1"></i> Tautan Google Drive
+                                    </span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2.5 rounded-pill fw-semibold flex-shrink-0" style="font-size: 0.74rem;" onclick="removeLinkFromFolder(${idx}, '${link.id}')">
+                                <i class="fas fa-trash-can me-1"></i> Hapus
+                            </button>
+                        </div>
+                        <input type="hidden" name="docs[${idx}][external_link_folder][]" value="${escapeHtml(link.folder_name || folder.name)}">
+                        <div class="mt-2 mb-2">
+                            <label class="form-label fw-bold text-dark mb-1 small d-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                                <i class="fas fa-link text-primary"></i> URL Tautan Berkas Langsung (Google Drive): <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-primary px-2.5"><i class="fas fa-link"></i></span>
+                                <input type="url" class="form-control form-control-sm py-1.5 gdrive-doc-input" name="docs[${idx}][external_links][]" value="${escapeHtml(link.url || '')}" placeholder="https://drive.google.com/file/d/... (Khusus berkas/foto, bukan folder)" oninput="validateGdriveDocInput(this)" onblur="validateGdriveDocInput(this)">
+                            </div>
+                            <div class="gdrive-validation-feedback text-danger small mt-1 fw-semibold" style="display: none; font-size: 0.74rem;"></div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold text-dark mb-1 small d-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                                <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan: <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control form-control-sm py-1.5 link-narasi-inp" name="docs[${idx}][external_link_narasi][]" rows="1" placeholder="Narasi / Keterangan tautan dokumen ini..." required>${escapeHtml(link.narasi || '')}</textarea>
+                        </div>
+                        ${pickerHtml}
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-7">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 border bg-light-subtle h-100">
+                                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                        <input class="form-check-input link-limit-sw cursor-pointer" type="checkbox" role="switch" name="docs[${idx}][external_link_is_limited][]" value="1" ${link.is_limited ? 'checked' : ''} onchange="this.closest('.row').querySelector('.link-limit-wrap').style.display = this.checked ? 'inline-flex' : 'none'" style="width: 2em; height: 1.1em;">
+                                        <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" style="font-size: 0.78rem;">Batasi Pratinjau</label>
+                                    </div>
+                                    <div class="input-group input-group-sm link-limit-wrap" style="width: 90px; ${link.is_limited ? 'display:inline-flex;' : 'display:none;'}">
+                                        <input type="number" class="form-control form-control-sm text-center py-1 fw-bold link-limit-val" name="docs[${idx}][external_link_page_limit][]" min="1" max="50" value="${link.page_limit || 1}" style="font-size: 0.75rem;">
+                                        <span class="input-group-text px-1 text-muted small">Hlm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 border bg-light-subtle h-100">
+                                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                        <input class="form-check-input link-dl-sw cursor-pointer" type="checkbox" role="switch" name="docs[${idx}][external_link_can_download][]" value="1" ${link.can_download ? 'checked' : ''} style="width: 2em; height: 1.1em;">
+                                        <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" style="font-size: 0.78rem;">Unduh Publik</label>
+                                    </div>
+                                    <span class="badge bg-light text-muted border small d-none d-sm-inline">Publik</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
-        const selectedSubs = st.sub_bidang_ids || [];
-        const pickerHtml = renderSubStandarPicker(`docs[${idx}][file_sub_bidang][${fIdx}][]`, selectedSubs, `card_${idx}_file_${fIdx}`, cardBidangId);
-        const isLimited = (st.is_limited !== undefined) ? st.is_limited : true;
-        const pageLimit = st.page_limit || 1;
-        const canDownload = (st.can_download !== undefined) ? st.can_download : false;
-        const narasiVal = (st.narasi !== undefined) ? st.narasi : '';
-
-        const div = document.createElement('div');
-        div.className = 'card p-3.5 bg-white border rounded-4 shadow-2xs mb-3';
-        div.innerHTML = `
-            <div class="d-flex align-items-center justify-content-between pb-2.5 border-bottom gap-2">
-                <div class="d-flex align-items-center gap-2.5 text-truncate" style="min-width: 0;">
-                    <div class="p-2 rounded-3 ${bgClass} flex-shrink-0">
-                        <i class="fas ${iconClass} fa-lg"></i>
+        foldersHtml += `
+            <div class="card border rounded-4 bg-white shadow-2xs overflow-hidden mb-2" id="folder_box_${idx}_${folder.id}">
+                <div class="p-3 bg-light border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-grow-1">
+                        <span class="p-2 rounded-3 bg-warning bg-opacity-15 text-warning flex-shrink-0" style="font-size: 1rem;">
+                            <i class="fas fa-folder-open text-amber-600"></i>
+                        </span>
+                        <div class="flex-grow-1" style="max-width: 320px;">
+                            <input type="text" class="form-control form-control-sm fw-bold border-secondary border-opacity-25 bg-white folder-name-input" 
+                                   value="${escapeHtml(folder.name)}" placeholder="Nama Folder (Contoh: SK & Pedoman)" 
+                                   oninput="updateCardFolderTitle(${idx}, '${folder.id}', this.value)" title="Klik untuk mengubah nama folder">
+                        </div>
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2.5 py-1 small" id="folder_count_badge_${idx}_${folder.id}">
+                            ${totalItems} Item
+                        </span>
                     </div>
-                    <div class="text-truncate">
-                        <div class="text-truncate fw-bold text-dark" style="font-size:0.88rem;">${file.name}</div>
-                        <span class="badge bg-light text-muted border mt-0.5" style="font-size: 0.72rem;">${(file.size / (1024*1024)).toFixed(2)} MB</span>
+                    <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" 
+                                onclick="triggerAddFolderFiles(${idx}, '${folder.id}', 'file')" title="Unggah berkas dokumen (PDF, Word, Excel) ke folder ini">
+                            <i class="fas fa-file-circle-plus text-primary"></i>
+                            <span style="font-size: 0.75rem;">+ Dokumen</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" 
+                                onclick="triggerAddFolderFiles(${idx}, '${folder.id}', 'photo')" title="Unggah foto/gambar (JPG, PNG) ke folder ini">
+                            <i class="fas fa-image text-info"></i>
+                            <span style="font-size: 0.75rem;">+ Foto</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" 
+                                onclick="addDriveLinkToFolder(${idx}, '${folder.id}')" title="Tambahkan tautan Google Drive ke folder ini">
+                            <i class="fab fa-google-drive text-success"></i>
+                            <span style="font-size: 0.75rem;">+ Link GDrive</span>
+                        </button>
+                        ${folders.length > 1 ? `
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-1 ms-1" style="width: 28px; height: 28px;" 
+                                onclick="removeFolderFromCard(${idx}, '${folder.id}')" title="Hapus folder ini beserta isinya">
+                            <i class="fas fa-trash-can" style="font-size: 0.75rem;"></i>
+                        </button>
+                        ` : ''}
                     </div>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill fw-semibold flex-shrink-0" style="font-size: 0.78rem;" onclick="removeCardStagedFile(${idx}, ${fIdx})" title="Batalkan berkas ini">
-                    <i class="fas fa-trash-can me-1"></i> Batal
-                </button>
-            </div>
-            
-            <div class="mt-2.5 mb-2">
-                <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas: <span class="text-danger">*</span>
-                </label>
-                <textarea class="form-control py-2" name="docs[${idx}][file_narasi][${fIdx}]" rows="1" placeholder="Keterangan / narasi berkas ini..." required>${narasiVal ? String(narasiVal).replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea>
-            </div>
-
-            ${pickerHtml}
-
-            <!-- Per-File Access Settings (2-Card Pill System) -->
-            <div class="row g-2.5 mt-2.5">
-                <div class="col-md-7">
-                    <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
-                        <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                            <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="card_limit_sw_${idx}_${fIdx}" name="docs[${idx}][file_is_limited][${fIdx}]" value="1" ${isLimited ? 'checked' : ''} onchange="document.getElementById('card_limit_wrap_${idx}_${fIdx}').style.display = this.checked ? 'inline-flex' : 'none'" style="width: 2.2em; height: 1.2em;">
-                            <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="card_limit_sw_${idx}_${fIdx}" style="font-size: 0.82rem;">
-                                Batasi Pratinjau
-                            </label>
-                        </div>
-                        <div class="input-group input-group-sm" id="card_limit_wrap_${idx}_${fIdx}" style="width: 100px; ${isLimited ? 'display:inline-flex;' : 'display:none;'}">
-                            <input type="number" class="form-control text-center py-1 fw-bold" name="docs[${idx}][file_page_limit][${fIdx}]" min="1" max="50" value="${pageLimit}" style="font-size: 0.78rem;">
-                            <span class="input-group-text px-1.5 text-muted small">Hlm</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-5">
-                    <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
-                        <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                            <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="card_dl_sw_${idx}_${fIdx}" name="docs[${idx}][file_can_download][${fIdx}]" value="1" ${canDownload ? 'checked' : ''} style="width: 2.2em; height: 1.2em;">
-                            <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="card_dl_sw_${idx}_${fIdx}" style="font-size: 0.82rem;">
-                                Unduh Publik
-                            </label>
-                        </div>
-                        <span class="badge bg-light text-muted border small d-none d-sm-inline">Publik</span>
-                    </div>
+                <div class="p-3" id="folder_items_${idx}_${folder.id}">
+                    ${itemsHtml}
                 </div>
             </div>
         `;
-        preview.appendChild(div);
     });
-}
 
-function addCardGdriveLink(idx) {
-    const container = document.getElementById(`card_gdrive_links_${idx}`);
-    if (!container) return;
-    const count = container.querySelectorAll('.card-gdrive-row').length + 1;
-    const card = document.getElementById(`docCard_${idx}`);
-    const cardBidangId = card ? card.querySelector(`select[name="docs[${idx}][bidang_id]"]`)?.value : null;
-    const pickerHtml = renderSubStandarPicker(`docs[${idx}][external_link_sub_bidang][${count - 1}][]`, [], `card_${idx}_link_${count}_${Math.random().toString(36).substring(2,6)}`, cardBidangId);
-
-    const div = document.createElement('div');
-    div.className = 'card-gdrive-row card p-3.5 bg-white border rounded-4 shadow-2xs mb-3';
-    div.innerHTML = `
-        <div class="d-flex align-items-center justify-content-between pb-2.5 border-bottom">
-            <span class="fw-bold text-dark-blue d-flex align-items-center gap-2 card-gdrive-title" style="font-size: 0.88rem;">
-                <div class="p-1.5 rounded-3 bg-success bg-opacity-10 text-success flex-shrink-0">
-                    <i class="fab fa-google-drive"></i>
-                </div>
-                <span>Tautan Berkas #${count}</span>
-            </span>
-            <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill fw-semibold" style="font-size: 0.78rem;" onclick="removeCardGdriveLink(this, ${idx})" title="Batalkan / Hapus tautan ini">
-                <i class="fas fa-trash-can me-1"></i> Hapus
-            </button>
-        </div>
-        <div class="mt-2.5 mb-2">
-            <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                <i class="fas fa-file-lines text-primary"></i> URL Tautan Dokumen (Google Drive): <span class="text-danger">*</span>
-            </label>
-            <div class="input-group">
-                <span class="input-group-text bg-light text-primary px-3"><i class="fas fa-link"></i></span>
-                <input type="url" class="form-control py-2 gdrive-doc-input" name="docs[${idx}][external_links][]" placeholder="https://drive.google.com/file/d/... (Khusus dokumen, bukan folder)" oninput="validateGdriveDocInput(this)" onblur="validateGdriveDocInput(this)">
-            </div>
-            <div class="gdrive-validation-feedback text-danger small mt-1 fw-semibold" style="display: none; font-size: 0.76rem;"></div>
-            <div class="form-text text-muted small mt-1" style="font-size: 0.74rem;">
-                <i class="fas fa-circle-info text-primary me-1"></i> Khusus tautan <strong>dokumen / file langsung</strong> (contoh: <code>drive.google.com/file/d/...</code>). <strong>Tautan folder tidak diperbolehkan.</strong>
-            </div>
-        </div>
-        <div class="mb-2">
-            <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan: <span class="text-danger">*</span>
-            </label>
-            <textarea class="form-control py-2" name="docs[${idx}][external_link_narasi][]" rows="1" placeholder="Keterangan / Narasi tautan dokumen ini..."></textarea>
-        </div>
-        ${pickerHtml}
-
-        <!-- Per-Link Access Settings -->
-        <div class="row g-2.5 mt-2.5">
-            <div class="col-md-7">
-                <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
-                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                        <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="card_link_limit_sw_${idx}_${count}" name="docs[${idx}][external_link_is_limited][${count - 1}]" value="1" checked onchange="document.getElementById('card_link_limit_wrap_${idx}_${count}').style.display = this.checked ? 'inline-flex' : 'none'" style="width: 2.2em; height: 1.2em;">
-                        <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="card_link_limit_sw_${idx}_${count}" style="font-size: 0.82rem;">
-                            Batasi Pratinjau
-                        </label>
-                    </div>
-                    <div class="input-group input-group-sm" id="card_link_limit_wrap_${idx}_${count}" style="width: 100px;">
-                        <input type="number" class="form-control text-center py-1 fw-bold" name="docs[${idx}][external_link_page_limit][${count - 1}]" min="1" max="50" value="1" style="font-size: 0.78rem;">
-                        <span class="input-group-text px-1.5 text-muted small">Hlm</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-5">
-                <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
-                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                        <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="card_link_dl_sw_${idx}_${count}" name="docs[${idx}][external_link_can_download][${count - 1}]" value="1" style="width: 2.2em; height: 1.2em;">
-                        <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="card_link_dl_sw_${idx}_${count}" style="font-size: 0.82rem;">
-                            Unduh Publik
-                        </label>
-                    </div>
-                    <span class="badge bg-light text-muted border small d-none d-sm-inline">Publik</span>
-                </div>
-            </div>
-        </div>
-    `;
-    container.appendChild(div);
-}
-
-function removeCardGdriveLink(btn, idx) {
-    const container = document.getElementById(`card_gdrive_links_${idx}`);
-    if (!container) return;
-    const row = btn.closest('.card-gdrive-row');
-    if (row) {
-        if (container.querySelectorAll('.card-gdrive-row').length > 1) {
-            row.remove();
-        } else {
-            row.querySelectorAll('input, textarea').forEach(inp => inp.value = '');
-        }
-    }
+    container.innerHTML = foldersHtml;
 }
 
 function addNewDocCard(presetData = null) {
@@ -2033,12 +1990,17 @@ function addNewDocCard(presetData = null) {
         }
         const container = document.getElementById('batchCardsContainer');
         if (!container) return;
-        const template = createDocCardTemplate(cardCounter, presetData);
+        const currentIdx = cardCounter;
+        const template = createDocCardTemplate(currentIdx, presetData);
         container.insertAdjacentHTML('beforeend', template);
         
+        // Render folder awal untuk kartu ini
+        initCardFolders(currentIdx);
+        renderCardFolders(currentIdx);
+
         // Jika ada preset bidang, sinkronkan sub-bidang picker di kartu ini
         if (presetData && presetData.bidang_id) {
-            handleBatchCardBidangChange(cardCounter, presetData.bidang_id);
+            handleBatchCardBidangChange(currentIdx, presetData.bidang_id);
         }
 
         cardCounter++;
@@ -2187,6 +2149,12 @@ document.addEventListener('DOMContentLoaded', function() {
         batchForm.addEventListener('submit', async function(e) {
             if (isBatchSubmitting) return;
 
+            // Simpan seluruh input form folder sebelum validasi/submit
+            document.querySelectorAll('.doc-batch-card').forEach(card => {
+                const cIdx = card.getAttribute('data-card-idx');
+                if (cIdx !== null) saveCardFolderInputStates(parseInt(cIdx));
+            });
+
             batchForm.querySelectorAll('.input-tahun-akademik, input[name*="tahun_akademik"]').forEach(inp => {
                 if (typeof window.autoPairTahunAkademik === 'function') {
                     window.autoPairTahunAkademik(inp, { type: 'blur' });
@@ -2262,6 +2230,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         inpData.name = `docs[${idx}][files_base64][${fIdx}][data]`;
                         inpData.value = base64Data;
                         batchForm.appendChild(inpData);
+
+                        const inpFolder = document.createElement('input');
+                        inpFolder.type = 'hidden';
+                        inpFolder.className = 'input-file-base64';
+                        inpFolder.name = `docs[${idx}][files_base64][${fIdx}][folder_name]`;
+                        inpFolder.value = file._folder_name || 'Utama';
+                        batchForm.appendChild(inpFolder);
+
+                        const inpCat = document.createElement('input');
+                        inpCat.type = 'hidden';
+                        inpCat.className = 'input-file-base64';
+                        inpCat.name = `docs[${idx}][files_base64][${fIdx}][file_category]`;
+                        inpCat.value = file._category || 'file';
+                        batchForm.appendChild(inpCat);
                     }
                 }
 

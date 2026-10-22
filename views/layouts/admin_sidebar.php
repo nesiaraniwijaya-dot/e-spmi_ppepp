@@ -152,11 +152,26 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                         <span class="badge bg-danger rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingReviewCount ?> dokumen menunggu verifikasi"><?= $sidebarPendingReviewCount ?></span>
                     <?php endif; ?>
                 </a>
+                <a href="<?= base_url('admin/monitoring-lalulintas') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-lalulintas') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-traffic-light"></i></span>
+                    <span>Lalu Lintas &amp; SLA Berkas</span>
+                </a>
+                <a href="<?= base_url('admin/monitoring-gpm') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-gpm') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-users-viewfinder"></i></span>
+                    <span>Monitoring Kinerja GPM</span>
+                </a>
             </div>
 
             <!-- Super Admin: Data Master Institusi -->
             <div class="admin-nav-group">
-                <div class="admin-nav-label">Data Master</div>
+                <div class="admin-nav-label">Data Master &amp; Kalender</div>
+                <a href="<?= base_url('admin/tahun-akademik') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/tahun-akademik') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-calendar-check"></i></span>
+                    <span>Tahun Akademik &amp; Upload</span>
+                </a>
                 <a href="<?= base_url('admin/fakultas') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/fakultas') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-landmark"></i></span>

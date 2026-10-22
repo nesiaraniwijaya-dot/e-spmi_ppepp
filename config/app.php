@@ -162,6 +162,8 @@ function parse_external_links(?string $raw): array {
                 if (is_array($item) && !empty($item['url'])) {
                     $result[] = [
                         'url' => trim($item['url']),
+                        'label' => trim($item['label'] ?? ''),
+                        'folder_name' => trim($item['folder_name'] ?? ''),
                         'narasi' => trim($item['narasi'] ?? ''),
                         'can_download_public' => (int)($item['can_download_public'] ?? 0),
                         'sub_bidang_ids' => !empty($item['sub_bidang_ids']) && is_array($item['sub_bidang_ids']) 
