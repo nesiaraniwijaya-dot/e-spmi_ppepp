@@ -88,7 +88,7 @@ $siklusDefinitions = [
         <!-- MODE EDIT DOKUMEN TUNGGAL (ADMIN PRODI)    -->
         <!-- ========================================== -->
         <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white" style="border: 1px solid #E2E8F0 !important;">
-            <form action="<?= base_url('prodi/dokumen/save') ?>" method="POST" enctype="multipart/form-data" id="documentUploadForm" novalidate>
+            <form action="<?= base_url('prodi/dokumen/save') ?>" method="POST" id="documentUploadForm" novalidate>
                 <input type="hidden" name="id" value="<?= $doc['id'] ?>">
                 
                 <?php if (in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])): 
@@ -649,7 +649,7 @@ $siklusDefinitions = [
         <!-- ========================================== -->
         <!-- MODE CREATE: BATCH MULTI-UPLOAD (1-10 DOK)  -->
         <!-- ========================================== -->
-        <form action="<?= base_url('prodi/dokumen/save') ?>" method="POST" enctype="multipart/form-data" id="batchDocForm" novalidate>
+        <form action="<?= base_url('prodi/dokumen/save') ?>" method="POST" id="batchDocForm" novalidate>
             
             <!-- Banner Mode Kelanjutan Judul PPEPP -->
             <div id="activeContinuationBanner" class="card border-0 shadow-sm rounded-4 p-3.5 mb-4 text-white" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); display: none;">
@@ -732,9 +732,9 @@ $siklusDefinitions = [
 <!-- JAVASCRIPT LOGIC FORM ADMIN PRODI          -->
 <!-- ========================================== -->
 <script>
-const SIKLUS_DEFS = <?= json_encode($siklusDefinitions) ?>;
-const BIDANGS_DATA = <?= json_encode($bidangList ?? []) ?>;
-const SUB_BIDANGS_DATA = <?= json_encode($subBidangList ?? []) ?>;
+const SIKLUS_DEFS = <?= json_encode($siklusDefinitions, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?> || {};
+const BIDANGS_DATA = <?= json_encode($bidangList ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?> || [];
+const SUB_BIDANGS_DATA = <?= json_encode($subBidangList ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?> || [];
 const PRODI_NAME = <?= json_encode($prodi['nama_prodi'] ?? 'Program Studi') ?>;
 const PRODI_JENJANG = <?= json_encode($prodi['jenjang'] ?? 'S1') ?>;
 const IS_EDIT_MODE = <?= $isEdit ? 'true' : 'false' ?>;
@@ -743,7 +743,7 @@ const PRESET_SIKLUS = <?= json_encode($presetSiklus ?? null) ?>;
 
 // Sub-bidang filtering helper
 function getFilteredSubBidang(bidangId) {
-    if (!bidangId) return [];
+    if (!bidangId || !Array.isArray(SUB_BIDANGS_DATA)) return [];
     return SUB_BIDANGS_DATA.filter(sb => sb.bidang_id == bidangId);
 }
 
@@ -1104,6 +1104,267 @@ function addSingleGdriveLinkRow() {
 }
 
 // ==========================================
+// FALLBACK SUB STANDAR MUTU PICKER
+// Mencegah kegagalan render kartu jika file assets/js/sub_standar_picker.js belum terunggah ke hosting
+// ==========================================
+if (typeof escapeHtml !== 'function') {
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+}
+
+if (typeof renderSubStandarPicker !== 'function') {
+    window.renderSubStandarPicker = function(inputName, selectedSubIds = [], uniqueKey = '', currentBidangId = null) {
+        if (!uniqueKey) uniqueKey = 'picker_' + Math.random().toString(36).substring(2, 9);
+        selectedSubIds = (selectedSubIds || []).map(id => parseInt(id)).filter(id => !isNaN(id) && id > 0);
+
+        const bData = (typeof BIDANGS_DATA !== 'undefined' && Array.isArray(BIDANGS_DATA)) ? BIDANGS_DATA : [];
+        let sbData = (typeof SUB_BIDANGS_DATA !== 'undefined' && Array.isArray(SUB_BIDANGS_DATA)) ? SUB_BIDANGS_DATA : [];
+        const parsedBidangId = (currentBidangId && parseInt(currentBidangId) > 0) ? parseInt(currentBidangId) : null;
+
+        if (parsedBidangId) {
+            sbData = sbData.filter(s => parseInt(s.bidang_id) === parsedBidangId);
+            const validIds = sbData.map(s => parseInt(s.id));
+            selectedSubIds = selectedSubIds.filter(id => validIds.includes(id));
+        } else {
+            selectedSubIds = [];
+        }
+
+        let badgesHtml = '';
+        selectedSubIds.forEach(sId => {
+            const sb = sbData.find(s => parseInt(s.id) === sId);
+            if (sb) {
+                const name = escapeHtml(sb.nama_sub_bidang);
+                badgesHtml += `
+                    <span class="badge rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1.5 border shadow-2xs me-1 mb-1 text-wrap text-start lh-sm" 
+                          style="background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE !important; font-size: 0.78rem; font-weight: 600; max-width: 100%; word-break: break-word;" 
+                          id="badge_${uniqueKey}_${sb.id}" title="${name}">
+                        <i class="fas fa-bookmark text-primary opacity-75 flex-shrink-0" style="font-size: 0.7rem;"></i>
+                        <span>${name}</span>
+                        <i class="fas fa-xmark cursor-pointer text-muted hover-danger ms-1 flex-shrink-0" 
+                           onclick="removeSubStandarTag('${uniqueKey}', ${sb.id})" title="Hapus standar ini"></i>
+                    </span>
+                `;
+            }
+        });
+
+        let optionsHtml = '';
+        if (!parsedBidangId) {
+            optionsHtml = `
+                <div class="px-3 py-3 text-center text-muted small fst-italic no-bidang-notice">
+                    <i class="fas fa-arrow-left text-primary me-1"></i> Silakan pilih Bidang pada dokumen terlebih dahulu
+                </div>
+            `;
+        } else {
+            const curBidang = bData.find(b => parseInt(b.id) === parsedBidangId);
+            const bName = curBidang ? curBidang.nama_bidang : 'Bidang Terpilih';
+            if (sbData.length > 0) {
+                optionsHtml += `
+                    <div class="px-2.5 py-1.5 mt-1 mb-1 fw-bold text-dark-blue rounded bg-light border-bottom d-flex align-items-center justify-content-between" style="font-size: 0.76rem; letter-spacing: 0.2px;">
+                        <span class="text-truncate"><i class="fas fa-layer-group text-primary me-1"></i> ${escapeHtml(bName)}</span>
+                        <span class="badge bg-secondary bg-opacity-25 text-dark rounded-pill" style="font-size: 0.68rem;">${sbData.length} Standar</span>
+                    </div>
+                `;
+                sbData.forEach(sb => {
+                    const isChecked = selectedSubIds.includes(parseInt(sb.id));
+                    const searchStr = `${sb.nama_sub_bidang || ''} ${bName}`.toLowerCase();
+                    optionsHtml += `
+                        <label class="dropdown-item d-flex align-items-start gap-2 py-2 px-2.5 rounded cursor-pointer sub-option-item" 
+                               style="font-size: 0.8rem; white-space: normal;" 
+                               data-search-text="${escapeHtml(searchStr)}">
+                            <input type="checkbox" class="form-check-input flex-shrink-0 mt-0.5 sub-check-input" 
+                                   name="${inputName}" value="${sb.id}" 
+                                   onchange="handleSubStandarCheckChange('${uniqueKey}', this, ${sb.id}, '', '${escapeHtml(sb.nama_sub_bidang)}')">
+                            <span class="lh-sm text-dark">${escapeHtml(sb.nama_sub_bidang)}</span>
+                        </label>
+                    `;
+                });
+            } else {
+                optionsHtml = `
+                    <div class="px-3 py-3 text-center text-muted small fst-italic">
+                        Belum ada standar mutu yang terdaftar untuk bidang ini.
+                    </div>
+                `;
+            }
+        }
+
+        const noSubPlaceholder = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';
+        const buttonLabel = parsedBidangId
+            ? '<i class="fas fa-plus-circle text-primary me-1.5"></i> Pilih / Tambah Standar...'
+            : '<i class="fas fa-info-circle text-muted me-1.5"></i> Pilih Bidang terlebih dahulu...';
+
+        return `
+            <div class="sub-standar-picker-wrap p-3 rounded-3 bg-white border shadow-2xs mt-2" 
+                 id="picker_wrap_${uniqueKey}" 
+                 data-picker-key="${uniqueKey}" 
+                 data-input-name="${inputName}" 
+                 data-current-bidang="${parsedBidangId || ''}">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="form-label fw-bold text-dark mb-0 d-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+                        <i class="fas fa-tags text-primary"></i>
+                        <span>Standar Mutu Berkas Ini: <span class="text-danger">*</span></span>
+                    </label>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">Bisa > 1 Standar</span>
+                </div>
+                <div class="selected-sub-badges d-flex flex-wrap gap-1 mb-2" id="badges_container_${uniqueKey}">
+                    ${badgesHtml || noSubPlaceholder}
+                </div>
+                <div class="dropdown">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 dropdown-toggle-custom" 
+                            id="btn_toggle_${uniqueKey}"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px;">
+                        <span class="text-truncate text-secondary dropdown-label-text">
+                            ${buttonLabel}
+                        </span>
+                        <i class="fas fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;"></i>
+                    </button>
+                    <div class="dropdown-menu p-2.5 shadow-lg border rounded-3 w-100" style="max-height: 300px; overflow-y: auto; font-size: 0.8rem; z-index: 1060;">
+                        <div class="px-1 pb-2 mb-1.5 border-bottom">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-muted px-2.5"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control py-1 px-2.5" placeholder="Cari nama standar..." onkeyup="filterSubStandarList('${uniqueKey}', this.value)">
+                            </div>
+                        </div>
+                        <div class="sub-standar-options-list" id="options_list_${uniqueKey}">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    window.updateSubStandarPickerOptions = function(uniqueKey, newBidangId, inputName) {
+        const wrap = document.getElementById(`picker_wrap_${uniqueKey}`);
+        if (!wrap) return;
+        if (!inputName) inputName = wrap.getAttribute('data-input-name') || '';
+
+        const bData = (typeof BIDANGS_DATA !== 'undefined' && Array.isArray(BIDANGS_DATA)) ? BIDANGS_DATA : [];
+        const sbData = (typeof SUB_BIDANGS_DATA !== 'undefined' && Array.isArray(SUB_BIDANGS_DATA)) ? SUB_BIDANGS_DATA : [];
+        const parsedBidangId = (newBidangId && parseInt(newBidangId) > 0) ? parseInt(newBidangId) : null;
+        wrap.setAttribute('data-current-bidang', parsedBidangId || '');
+
+        const container = document.getElementById(`badges_container_${uniqueKey}`);
+        const optionsContainer = document.getElementById(`options_list_${uniqueKey}`);
+        const toggleBtn = document.getElementById(`btn_toggle_${uniqueKey}`);
+        const labelSpan = toggleBtn ? toggleBtn.querySelector('.dropdown-label-text') : null;
+
+        if (container) {
+            const validSubs = parsedBidangId ? sbData.filter(s => parseInt(s.bidang_id) === parsedBidangId) : [];
+            const validIds = validSubs.map(s => parseInt(s.id));
+            container.querySelectorAll('.badge').forEach(b => {
+                const m = b.id.match(new RegExp(`badge_${uniqueKey}_(\\d+)`));
+                if (m && !validIds.includes(parseInt(m[1]))) b.remove();
+            });
+            if (container.querySelectorAll('.badge').length === 0) {
+                container.innerHTML = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';
+            }
+        }
+
+        let newOptionsHtml = '';
+        if (!parsedBidangId) {
+            newOptionsHtml = '<div class="px-3 py-3 text-center text-muted small fst-italic no-bidang-notice"><i class="fas fa-arrow-left text-primary me-1"></i> Silakan pilih Bidang pada dokumen terlebih dahulu</div>';
+            if (labelSpan) labelSpan.innerHTML = '<i class="fas fa-info-circle text-muted me-1.5"></i> Pilih Bidang terlebih dahulu...';
+        } else {
+            const curBidang = bData.find(b => parseInt(b.id) === parsedBidangId);
+            const bName = curBidang ? curBidang.nama_bidang : 'Bidang Terpilih';
+            const filteredSubs = sbData.filter(s => parseInt(s.bidang_id) === parsedBidangId);
+
+            if (filteredSubs.length > 0) {
+                newOptionsHtml += `
+                    <div class="px-2.5 py-1.5 mt-1 mb-1 fw-bold text-dark-blue rounded bg-light border-bottom d-flex align-items-center justify-content-between" style="font-size: 0.76rem; letter-spacing: 0.2px;">
+                        <span class="text-truncate"><i class="fas fa-layer-group text-primary me-1"></i> ${escapeHtml(bName)}</span>
+                        <span class="badge bg-secondary bg-opacity-25 text-dark rounded-pill" style="font-size: 0.68rem;">${filteredSubs.length} Standar</span>
+                    </div>
+                `;
+                filteredSubs.forEach(sb => {
+                    const searchStr = `${sb.nama_sub_bidang || ''} ${bName}`.toLowerCase();
+                    newOptionsHtml += `
+                        <label class="dropdown-item d-flex align-items-start gap-2 py-2 px-2.5 rounded cursor-pointer sub-option-item" 
+                               style="font-size: 0.8rem; white-space: normal;" 
+                               data-search-text="${escapeHtml(searchStr)}">
+                            <input type="checkbox" class="form-check-input flex-shrink-0 mt-0.5 sub-check-input" 
+                                   name="${inputName}" value="${sb.id}" 
+                                   onchange="handleSubStandarCheckChange('${uniqueKey}', this, ${sb.id}, '', '${escapeHtml(sb.nama_sub_bidang)}')">
+                            <span class="lh-sm text-dark">${escapeHtml(sb.nama_sub_bidang)}</span>
+                        </label>
+                    `;
+                });
+            } else {
+                newOptionsHtml = '<div class="px-3 py-3 text-center text-muted small fst-italic">Belum ada standar mutu yang terdaftar untuk bidang ini.</div>';
+            }
+            if (labelSpan) labelSpan.innerHTML = '<i class="fas fa-plus-circle text-primary me-1.5"></i> Pilih / Tambah Standar...';
+        }
+        if (optionsContainer) optionsContainer.innerHTML = newOptionsHtml;
+    };
+
+    window.updateSubStandarPickersInContainer = function(containerOrSelector, newBidangId) {
+        let container = typeof containerOrSelector === 'string' ? document.querySelector(containerOrSelector) : containerOrSelector;
+        if (!container) return;
+        container.querySelectorAll('.sub-standar-picker-wrap').forEach(picker => {
+            const key = picker.getAttribute('data-picker-key') || picker.id.replace('picker_wrap_', '');
+            const inputName = picker.getAttribute('data-input-name') || '';
+            updateSubStandarPickerOptions(key, newBidangId, inputName);
+        });
+    };
+
+    window.handleSubStandarCheckChange = function(uniqueKey, checkbox, subId, subCode, subName) {
+        const container = document.getElementById(`badges_container_${uniqueKey}`);
+        if (!container) return;
+        const placeholder = container.querySelector('.no-sub-placeholder');
+        if (placeholder) placeholder.remove();
+
+        const existingBadge = document.getElementById(`badge_${uniqueKey}_${subId}`);
+        if (checkbox.checked) {
+            if (!existingBadge) {
+                const badge = document.createElement('span');
+                badge.className = 'badge rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1.5 border shadow-2xs me-1 mb-1 text-wrap text-start lh-sm';
+                badge.style.cssText = 'background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE !important; font-size: 0.78rem; font-weight: 600; max-width: 100%; word-break: break-word;';
+                badge.id = `badge_${uniqueKey}_${subId}`;
+                badge.title = subName;
+                badge.innerHTML = `
+                    <i class="fas fa-bookmark text-primary opacity-75 flex-shrink-0" style="font-size: 0.7rem;"></i>
+                    <span>${escapeHtml(subName)}</span>
+                    <i class="fas fa-xmark cursor-pointer text-muted hover-danger ms-1 flex-shrink-0" 
+                       onclick="removeSubStandarTag('${uniqueKey}', ${subId})" title="Hapus standar ini"></i>
+                `;
+                container.appendChild(badge);
+            }
+        } else {
+            if (existingBadge) existingBadge.remove();
+            if (container.querySelectorAll('.badge').length === 0) {
+                container.innerHTML = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';
+            }
+        }
+    };
+
+    window.removeSubStandarTag = function(uniqueKey, subId) {
+        const badge = document.getElementById(`badge_${uniqueKey}_${subId}`);
+        if (badge) badge.remove();
+        const checkbox = document.querySelector(`#options_list_${uniqueKey} input[value="${subId}"]`);
+        if (checkbox) checkbox.checked = false;
+        const container = document.getElementById(`badges_container_${uniqueKey}`);
+        if (container && container.querySelectorAll('.badge').length === 0) {
+            container.innerHTML = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';
+        }
+    };
+
+    window.filterSubStandarList = function(uniqueKey, query) {
+        query = (query || '').toLowerCase().trim();
+        document.querySelectorAll(`#options_list_${uniqueKey} .sub-option-item`).forEach(item => {
+            const text = item.getAttribute('data-search-text') || '';
+            item.style.display = text.includes(query) ? 'flex' : 'none';
+        });
+    };
+}
+
+// ==========================================
 // BATCH MULTI-UPLOAD SYSTEM (UP TO 10 CARDS)
 // ==========================================
 let cardCounter = 0;
@@ -1111,13 +1372,17 @@ let batchStagedFiles = {}; // idx => [File]
 
 function createDocCardTemplate(idx, presetData = null) {
     const defaultTahunVal = <?= json_encode($defaultTahun) ?>;
-    const initCardLinkPicker = renderSubStandarPicker(`docs[${idx}][external_link_sub_bidang][0][]`, [], `card_${idx}_link_0`, presetData ? presetData.bidang_id : null);
+    const initCardLinkPicker = (typeof renderSubStandarPicker === 'function') 
+        ? renderSubStandarPicker(`docs[${idx}][external_link_sub_bidang][0][]`, [], `card_${idx}_link_0`, presetData ? presetData.bidang_id : null)
+        : '';
     
     let bidangOptions = '<option value="">-- Pilih Bidang --</option>';
-    BIDANGS_DATA.forEach(b => {
-        const isSelBid = (presetData && presetData.bidang_id == b.id) ? 'selected' : '';
-        bidangOptions += `<option value="${b.id}" ${isSelBid}>${b.nama_bidang}</option>`;
-    });
+    if (Array.isArray(BIDANGS_DATA)) {
+        BIDANGS_DATA.forEach(b => {
+            const isSelBid = (presetData && presetData.bidang_id == b.id) ? 'selected' : '';
+            bidangOptions += `<option value="${b.id}" ${isSelBid}>${b.nama_bidang}</option>`;
+        });
+    }
 
     let cycleCardsHtml = '';
     for (const [key, val] of Object.entries(SIKLUS_DEFS)) {
@@ -1760,23 +2025,27 @@ function removeCardGdriveLink(btn, idx) {
 }
 
 function addNewDocCard(presetData = null) {
-    const currentCards = document.querySelectorAll('.doc-batch-card');
-    if (currentCards.length >= 10) {
-        alert('Maksimal pengunggahan sekaligus adalah 10 dokumen.');
-        return;
-    }
-    const container = document.getElementById('batchCardsContainer');
-    if (!container) return;
-    const template = createDocCardTemplate(cardCounter, presetData);
-    container.insertAdjacentHTML('beforeend', template);
-    
-    // Jika ada preset bidang, sinkronkan sub-bidang picker di kartu ini
-    if (presetData && presetData.bidang_id) {
-        handleBatchCardBidangChange(cardCounter, presetData.bidang_id);
-    }
+    try {
+        const currentCards = document.querySelectorAll('.doc-batch-card');
+        if (currentCards.length >= 10) {
+            alert('Maksimal pengunggahan sekaligus adalah 10 dokumen.');
+            return;
+        }
+        const container = document.getElementById('batchCardsContainer');
+        if (!container) return;
+        const template = createDocCardTemplate(cardCounter, presetData);
+        container.insertAdjacentHTML('beforeend', template);
+        
+        // Jika ada preset bidang, sinkronkan sub-bidang picker di kartu ini
+        if (presetData && presetData.bidang_id) {
+            handleBatchCardBidangChange(cardCounter, presetData.bidang_id);
+        }
 
-    cardCounter++;
-    updateTotalCardCounter();
+        cardCounter++;
+        updateTotalCardCounter();
+    } catch (err) {
+        console.error('Error saat merender kartu formulir dokumen prodi:', err);
+    }
 }
 
 function continueCycleUpload(cycleData, stageKey) {
@@ -1911,10 +2180,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Attach form submit validation & auto-formatting
+    // Attach form submit validation, base64 conversion & auto-formatting
     const batchForm = document.getElementById('batchDocForm');
     if (batchForm) {
-        batchForm.addEventListener('submit', function(e) {
+        let isBatchSubmitting = false;
+        batchForm.addEventListener('submit', async function(e) {
+            if (isBatchSubmitting) return;
+
             batchForm.querySelectorAll('.input-tahun-akademik, input[name*="tahun_akademik"]').forEach(inp => {
                 if (typeof window.autoPairTahunAkademik === 'function') {
                     window.autoPairTahunAkademik(inp, { type: 'blur' });
@@ -1924,12 +2196,116 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 return false;
             }
+
+            // Hitung total berkas yang dilampirkan
+            let totalFiles = 0;
+            Object.values(batchStagedFiles || {}).forEach(arr => {
+                if (Array.isArray(arr)) totalFiles += arr.length;
+            });
+
+            if (totalFiles === 0) {
+                // HANYA LINK: nonaktifkan file input agar form dikirim murni urlencoded tanpa multipart
+                batchForm.removeAttribute('enctype');
+                batchForm.enctype = 'application/x-www-form-urlencoded';
+                batchForm.querySelectorAll('input[type="file"]').forEach(inp => {
+                    inp.disabled = true;
+                });
+                return true;
+            }
+
+            // ADA BERKAS: konversi berkas ke Base64 agar dapat dikirim dengan form-urlencoded
+            // Ini untuk mengatasi emergency rule OpenResty yang memblokir multipart/form-data
+            e.preventDefault();
+            const submitBtn = e.submitter || document.activeElement || document.getElementById('btnSubmitPublishBatch');
+            const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Menyiapkan Berkas...';
+            }
+
+            // Bersihkan input base64 sebelumnya
+            batchForm.querySelectorAll('.input-file-base64').forEach(el => el.remove());
+
+            try {
+                // Periksa total ukuran berkas agar tidak melebihi kapasitas server (maks 8MB)
+                let totalBytes = 0;
+                for (const files of Object.values(batchStagedFiles)) {
+                    if (Array.isArray(files)) {
+                        for (const f of files) totalBytes += f.size;
+                    }
+                }
+                if (totalBytes > 8 * 1024 * 1024) {
+                    alert('Total ukuran berkas (' + (totalBytes / (1024 * 1024)).toFixed(1) + ' MB) melebihi batas 8 MB pada hosting.\n\nSilakan gunakan tautan Google Drive untuk berkas berukuran besar.');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = origBtnHtml;
+                    }
+                    return false;
+                }
+
+                for (const [idx, files] of Object.entries(batchStagedFiles)) {
+                    if (!Array.isArray(files)) continue;
+                    for (let fIdx = 0; fIdx < files.length; fIdx++) {
+                        const file = files[fIdx];
+                        const base64Data = await readFileAsBase64(file);
+
+                        const inpName = document.createElement('input');
+                        inpName.type = 'hidden';
+                        inpName.className = 'input-file-base64';
+                        inpName.name = `docs[${idx}][files_base64][${fIdx}][name]`;
+                        inpName.value = file.name;
+                        batchForm.appendChild(inpName);
+
+                        const inpData = document.createElement('input');
+                        inpData.type = 'hidden';
+                        inpData.className = 'input-file-base64';
+                        inpData.name = `docs[${idx}][files_base64][${fIdx}][data]`;
+                        inpData.value = base64Data;
+                        batchForm.appendChild(inpData);
+                    }
+                }
+
+                // Nonaktifkan file input fisik agar browser tidak mengirim request multipart
+                batchForm.querySelectorAll('input[type="file"]').forEach(inp => {
+                    inp.disabled = true;
+                });
+
+                // Ubah enctype menjadi application/x-www-form-urlencoded
+                batchForm.removeAttribute('enctype');
+                batchForm.enctype = 'application/x-www-form-urlencoded';
+
+                // Sertakan action_submit button yang ditekan
+                if (submitBtn && submitBtn.name && submitBtn.value) {
+                    let actionInp = document.getElementById('batch_temp_action_submit');
+                    if (!actionInp) {
+                        actionInp = document.createElement('input');
+                        actionInp.type = 'hidden';
+                        actionInp.id = 'batch_temp_action_submit';
+                        actionInp.name = submitBtn.name;
+                        batchForm.appendChild(actionInp);
+                    }
+                    actionInp.value = submitBtn.value;
+                }
+
+                isBatchSubmitting = true;
+                batchForm.submit();
+            } catch (err) {
+                console.error('Error membaca berkas:', err);
+                alert('Gagal memproses berkas: ' + err.message);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origBtnHtml;
+                }
+            }
         });
     }
 
-    const singleEditForm = document.getElementById('editDocForm') || document.querySelector('form[action*="/update/"]');
+    const singleEditForm = document.getElementById('documentUploadForm') || document.getElementById('editDocForm') || document.querySelector('form[action*="/save"]');
     if (singleEditForm) {
-        singleEditForm.addEventListener('submit', function(e) {
+        let isSingleSubmitting = false;
+        singleEditForm.addEventListener('submit', async function(e) {
+            if (isSingleSubmitting) return;
+
             singleEditForm.querySelectorAll('.input-tahun-akademik, input[name*="tahun_akademik"]').forEach(inp => {
                 if (typeof window.autoPairTahunAkademik === 'function') {
                     window.autoPairTahunAkademik(inp, { type: 'blur' });
@@ -1939,8 +2315,98 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 return false;
             }
+
+            const singleFiles = (typeof singleStagedFiles !== 'undefined' && Array.isArray(singleStagedFiles)) ? singleStagedFiles : [];
+            if (singleFiles.length === 0) {
+                singleEditForm.removeAttribute('enctype');
+                singleEditForm.enctype = 'application/x-www-form-urlencoded';
+                singleEditForm.querySelectorAll('input[type="file"]').forEach(inp => {
+                    inp.disabled = true;
+                });
+                return true;
+            }
+
+            e.preventDefault();
+            const submitBtn = e.submitter || document.activeElement;
+            const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Menyiapkan Berkas...';
+            }
+
+            singleEditForm.querySelectorAll('.input-single-file-base64').forEach(el => el.remove());
+            try {
+                // Periksa total ukuran berkas agar tidak melebihi kapasitas server
+                let totalBytes = 0;
+                for (const f of singleFiles) totalBytes += f.size;
+                if (totalBytes > 8 * 1024 * 1024) {
+                    alert('Total ukuran berkas (' + (totalBytes / (1024 * 1024)).toFixed(1) + ' MB) melebihi batas 8 MB pada hosting.\n\nSilakan gunakan tautan Google Drive untuk berkas berukuran besar.');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = origBtnHtml;
+                    }
+                    return false;
+                }
+
+                for (let idx = 0; idx < singleFiles.length; idx++) {
+                    const file = singleFiles[idx];
+                    const base64Data = await readFileAsBase64(file);
+
+                    const inpName = document.createElement('input');
+                    inpName.type = 'hidden';
+                    inpName.className = 'input-single-file-base64';
+                    inpName.name = `new_files_base64[${idx}][name]`;
+                    inpName.value = file.name;
+                    singleEditForm.appendChild(inpName);
+
+                    const inpData = document.createElement('input');
+                    inpData.type = 'hidden';
+                    inpData.className = 'input-single-file-base64';
+                    inpData.name = `new_files_base64[${idx}][data]`;
+                    inpData.value = base64Data;
+                    singleEditForm.appendChild(inpData);
+                }
+
+                singleEditForm.querySelectorAll('input[type="file"]').forEach(inp => {
+                    inp.disabled = true;
+                });
+
+                singleEditForm.removeAttribute('enctype');
+                singleEditForm.enctype = 'application/x-www-form-urlencoded';
+
+                if (submitBtn && submitBtn.name && submitBtn.value) {
+                    let actionInp = document.getElementById('single_temp_action_submit');
+                    if (!actionInp) {
+                        actionInp = document.createElement('input');
+                        actionInp.type = 'hidden';
+                        actionInp.id = 'single_temp_action_submit';
+                        actionInp.name = submitBtn.name;
+                        singleEditForm.appendChild(actionInp);
+                    }
+                    actionInp.value = submitBtn.value;
+                }
+
+                isSingleSubmitting = true;
+                singleEditForm.submit();
+            } catch (err) {
+                console.error('Error membaca berkas single:', err);
+                alert('Gagal memproses berkas: ' + err.message);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origBtnHtml;
+                }
+            }
         });
     }
+
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
 });
 
 /**

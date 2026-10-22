@@ -45,7 +45,15 @@ if (!defined('APP_NAME')) {
     // Google SSO (OAuth 2.0) Configuration
     define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: ($envConfig['GOOGLE_CLIENT_ID'] ?? ''));
     define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: ($envConfig['GOOGLE_CLIENT_SECRET'] ?? ''));
-    define('GOOGLE_REDIRECT_URI', BASE_URL . '/auth/google/callback');
+
+    // Otomatis upgrade ke HTTPS untuk redirect URI Google OAuth jika berada di hosting online
+    $oauthRedirect = BASE_URL . '/auth/google/callback';
+    $hostClean = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? '');
+    $isLocalEnv = in_array($hostClean, ['localhost', '127.0.0.1', '::1']) || str_ends_with($hostClean, '.test') || str_ends_with($hostClean, '.local');
+    if (!$isLocalEnv && !str_starts_with($oauthRedirect, 'https://')) {
+        $oauthRedirect = preg_replace('/^http:\/\//i', 'https://', $oauthRedirect);
+    }
+    define('GOOGLE_REDIRECT_URI', $oauthRedirect);
 }
 
 // Global Environment Detection Function

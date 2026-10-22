@@ -67,16 +67,31 @@ class AuthController extends Controller {
     }
 
     public function redirectToGoogle(): void {
-        Auth::startSession();
-        $clientId = GOOGLE_CLIENT_ID;
-        $redirectUri = urlencode(GOOGLE_REDIRECT_URI);
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Ambil Client ID & Redirect URI dengan fallback aman
+        $clientId = defined('GOOGLE_CLIENT_ID') ? GOOGLE_CLIENT_ID : '';
+        if (empty($clientId) && file_exists(__DIR__ . '/../config/env.php')) {
+            $env = require __DIR__ . '/../config/env.php';
+            $clientId = $env['GOOGLE_CLIENT_ID'] ?? '';
+        }
+
+        $redirectUri = defined('GOOGLE_REDIRECT_URI') ? GOOGLE_REDIRECT_URI : base_url('auth/google/callback');
+
+        if (empty($clientId)) {
+            Auth::setFlash('danger', 'Google Client ID belum dikonfigurasi. Pastikan config/env.php sudah terpasang.');
+            redirect('login');
+        }
+
         $scope = urlencode('openid email profile');
         $state = bin2hex(random_bytes(16));
         $_SESSION['oauth2_state'] = $state;
 
         $authUrl = "https://accounts.google.com/o/oauth2/v2/auth?"
-            . "client_id={$clientId}"
-            . "&redirect_uri={$redirectUri}"
+            . "client_id=" . urlencode($clientId)
+            . "&redirect_uri=" . urlencode($redirectUri)
             . "&response_type=code"
             . "&scope={$scope}"
             . "&state={$state}"
@@ -87,7 +102,10 @@ class AuthController extends Controller {
     }
 
     public function handleGoogleCallback(): void {
-        Auth::startSession();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         $code = $_GET['code'] ?? null;
         $state = $_GET['state'] ?? null;
         $sessionState = $_SESSION['oauth2_state'] ?? null;
@@ -102,15 +120,24 @@ class AuthController extends Controller {
         }
         unset($_SESSION['oauth2_state']);
 
+        $clientId = defined('GOOGLE_CLIENT_ID') ? GOOGLE_CLIENT_ID : '';
+        $clientSecret = defined('GOOGLE_CLIENT_SECRET') ? GOOGLE_CLIENT_SECRET : '';
+        if ((empty($clientId) || empty($clientSecret)) && file_exists(__DIR__ . '/../config/env.php')) {
+            $env = require __DIR__ . '/../config/env.php';
+            $clientId = $env['GOOGLE_CLIENT_ID'] ?? $clientId;
+            $clientSecret = $env['GOOGLE_CLIENT_SECRET'] ?? $clientSecret;
+        }
+        $redirectUri = defined('GOOGLE_REDIRECT_URI') ? GOOGLE_REDIRECT_URI : base_url('auth/google/callback');
+
         // 1. Tukar Authorization Code dengan Access Token
         $ch = curl_init('https://oauth2.googleapis.com/token');
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query([
                 'code' => $code,
-                'client_id' => GOOGLE_CLIENT_ID,
-                'client_secret' => GOOGLE_CLIENT_SECRET,
-                'redirect_uri' => GOOGLE_REDIRECT_URI,
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+                'redirect_uri' => $redirectUri,
                 'grant_type' => 'authorization_code',
             ]),
             CURLOPT_RETURNTRANSFER => true,

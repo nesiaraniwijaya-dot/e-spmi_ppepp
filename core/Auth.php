@@ -247,6 +247,10 @@ class Auth {
         return in_array(self::role(), ['super_admin', 'admin_lpm', 'kepala_pusat_mutu', 'kepala_lpm']);
     }
 
+    public static function isSuperAdmin(): bool {
+        return self::role() === 'super_admin';
+    }
+
     public static function isFakultas(): bool {
         return in_array(self::role(), ['dekan', 'wadek']);
     }

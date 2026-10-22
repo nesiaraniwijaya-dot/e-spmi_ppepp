@@ -62,8 +62,8 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
-              AND status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL
-            ORDER BY FIELD(status_review, 'sudah_diperbaiki', 'menunggu_review_gpm', 'belum_direview'), updated_at DESC
+              AND status_review IN ('revisi_lpm', 'menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL
+            ORDER BY FIELD(status_review, 'revisi_lpm', 'sudah_diperbaiki', 'menunggu_review_gpm', 'belum_direview'), updated_at DESC
         ");
         $stmt->execute([$headerFakultasId, $headerFakultasId]);
         $notificationItems = $stmt->fetchAll() ?: [];
@@ -108,6 +108,8 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <!-- LPM Design System Stylesheet -->
     <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
+    <!-- Sub Standar Mutu Picker Helper -->
+    <script src="<?= asset('js/sub_standar_picker.js') ?>"></script>
     <script>
         window.IS_USER_LOGGED_IN = <?= Auth::check() ? 'true' : 'false' ?>;
         window.LOGIN_URL = '<?= base_url("login") ?>';
@@ -269,7 +271,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                     $editUrl = match(true) {
                                         Auth::isProdi()    => base_url('prodi/dokumen/edit/' . $notifDoc['id']),
                                         Auth::isFakultas() => base_url('fakultas/dokumen/edit/' . $notifDoc['id']),
-                                        Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen'),
+                                        Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm' => in_array($notifDoc['status_review'], ['revisi_gpm', 'revisi_lpm']) ? base_url('gpm/perbaikan') : base_url('gpm/dokumen'),
                                         Auth::isLpm()      => base_url('admin/review-hub'),
                                         default            => base_url('admin/review-hub'),
                                     };
@@ -318,14 +320,14 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                         $perbaikanPageUrl = match(true) {
                             Auth::isProdi()    => base_url('prodi/perbaikan'),
                             Auth::isFakultas() => base_url('fakultas/perbaikan'),
-                            Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm' => base_url('gpm/dokumen'),
+                            Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm' => ($perluActionCount > 0 ? base_url('gpm/perbaikan') : base_url('gpm/dokumen')),
                             Auth::isLpm()      => base_url('admin/review-hub'),
                             default            => base_url('admin/review-hub'),
                         };
                         ?>
                         <li class="p-2 text-center bg-light">
                             <a href="<?= $perbaikanPageUrl ?>" class="text-primary fw-bold text-decoration-none small d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                                <span><?= (Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm') ? 'Buka Review Dokumen GPM' : (Auth::isLpm() ? 'Buka Ruang Review LPM' : 'Buka Menu Perbaikan Dokumen') ?></span>
+                                <span><?= (Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm') ? ($perluActionCount > 0 ? 'Buka Monitoring Dokumen Revisi' : 'Buka Review Dokumen GPM') : (Auth::isLpm() ? 'Buka Ruang Review LPM' : 'Buka Menu Perbaikan Dokumen') ?></span>
                                 <i class="fas fa-arrow-right"></i>
                             </a>
                         </li>

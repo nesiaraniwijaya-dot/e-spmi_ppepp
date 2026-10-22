@@ -581,6 +581,46 @@ class AdminProdiController extends Controller {
                         }
                     }
 
+                    // Dukungan berkas Base64 (mengatasi blokir 403 OpenResty WAF pada multipart/form-data)
+                    if (empty($uploadedFilesList) && !empty($d['files_base64']) && is_array($d['files_base64'])) {
+                        foreach ($d['files_base64'] as $fIdx => $b64Item) {
+                            $origName = trim($b64Item['name'] ?? '');
+                            $rawB64 = $b64Item['data'] ?? '';
+                            if (empty($origName) || empty($rawB64)) continue;
+                            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                            if (in_array($ext, $allowedExts)) {
+                                $fileNarasis = !empty($d['file_narasi']) && is_array($d['file_narasi']) ? array_values($d['file_narasi']) : [];
+                                $fNarasi = trim($fileNarasis[$fIdx] ?? ($d['file_narasi'][$fIdx] ?? ''));
+                                if (!$isDraft && empty($fNarasi)) {
+                                    throw new \Exception("Narasi untuk berkas '{$origName}' pada Dokumen #{$docNumber} wajib diisi.");
+                                }
+                                $fSubs = !empty($batchFileSubs[$fIdx]) && is_array($batchFileSubs[$fIdx])
+                                    ? array_values(array_filter(array_map('intval', $batchFileSubs[$fIdx])))
+                                    : ($subBidangId ? [(int)$subBidangId] : []);
+                                
+                                if (preg_match('/^data:.*?;base64,/', $rawB64, $m)) {
+                                    $rawB64 = substr($rawB64, strlen($m[0]));
+                                }
+                                $bin = base64_decode($rawB64);
+                                if ($bin !== false) {
+                                    $size = strlen($bin);
+                                    $fileName = 'DOC_' . $this->prodiId . '_' . time() . '_' . uniqid() . '.' . $ext;
+                                    $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
+                                    if (file_put_contents($targetFile, $bin) !== false) {
+                                        $uploadedFilesList[] = [
+                                            'file_name' => $origName,
+                                            'file_path' => 'uploads/documents/' . $fileName,
+                                            'file_size' => round($size / (1024 * 1024), 2) . ' MB',
+                                            'file_extension' => $ext,
+                                            'narasi' => $fNarasi,
+                                            'sub_bidang_ids' => $fSubs
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // Kumpulkan seluruh sub standar dari berkas dan link
                     $allDocSubIds = [];
                     if ($subBidangId) $allDocSubIds[] = (int)$subBidangId;
@@ -1127,6 +1167,62 @@ class AdminProdiController extends Controller {
                     sync_file_sub_bidang($this->db, $newFileId, $fSubArray);
                     if (!empty($fSubArray)) {
                         $allDocSubIds = array_merge($allDocSubIds, $fSubArray);
+                    }
+                }
+            }
+
+            // Dukungan upload berkas baru via Base64 untuk Single Edit (mengatasi blokir 403 OpenResty WAF)
+            if (!empty($_POST['new_files_base64']) && is_array($_POST['new_files_base64'])) {
+                $stmtNewFile = $this->db->prepare("
+                    INSERT INTO ppepp_document_files (document_id, file_name, file_path, file_size, file_extension, narasi, sub_bidang_ids, sort_order, is_page_limited, public_page_limit, can_download_public, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                ");
+                $newNarasis = !empty($_POST['new_file_narasi']) && is_array($_POST['new_file_narasi']) ? array_values($_POST['new_file_narasi']) : [];
+                $newIsLim = $_POST['new_file_is_limited'] ?? [];
+                $newPLim = $_POST['new_file_page_limit'] ?? [];
+                $newCanDl = $_POST['new_file_can_download'] ?? [];
+                $newSubs = $_POST['new_file_sub_bidang'] ?? [];
+                $nextSort = 1;
+
+                foreach ($_POST['new_files_base64'] as $idx => $b64Item) {
+                    $origName = trim($b64Item['name'] ?? '');
+                    $rawB64 = $b64Item['data'] ?? '';
+                    if (empty($origName) || empty($rawB64)) continue;
+                    $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                    if (in_array($ext, $allowedExts)) {
+                        $fNarasi = trim($newNarasis[$idx] ?? ($_POST['file_narasi'][$idx] ?? ''));
+                        if (empty($fNarasi)) {
+                            $fNarasi = pathinfo($origName, PATHINFO_FILENAME);
+                        }
+                        $fIsLimVal = isset($newIsLim[$idx]) ? (!empty($newIsLim[$idx]) ? 1 : 0) : ($isPageLimited ? 1 : 0);
+                        $fPLimVal = isset($newPLim[$idx]) ? max(1, (int)$newPLim[$idx]) : ($isPageLimited ? $publicPageLimit : 1);
+                        $fCanDlVal = isset($newCanDl[$idx]) ? (!empty($newCanDl[$idx]) ? 1 : 0) : $canDownloadPublic;
+                        $fSubArray = !empty($newSubs[$idx]) && is_array($newSubs[$idx])
+                            ? array_values(array_filter(array_map('intval', $newSubs[$idx])))
+                            : ($subBidangId ? [(int)$subBidangId] : []);
+                        $fSubsJson = json_encode($fSubArray);
+
+                        if (preg_match('/^data:.*?;base64,/', $rawB64, $m)) {
+                            $rawB64 = substr($rawB64, strlen($m[0]));
+                        }
+                        $bin = base64_decode($rawB64);
+                        if ($bin !== false) {
+                            $size = strlen($bin);
+                            $fileName = 'DOC_' . $this->prodiId . '_' . time() . '_' . uniqid() . '.' . $ext;
+                            $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
+                            if (file_put_contents($targetFile, $bin) !== false) {
+                                $stmtNewFile->execute([
+                                    $id, $origName, 'uploads/documents/' . $fileName,
+                                    round($size / (1024 * 1024), 2) . ' MB', $ext, $fNarasi, $fSubsJson, $nextSort++,
+                                    $fIsLimVal, $fPLimVal, $fCanDlVal
+                                ]);
+                                $newFid = (int)$this->db->lastInsertId();
+                                sync_file_sub_bidang($this->db, $newFid, $fSubArray);
+                                if (!empty($fSubArray)) {
+                                    $allDocSubIds = array_merge($allDocSubIds, $fSubArray);
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -16,6 +16,17 @@ class Database {
     private string $charset = 'utf8mb4';
 
     private function __construct() {
+        // Auto-detect hosting online vs local development
+        $hostClean = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? '');
+        $isLocalEnv = empty($hostClean) || in_array($hostClean, ['localhost', '127.0.0.1', '::1']) || str_ends_with($hostClean, '.test') || str_ends_with($hostClean, '.local');
+
+        if (!$isLocalEnv) {
+            $this->host = 'sql303.ezyro.com';
+            $this->dbname = 'ezyro_43035390_spmi';
+            $this->username = 'ezyro_43035390';
+            $this->password = 'grqh7tyz';
+        }
+
         // Load custom config from environment or overrides if needed
         if (file_exists(__DIR__ . '/env.php')) {
             $env = require __DIR__ . '/env.php';
