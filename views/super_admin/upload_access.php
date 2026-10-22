@@ -250,9 +250,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
                         <h6 class="fw-bold text-dark-blue mb-0">Daftar Tahun Akademik &amp; Batas Tenggat Pengunggahan Dokumen</h6>
-                        <div class="text-muted small" style="font-size: 0.75rem;">Hanya Tahun Akademik yang berstatus Aktif yang dapat diunggah secara bebas oleh unit sebelum batas tenggat berakhir.</div>
+                        <div class="text-muted small" style="font-size: 0.75rem;">Aktifkan tahun akademik berjalan dengan tombol switch. Atur hidupnya batas tenggat waktu unggah (deadline) melalui tombol Atur Tenggat.</div>
                     </div>
-                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-2xs" data-bs-toggle="modal" data-bs-target="#modalAcademicYear" onclick="openCreateYearModal()">
+                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-2xs" onclick="openCreateYearModal()">
                         <i class="fas fa-plus me-1"></i> Tambah Tahun Akademik
                     </button>
                 </div>
@@ -262,11 +262,10 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <thead class="table-light text-secondary fw-semibold" style="font-size: 0.74rem; text-transform: uppercase;">
                             <tr>
                                 <th class="ps-3 py-3" style="width: 40px;">#</th>
-                                <th class="py-3" style="min-width: 150px;">Tahun Akademik</th>
-                                <th class="py-3" style="min-width: 140px;">Status Aktif</th>
-                                <th class="py-3" style="min-width: 220px;">Tenggat Waktu Unggah (Deadline)</th>
-                                <th class="py-3" style="min-width: 200px;">Keterangan</th>
-                                <th class="py-3 text-end pe-3" style="min-width: 100px;">Aksi</th>
+                                <th class="py-3" style="min-width: 140px;">Tahun Akademik</th>
+                                <th class="py-3" style="min-width: 180px;">Status Aktif (Berjalan)</th>
+                                <th class="py-3" style="min-width: 250px;">Batas Waktu Tenggat Unggah (Deadline)</th>
+                                <th class="py-3 text-end pe-3" style="min-width: 130px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -285,35 +284,51 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         <span class="fs-6 fw-bold text-dark"><?= htmlspecialchars($d['tahun_akademik']) ?></span>
                                     </td>
                                     <td>
-                                        <?php if ($isAct): ?>
-                                            <span class="badge bg-success rounded-pill px-2.5 py-1 fw-bold shadow-2xs">
-                                                <i class="fas fa-circle-check me-1"></i> Aktif Berjalan
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1">
-                                                Tahun Lampau (Terkunci)
-                                            </span>
-                                        <?php endif; ?>
+                                        <!-- Switch On/Off Tahun Akademik Aktif -->
+                                        <div class="form-check form-switch d-inline-flex align-items-center gap-2 m-0 p-0">
+                                            <input class="form-check-input ms-0 shadow-2xs switch-ta-active" 
+                                                   type="checkbox" 
+                                                   role="switch" 
+                                                   id="switch_ta_<?= $d['id'] ?>" 
+                                                   <?= $isAct ? 'checked' : '' ?>
+                                                   style="cursor: pointer; width: 2.5em; height: 1.3em;"
+                                                   data-id="<?= $d['id'] ?>"
+                                                   data-ta="<?= htmlspecialchars($d['tahun_akademik']) ?>"
+                                                   onchange="handleToggleActiveYear(<?= $d['id'] ?>, '<?= htmlspecialchars($d['tahun_akademik']) ?>', this)">
+                                            <label class="form-check-label small fw-semibold cursor-pointer user-select-none mb-0" for="switch_ta_<?= $d['id'] ?>" id="label_ta_<?= $d['id'] ?>">
+                                                <?php if ($isAct): ?>
+                                                    <span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs">
+                                                        <i class="fas fa-circle-check me-1"></i> Aktif Berjalan
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1">
+                                                        Nonaktif
+                                                    </span>
+                                                <?php endif; ?>
+                                            </label>
+                                        </div>
                                     </td>
                                     <td>
                                         <?php if (!empty($d['deadline_upload'])): ?>
-                                            <div class="fw-semibold <?= $isPastDeadline ? 'text-danger' : 'text-dark' ?>" style="font-size: 0.8rem;">
-                                                <i class="far fa-calendar-alt me-1"></i><?= date('d M Y, H:i', strtotime($d['deadline_upload'])) ?> WIB
+                                            <div class="fw-semibold <?= $isPastDeadline ? 'text-danger' : 'text-dark' ?>" style="font-size: 0.82rem;">
+                                                <i class="far fa-calendar-alt me-1 text-primary"></i><?= date('d M Y, H:i', strtotime($d['deadline_upload'])) ?> WIB
                                             </div>
-                                            <div class="small <?= $isPastDeadline ? 'text-danger' : 'text-success' ?>" style="font-size: 0.7rem;">
-                                                <?= $isPastDeadline ? '<i class="fas fa-lock me-1"></i>Telah Berakhir (Terkunci Otomatis)' : '<i class="fas fa-unlock me-1"></i>Unggah Dibuka' ?>
+                                            <div class="small <?= $isPastDeadline ? 'text-danger' : 'text-success' ?>" style="font-size: 0.72rem;">
+                                                <?= $isPastDeadline ? '<i class="fas fa-lock me-1"></i>Telah Berakhir (Terkunci Otomatis)' : '<i class="fas fa-unlock me-1"></i>Unggah Dibuka Bebas' ?>
                                             </div>
                                         <?php else: ?>
-                                            <span class="text-muted small">Tidak dibatasi</span>
+                                            <div class="d-inline-flex align-items-center gap-1.5">
+                                                <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" style="font-size: 0.74rem;">
+                                                    <i class="fas fa-infinity me-1 text-muted"></i> Tidak Dibatasi (Bebas Tenggat)
+                                                </span>
+                                            </div>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
-                                        <span class="text-muted small"><?= htmlspecialchars($d['keterangan'] ?? '-') ?></span>
-                                    </td>
                                     <td class="text-end pe-3">
-                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-2xs"
-                                                onclick="openEditYearModal(<?= htmlspecialchars(json_encode($d)) ?>)">
-                                            <i class="fas fa-edit me-1"></i> Edit
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-2xs fw-semibold"
+                                                style="font-size: 0.78rem;"
+                                                onclick="openDeadlineModal(<?= htmlspecialchars(json_encode($d)) ?>)">
+                                            <i class="fas fa-stopwatch me-1"></i> Atur Tenggat
                                         </button>
                                     </td>
                                 </tr>
@@ -326,48 +341,121 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     </div>
 </div>
 
-<!-- Modal Tambah / Edit Tahun Akademik -->
-<div class="modal fade" id="modalAcademicYear" tabindex="-1" aria-hidden="true">
+<!-- Modal Atur Batas Waktu Tenggat Unggah (Deadline) -->
+<div class="modal fade" id="modalDeadlineSetting" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header bg-navy text-white px-4 py-3 border-0">
-                <h6 class="modal-title text-white fw-bold mb-0" id="ayModalTitle" style="color: #ffffff !important;">
-                    <i class="fas fa-calendar-plus me-1 text-info"></i> Atur Tahun Akademik &amp; Tenggat Waktu
+                <h6 class="modal-title text-white fw-bold mb-0" id="deadlineModalTitle" style="color: #ffffff !important;">
+                    <i class="fas fa-stopwatch me-1.5 text-warning"></i> Atur Batas Waktu Tenggat Unggah (Deadline)
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="<?= base_url('admin/upload-access/save-deadline') ?>" method="POST" id="formDeadlineSetting">
+                <input type="hidden" name="id" id="deadline_ay_id" value="">
+                <input type="hidden" name="tahun_akademik" id="deadline_ay_ta" value="">
+
+                <div class="modal-body p-4">
+                    <!-- Info Box Tahun Akademik -->
+                    <div class="p-3 rounded-3 bg-light border mb-3 d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-muted small mb-0.5" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700;">Tahun Akademik</div>
+                            <div class="fs-5 fw-bold text-dark-blue" id="deadline_display_ta">-</div>
+                        </div>
+                        <div id="deadline_display_badge"></div>
+                    </div>
+
+                    <!-- Switch Hidupkan / Matikan Batas Waktu Tenggat (Deadline) -->
+                    <div class="card p-3 rounded-3 border mb-3 bg-white shadow-2xs">
+                        <div class="form-check form-switch d-flex align-items-center justify-content-between p-0 m-0">
+                            <label class="form-check-label fw-bold text-dark small mb-0 pe-2" for="deadline_has_deadline" style="cursor: pointer;">
+                                <div class="d-flex align-items-center gap-1.5 text-dark-blue">
+                                    <i class="fas fa-hourglass-end text-primary"></i> Hidupkan Batas Waktu Tenggat (Deadline)
+                                </div>
+                                <div class="text-muted fw-normal mt-0.5" style="font-size: 0.72rem;">
+                                    Aktifkan jika ingin membatasi batas akhir unggah dokumen untuk tahun akademik ini.
+                                </div>
+                            </label>
+                            <input class="form-check-input ms-2 switch-ta-active" type="checkbox" role="switch" id="deadline_has_deadline" name="has_deadline" value="1" style="cursor: pointer; width: 2.8em; height: 1.4em;" onchange="toggleDeadlineContainer(this.checked)">
+                        </div>
+                    </div>
+
+                    <!-- Container Input Tanggal & Jam Tenggat (Muncul jika deadline hidup) -->
+                    <div id="deadlineContainer" class="mb-2" style="display: none;">
+                        <label class="form-label fw-semibold small text-secondary">
+                            Batas Tanggal &amp; Jam Tenggat Unggah (WIB) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text bg-white text-primary"><i class="far fa-calendar-check"></i></span>
+                            <input type="datetime-local" class="form-control" id="deadline_datetime_input" name="deadline_upload">
+                        </div>
+
+                        <!-- Shortcut Preset Deadline -->
+                        <div class="d-flex align-items-center gap-1.5 flex-wrap mt-2 pt-1">
+                            <span class="text-muted small me-1" style="font-size: 0.72rem;">Preset Cepat:</span>
+                            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-0.5" style="font-size: 0.72rem;" onclick="setDeadlinePreset('end_ay')">
+                                <i class="fas fa-calendar-day me-1"></i>31 Agustus 23:59 (Akhir TA)
+                            </button>
+                            <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-0.5" style="font-size: 0.72rem;" onclick="setDeadlinePreset('plus_7')">
+                                +7 Hari
+                            </button>
+                            <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-0.5" style="font-size: 0.72rem;" onclick="setDeadlinePreset('plus_30')">
+                                +30 Hari
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="deadlineContainerOff" class="alert alert-info py-2 px-3 rounded-3 small mb-0" style="font-size: 0.75rem;">
+                        <i class="fas fa-info-circle me-1"></i> Status <strong>Tidak Dibatasi</strong>: Pengunggahan dokumen pada tahun akademik ini dapat dilakukan bebas kapan saja tanpa batas tenggat waktu.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light px-4 py-2.5 border-top">
+                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-2xs">
+                        <i class="fas fa-save me-1"></i> Simpan Tenggat Waktu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Tahun Akademik Baru -->
+<div class="modal fade" id="modalAddAcademicYear" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-navy text-white px-4 py-3 border-0">
+                <h6 class="modal-title text-white fw-bold mb-0" style="color: #ffffff !important;">
+                    <i class="fas fa-calendar-plus me-1.5 text-info"></i> Tambah Tahun Akademik Baru
                 </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="<?= base_url('admin/upload-access/save-deadline') ?>" method="POST">
-                <input type="hidden" name="id" id="ay_id" value="">
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold small text-secondary">Tahun Akademik <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control input-tahun-akademik" id="ay_tahun_akademik" name="tahun_akademik" placeholder="Contoh: 2026/2027" maxlength="9" required oninput="autoPairTahunAkademik(this, event)">
-                        <div class="form-text small" style="font-size: 0.72rem;">Format: <code>YYYY/YYYY</code> (Contoh: 2026/2027)</div>
+                        <input type="text" class="form-control input-tahun-akademik" id="new_ay_input" name="tahun_akademik" placeholder="Contoh: 2027/2028" maxlength="9" required oninput="autoPairTahunAkademik(this, event)">
+                        <div class="form-text small" style="font-size: 0.72rem;">Format: <code>YYYY/YYYY</code> (Contoh: 2027/2028)</div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-secondary">Batas Waktu Tenggat Unggah (Deadline)</label>
-                        <input type="datetime-local" class="form-control" id="ay_deadline_upload" name="deadline_upload">
-                        <div class="form-text small" style="font-size: 0.72rem;">Setelah tanggal &amp; jam ini, pengunggahan dokumen pada tahun akademik ini otomatis terkunci.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-secondary">Keterangan / Catatan</label>
-                        <input type="text" class="form-control" id="ay_keterangan" name="keterangan" placeholder="Contoh: Tahun Akademik Berjalan SCU">
-                    </div>
-
-                    <div class="form-check form-switch p-3 rounded-3 bg-light border">
-                        <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="ay_is_active" name="is_active" value="1">
-                        <label class="form-check-label fw-bold text-dark small" for="ay_is_active">
-                            Jadikan sebagai Tahun Akademik Aktif Saat Ini
+                    <div class="form-check form-switch p-3 rounded-3 bg-light border mb-3">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="new_ay_is_active" name="is_active" value="1">
+                        <label class="form-check-label fw-bold text-dark small" for="new_ay_is_active" style="cursor: pointer;">
+                            Langsung Jadikan sebagai Tahun Akademik Aktif Saat Ini
                         </label>
-                        <div class="text-muted small ps-4 mt-0.5" style="font-size: 0.72rem;">Jika dicentang, tahun akademik lain otomatis dinonaktifkan.</div>
+                        <div class="text-muted small ps-4 mt-0.5" style="font-size: 0.72rem;">Jika diaktifkan, tahun akademik lain otomatis dinonaktifkan.</div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small text-secondary">Batas Waktu Tenggat Unggah (Opsional)</label>
+                        <input type="datetime-local" class="form-control" id="new_ay_deadline" name="deadline_upload">
+                        <div class="form-text small" style="font-size: 0.72rem;">Kosongkan jika pengunggahan dokumen tidak dibatasi waktu.</div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light px-4 py-2.5">
+                <div class="modal-footer bg-light px-4 py-2.5 border-top">
                     <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold">
-                        <i class="fas fa-save me-1"></i> Simpan Pengaturan
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-2xs">
+                        <i class="fas fa-plus me-1"></i> Tambahkan
                     </button>
                 </div>
             </form>
@@ -459,30 +547,172 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 </div>
 
 <script>
-function openCreateYearModal() {
-    document.getElementById('ayModalTitle').innerHTML = '<i class="fas fa-calendar-plus me-1 text-info"></i> Tambah Tahun Akademik';
-    document.getElementById('ay_id').value = '';
-    document.getElementById('ay_tahun_akademik').value = '';
-    document.getElementById('ay_deadline_upload').value = '';
-    document.getElementById('ay_keterangan').value = '';
-    document.getElementById('ay_is_active').checked = false;
+// Toggle switch aktif/nonaktif tahun akademik via AJAX
+function handleToggleActiveYear(id, taName, switchEl) {
+    const isChecked = switchEl.checked;
+    
+    // Jika user mencoba mematikan switch yang sedang aktif
+    if (!isChecked) {
+        switchEl.checked = true;
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'info',
+                title: 'Tahun Akademik Aktif',
+                text: 'Minimal harus ada 1 Tahun Akademik yang aktif berjalan. Untuk menggantinya, silakan aktifkan tahun akademik lain melalui tombol switch-nya.',
+                confirmButtonText: 'Mengerti'
+            });
+        } else {
+            alert('Minimal harus ada 1 Tahun Akademik yang aktif berjalan. Silakan aktifkan tahun akademik lain.');
+        }
+        return;
+    }
+
+    switchEl.disabled = true;
+    const labelEl = document.getElementById('label_ta_' + id);
+    const oldLabelHtml = labelEl ? labelEl.innerHTML : '';
+    if (labelEl) {
+        labelEl.innerHTML = '<span class="badge bg-secondary rounded-pill px-2 py-0.5"><i class="fas fa-spinner fa-spin me-1"></i>Memproses...</span>';
+    }
+
+    fetch('<?= base_url('admin/upload-access/toggle-active') ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            id: id,
+            is_active: 1
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll('.switch-ta-active').forEach(sw => {
+                const swId = sw.getAttribute('data-id');
+                const lbl = document.getElementById('label_ta_' + swId);
+                if (parseInt(swId) === parseInt(id)) {
+                    sw.checked = true;
+                    if (lbl) {
+                        lbl.innerHTML = '<span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs"><i class="fas fa-circle-check me-1"></i> Aktif Berjalan</span>';
+                    }
+                } else if (swId) {
+                    sw.checked = false;
+                    if (lbl) {
+                        lbl.innerHTML = '<span class="badge bg-light text-muted border rounded-pill px-2.5 py-1">Nonaktif</span>';
+                    }
+                }
+                sw.disabled = false;
+            });
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: data.message,
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }
+            setTimeout(() => {
+                window.location.hash = '#tab-deadlines';
+                window.location.reload();
+            }, 700);
+        } else {
+            throw new Error(data.message || 'Gagal mengubah status aktif.');
+        }
+    })
+    .catch(err => {
+        switchEl.checked = !isChecked;
+        switchEl.disabled = false;
+        if (labelEl) labelEl.innerHTML = oldLabelHtml;
+        alert(err.message || 'Terjadi kesalahan sistem.');
+    });
 }
 
-function openEditYearModal(data) {
-    document.getElementById('ayModalTitle').innerHTML = '<i class="fas fa-edit me-1 text-info"></i> Edit Tahun Akademik: ' + data.tahun_akademik;
-    document.getElementById('ay_id').value = data.id || '';
-    document.getElementById('ay_tahun_akademik').value = data.tahun_akademik || '';
+// Buka Modal Atur Tenggat Waktu (Deadline)
+function openDeadlineModal(data) {
+    document.getElementById('deadline_ay_id').value = data.id || '';
+    document.getElementById('deadline_ay_ta').value = data.tahun_akademik || '';
+    document.getElementById('deadline_display_ta').textContent = data.tahun_akademik || '-';
     
-    // Format datetime-local (YYYY-MM-DDTHH:MM)
-    if (data.deadline_upload) {
-        document.getElementById('ay_deadline_upload').value = data.deadline_upload.replace(' ', 'T').substring(0, 16);
+    const badgeWrap = document.getElementById('deadline_display_badge');
+    if (data.is_active == 1) {
+        badgeWrap.innerHTML = '<span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs"><i class="fas fa-circle-check me-1"></i> Aktif Berjalan</span>';
     } else {
-        document.getElementById('ay_deadline_upload').value = '';
+        badgeWrap.innerHTML = '<span class="badge bg-light text-muted border rounded-pill px-2.5 py-1">Nonaktif (Terkunci)</span>';
     }
-    document.getElementById('ay_keterangan').value = data.keterangan || '';
-    document.getElementById('ay_is_active').checked = (data.is_active == 1);
 
-    const modal = new bootstrap.Modal(document.getElementById('modalAcademicYear'));
+    const hasDeadline = !!(data.deadline_upload && data.deadline_upload.trim() !== '');
+    const switchEl = document.getElementById('deadline_has_deadline');
+    switchEl.checked = hasDeadline;
+    toggleDeadlineContainer(hasDeadline);
+
+    if (hasDeadline) {
+        document.getElementById('deadline_datetime_input').value = data.deadline_upload.replace(' ', 'T').substring(0, 16);
+    } else {
+        document.getElementById('deadline_datetime_input').value = '';
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('modalDeadlineSetting'));
+    modal.show();
+}
+
+function toggleDeadlineContainer(isEnabled) {
+    const box = document.getElementById('deadlineContainer');
+    const boxOff = document.getElementById('deadlineContainerOff');
+    const input = document.getElementById('deadline_datetime_input');
+    
+    if (isEnabled) {
+        box.style.display = 'block';
+        boxOff.style.display = 'none';
+        input.required = true;
+        if (!input.value) {
+            setDeadlinePreset('end_ay');
+        }
+    } else {
+        box.style.display = 'none';
+        boxOff.style.display = 'block';
+        input.required = false;
+    }
+}
+
+function setDeadlinePreset(type) {
+    const taVal = document.getElementById('deadline_ay_ta').value || '';
+    const now = new Date();
+    let targetDate = new Date();
+
+    if (type === 'end_ay') {
+        let endYear = now.getFullYear();
+        if (taVal && taVal.includes('/')) {
+            const parts = taVal.split('/');
+            if (parts[1] && parts[1].length === 4) {
+                endYear = parseInt(parts[1], 10);
+            }
+        }
+        targetDate = new Date(endYear, 7, 31, 23, 59, 0); // 31 Agustus 23:59
+    } else if (type === 'plus_7') {
+        targetDate.setDate(targetDate.getDate() + 7);
+        targetDate.setHours(23, 59, 0, 0);
+    } else if (type === 'plus_30') {
+        targetDate.setDate(targetDate.getDate() + 30);
+        targetDate.setHours(23, 59, 0, 0);
+    }
+
+    const y = targetDate.getFullYear();
+    const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const d = String(targetDate.getDate()).padStart(2, '0');
+    const hh = String(targetDate.getHours()).padStart(2, '0');
+    const mm = String(targetDate.getMinutes()).padStart(2, '0');
+    document.getElementById('deadline_datetime_input').value = `${y}-${m}-${d}T${hh}:${mm}`;
+}
+
+function openCreateYearModal() {
+    document.getElementById('new_ay_input').value = '';
+    document.getElementById('new_ay_is_active').checked = false;
+    document.getElementById('new_ay_deadline').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('modalAddAcademicYear'));
     modal.show();
 }
 
@@ -505,6 +735,16 @@ function openRejectModal(req) {
 function toggleCustomExpiry(val) {
     document.getElementById('custom_expiry_wrap').style.display = (val === 'custom') ? 'block' : 'none';
 }
+
+// Menjaga tab tetap di #tab-deadlines jika URL hash ada
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash === '#tab-deadlines') {
+        const triggerEl = document.querySelector('#tab-deadlines-btn');
+        if (triggerEl) {
+            bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+        }
+    }
+});
 </script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

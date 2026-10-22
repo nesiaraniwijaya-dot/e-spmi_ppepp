@@ -1625,9 +1625,6 @@ class SuperAdminController extends Controller {
         redirect('admin/tahun-akademik');
     }
 
-    public function uploadAccess(): void {
-        redirect('admin/tahun-akademik');
-    }
 
     /**
      * Halaman Monitoring Lalu Lintas Dokumen LPM
@@ -1824,5 +1821,285 @@ class SuperAdminController extends Controller {
             'totalReviewedAll' => $totalReviewedAll,
             'totalPendingAll' => $totalPendingAll
         ]);
+    }
+
+    /**
+     * Manajemen Akses Unggah Dokumen & Tenggat Waktu (LPM)
+     */
+    public function uploadAccess(): void {
+        // 1. Data Seluruh Tahun Akademik & Deadline
+        $deadlines = $this->db->query("
+            SELECT * FROM academic_year_deadlines 
+            ORDER BY tahun_akademik DESC
+        ")->fetchAll() ?: [];
+
+        $activeAy = get_active_tahun_akademik($this->db);
+
+        // 2. Data Seluruh Permohonan Izin Buka Akses dari Prodi & Fakultas
+        $requests = $this->db->query("
+            SELECT r.*,
+                   u.name as pemohon_name, u.email as pemohon_email, u.role as pemohon_role,
+                   p.nama_prodi, p.kode_prodi, p.jenjang,
+                   f.nama_fakultas, f.kode_fakultas,
+                   admin_u.name as processor_name
+            FROM upload_access_requests r
+            LEFT JOIN users u ON r.user_id = u.id
+            LEFT JOIN prodis p ON r.prodi_id = p.id
+            LEFT JOIN fakultas f ON (r.fakultas_id = f.id OR p.fakultas_id = f.id)
+            LEFT JOIN users admin_u ON r.processed_by = admin_u.id
+            ORDER BY r.created_at DESC
+        ")->fetchAll() ?: [];
+
+        $pendingCount = count(array_filter($requests, fn($r) => $r['status'] === 'pending'));
+        $approvedCount = count(array_filter($requests, fn($r) => $r['status'] === 'approved'));
+
+        $this->render('super_admin/upload_access', [
+            'pageTitle' => 'Manajemen Akses & Tenggat Waktu Unggah',
+            'deadlines' => $deadlines,
+            'activeAy' => $activeAy,
+            'requests' => $requests,
+            'pendingCount' => $pendingCount,
+            'approvedCount' => $approvedCount
+        ]);
+    }
+
+    /**
+     * Simpan / Perbarui Tenggat Waktu & Tahun Akademik (LPM)
+     */
+    public function saveAcademicDeadline(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('admin/upload-access#tab-deadlines');
+            return;
+        }
+
+        $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+        $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+        $hasDeadline = isset($_POST['has_deadline']) ? ((int)$_POST['has_deadline'] === 1) : (!empty($_POST['deadline_upload']));
+        $deadlineUpload = ($hasDeadline && !empty($_POST['deadline_upload'])) ? trim($_POST['deadline_upload']) : null;
+        $keterangan = trim($_POST['keterangan'] ?? '');
+        $isActive = isset($_POST['is_active']) ? ((int)$_POST['is_active'] === 1 ? 1 : 0) : null;
+
+        try {
+            $this->db->beginTransaction();
+
+            if ($id) {
+                // Ambil data existing terlebih dahulu
+                $stmtOld = $this->db->prepare("SELECT * FROM academic_year_deadlines WHERE id = ?");
+                $stmtOld->execute([$id]);
+                $existing = $stmtOld->fetch();
+
+                if (!$existing) {
+                    throw new \Exception('Data Tahun Akademik tidak ditemukan.');
+                }
+
+                $finalTa = !empty($tahunAkademik) ? $tahunAkademik : $existing['tahun_akademik'];
+                $finalIsActive = ($isActive !== null) ? $isActive : (int)$existing['is_active'];
+
+                if ($finalIsActive === 1) {
+                    $this->db->exec("UPDATE academic_year_deadlines SET is_active = 0");
+                }
+
+                $stmt = $this->db->prepare("
+                    UPDATE academic_year_deadlines 
+                    SET tahun_akademik = ?, is_active = ?, deadline_upload = ?, keterangan = ?, updated_at = NOW()
+                    WHERE id = ?
+                ");
+                $stmt->execute([$finalTa, $finalIsActive, $deadlineUpload, $keterangan, $id]);
+                $actionType = 'UPDATE';
+                $tahunAkademik = $finalTa;
+            } else {
+                if (empty($tahunAkademik)) {
+                    throw new \Exception('Tahun akademik wajib diisi.');
+                }
+
+                $finalIsActive = ($isActive !== null) ? $isActive : 0;
+                if ($finalIsActive === 1) {
+                    $this->db->exec("UPDATE academic_year_deadlines SET is_active = 0");
+                }
+
+                $stmt = $this->db->prepare("
+                    INSERT INTO academic_year_deadlines (tahun_akademik, is_active, deadline_upload, keterangan, created_at)
+                    VALUES (?, ?, ?, ?, NOW())
+                    ON DUPLICATE KEY UPDATE is_active = VALUES(is_active), deadline_upload = VALUES(deadline_upload), keterangan = VALUES(keterangan), updated_at = NOW()
+                ");
+                $stmt->execute([$tahunAkademik, $finalIsActive, $deadlineUpload, $keterangan]);
+                $id = (int)$this->db->lastInsertId();
+                $actionType = 'CREATE';
+            }
+
+            $this->db->commit();
+
+            $deadlineLabel = $deadlineUpload ? date('d M Y, H:i', strtotime($deadlineUpload)) . ' WIB' : 'Tanpa Batasan (Bebas)';
+            AuditLogger::log($actionType, 'Pengaturan Tenggat Akademik', (string)$id, "TA {$tahunAkademik} (Deadline: {$deadlineLabel})");
+            Auth::setFlash('success', "Pengaturan batas tenggat Tahun Akademik {$tahunAkademik} berhasil disimpan.");
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            Auth::setFlash('danger', 'Gagal menyimpan pengaturan: ' . $e->getMessage());
+        }
+
+        redirect('admin/upload-access#tab-deadlines');
+    }
+
+    /**
+     * Switch On/Off Tahun Akademik Aktif (AJAX atau POST)
+     */
+    public function toggleActiveAcademicYear(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('admin/upload-access#tab-deadlines');
+            return;
+        }
+
+        $id = (int)($_POST['id'] ?? 0);
+        $isActive = !empty($_POST['is_active']) ? 1 : 0;
+
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                  || (strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false);
+
+        if (!$id) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'ID Tahun Akademik tidak valid.']);
+                exit;
+            }
+            Auth::setFlash('danger', 'ID Tahun Akademik tidak valid.');
+            redirect('admin/upload-access#tab-deadlines');
+            return;
+        }
+
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM academic_year_deadlines WHERE id = ?");
+            $stmt->execute([$id]);
+            $targetAy = $stmt->fetch();
+
+            if (!$targetAy) {
+                throw new \Exception('Data Tahun Akademik tidak ditemukan.');
+            }
+
+            $this->db->beginTransaction();
+
+            if ($isActive === 1) {
+                // Nonaktifkan semua tahun akademik lain
+                $this->db->exec("UPDATE academic_year_deadlines SET is_active = 0");
+                // Aktifkan tahun akademik terpilih
+                $stmtUpd = $this->db->prepare("UPDATE academic_year_deadlines SET is_active = 1, updated_at = NOW() WHERE id = ?");
+                $stmtUpd->execute([$id]);
+                $msg = "Tahun Akademik {$targetAy['tahun_akademik']} sekarang AKTIF sebagai tahun akademik berjalan.";
+            } else {
+                // Cek apakah ini satu-satunya tahun akademik yang aktif
+                $activeCount = (int)$this->db->query("SELECT COUNT(*) FROM academic_year_deadlines WHERE is_active = 1")->fetchColumn();
+                if ($activeCount <= 1 && $targetAy['is_active'] == 1) {
+                    throw new \Exception('Minimal harus ada 1 Tahun Akademik yang aktif berjalan. Untuk mengubahnya, silakan aktifkan tahun akademik lain.');
+                }
+                $stmtUpd = $this->db->prepare("UPDATE academic_year_deadlines SET is_active = 0, updated_at = NOW() WHERE id = ?");
+                $stmtUpd->execute([$id]);
+                $msg = "Tahun Akademik {$targetAy['tahun_akademik']} dinonaktifkan.";
+            }
+
+            $this->db->commit();
+
+            AuditLogger::log('UPDATE', 'Tahun Akademik Aktif', (string)$id, "Tahun Akademik {$targetAy['tahun_akademik']} status aktif diubah: {$isActive}");
+
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => $msg,
+                    'tahun_akademik' => $targetAy['tahun_akademik'],
+                    'is_active' => $isActive
+                ]);
+                exit;
+            }
+
+            Auth::setFlash('success', $msg);
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                exit;
+            }
+            Auth::setFlash('danger', $e->getMessage());
+        }
+
+        redirect('admin/upload-access#tab-deadlines');
+    }
+
+    /**
+     * Proses Persetujuan / Penolakan Permohonan Akses Upload dari Unit (LPM)
+     */
+    public function processAccessRequest(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('admin/upload-access');
+            return;
+        }
+
+        $requestId = (int)($_POST['request_id'] ?? 0);
+        $action = trim($_POST['action'] ?? ''); // 'approve' or 'reject'
+        $catatanLpm = trim($_POST['catatan_lpm'] ?? '');
+        $durasiHari = (int)($_POST['durasi_hari'] ?? 7);
+        $customExpiredAt = !empty($_POST['custom_expired_at']) ? trim($_POST['custom_expired_at']) : null;
+
+        if (!$requestId || !in_array($action, ['approve', 'reject'])) {
+            Auth::setFlash('danger', 'Permintaan proses akses tidak valid.');
+            redirect('admin/upload-access');
+            return;
+        }
+
+        try {
+            $stmtOld = $this->db->prepare("SELECT * FROM upload_access_requests WHERE id = ?");
+            $stmtOld->execute([$requestId]);
+            $req = $stmtOld->fetch();
+
+            if (!$req) {
+                Auth::setFlash('danger', 'Permohonan akses tidak ditemukan.');
+                redirect('admin/upload-access');
+                return;
+            }
+
+            if ($action === 'approve') {
+                $status = 'approved';
+                if (!empty($customExpiredAt)) {
+                    $aksesBerlakuSampai = $customExpiredAt;
+                } else {
+                    $aksesBerlakuSampai = date('Y-m-d 23:59:59', strtotime("+{$durasiHari} days"));
+                }
+                $pesanSukses = "Permohonan akses upload TA {$req['tahun_akademik']} berhasil DISETUJUI sampai dengan " . date('d M Y, H:i', strtotime($aksesBerlakuSampai)) . " WIB.";
+            } else {
+                $status = 'rejected';
+                $aksesBerlakuSampai = null;
+                $pesanSukses = "Permohonan akses upload TA {$req['tahun_akademik']} telah DITOLAK.";
+            }
+
+            $stmtUpd = $this->db->prepare("
+                UPDATE upload_access_requests 
+                SET status = ?, akses_berlaku_sampai = ?, catatan_lpm = ?, processed_by = ?, processed_at = NOW(), updated_at = NOW()
+                WHERE id = ?
+            ");
+            $stmtUpd->execute([
+                $status,
+                $aksesBerlakuSampai,
+                $catatanLpm,
+                Auth::id(),
+                $requestId
+            ]);
+
+            AuditLogger::log('UPDATE', 'Persetujuan Akses Upload', (string)$requestId, "Permohonan ID #{$requestId} diproses: {$status}", $req, [
+                'status' => $status,
+                'akses_berlaku_sampai' => $aksesBerlakuSampai,
+                'catatan_lpm' => $catatanLpm
+            ]);
+
+            Auth::setFlash('success', $pesanSukses);
+        } catch (\Throwable $e) {
+            Auth::setFlash('danger', 'Gagal memproses permohonan akses: ' . $e->getMessage());
+        }
+
+        redirect('admin/upload-access');
     }
 }

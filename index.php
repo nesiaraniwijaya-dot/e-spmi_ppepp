@@ -77,6 +77,7 @@ $router->post('admin/tahun-akademik/toggle/{id:\d+}', ['SuperAdminController', '
 // Manajemen Akses & Tenggat Waktu Unggah (LPM)
 $router->get('admin/upload-access', ['SuperAdminController', 'uploadAccess']);
 $router->post('admin/upload-access/save-deadline', ['SuperAdminController', 'saveAcademicDeadline']);
+$router->post('admin/upload-access/toggle-active', ['SuperAdminController', 'toggleActiveAcademicYear']);
 $router->post('admin/upload-access/process-request', ['SuperAdminController', 'processAccessRequest']);
 
 // Manajemen Pengguna & Hak Akses
