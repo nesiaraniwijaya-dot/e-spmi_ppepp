@@ -188,7 +188,10 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 <a href="<?= base_url('admin/upload-access') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, ['admin/upload-access', 'admin/tahun-akademik']) ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-calendar-check"></i></span>
-                    <span>Akses &amp; Tenggat Upload</span>
+                    <span>Tahun Akademik &amp; Akses Upload</span>
+                    <?php if (!empty($sidebarPendingReqCount) && $sidebarPendingReqCount > 0): ?>
+                        <span class="badge bg-danger rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingReqCount ?> permohonan izin buka akses"><?= $sidebarPendingReqCount ?></span>
+                    <?php endif; ?>
                 </a>
                 <a href="<?= base_url('admin/fakultas') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/fakultas') ?>">
@@ -210,14 +213,6 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
             <!-- Super Admin: Manajemen Sistem -->
             <div class="admin-nav-group">
                 <div class="admin-nav-label">Manajemen Sistem</div>
-                <a href="<?= base_url('admin/upload-access') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/upload-access') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-key"></i></span>
-                    <span>Akses &amp; Tenggat Upload</span>
-                    <?php if ($sidebarPendingReqCount > 0): ?>
-                        <span class="badge bg-danger rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingReqCount ?> permohonan izin buka akses"><?= $sidebarPendingReqCount ?></span>
-                    <?php endif; ?>
-                </a>
                 <a href="<?= base_url('admin/landing-settings') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/landing-settings') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-sliders"></i></span>

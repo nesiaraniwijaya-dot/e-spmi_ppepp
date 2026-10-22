@@ -1548,19 +1548,10 @@ class SuperAdminController extends Controller {
 
     /**
      * Manajemen Buka / Tutup Jatah Upload per Tahun Akademik (LPM)
+     * (Dialihkan ke portal terpadu Manajemen Tahun Akademik & Akses Upload)
      */
     public function tahunAkademik(): void {
-        $tahunList = $this->db->query("
-            SELECT t.*, 
-                   (SELECT COUNT(*) FROM ppepp_documents d WHERE d.tahun_akademik = t.tahun_akademik AND d.deleted_at IS NULL) as total_dokumen
-            FROM tahun_akademik_settings t
-            ORDER BY t.tahun_akademik DESC
-        ")->fetchAll();
-
-        $this->render('super_admin/tahun_akademik', [
-            'pageTitle' => 'Manajemen Tahun Akademik & Periode Upload',
-            'tahunList' => $tahunList
-        ]);
+        redirect('admin/upload-access');
     }
 
     public function toggleTahunAkademik(string $id): void {
@@ -1570,7 +1561,7 @@ class SuperAdminController extends Controller {
         $row = $stmt->fetch();
         if (!$row) {
             Auth::setFlash('danger', 'Tahun akademik tidak ditemukan.');
-            redirect('admin/tahun-akademik');
+            redirect('admin/upload-access#tab-deadlines');
             return;
         }
 
@@ -1580,8 +1571,22 @@ class SuperAdminController extends Controller {
 
         $statusText = $newStatus ? 'DIBUKA' : 'DITUTUP';
         AuditLogger::log('UPDATE', 'Tahun Akademik', "ID {$id}", "Mengubah status upload TA {$row['tahun_akademik']} menjadi {$statusText}");
+
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                  || (strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false);
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'is_open' => $newStatus,
+                'message' => "Jatah upload Tahun Akademik {$row['tahun_akademik']} berhasil {$statusText}."
+            ]);
+            exit;
+        }
+
         Auth::setFlash('success', "Periode upload untuk Tahun Akademik {$row['tahun_akademik']} berhasil {$statusText}.");
-        redirect('admin/tahun-akademik');
+        redirect('admin/upload-access#tab-deadlines');
     }
 
     public function saveTahunAkademik(): void {
@@ -1592,7 +1597,7 @@ class SuperAdminController extends Controller {
 
         if (empty($tahunAkademik)) {
             Auth::setFlash('danger', 'Tahun akademik wajib diisi (Contoh: 2026/2027).');
-            redirect('admin/tahun-akademik');
+            redirect('admin/upload-access#tab-deadlines');
             return;
         }
 
@@ -1622,7 +1627,15 @@ class SuperAdminController extends Controller {
             Auth::setFlash('success', "Tahun Akademik {$tahunAkademik} berhasil ditambahkan (Periode 1 Sept - 31 Agt).");
         }
 
-        redirect('admin/tahun-akademik');
+        // Sinkronisasi ke academic_year_deadlines
+        $stmtSync = $this->db->prepare("
+            INSERT INTO academic_year_deadlines (tahun_akademik, is_active, deadline_upload, keterangan)
+            VALUES (?, 0, ?, ?)
+            ON DUPLICATE KEY UPDATE updated_at = NOW()
+        ");
+        $stmtSync->execute([$tahunAkademik, $tglSelesai . ' 23:59:59', $catatan ?: 'Tahun Akademik UNIKA']);
+
+        redirect('admin/upload-access#tab-deadlines');
     }
 
 
@@ -1886,21 +1899,32 @@ class SuperAdminController extends Controller {
     }
 
     /**
-     * Manajemen Akses Unggah Dokumen & Tenggat Waktu (LPM)
+     * Manajemen Terpadu Tahun Akademik, Akses Unggah, & Tenggat Waktu (LPM)
      */
     public function uploadAccess(): void {
         $this->ensureUploadAccessTables();
 
-        // 1. Data Seluruh Tahun Akademik & Deadline
-        $deadlines = [];
-        try {
-            $deadlines = $this->db->query("
-                SELECT * FROM academic_year_deadlines 
-                ORDER BY tahun_akademik DESC
-            ")->fetchAll() ?: [];
-        } catch (\Throwable $e) {
-            $deadlines = [];
-        }
+        // Otomatis sinkronkan rekaman antara academic_year_deadlines dan tahun_akademik_settings
+        $this->syncAcademicYearTables();
+
+        // 1. Data Terpadu Tahun Akademik (Deadline, Kalender 1 Sept - 31 Agt, Buka/Tutup, dan Dokumen)
+        $deadlines = $this->db->query("
+            SELECT 
+                d.id,
+                d.tahun_akademik,
+                d.is_active,
+                d.deadline_upload,
+                d.keterangan,
+                s.id as setting_id,
+                s.tanggal_mulai,
+                s.tanggal_selesai,
+                COALESCE(s.is_open, 1) as is_open,
+                s.catatan as setting_catatan,
+                (SELECT COUNT(*) FROM ppepp_documents doc WHERE doc.tahun_akademik = d.tahun_akademik AND doc.deleted_at IS NULL) as total_dokumen
+            FROM academic_year_deadlines d
+            LEFT JOIN tahun_akademik_settings s ON d.tahun_akademik = s.tahun_akademik
+            ORDER BY d.tahun_akademik DESC
+        ")->fetchAll() ?: [];
 
         $activeAy = get_active_tahun_akademik($this->db);
 
@@ -1927,14 +1951,74 @@ class SuperAdminController extends Controller {
         $pendingCount = count(array_filter($requests, fn($r) => $r['status'] === 'pending'));
         $approvedCount = count(array_filter($requests, fn($r) => $r['status'] === 'approved'));
 
+        // Statistik agregat
+        $totalDocsAll = array_sum(array_column($deadlines, 'total_dokumen'));
+        $openCount = count(array_filter($deadlines, fn($t) => !empty($t['is_open'])));
+        $closedCount = count($deadlines) - $openCount;
+
         $this->render('super_admin/upload_access', [
-            'pageTitle' => 'Manajemen Akses & Tenggat Waktu Unggah',
+            'pageTitle' => 'Manajemen Tahun Akademik & Akses Upload',
             'deadlines' => $deadlines,
             'activeAy' => $activeAy,
             'requests' => $requests,
             'pendingCount' => $pendingCount,
-            'approvedCount' => $approvedCount
+            'approvedCount' => $approvedCount,
+            'totalDocsAll' => $totalDocsAll,
+            'openCount' => $openCount,
+            'closedCount' => $closedCount
         ]);
+    }
+
+    /**
+     * Helper: Sinkronisasi data antara tabel academic_year_deadlines dan tahun_akademik_settings
+     */
+    private function syncAcademicYearTables(): void {
+        try {
+            // Data di academic_year_deadlines yang belum ada di tahun_akademik_settings
+            $missingInSettings = $this->db->query("
+                SELECT d.tahun_akademik, d.is_active 
+                FROM academic_year_deadlines d
+                LEFT JOIN tahun_akademik_settings s ON d.tahun_akademik = s.tahun_akademik
+                WHERE s.id IS NULL
+            ")->fetchAll() ?: [];
+
+            foreach ($missingInSettings as $m) {
+                $ta = $m['tahun_akademik'];
+                if (preg_match('/^(\d{4})\/(\d{4})$/', $ta, $matches)) {
+                    $tMulai = $matches[1] . '-09-01';
+                    $tSelesai = $matches[2] . '-08-31';
+                } else {
+                    $tMulai = date('Y') . '-09-01';
+                    $tSelesai = (date('Y') + 1) . '-08-31';
+                }
+                $isOpen = ($m['is_active'] == 1) ? 1 : 0;
+                $stmt = $this->db->prepare("
+                    INSERT IGNORE INTO tahun_akademik_settings (tahun_akademik, tanggal_mulai, tanggal_selesai, is_open, catatan)
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+                $stmt->execute([$ta, $tMulai, $tSelesai, $isOpen, 'Tahun Akademik']);
+            }
+
+            // Data di tahun_akademik_settings yang belum ada di academic_year_deadlines
+            $missingInDeadlines = $this->db->query("
+                SELECT s.tahun_akademik, s.is_open, s.tanggal_selesai
+                FROM tahun_akademik_settings s
+                LEFT JOIN academic_year_deadlines d ON s.tahun_akademik = d.tahun_akademik
+                WHERE d.id IS NULL
+            ")->fetchAll() ?: [];
+
+            foreach ($missingInDeadlines as $m) {
+                $ta = $m['tahun_akademik'];
+                $deadline = !empty($m['tanggal_selesai']) ? $m['tanggal_selesai'] . ' 23:59:59' : null;
+                $stmt = $this->db->prepare("
+                    INSERT IGNORE INTO academic_year_deadlines (tahun_akademik, is_active, deadline_upload, keterangan)
+                    VALUES (?, ?, ?, ?)
+                ");
+                $stmt->execute([$ta, 0, $deadline, 'Sinkronisasi dari Pengaturan Periode']);
+            }
+        } catch (\Throwable $e) {
+            // Silently continue
+        }
     }
 
     /**
