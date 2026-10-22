@@ -17,8 +17,8 @@ function formatHoursToDays(?float $hours): string {
     <!-- Header Page -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-            <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill bg-scu-blue bg-opacity-10 text-primary small fw-bold mb-2">
-                <i class="fas fa-users-gear"></i> Gugus Penjaminan Mutu (GPM)
+            <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill small fw-bold mb-2" style="background: #EEF2FF; color: #1E3A8A; border: 1px solid #C7D2FE;">
+                <i class="fas fa-users-gear text-primary"></i> Gugus Penjaminan Mutu (GPM)
             </div>
             <h3 class="fw-bold text-dark-blue mb-1">Monitoring Kinerja Anggota GPM</h3>
             <p class="text-muted small mb-0">Direktori seluruh anggota Gugus Penjaminan Mutu (GPM) fakultas: status telaah dokumen, antrean pending, dan riwayat catatan perbaikan.</p>
@@ -39,8 +39,8 @@ function formatHoursToDays(?float $hours): string {
     <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-scu-blue bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;">
-                    <i class="fas fa-users me-1.5"></i> <?= count($gpmMembers) ?> Anggota GPM Terdaftar
+                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: #EEF2FF; color: #1E3A8A; border: 1px solid #C7D2FE; font-size: 0.82rem;">
+                    <i class="fas fa-users text-primary me-1.5"></i> <?= count($gpmMembers) ?> Anggota GPM Terdaftar
                 </span>
             </div>
             <div class="flex-grow-1" style="max-width: 380px;">
@@ -126,60 +126,52 @@ function formatHoursToDays(?float $hours): string {
                             <div class="row g-2 text-center mb-3">
                                 <!-- Approve -->
                                 <div class="col-4">
-                                    <div class="p-2.5 rounded-3 border h-100" style="background: #F0FDF4; border-color: #BBF7D0 !important;">
-                                        <div class="d-flex align-items-center justify-content-center gap-1 text-success mb-1" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">
+                                    <div class="p-2.5 rounded-3 border h-100" style="background: #F0FDF4; border-color: #86EFAC !important;">
+                                        <div class="d-flex align-items-center justify-content-center gap-1 mb-1" style="color: #15803D; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">
                                             <i class="fas fa-circle-check"></i> Approve
                                         </div>
-                                        <div class="fw-bold fs-4 text-success line-height-1">
+                                        <div class="fw-bold fs-4 line-height-1" style="color: #166534;">
                                             <?= (int)$m['total_diteruskan'] ?>
                                         </div>
-                                        <span class="text-muted" style="font-size: 0.65rem;">Disetujui GPM</span>
+                                        <span style="color: #15803D; font-size: 0.68rem; font-weight: 600;">Disetujui GPM</span>
                                     </div>
                                 </div>
 
                                 <!-- Pending -->
                                 <div class="col-4">
-                                    <div class="p-2.5 rounded-3 border h-100" style="background: #FEFCE8; border-color: #FEF08A !important;">
-                                        <div class="d-flex align-items-center justify-content-center gap-1 text-warning mb-1" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">
+                                    <div class="p-2.5 rounded-3 border h-100" style="background: #FFFBEB; border-color: #FCD34D !important;">
+                                        <div class="d-flex align-items-center justify-content-center gap-1 mb-1" style="color: #B45309; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">
                                             <i class="fas fa-clock"></i> Pending
                                         </div>
-                                        <div class="fw-bold fs-4 text-warning line-height-1">
+                                        <div class="fw-bold fs-4 line-height-1" style="color: #92400E;">
                                             <?= (int)$m['pending_review'] ?>
                                         </div>
-                                        <span class="text-muted" style="font-size: 0.65rem;">Antre Telaah</span>
+                                        <span style="color: #B45309; font-size: 0.68rem; font-weight: 600;">Antre Telaah</span>
                                     </div>
                                 </div>
 
                                 <!-- Revisi -->
                                 <div class="col-4">
-                                    <div class="p-2.5 rounded-3 border h-100" style="background: #FEF2F2; border-color: #FECACA !important;">
-                                        <div class="d-flex align-items-center justify-content-center gap-1 text-danger mb-1" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">
+                                    <div class="p-2.5 rounded-3 border h-100" style="background: #FEF2F2; border-color: #FCA5A5 !important;">
+                                        <div class="d-flex align-items-center justify-content-center gap-1 mb-1" style="color: #DC2626; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">
                                             <i class="fas fa-rotate-left"></i> Revisi
                                         </div>
-                                        <div class="fw-bold fs-4 text-danger line-height-1">
+                                        <div class="fw-bold fs-4 line-height-1" style="color: #991B1B;">
                                             <?= (int)$m['total_revisi'] ?>
                                         </div>
-                                        <span class="text-muted" style="font-size: 0.65rem;">Minta Perbaikan</span>
+                                        <span style="color: #DC2626; font-size: 0.68rem; font-weight: 600;">Minta Perbaikan</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Rata-rata respon & Review Terakhir -->
-                            <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle mb-3 mt-auto" style="font-size: 0.75rem;">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="p-1.5 rounded-circle bg-primary bg-opacity-10 text-primary">
-                                        <i class="fas fa-stopwatch"></i>
-                                    </span>
-                                    <div>
-                                        <div class="text-muted" style="font-size: 0.66rem; font-weight: 700; text-transform: uppercase;">Rata-rata Respon</div>
-                                        <div class="fw-bold text-dark font-monospace"><?= $avgDaysStr ?></div>
-                                    </div>
+                            <!-- Rata-rata respon (Ditengah, Tanpa Review Terakhir) -->
+                            <div class="text-center p-2.5 rounded-3 border mb-3 mt-auto" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                                <div class="d-inline-flex align-items-center justify-content-center gap-1.5 mb-1" style="color: #475569; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">
+                                    <i class="fas fa-stopwatch text-primary"></i>
+                                    <span>Rata-rata Respon</span>
                                 </div>
-                                <div class="text-end">
-                                    <div class="text-muted" style="font-size: 0.66rem; font-weight: 700; text-transform: uppercase;">Review Terakhir</div>
-                                    <div class="fw-semibold text-secondary" style="font-size: 0.72rem;">
-                                        <?= !empty($m['last_reviewed_at']) ? date('d M Y', strtotime($m['last_reviewed_at'])) : 'Belum Ada' ?>
-                                    </div>
+                                <div class="fw-bold font-monospace" style="color: #0F172A; font-size: 1.15rem;">
+                                    <?= $avgDaysStr ?>
                                 </div>
                             </div>
 
