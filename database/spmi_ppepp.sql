@@ -921,6 +921,7 @@ CREATE TABLE `ppepp_documents` (
   `nomor_dokumen` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `siklus` enum('penetapan','pelaksanaan','evaluasi','pengendalian','peningkatan') COLLATE utf8mb4_unicode_ci NOT NULL,
   `tahun_akademik` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tanggal_dokumen` date DEFAULT NULL,
   `tanggal_berlaku_mulai` date DEFAULT NULL,
   `tanggal_berlaku_selesai` date DEFAULT NULL,
   `jenis_upload` enum('file','link','kombinasi') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'file',
@@ -1169,6 +1170,49 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `password_plain`, `role`
 ('52', 'Nesia Rani Wijaya (Akun Testing Multi-Role)', 'nesiaraniwijaya@gmail.com', '$2y$10$y.38NfBsCZHSWEUezPiNceXre2qSj59tv3pcSfvLykiOu7VdssxpC', NULL, 'testing', 'uploads/avatars/avatar_52_1792478680.png', NULL, NULL, '1', '2026-10-08 10:20:26', '2026-10-20 13:44:40'),
 ('53', 'Ravy Whienelda (Akun Testing Multi-Role)', 'ravywhienelda@gmail.com', '$2y$10$eRatSgiwbj4bKvfFq9JY5OAEdjLq3JCKLocErwVoM5MKVjbHqwIr6', '123', 'testing', NULL, NULL, NULL, '1', '2026-10-08 10:47:04', '2026-10-08 14:29:50'),
 ('56', 'LPM UNIKA Soegijapranata (Akun Testing)', 'lpm@unika.ac.id', '$2y$10$ltFX966/R8kCZtAjEb.YjO9fIO2P8WVPUeulNov0Hre9EkRi7fj3O', 'password123', 'testing', NULL, NULL, NULL, '1', '2026-10-08 14:29:50', '2026-10-08 14:29:50'),
-('57', 'Tata Usaha LPM (Akun Testing)', 'tu.lpm@unika.ac.id', '$2y$10$ltFX966/R8kCZtAjEb.YjO9fIO2P8WVPUeulNov0Hre9EkRi7fj3O', 'password123', 'testing', NULL, NULL, NULL, '1', '2026-10-08 14:29:50', '2026-10-08 14:29:50');
+-- --------------------------------------------------------
+-- Struktur tabel `academic_year_deadlines`
+-- --------------------------------------------------------
+DROP TABLE IF EXISTS `academic_year_deadlines`;
+CREATE TABLE `academic_year_deadlines` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tahun_akademik` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 0,
+  `deadline_upload` datetime DEFAULT NULL,
+  `keterangan` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_tahun_akademik` (`tahun_akademik`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data tabel `academic_year_deadlines`
+INSERT INTO `academic_year_deadlines` (`tahun_akademik`, `is_active`, `deadline_upload`, `keterangan`) VALUES
+('2026/2027', 1, '2027-08-31 23:59:59', 'Tahun Akademik Berjalan (Aktif)'),
+('2025/2026', 0, '2026-08-31 23:59:59', 'Tahun Akademik Lampau (Terkunci)'),
+('2024/2025', 0, '2025-08-31 23:59:59', 'Tahun Akademik Lampau (Terkunci)');
+
+-- --------------------------------------------------------
+-- Struktur tabel `upload_access_requests`
+-- --------------------------------------------------------
+DROP TABLE IF EXISTS `upload_access_requests`;
+CREATE TABLE `upload_access_requests` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `level` enum('prodi','fakultas') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `prodi_id` int(11) DEFAULT NULL,
+  `fakultas_id` int(11) DEFAULT NULL,
+  `tahun_akademik` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `alasan` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `akses_berlaku_sampai` datetime DEFAULT NULL,
+  `catatan_lpm` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `processed_by` int(11) DEFAULT NULL,
+  `processed_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_unit_status` (`status`,`level`,`prodi_id`,`fakultas_id`,`tahun_akademik`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

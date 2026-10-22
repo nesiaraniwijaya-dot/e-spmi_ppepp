@@ -792,3 +792,175 @@ function normalize_tahun_akademik(?string $input): string {
 
     return $raw;
 }
+
+/**
+ * Hitung otomatis Tahun Akademik berdasarkan Tanggal Dokumen
+ * Aturan Kalender Akademik:
+ * 1 September Tahun N s/d 31 Desember Tahun N -> N / (N + 1)
+ * 1 Januari Tahun N+1 s/d 31 Agustus Tahun N+1 -> N / (N + 1)
+ */
+function calculate_tahun_akademik_from_date(?string $dateStr): string {
+    if (empty($dateStr)) return '';
+    $ts = strtotime($dateStr);
+    if (!$ts) return '';
+    $year = (int)date('Y', $ts);
+    $month = (int)date('n', $ts);
+    if ($month >= 9) {
+        return "{$year}/" . ($year + 1);
+    } else {
+        return ($year - 1) . "/{$year}";
+    }
+}
+
+/**
+ * Cek apakah ekstensi berkas adalah berkas gambar / foto
+ */
+function is_image_extension(?string $ext): bool {
+    if (empty($ext)) return false;
+    return in_array(strtolower(trim($ext)), ['jpg', 'jpeg', 'png', 'webp']);
+}
+
+/**
+ * Ambil data Tahun Akademik yang saat ini aktif dari tabel academic_year_deadlines
+ */
+function get_active_tahun_akademik($db = null): ?array {
+    try {
+        if ($db instanceof Database) {
+            $pdo = $db->getConnection();
+        } elseif ($db instanceof PDO) {
+            $pdo = $db;
+        } else {
+            require_once ROOT_PATH . '/config/database.php';
+            $pdo = Database::getInstance()->getConnection();
+        }
+        $stmt = $pdo->query("SELECT * FROM academic_year_deadlines WHERE is_active = 1 LIMIT 1");
+        $res = $stmt->fetch();
+        return $res ?: null;
+    } catch (\Throwable $e) {
+        return null;
+    }
+}
+
+/**
+ * Cek status penguncian Tahun Akademik untuk unit tertentu (Prodi / Fakultas)
+ * Return: [
+ *   'is_locked' => bool,
+ *   'reason' => string,
+ *   'has_waiver' => bool,
+ *   'waiver' => ?array,
+ *   'is_past_year' => bool,
+ *   'is_past_deadline' => bool
+ * ]
+ */
+function check_academic_year_upload_access(
+    string $tahunAkademik, 
+    string $level, 
+    ?int $prodiId = null, 
+    ?int $fakultasId = null, 
+    $db = null
+): array {
+    $normTa = normalize_tahun_akademik($tahunAkademik);
+    if (empty($normTa)) {
+        return ['is_locked' => false, 'reason' => '', 'has_waiver' => false, 'waiver' => null, 'is_past_year' => false, 'is_past_deadline' => false];
+    }
+
+    if ($db instanceof Database) {
+        $pdo = $db->getConnection();
+    } elseif ($db instanceof PDO) {
+        $pdo = $db;
+    } else {
+        require_once ROOT_PATH . '/config/database.php';
+        $pdo = Database::getInstance()->getConnection();
+    }
+
+    try {
+        // Ambil info tahun akademik dari master deadline
+        $stmtAy = $pdo->prepare("SELECT * FROM academic_year_deadlines WHERE tahun_akademik = ? LIMIT 1");
+        $stmtAy->execute([$normTa]);
+        $ayInfo = $stmtAy->fetch();
+
+        $activeAy = get_active_tahun_akademik($pdo);
+        $activeTaStr = $activeAy['tahun_akademik'] ?? '';
+
+        $isPastYear = false;
+        $isPastDeadline = false;
+        $reason = '';
+
+        if (!empty($activeTaStr) && $normTa !== $activeTaStr) {
+            // Tahun berbeda dari tahun aktif
+            $isPastYear = true;
+            $reason = "Tahun Akademik {$normTa} merupakan tahun lampau.";
+        }
+
+        if ($ayInfo && !empty($ayInfo['deadline_upload'])) {
+            $deadlineTs = strtotime($ayInfo['deadline_upload']);
+            if ($deadlineTs && time() > $deadlineTs) {
+                $isPastDeadline = true;
+                $deadlineFmt = date('d M Y, H:i', $deadlineTs) . ' WIB';
+                $reason = !empty($reason) ? $reason . " (Batas tenggat unggah: {$deadlineFmt})" : "Tenggat unggah dokumen untuk Tahun Akademik {$normTa} telah berakhir pada {$deadlineFmt}.";
+            }
+        }
+
+        // Jika tidak lampau dan tidak lewat deadline -> langsung izinkan (TIDAK TERKUNCI)
+        if (!$isPastYear && !$isPastDeadline) {
+            return [
+                'is_locked' => false,
+                'reason' => '',
+                'has_waiver' => false,
+                'waiver' => null,
+                'is_past_year' => false,
+                'is_past_deadline' => false
+            ];
+        }
+
+        // Jika lampau atau lewat deadline, cek apakah unit memiliki izin akses dispensasi dari LPM
+        $sqlWaiver = "
+            SELECT * FROM upload_access_requests 
+            WHERE status = 'approved' 
+              AND tahun_akademik = ? 
+              AND level = ?
+              AND (akses_berlaku_sampai IS NULL OR akses_berlaku_sampai >= NOW())
+        ";
+        $params = [$normTa, $level];
+
+        if ($level === 'prodi') {
+            $sqlWaiver .= " AND prodi_id = ?";
+            $params[] = (int)$prodiId;
+        } else {
+            $sqlWaiver .= " AND fakultas_id = ?";
+            $params[] = (int)$fakultasId;
+        }
+        $sqlWaiver .= " ORDER BY akses_berlaku_sampai DESC LIMIT 1";
+
+        $stmtWaiver = $pdo->prepare($sqlWaiver);
+        $stmtWaiver->execute($params);
+        $waiver = $stmtWaiver->fetch();
+
+        if ($waiver) {
+            // Memiliki izin dispensasi aktif dari LPM
+            return [
+                'is_locked' => false,
+                'reason' => 'Akses dibuka berdasarkan izin persetujuan LPM.',
+                'has_waiver' => true,
+                'waiver' => $waiver,
+                'is_past_year' => $isPastYear,
+                'is_past_deadline' => $isPastDeadline
+            ];
+        }
+
+        // Terkunci! Butuh izin LPM
+        return [
+            'is_locked' => true,
+            'reason' => $reason,
+            'has_waiver' => false,
+            'waiver' => null,
+            'is_past_year' => $isPastYear,
+            'is_past_deadline' => $isPastDeadline
+        ];
+
+    } catch (\Throwable $e) {
+        // Defensive: jika ada error database query, jangan kunci agar tidak menghalangi upload
+        return ['is_locked' => false, 'reason' => '', 'has_waiver' => false, 'waiver' => null, 'is_past_year' => false, 'is_past_deadline' => false];
+    }
+}
+

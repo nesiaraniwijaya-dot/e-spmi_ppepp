@@ -306,6 +306,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
+            // Check if file is an image (JPG, PNG, WebP)
+            const fileExtMatch = (pdfUrl || '').split('?')[0].split('#')[0].split('.').pop().toLowerCase();
+            const isImageFile = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(fileExtMatch) || (button.getAttribute('data-file-type') === 'image');
+
+            if (isImageFile) {
+                if (headerIcon) headerIcon.className = 'fas fa-file-image fa-lg text-warning';
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+                if (totalInfo) totalInfo.textContent = 'Berkas Foto / Gambar Digital';
+                const pageCounter = document.getElementById('pdfPageCounterBadge');
+                if (pageCounter) pageCounter.textContent = '1 / 1 (Foto)';
+
+                if (pagesContainer) {
+                    pagesContainer.style.display = 'flex';
+                    pagesContainer.innerHTML = `
+                        <div class="d-flex justify-content-center align-items-center w-100 p-3" style="min-height: 60vh;">
+                            <img id="pdfViewerImage" src="${pdfUrl}" alt="${docTitle}" 
+                                 class="img-fluid rounded-3 shadow-lg" 
+                                 style="max-width: 95%; max-height: 80vh; object-fit: contain; transition: transform 0.2s ease; border: 1px solid rgba(255,255,255,0.15);" />
+                        </div>
+                    `;
+                }
+                return;
+            }
+
             // Check if PDF.js library is loaded
             if (typeof pdfjsLib === 'undefined') {
                 if (pagesContainer) {
@@ -390,6 +414,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (zoomInBtn) {
             zoomInBtn.addEventListener('click', function () {
+                const imgEl = document.getElementById('pdfViewerImage');
+                if (imgEl) {
+                    if (currentScale >= 2.5) return;
+                    currentScale += 0.25;
+                    if (zoomDisplay) zoomDisplay.textContent = Math.round(currentScale * 100) + '%';
+                    imgEl.style.transform = `scale(${currentScale})`;
+                    return;
+                }
                 if (!currentPdfDoc || currentScale >= 2.5) return;
                 currentScale += 0.25;
                 if (zoomDisplay) zoomDisplay.textContent = Math.round(currentScale * 100) + '%';
@@ -399,6 +431,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (zoomOutBtn) {
             zoomOutBtn.addEventListener('click', function () {
+                const imgEl = document.getElementById('pdfViewerImage');
+                if (imgEl) {
+                    if (currentScale <= 0.5) return;
+                    currentScale -= 0.25;
+                    if (zoomDisplay) zoomDisplay.textContent = Math.round(currentScale * 100) + '%';
+                    imgEl.style.transform = `scale(${currentScale})`;
+                    return;
+                }
                 if (!currentPdfDoc || currentScale <= 0.75) return;
                 currentScale -= 0.25;
                 if (zoomDisplay) zoomDisplay.textContent = Math.round(currentScale * 100) + '%';
@@ -408,6 +448,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (zoomResetBtn) {
             zoomResetBtn.addEventListener('click', function () {
+                const imgEl = document.getElementById('pdfViewerImage');
+                if (imgEl) {
+                    currentScale = 1.0;
+                    if (zoomDisplay) zoomDisplay.textContent = '100%';
+                    imgEl.style.transform = 'scale(1)';
+                    return;
+                }
                 if (!currentPdfDoc) return;
                 currentScale = 1.25;
                 if (zoomDisplay) zoomDisplay.textContent = '125%';

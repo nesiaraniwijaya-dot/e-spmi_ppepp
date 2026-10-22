@@ -62,7 +62,6 @@ $router->post('admin/sub-bidang/delete/{id}', ['SuperAdminController', 'deleteSu
 // Pusat Review & Verifikasi Dokumen Mutu (Admin LPM / Super Admin)
 $router->get('admin/review', ['SuperAdminController', 'reviewHub']);
 $router->get('admin/review-dokumen', ['SuperAdminController', 'reviewHub']);
-$router->get('admin/monitoring-dokumen', ['SuperAdminController', 'monitoringDokumen']);
 $router->get('admin/monitoring-lalulintas', ['SuperAdminController', 'monitoringLaluLintas']);
 $router->get('admin/monitoring-gpm', ['SuperAdminController', 'monitoringGpm']);
 $router->get('admin/review-prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
@@ -74,6 +73,11 @@ $router->get('api/dokumen-revisi/{id:\d+}', ['SuperAdminController', 'getDocumen
 $router->get('admin/tahun-akademik', ['SuperAdminController', 'tahunAkademik']);
 $router->post('admin/tahun-akademik/save', ['SuperAdminController', 'saveTahunAkademik']);
 $router->post('admin/tahun-akademik/toggle/{id:\d+}', ['SuperAdminController', 'toggleTahunAkademik']);
+
+// Manajemen Akses & Tenggat Waktu Unggah (LPM)
+$router->get('admin/upload-access', ['SuperAdminController', 'uploadAccess']);
+$router->post('admin/upload-access/save-deadline', ['SuperAdminController', 'saveAcademicDeadline']);
+$router->post('admin/upload-access/process-request', ['SuperAdminController', 'processAccessRequest']);
 
 // Manajemen Pengguna & Hak Akses
 $router->get('admin/users', ['SuperAdminController', 'users']);
@@ -102,6 +106,7 @@ $router->get('prodi/dokumen/create', ['AdminProdiController', 'createDocument'])
 $router->get('prodi/dokumen/cycles', ['AdminProdiController', 'cycles']);
 $router->get('prodi/dokumen/edit/{id:\d+}', ['AdminProdiController', 'editDocument']);
 $router->post('prodi/dokumen/save', ['AdminProdiController', 'saveDocument']);
+$router->post('prodi/request-upload-access', ['AdminProdiController', 'requestUploadAccess']);
 $router->post('prodi/dokumen/ajukan/{id:\d+}', ['AdminProdiController', 'ajukanDraft']);
 $router->post('prodi/dokumen/delete/{id:\d+}', ['AdminProdiController', 'softDeleteDocument']);
 $router->post('prodi/dokumen/restore/{id:\d+}', ['AdminProdiController', 'restoreDocument']);
@@ -127,6 +132,7 @@ $router->get('fakultas/dokumen/create', ['AdminFakultasController', 'createDocum
 $router->get('fakultas/dokumen/cycles', ['AdminFakultasController', 'cycles']);
 $router->get('fakultas/dokumen/edit/{id:\d+}', ['AdminFakultasController', 'editDocument']);
 $router->post('fakultas/dokumen/save', ['AdminFakultasController', 'saveDocument']);
+$router->post('fakultas/request-upload-access', ['AdminFakultasController', 'requestUploadAccess']);
 $router->post('fakultas/dokumen/ajukan/{id:\d+}', ['AdminFakultasController', 'ajukanDraft']);
 $router->post('fakultas/dokumen/delete/{id:\d+}', ['AdminFakultasController', 'softDeleteDocument']);
 $router->post('fakultas/dokumen/restore/{id:\d+}', ['AdminFakultasController', 'restoreDocument']);

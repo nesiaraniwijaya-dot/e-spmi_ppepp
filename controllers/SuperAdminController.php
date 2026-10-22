@@ -1625,6 +1625,10 @@ class SuperAdminController extends Controller {
         redirect('admin/tahun-akademik');
     }
 
+    public function uploadAccess(): void {
+        redirect('admin/tahun-akademik');
+    }
+
     /**
      * Halaman Monitoring Lalu Lintas Dokumen LPM
      * Memantau status file, antrean review GPM, durasi turnaround (jarak tanggal upload vs review),

@@ -74,11 +74,26 @@ try {
             WHERE status_review = 'menunggu_review_lpm' AND deleted_at IS NULL
         ");
         $sidebarPendingReviewCount = (int)$stmtPending->fetchColumn();
+
+        $stmtPendingGpm = $sidebarDb->query("
+            SELECT COUNT(*) FROM ppepp_documents 
+            WHERE status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') 
+              AND deleted_at IS NULL AND status_review != 'draft'
+        ");
+        $sidebarPendingGpmCount = (int)$stmtPendingGpm->fetchColumn();
+
+        $stmtPendingReq = $sidebarDb->query("
+            SELECT COUNT(*) FROM upload_access_requests 
+            WHERE status = 'pending'
+        ");
+        $sidebarPendingReqCount = (int)$stmtPendingReq->fetchColumn();
     }
 } catch (\Throwable $e) {
     $sidebarRevisiCount = 0;
     $sidebarPerluPerbaikanCount = 0;
     $sidebarPendingReviewCount = 0;
+    $sidebarPendingGpmCount = 0;
+    $sidebarPendingReqCount = 0;
     $sidebarDraftCount = 0;
 }
 
@@ -151,7 +166,6 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <?php if ($sidebarPendingReviewCount > 0): ?>
                         <span class="badge bg-danger rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingReviewCount ?> dokumen menunggu verifikasi"><?= $sidebarPendingReviewCount ?></span>
                     <?php endif; ?>
-                </a>
                 <a href="<?= base_url('admin/monitoring-lalulintas') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-lalulintas') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-traffic-light"></i></span>
@@ -161,6 +175,9 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-gpm') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-users-viewfinder"></i></span>
                     <span>Monitoring Kinerja GPM</span>
+                    <?php if (!empty($sidebarPendingGpmCount) && $sidebarPendingGpmCount > 0): ?>
+                        <span class="badge bg-warning text-dark border border-warning rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingGpmCount ?> dokumen antre telaah GPM"><?= $sidebarPendingGpmCount ?></span>
+                    <?php endif; ?>
                 </a>
             </div>
 
@@ -192,6 +209,14 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
             <!-- Super Admin: Manajemen Sistem -->
             <div class="admin-nav-group">
                 <div class="admin-nav-label">Manajemen Sistem</div>
+                <a href="<?= base_url('admin/upload-access') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/upload-access') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-key"></i></span>
+                    <span>Akses &amp; Tenggat Upload</span>
+                    <?php if ($sidebarPendingReqCount > 0): ?>
+                        <span class="badge bg-danger rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingReqCount ?> permohonan izin buka akses"><?= $sidebarPendingReqCount ?></span>
+                    <?php endif; ?>
+                </a>
                 <a href="<?= base_url('admin/landing-settings') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/landing-settings') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-sliders"></i></span>

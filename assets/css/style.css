@@ -91,6 +91,62 @@ img {
   height: auto;
 }
 
+/* Ensure headers with dark backgrounds have high-contrast white text */
+.modal-header.bg-dark-blue,
+.modal-header.bg-navy,
+.modal-header.bg-primary,
+.modal-header.bg-success,
+.modal-header.bg-danger,
+.modal-header.bg-dark,
+.modal-header.text-white {
+  color: #ffffff !important;
+}
+
+.modal-header.bg-dark-blue .modal-title,
+.modal-header.bg-dark-blue h1,
+.modal-header.bg-dark-blue h2,
+.modal-header.bg-dark-blue h3,
+.modal-header.bg-dark-blue h4,
+.modal-header.bg-dark-blue h5,
+.modal-header.bg-dark-blue h6,
+.modal-header.bg-navy .modal-title,
+.modal-header.bg-navy h1,
+.modal-header.bg-navy h2,
+.modal-header.bg-navy h3,
+.modal-header.bg-navy h4,
+.modal-header.bg-navy h5,
+.modal-header.bg-navy h6,
+.modal-header.bg-primary .modal-title,
+.modal-header.bg-primary h1,
+.modal-header.bg-primary h2,
+.modal-header.bg-primary h3,
+.modal-header.bg-primary h4,
+.modal-header.bg-primary h5,
+.modal-header.bg-primary h6,
+.modal-header.bg-success .modal-title,
+.modal-header.bg-success h1,
+.modal-header.bg-success h2,
+.modal-header.bg-success h3,
+.modal-header.bg-success h4,
+.modal-header.bg-success h5,
+.modal-header.bg-success h6,
+.modal-header.bg-danger .modal-title,
+.modal-header.bg-danger h1,
+.modal-header.bg-danger h2,
+.modal-header.bg-danger h3,
+.modal-header.bg-danger h4,
+.modal-header.bg-danger h5,
+.modal-header.bg-danger h6,
+.modal-header.text-white .modal-title,
+.modal-header.text-white h1,
+.modal-header.text-white h2,
+.modal-header.text-white h3,
+.modal-header.text-white h4,
+.modal-header.text-white h5,
+.modal-header.text-white h6 {
+  color: #ffffff !important;
+}
+
 /* --- Utility Classes --- */
 .text-navy {
   color: var(--navy) !important;
