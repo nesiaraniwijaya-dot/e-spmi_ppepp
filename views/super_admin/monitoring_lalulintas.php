@@ -24,10 +24,10 @@ function formatDurationHours(?int $hours): string {
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
             <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill bg-scu-blue bg-opacity-10 text-primary small fw-bold mb-2">
-                <i class="fas fa-traffic-light"></i> Pengawasan Arus &amp; SLA Dokumen
+                <i class="fas fa-file-waveform"></i> Pengawasan &amp; Status Dokumen Mutu
             </div>
-            <h3 class="fw-bold text-dark-blue mb-1">Monitoring Lalu Lintas Berkas &amp; Turnaround SPMI</h3>
-            <p class="text-muted small mb-0">Pemantauan arus dokumen mutu: waktu tunggu, antrean review GPM, durasi respon penelaahan, serta unit yang belum mengunggah.</p>
+            <h3 class="fw-bold text-dark-blue mb-1">Monitoring Dokumen Mutu</h3>
+            <p class="text-muted small mb-0">Pemantauan status dokumen mutu: waktu tunggu, antrean review GPM, durasi respon penelaahan, serta unit yang belum mengunggah.</p>
         </div>
         <div class="d-flex gap-2 align-items-center">
             <a href="<?= base_url('admin/tahun-akademik') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5">
@@ -89,7 +89,7 @@ function formatDurationHours(?int $hours): string {
 
     <!-- Filter & Toolbar Card -->
     <div class="card border-0 shadow-sm rounded-4 p-3.5 mb-4 bg-white">
-        <form method="GET" action="<?= base_url('admin/monitoring-lalulintas') ?>" class="row g-2.5 align-items-end">
+        <form method="GET" action="<?= base_url('admin/monitoring-berkas') ?>" class="row g-2.5 align-items-end">
             <div class="col-md-3 col-lg-2">
                 <label class="form-label small fw-bold text-dark mb-1">Tahun Akademik</label>
                 <select name="tahun_akademik" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -103,9 +103,9 @@ function formatDurationHours(?int $hours): string {
             </div>
 
             <div class="col-md-3 col-lg-2">
-                <label class="form-label small fw-bold text-dark mb-1">Filter Arus Berkas</label>
+                <label class="form-label small fw-bold text-dark mb-1">Status Penelaahan</label>
                 <select name="kategori_traffic" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="">Semua Status Arus</option>
+                    <option value="">Semua Status</option>
                     <option value="menunggu_gpm" <?= $trafficFilter === 'menunggu_gpm' ? 'selected' : '' ?>>⏳ Tertahan di GPM</option>
                     <option value="revisi_unit" <?= $trafficFilter === 'revisi_unit' ? 'selected' : '' ?>>🔄 Perlu Revisi di Unit</option>
                     <option value="menunggu_lpm" <?= $trafficFilter === 'menunggu_lpm' ? 'selected' : '' ?>>📥 Menunggu Telaah LPM</option>
@@ -147,7 +147,7 @@ function formatDurationHours(?int $hours): string {
             </div>
 
             <div class="col-md-6 col-lg-1 d-flex gap-1">
-                <a href="<?= base_url('admin/monitoring-lalulintas') ?>" class="btn btn-sm btn-outline-secondary rounded-pill w-100 py-1.5" title="Reset Filter">
+                <a href="<?= base_url('admin/monitoring-berkas') ?>" class="btn btn-sm btn-outline-secondary rounded-pill w-100 py-1.5" title="Reset Filter">
                     <i class="fas fa-rotate-left"></i>
                 </a>
             </div>
@@ -158,8 +158,8 @@ function formatDurationHours(?int $hours): string {
     <ul class="nav nav-pills gap-2 mb-3" id="trafficTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-2xs" id="traffic-live-tab" data-bs-toggle="tab" data-bs-target="#traffic-live" type="button" role="tab">
-                <i class="fas fa-route text-primary"></i>
-                <span>Arus Dokumen &amp; Turnaround SLA (<?= count($documents) ?>)</span>
+                <i class="fas fa-file-lines text-primary"></i>
+                <span>Status Berkas &amp; Turnaround (<?= count($documents) ?>)</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">

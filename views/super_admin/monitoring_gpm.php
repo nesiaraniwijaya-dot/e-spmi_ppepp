@@ -28,9 +28,9 @@ function formatHoursToDays(?float $hours): string {
                 <i class="fas fa-user-plus"></i>
                 <span>Kelola Akun GPM</span>
             </a>
-            <a href="<?= base_url('admin/monitoring-lalulintas') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5 py-2 shadow-sm bg-scu-blue border-0 fw-semibold d-inline-flex align-items-center gap-1.5">
-                <i class="fas fa-traffic-light"></i>
-                <span>Arus Dokumen Mutu</span>
+            <a href="<?= base_url('admin/monitoring-dokumen') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5 py-2 shadow-sm bg-scu-blue border-0 fw-semibold d-inline-flex align-items-center gap-1.5">
+                <i class="fas fa-file-waveform"></i>
+                <span>Monitoring Dokumen</span>
             </a>
         </div>
     </div>

@@ -1626,12 +1626,16 @@ class SuperAdminController extends Controller {
     }
 
 
+    public function monitoringLaluLintas(): void {
+        $this->monitoringBerkas();
+    }
+
     /**
-     * Halaman Monitoring Lalu Lintas Dokumen LPM
+     * Halaman Monitoring Dokumen Mutu & SLA Berkas LPM
      * Memantau status file, antrean review GPM, durasi turnaround (jarak tanggal upload vs review),
      * serta unit yang belum mengunggah dokumen.
      */
-    public function monitoringLaluLintas(): void {
+    public function monitoringBerkas(): void {
         $tahunList = $this->db->query("SELECT tahun_akademik, is_open FROM tahun_akademik_settings ORDER BY tahun_akademik DESC")->fetchAll();
         $defaultTA = '';
         foreach ($tahunList as $t) {
@@ -1758,7 +1762,7 @@ class SuperAdminController extends Controller {
         $prodiList = $this->db->query("SELECT id, fakultas_id, nama_prodi, kode_prodi, jenjang FROM prodis ORDER BY nama_prodi ASC")->fetchAll();
 
         $this->render('super_admin/monitoring_lalulintas', [
-            'pageTitle' => 'Monitoring Lalu Lintas Berkas & Turnaround SPMI',
+            'pageTitle' => 'Monitoring Dokumen Mutu',
             'documents' => $documents,
             'stats' => $stats,
             'tahunList' => $tahunList,

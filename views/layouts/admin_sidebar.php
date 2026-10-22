@@ -166,10 +166,11 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <?php if ($sidebarPendingReviewCount > 0): ?>
                         <span class="badge bg-danger rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingReviewCount ?> dokumen menunggu verifikasi"><?= $sidebarPendingReviewCount ?></span>
                     <?php endif; ?>
-                <a href="<?= base_url('admin/monitoring-lalulintas') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-lalulintas') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-traffic-light"></i></span>
-                    <span>Lalu Lintas &amp; SLA Berkas</span>
+                </a>
+                <a href="<?= base_url('admin/monitoring-berkas') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, ['admin/monitoring-berkas', 'admin/monitoring-lalulintas']) ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-file-waveform"></i></span>
+                    <span>Monitoring Dokumen</span>
                 </a>
                 <a href="<?= base_url('admin/monitoring-gpm') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-gpm') ?>">
@@ -184,10 +185,10 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
             <!-- Super Admin: Data Master Institusi -->
             <div class="admin-nav-group">
                 <div class="admin-nav-label">Data Master &amp; Kalender</div>
-                <a href="<?= base_url('admin/tahun-akademik') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/tahun-akademik') ?>">
+                <a href="<?= base_url('admin/upload-access') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, ['admin/upload-access', 'admin/tahun-akademik']) ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-calendar-check"></i></span>
-                    <span>Tahun Akademik &amp; Upload</span>
+                    <span>Akses &amp; Tenggat Upload</span>
                 </a>
                 <a href="<?= base_url('admin/fakultas') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/fakultas') ?>">

@@ -1112,17 +1112,16 @@ function addSingleGdriveLinkRow() {
 // FALLBACK SUB STANDAR MUTU PICKER
 // Mencegah kegagalan render kartu jika file assets/js/sub_standar_picker.js belum terunggah ke hosting
 // ==========================================
-if (typeof escapeHtml !== 'function') {
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-}
+window.escapeHtml = function(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+var escapeHtml = window.escapeHtml;
 
 if (typeof renderSubStandarPicker !== 'function') {
     window.renderSubStandarPicker = function(inputName, selectedSubIds = [], uniqueKey = '', currentBidangId = null) {

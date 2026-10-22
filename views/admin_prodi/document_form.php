@@ -1107,17 +1107,16 @@ function addSingleGdriveLinkRow() {
 // FALLBACK SUB STANDAR MUTU PICKER
 // Mencegah kegagalan render kartu jika file assets/js/sub_standar_picker.js belum terunggah ke hosting
 // ==========================================
-if (typeof escapeHtml !== 'function') {
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-}
+window.escapeHtml = function(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+var escapeHtml = window.escapeHtml;
 
 if (typeof renderSubStandarPicker !== 'function') {
     window.renderSubStandarPicker = function(inputName, selectedSubIds = [], uniqueKey = '', currentBidangId = null) {
@@ -1368,7 +1367,6 @@ if (typeof renderSubStandarPicker !== 'function') {
 // BATCH MULTI-UPLOAD SYSTEM (UP TO 10 CARDS)
 // ==========================================
 let cardCounter = 0;
-let batchStagedFiles = {}; // idx => [File]
 
 function createDocCardTemplate(idx, presetData = null) {
     const defaultTahunVal = <?= json_encode($defaultTahun) ?>;
