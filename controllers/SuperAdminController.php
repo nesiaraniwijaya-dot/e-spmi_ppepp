@@ -1560,7 +1560,7 @@ class SuperAdminController extends Controller {
 
         // 1. Ambil seluruh data fakultas beserta akun penelaah GPM masing-masing
         $allFakultas = $this->db->query("SELECT * FROM fakultas ORDER BY id ASC")->fetchAll() ?: [];
-        $gpmUsers = $this->db->query("SELECT id, name, email, phone, fakultas_id FROM users WHERE role = 'gpm' AND is_active = 1")->fetchAll() ?: [];
+        $gpmUsers = $this->db->query("SELECT id, name, email, fakultas_id FROM users WHERE role = 'gpm' AND is_active = 1")->fetchAll() ?: [];
         
         $gpmByFakultas = [];
         foreach ($gpmUsers as $gu) {
