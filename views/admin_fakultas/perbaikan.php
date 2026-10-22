@@ -363,7 +363,7 @@ $totalDocs = count($documents);
                                     $filesCount = count($sDoc['files'] ?? []);
                                     $hasLink = !empty($sDoc['external_link']);
                                     $hasLegacy = !empty($sDoc['file_path']);
-                                    $sIsGpm = ($sDoc['status_review'] === 'revisi_gpm');
+                                    $sIsGpm = ($sDoc['status_review'] === 'revisi_gpm') || (!empty($sDoc['gpm_reviewed_at']) && empty($sDoc['lpm_reviewed_at']));
                                     if ($sIsGpm) {
                                         $sRevLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
                                         $sRevDate = !empty($sDoc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($sDoc['gpm_reviewed_at'])) . ' WIB' : (!empty($sDoc['reviewed_at']) ? date('d M Y, H:i', strtotime($sDoc['reviewed_at'])) . ' WIB' : '-');
@@ -509,7 +509,7 @@ $totalDocs = count($documents);
                             </thead>
                             <tbody>
                                 <?php foreach ($documents as $idx => $doc): 
-                                    $isGpmRev = ($doc['status_review'] === 'revisi_gpm');
+                                    $isGpmRev = ($doc['status_review'] === 'revisi_gpm') || (!empty($doc['gpm_reviewed_at']) && empty($doc['lpm_reviewed_at']));
                                     $isPerlu = in_array($doc['status_review'], ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']);
                                     if ($isGpmRev) {
                                         $revLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';

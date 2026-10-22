@@ -129,7 +129,13 @@ class GpmController extends Controller {
             LEFT JOIN fakultas f ON d.fakultas_id = f.id
             LEFT JOIN users u ON d.reviewed_by = u.id
             WHERE {$scopeWhereAlias} AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
-            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            ORDER BY 
+                GREATEST(
+                    COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.updated_at, '1970-01-01 00:00:00')
+                ) DESC, d.id DESC
             LIMIT 10
         ");
         $stmtRevisi->execute();
@@ -1196,7 +1202,13 @@ class GpmController extends Controller {
             $params[] = $this->fakultasId;
         }
 
-        $sql .= " ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC";
+        $sql .= " ORDER BY 
+            GREATEST(
+                COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(d.updated_at, '1970-01-01 00:00:00')
+            ) DESC, d.id DESC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);

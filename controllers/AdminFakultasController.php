@@ -56,7 +56,13 @@ class AdminFakultasController extends Controller {
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN users u ON d.reviewed_by = u.id
             WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
-            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            ORDER BY 
+                GREATEST(
+                    COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.updated_at, '1970-01-01 00:00:00')
+                ) DESC, d.id DESC
         ");
         $stmtRevisi->execute([$this->fakultasId]);
         $revisiDocs = $stmtRevisi->fetchAll();
@@ -200,7 +206,13 @@ class AdminFakultasController extends Controller {
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
             WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
-            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            ORDER BY 
+                GREATEST(
+                    COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.updated_at, '1970-01-01 00:00:00')
+                ) DESC, d.id DESC
         ");
         $stmt->execute([$this->fakultasId]);
         $documents = $stmt->fetchAll();

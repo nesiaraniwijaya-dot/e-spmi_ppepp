@@ -37,7 +37,9 @@ class ApiController extends Controller {
             }
 
             $stmtHist = $this->db->prepare("
-                SELECT r.*, u.name as reviewer_user_name, u.role as reviewer_user_role
+                SELECT r.*,
+                       DATE_FORMAT(r.created_at, '%d %b %Y, %H:%i') as created_at_formatted,
+                       u.name as reviewer_user_name, u.role as reviewer_user_role
                 FROM ppepp_document_reviews r
                 LEFT JOIN users u ON r.reviewer_id = u.id
                 WHERE r.document_id = ?
@@ -134,6 +136,7 @@ class ApiController extends Controller {
             if (empty($history)) {
                 $syntheticHistory = [];
                 if (!empty($doc['gpm_catatan'])) {
+                    $gpmDate = $doc['gpm_reviewed_at'] ?? date('Y-m-d H:i:s');
                     $syntheticHistory[] = [
                         'id' => 0,
                         'document_id' => $doc['id'],
@@ -145,10 +148,12 @@ class ApiController extends Controller {
                         'catatan' => $doc['gpm_catatan'],
                         'reviewer_user_name' => 'Gugus Penjaminan Mutu (GPM)',
                         'reviewer_user_role' => 'gpm',
-                        'created_at' => $doc['gpm_reviewed_at'] ?? date('Y-m-d H:i:s')
+                        'created_at' => $gpmDate,
+                        'created_at_formatted' => date('d M Y, H:i', strtotime($gpmDate)) . ' WIB'
                     ];
                 }
                 if (!empty($doc['lpm_catatan']) || (!empty($doc['catatan_review']) && in_array($doc['status_review'], ['perlu_perbaikan', 'revisi_lpm', 'sesuai']))) {
+                    $lpmDate = $doc['lpm_reviewed_at'] ?? date('Y-m-d H:i:s');
                     $syntheticHistory[] = [
                         'id' => 0,
                         'document_id' => $doc['id'],
@@ -160,13 +165,24 @@ class ApiController extends Controller {
                         'catatan' => $doc['lpm_catatan'] ?? $doc['catatan_review'] ?? '',
                         'reviewer_user_name' => 'Pusat Penjaminan Mutu LPM',
                         'reviewer_user_role' => 'admin_lpm',
-                        'created_at' => $doc['lpm_reviewed_at'] ?? date('Y-m-d H:i:s')
+                        'created_at' => $lpmDate,
+                        'created_at_formatted' => date('d M Y, H:i', strtotime($lpmDate)) . ' WIB'
                     ];
                 }
                 if (!empty($syntheticHistory)) {
                     $history = $syntheticHistory;
                 }
             }
+
+            // Standardize created_at_formatted for all items
+            foreach ($history as &$hItem) {
+                if (empty($hItem['created_at_formatted']) && !empty($hItem['created_at'])) {
+                    $hItem['created_at_formatted'] = date('d M Y, H:i', strtotime($hItem['created_at'])) . ' WIB';
+                } elseif (!empty($hItem['created_at_formatted']) && !str_ends_with($hItem['created_at_formatted'], 'WIB')) {
+                    $hItem['created_at_formatted'] .= ' WIB';
+                }
+            }
+            unset($hItem);
 
             echo json_encode([
                 'success' => true,

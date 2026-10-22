@@ -532,7 +532,7 @@
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     ${statusBadge}
-                                    <span class="text-muted small" style="font-size:0.75rem;"><i class="far fa-calendar-alt me-1"></i>${item.created_at || ''}</span>
+                                    <span class="text-muted small" style="font-size:0.75rem;"><i class="far fa-calendar-alt me-1"></i>${item.created_at_formatted || (item.created_at ? item.created_at + ' WIB' : '')}</span>
                                 </div>
                             </div>
                             <div class="p-2.5 rounded-3 bg-light border text-dark small" style="line-height:1.6; white-space:pre-wrap; font-size:0.83rem;">${item.catatan || '(Tidak ada catatan tertulis)'}</div>
@@ -543,7 +543,7 @@
                                             <i class="fas fa-file-arrow-up me-1"></i> Perbaikan Telah Diunggah
                                         </span>
                                         <span class="text-muted small" style="font-size:0.72rem;">
-                                            <i class="far fa-clock me-1"></i> ${item.revised_at || ''}
+                                            <i class="far fa-clock me-1"></i> ${item.revised_at ? (item.revised_at.includes('WIB') ? item.revised_at : item.revised_at + ' WIB') : ''}
                                         </span>
                                     </div>
                                     ${item.uploader_name ? `<div class="small text-muted mb-1" style="font-size:0.75rem;">Diunggah oleh: <strong class="text-dark">${item.uploader_name}</strong></div>` : ''}

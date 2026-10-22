@@ -4,6 +4,9 @@
  * SPMI PPEPP UNIKA Soegijapranata (SCU)
  */
 
+// Set Standard Timezone: Waktu Indonesia Barat (WIB / UTC+7)
+date_default_timezone_set('Asia/Jakarta');
+
 if (!defined('APP_NAME')) {
     define('APP_NAME', 'MITRA');
     define('APP_LONG_NAME', 'Sistem Informasi Penjaminan Mutu Internal (PPEPP)');

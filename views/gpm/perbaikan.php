@@ -471,7 +471,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                                 <?php foreach ($sudahDocs as $idx => $doc): 
                                     $filesCount = count($doc['files'] ?? []);
                                     $hasLink = !empty($doc['external_link']);
-                                    $sIsGpm = (($doc['status_review'] ?? '') === 'revisi_gpm');
+                                    $sIsGpm = (($doc['status_review'] ?? '') === 'revisi_gpm') || (!empty($doc['gpm_reviewed_at']) && empty($doc['lpm_reviewed_at']));
                                     if ($sIsGpm) {
                                         $sRevLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
                                         $sRevDate = !empty($doc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'])) . ' WIB' : (!empty($doc['reviewed_at']) ? date('d M Y, H:i', strtotime($doc['reviewed_at'])) . ' WIB' : '-');
@@ -646,7 +646,7 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                             <tbody>
                                 <?php foreach ($revisiDocs as $idx => $doc): 
                                     $isPerlu = in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']);
-                                    $isGpmRev = (($doc['status_review'] ?? '') === 'revisi_gpm');
+                                    $isGpmRev = (($doc['status_review'] ?? '') === 'revisi_gpm') || (!empty($doc['gpm_reviewed_at']) && empty($doc['lpm_reviewed_at']));
                                     if ($isGpmRev) {
                                         $revLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
                                         $revDate = !empty($doc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'])) . ' WIB' : (!empty($doc['reviewed_at']) ? date('d M Y, H:i', strtotime($doc['reviewed_at'])) . ' WIB' : '-');

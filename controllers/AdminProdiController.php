@@ -61,7 +61,13 @@ class AdminProdiController extends Controller {
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN users u ON d.reviewed_by = u.id
             WHERE d.prodi_id = ? AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
-            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            ORDER BY 
+                GREATEST(
+                    COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.updated_at, '1970-01-01 00:00:00')
+                ) DESC, d.id DESC
         ");
         $stmtRevisi->execute([$this->prodiId]);
         $revisiDocs = $stmtRevisi->fetchAll();
@@ -175,7 +181,13 @@ class AdminProdiController extends Controller {
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
             WHERE d.prodi_id = ? AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
-            ORDER BY FIELD(d.status_review, 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'), d.updated_at DESC
+            ORDER BY 
+                GREATEST(
+                    COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
+                    COALESCE(d.updated_at, '1970-01-01 00:00:00')
+                ) DESC, d.id DESC
         ");
         $stmt->execute([$this->prodiId]);
         $documents = $stmt->fetchAll();
@@ -1186,7 +1198,7 @@ class AdminProdiController extends Controller {
                     tahun_akademik = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?, 
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, 
                     external_link = ?, public_page_limit = ?, can_download_public = ?, 
-                    status_review = ?, tahap_review = ?, deskripsi = ?
+                    status_review = ?, tahap_review = ?, deskripsi = ?, updated_at = NOW()
                 WHERE id = ? AND prodi_id = ?
             ");
             $stmt->execute([

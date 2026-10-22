@@ -20,7 +20,12 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
-            ORDER BY updated_at DESC
+            ORDER BY GREATEST(
+                COALESCE(lpm_reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(gpm_reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(updated_at, '1970-01-01 00:00:00')
+            ) DESC, id DESC
         ");
         $stmt->execute([$headerProdiId]);
         $notificationItems = $stmt->fetchAll() ?: [];
@@ -36,7 +41,12 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
-            ORDER BY updated_at DESC
+            ORDER BY GREATEST(
+                COALESCE(lpm_reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(gpm_reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(reviewed_at, '1970-01-01 00:00:00'),
+                COALESCE(updated_at, '1970-01-01 00:00:00')
+            ) DESC, id DESC
         ");
         $stmt->execute([$headerFakultasId]);
         $notificationItems = $stmt->fetchAll() ?: [];
