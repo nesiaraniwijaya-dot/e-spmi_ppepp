@@ -401,6 +401,17 @@ class AdminFakultasController extends Controller {
             }
         }
 
+        $activeAy = get_active_tahun_akademik($this->db);
+        $allAyDeadlines = $this->db->query("SELECT * FROM academic_year_deadlines ORDER BY tahun_akademik DESC")->fetchAll() ?: [];
+        $stmtWaivers = $this->db->prepare("
+            SELECT * FROM upload_access_requests 
+            WHERE level = 'fakultas' AND fakultas_id = ? AND status = 'approved' 
+              AND (akses_berlaku_sampai IS NULL OR akses_berlaku_sampai >= NOW())
+            ORDER BY akses_berlaku_sampai DESC
+        ");
+        $stmtWaivers->execute([$this->fakultasId]);
+        $myActiveWaivers = $stmtWaivers->fetchAll() ?: [];
+
         $this->render('admin_fakultas/document_form', [
             'pageTitle' => 'Unggah Dokumen Mutu Fakultas',
             'fakultas' => $this->fakultas,
@@ -411,7 +422,10 @@ class AdminFakultasController extends Controller {
             'isEdit' => false,
             'existingCycles' => $existingCyclesWithStages,
             'presetCycle' => $presetCycle,
-            'presetSiklus' => $targetSiklus
+            'presetSiklus' => $targetSiklus,
+            'activeAy' => $activeAy,
+            'allAyDeadlines' => $allAyDeadlines,
+            'myActiveWaivers' => $myActiveWaivers
         ]);
     }
 
@@ -455,6 +469,17 @@ class AdminFakultasController extends Controller {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active=1 ORDER BY id ASC")->fetchAll();
         $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active=1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
 
+        $activeAy = get_active_tahun_akademik($this->db);
+        $allAyDeadlines = $this->db->query("SELECT * FROM academic_year_deadlines ORDER BY tahun_akademik DESC")->fetchAll() ?: [];
+        $stmtWaivers = $this->db->prepare("
+            SELECT * FROM upload_access_requests 
+            WHERE level = 'fakultas' AND fakultas_id = ? AND status = 'approved' 
+              AND (akses_berlaku_sampai IS NULL OR akses_berlaku_sampai >= NOW())
+            ORDER BY akses_berlaku_sampai DESC
+        ");
+        $stmtWaivers->execute([$this->fakultasId]);
+        $myActiveWaivers = $stmtWaivers->fetchAll() ?: [];
+
         $this->render('admin_fakultas/document_form', [
             'pageTitle' => 'Ubah Dokumen Mutu: ' . $doc['nama_dokumen'],
             'fakultas' => $this->fakultas,
@@ -462,7 +487,10 @@ class AdminFakultasController extends Controller {
             'subBidangList' => $subBidangList,
             'doc' => $doc,
             'docFiles' => $docFiles,
-            'isEdit' => true
+            'isEdit' => true,
+            'activeAy' => $activeAy,
+            'allAyDeadlines' => $allAyDeadlines,
+            'myActiveWaivers' => $myActiveWaivers
         ]);
     }
 
@@ -503,7 +531,15 @@ class AdminFakultasController extends Controller {
                     $bidangId = !empty($d['bidang_id']) ? (int)$d['bidang_id'] : null;
                     $subBidangId = !empty($d['sub_bidang_id']) ? (int)$d['sub_bidang_id'] : null;
                     $siklus = trim($d['siklus'] ?? '');
-                    $tahunAkademik = normalize_tahun_akademik($d['tahun_akademik'] ?? '');
+                    $tanggalDokumen = !empty($d['tanggal_dokumen']) ? trim($d['tanggal_dokumen']) : date('Y-m-d');
+                    $tahunAkademik = !empty($d['tahun_akademik']) ? normalize_tahun_akademik($d['tahun_akademik']) : calculate_tahun_akademik_from_date($tanggalDokumen);
+
+                    // Validasi Akses & Deadline Tahun Akademik
+                    $lockCheck = check_academic_year_upload_access($tahunAkademik, 'fakultas', null, $this->fakultasId, $this->db);
+                    if ($lockCheck['is_locked']) {
+                        throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}): {$lockCheck['reason']} Silakan ajukan izin akses upload ke LPM terlebih dahulu.");
+                    }
+
                     $startDate = null;
                     $endDate = null;
                     $jenisUpload = trim($d['jenis_upload'] ?? 'file');
@@ -756,13 +792,13 @@ class AdminFakultasController extends Controller {
                     $stmt = $this->db->prepare("
                         INSERT INTO ppepp_documents (
                             cycle_id, fakultas_id, prodi_id, user_id, bidang_id, sub_bidang_id,
-                            nama_dokumen, nomor_dokumen, siklus, tahun_akademik,
+                            nama_dokumen, nomor_dokumen, siklus, tahun_akademik, tanggal_dokumen,
                             tanggal_berlaku_mulai, tanggal_berlaku_selesai,
                             jenis_upload, file_path, file_size, file_extension, external_link,
                             public_page_limit, can_download_public, status_review, tahap_review, level, created_at
                         ) VALUES (
                             ?, ?, NULL, ?, ?, ?,
-                            ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?,
                             ?, ?,
                             ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, 'fakultas', NOW()
@@ -770,7 +806,7 @@ class AdminFakultasController extends Controller {
                     ");
                     $stmt->execute([
                         $cycleId, $this->fakultasId, Auth::id(), $bidangId, $subBidangId,
-                        $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik,
+                        $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik, $tanggalDokumen,
                         $startDate, $endDate,
                         $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
                         $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview
@@ -868,7 +904,17 @@ class AdminFakultasController extends Controller {
             $bidangId = !empty($_POST['bidang_id']) ? (int)$_POST['bidang_id'] : null;
             $subBidangId = !empty($_POST['sub_bidang_id']) ? (int)$_POST['sub_bidang_id'] : null;
             $siklus = trim($_POST['siklus'] ?? '');
-            $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+            $tanggalDokumen = !empty($_POST['tanggal_dokumen']) ? trim($_POST['tanggal_dokumen']) : date('Y-m-d');
+            $tahunAkademik = !empty($_POST['tahun_akademik']) ? normalize_tahun_akademik($_POST['tahun_akademik']) : calculate_tahun_akademik_from_date($tanggalDokumen);
+
+            // Validasi Akses & Deadline Tahun Akademik
+            $lockCheck = check_academic_year_upload_access($tahunAkademik, 'fakultas', null, $this->fakultasId, $this->db);
+            if ($lockCheck['is_locked']) {
+                Auth::setFlash('danger', $lockCheck['reason'] . ' Silakan ajukan izin buka akses unggah ke LPM terlebih dahulu.');
+                redirect('fakultas/dokumen/edit/' . $id);
+                return;
+            }
+
             $startDate = null;
             $endDate = null;
             $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
@@ -1223,14 +1269,14 @@ class AdminFakultasController extends Controller {
             $stmtUpdate = $this->db->prepare("
                 UPDATE ppepp_documents SET 
                     nama_dokumen = ?, nomor_dokumen = ?, bidang_id = ?, sub_bidang_id = ?,
-                    siklus = ?, tahun_akademik = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?,
+                    siklus = ?, tahun_akademik = ?, tanggal_dokumen = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?,
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, external_link = ?,
                     public_page_limit = ?, can_download_public = ?, status_review = ?, tahap_review = ?, updated_at = NOW()
                 WHERE id = ? AND fakultas_id = ? AND level = 'fakultas'
             ");
             $stmtUpdate->execute([
                 $namaDokumen, $nomorDokumen, $bidangId, $subBidangId,
-                $siklus, $tahunAkademik, $startDate, $endDate,
+                $siklus, $tahunAkademik, $tanggalDokumen, $startDate, $endDate,
                 $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
                 $publicPageLimit, $canDownloadPublic, $newStatusReview, $newTahapReview,
                 $id, $this->fakultasId
@@ -1506,4 +1552,44 @@ class AdminFakultasController extends Controller {
         }
         unset($d);
     }
+
+    /**
+     * Ajukan Permohonan Buka Akses Unggah Dokumen Tahun Lampau / Susulan ke LPM
+     */
+    public function requestUploadAccess(): void {
+        $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+        $alasan = trim($_POST['alasan'] ?? '');
+
+        if (empty($tahunAkademik) || empty($alasan)) {
+            Auth::setFlash('danger', 'Tahun akademik dan alasan permohonan wajib diisi.');
+            redirect('fakultas/dokumen/create');
+            return;
+        }
+
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO upload_access_requests (user_id, level, prodi_id, fakultas_id, tahun_akademik, alasan, status, created_at)
+                VALUES (?, 'fakultas', NULL, ?, ?, ?, 'pending', NOW())
+            ");
+            $stmt->execute([
+                Auth::id(),
+                $this->fakultasId,
+                $tahunAkademik,
+                $alasan
+            ]);
+            $reqId = $this->db->lastInsertId();
+
+            AuditLogger::log('CREATE', 'Permohonan Akses Upload', (string)$reqId, "TA {$tahunAkademik} - " . ($this->fakultas['nama_fakultas'] ?? 'Fakultas'), null, [
+                'tahun_akademik' => $tahunAkademik,
+                'alasan' => $alasan
+            ], null, null);
+
+            Auth::setFlash('success', "Permohonan izin buka akses unggah dokumen untuk Tahun Akademik {$tahunAkademik} telah diajukan ke LPM. Silakan tunggu verifikasi admin LPM.");
+        } catch (\Throwable $e) {
+            Auth::setFlash('danger', 'Gagal mengirim permohonan akses: ' . $e->getMessage());
+        }
+
+        redirect('fakultas/dokumen/create');
+    }
 }
+

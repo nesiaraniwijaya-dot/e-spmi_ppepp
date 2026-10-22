@@ -98,15 +98,33 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
     - **Pembaruan Master Database SQL**:
       - Master dump `database/spmi_ppepp.sql` telah disinkronkan dan memuat seluruh data terbaru (10 fakultas, 27 prodi, akun demo `pengguna@unika.ac.id`, kolom `password_plain`, dan riwayat dokumen).
 
+11. **Fitur Tanggal Dokumen, Tenggat Waktu (Deadline) Unggah, & Izin Akses Tahun Lampau (22 Oktober 2026)**:
+    - **Kolom `ppepp_documents.tanggal_dokumen` (DATE NULL)**:
+      - Menampung tanggal resmi pengesahan/pembuatan dokumen mutu.
+      - Menjadi dasar perhitungan otomatis Tahun Akademik (1 September - 31 Agustus).
+      - Telah disinkronkan otomatis dari `DATE(created_at)` untuk seluruh dokumen eksisting.
+    - **Tabel `academic_year_deadlines`**:
+      - Menampung daftar Tahun Akademik, penanda tahun aktif (`is_active`), dan batas akhir waktu unggah (`deadline_upload`).
+      - Dikelola langsung oleh LPM pada menu *Akses & Tenggat Upload*.
+    - **Tabel `upload_access_requests`**:
+      - Menampung pengajuan izin buka akses upload dokumen tahun lampau / susulan dari Program Studi dan Fakultas kepada LPM.
+      - Menyimpan status permohonan (`pending`, `approved`, `rejected`), masa berlaku dispensasi (`akses_berlaku_sampai`), dan catatan evaluasi LPM.
+    - Skrip migrasi terpasang: `database/migration_fitur_akademik_dan_gpm.php`.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
-Cukup impor satu berkas master terpusat:
+Cukup jalankan skrip migrasi PHP:
+```bash
+php database/migration_fitur_akademik_dan_gpm.php
+```
+atau impor berkas master terpusat:
 ```bash
 mysql -u root spmi_ppepp < database/spmi_ppepp.sql
 ```
 atau melalui phpMyAdmin:
 1. Buat/pilih database `spmi_ppepp`.
 2. Klik tab **Import**, pilih berkas `database/spmi_ppepp.sql`, lalu klik **Import**.
+
 
 

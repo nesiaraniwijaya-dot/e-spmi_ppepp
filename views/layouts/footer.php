@@ -654,6 +654,23 @@
         }
     };
 
+    window.calculateTahunAkademikFromDate = function(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            if (!isNaN(year) && !isNaN(month)) {
+                return (month >= 9) ? (year + '/' + (year + 1)) : ((year - 1) + '/' + year);
+            }
+        }
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const year = d.getFullYear();
+        const month = d.getMonth() + 1;
+        return (month >= 9) ? (year + '/' + (year + 1)) : ((year - 1) + '/' + year);
+    };
+
     (function() {
         function isTahunAkademikInput(el) {
             if (!el || el.tagName !== 'INPUT') return false;

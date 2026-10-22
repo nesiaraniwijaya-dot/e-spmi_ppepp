@@ -1545,4 +1545,364 @@ class SuperAdminController extends Controller {
         Auth::setFlash('success', 'Konten beranda publik berhasil dikembalikan ke standar awal.');
         redirect('admin/landing-settings');
     }
+
+    /**
+     * Monitoring Antrean Dokumen yang Perlu Ditelaah Seluruh GPM (Tingkat Fakultas)
+     */
+    public function monitoringGpm(): void {
+        $fakultasFilter = !empty($_GET['fakultas_id']) ? (int)$_GET['fakultas_id'] : null;
+        $prodiFilter    = !empty($_GET['prodi_id']) ? (int)$_GET['prodi_id'] : null;
+        $siklusFilter   = trim($_GET['siklus'] ?? '');
+        $tahunFilter    = trim($_GET['tahun_akademik'] ?? '');
+        $statusFilter   = trim($_GET['status_review'] ?? '');
+        $agingFilter    = trim($_GET['aging'] ?? '');
+        $search         = trim($_GET['search'] ?? '');
+
+        // 1. Ambil seluruh data fakultas beserta akun penelaah GPM masing-masing
+        $allFakultas = $this->db->query("SELECT * FROM fakultas ORDER BY id ASC")->fetchAll() ?: [];
+        $gpmUsers = $this->db->query("SELECT id, name, email, phone, fakultas_id FROM users WHERE role = 'gpm' AND is_active = 1")->fetchAll() ?: [];
+        
+        $gpmByFakultas = [];
+        foreach ($gpmUsers as $gu) {
+            $fId = (int)($gu['fakultas_id'] ?? 0);
+            if ($fId > 0) {
+                $gpmByFakultas[$fId][] = $gu;
+            }
+        }
+
+        // 2. Base Query: Seluruh dokumen yang sedang menunggu telaah GPM
+        $sql = "
+            SELECT d.*, 
+                   b.nama_bidang, b.kode_bidang,
+                   sb.nama_sub_bidang, sb.kode_sub_bidang,
+                   p.nama_prodi, p.kode_prodi, p.jenjang,
+                   COALESCE(d.fakultas_id, p.fakultas_id) as calculated_fakultas_id,
+                   f.nama_fakultas, f.kode_fakultas,
+                   u.name as uploader_name, u.email as uploader_email,
+                   DATEDIFF(NOW(), COALESCE(d.updated_at, d.created_at)) as aging_days
+            FROM ppepp_documents d
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN fakultas f ON (d.fakultas_id = f.id OR p.fakultas_id = f.id)
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
+            LEFT JOIN users u ON d.user_id = u.id
+            WHERE d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview')
+              AND d.deleted_at IS NULL
+              AND d.status_review != 'draft'
+        ";
+        $params = [];
+
+        if ($fakultasFilter) {
+            $sql .= " AND (d.fakultas_id = ? OR p.fakultas_id = ?)";
+            $params[] = $fakultasFilter;
+            $params[] = $fakultasFilter;
+        }
+
+        if ($prodiFilter) {
+            $sql .= " AND d.prodi_id = ?";
+            $params[] = $prodiFilter;
+        }
+
+        if ($siklusFilter) {
+            $sql .= " AND d.siklus = ?";
+            $params[] = $siklusFilter;
+        }
+
+        if ($tahunFilter) {
+            $sql .= " AND d.tahun_akademik = ?";
+            $params[] = $tahunFilter;
+        }
+
+        if ($statusFilter) {
+            $sql .= " AND d.status_review = ?";
+            $params[] = $statusFilter;
+        }
+
+        if ($search) {
+            $sql .= " AND (d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR p.nama_prodi LIKE ? OR f.nama_fakultas LIKE ?)";
+            $sParam = "%{$search}%";
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+        }
+
+        if ($agingFilter === 'urgent') {
+            $sql .= " AND DATEDIFF(NOW(), COALESCE(d.updated_at, d.created_at)) >= 7";
+        } elseif ($agingFilter === 'warning') {
+            $sql .= " AND DATEDIFF(NOW(), COALESCE(d.updated_at, d.created_at)) BETWEEN 3 AND 6";
+        } elseif ($agingFilter === 'normal') {
+            $sql .= " AND DATEDIFF(NOW(), COALESCE(d.updated_at, d.created_at)) < 3";
+        }
+
+        // Urutkan dokumen yang menunggu paling lama terlebih dahulu (Aging Descending)
+        $sql .= " ORDER BY aging_days DESC, d.updated_at ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $pendingDocuments = $stmt->fetchAll() ?: [];
+
+        // Attach multi-files untuk keperluan pratinjau instan
+        if (!empty($pendingDocuments)) {
+            $docIds = array_column($pendingDocuments, 'id');
+            $inClause = implode(',', array_fill(0, count($docIds), '?'));
+            $stmtFiles = $this->db->prepare("SELECT * FROM ppepp_document_files WHERE document_id IN ({$inClause}) ORDER BY sort_order ASC, id ASC");
+            $stmtFiles->execute($docIds);
+            $filesGrouped = [];
+            foreach ($stmtFiles->fetchAll() as $f) {
+                $filesGrouped[$f['document_id']][] = $f;
+            }
+            foreach ($pendingDocuments as &$pDoc) {
+                $pDoc['files'] = $filesGrouped[$pDoc['id']] ?? [];
+            }
+            unset($pDoc);
+        }
+
+        // 3. Statistik Global Antrean GPM
+        $totalAntrean = (int)$this->db->query("
+            SELECT COUNT(*) FROM ppepp_documents 
+            WHERE status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') 
+              AND deleted_at IS NULL AND status_review != 'draft'
+        ")->fetchColumn();
+
+        $totalBaru = (int)$this->db->query("
+            SELECT COUNT(*) FROM ppepp_documents 
+            WHERE status_review IN ('menunggu_review_gpm', 'belum_direview') 
+              AND deleted_at IS NULL AND status_review != 'draft'
+        ")->fetchColumn();
+
+        $totalPerbaikan = (int)$this->db->query("
+            SELECT COUNT(*) FROM ppepp_documents 
+            WHERE status_review = 'sudah_diperbaiki' 
+              AND deleted_at IS NULL AND status_review != 'draft'
+        ")->fetchColumn();
+
+        $totalUrgentAging = (int)$this->db->query("
+            SELECT COUNT(*) FROM ppepp_documents 
+            WHERE status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') 
+              AND DATEDIFF(NOW(), COALESCE(updated_at, created_at)) >= 7
+              AND deleted_at IS NULL AND status_review != 'draft'
+        ")->fetchColumn();
+
+        // 4. Rekapitulasi per Fakultas
+        $fakultasQueueSummary = [];
+        $stmtFakSummary = $this->db->query("
+            SELECT 
+                COALESCE(d.fakultas_id, p.fakultas_id) as f_id,
+                COUNT(d.id) as total_antrean,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_gpm', 'belum_direview') THEN 1 ELSE 0 END) as count_baru,
+                SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' THEN 1 ELSE 0 END) as count_perbaikan,
+                SUM(CASE WHEN DATEDIFF(NOW(), COALESCE(d.updated_at, d.created_at)) >= 7 THEN 1 ELSE 0 END) as count_urgent,
+                MAX(DATEDIFF(NOW(), COALESCE(d.updated_at, d.created_at))) as max_aging_days
+            FROM ppepp_documents d
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            WHERE d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview')
+              AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            GROUP BY f_id
+        ");
+        foreach ($stmtFakSummary->fetchAll() as $row) {
+            if (!empty($row['f_id'])) {
+                $fakultasQueueSummary[(int)$row['f_id']] = $row;
+            }
+        }
+
+        // Ambil daftar prodi untuk filter
+        $prodisList = $this->db->query("SELECT id, nama_prodi, fakultas_id, jenjang FROM prodis ORDER BY jenjang ASC, nama_prodi ASC")->fetchAll() ?: [];
+
+        $this->render('super_admin/monitoring_gpm', [
+            'pageTitle' => 'Monitoring Antrean Telaah GPM',
+            'allFakultas' => $allFakultas,
+            'prodisList' => $prodisList,
+            'gpmByFakultas' => $gpmByFakultas,
+            'pendingDocuments' => $pendingDocuments,
+            'totalAntrean' => $totalAntrean,
+            'totalBaru' => $totalBaru,
+            'totalPerbaikan' => $totalPerbaikan,
+            'totalUrgentAging' => $totalUrgentAging,
+            'fakultasQueueSummary' => $fakultasQueueSummary,
+            'filters' => [
+                'fakultas_id' => $fakultasFilter,
+                'prodi_id' => $prodiFilter,
+                'siklus' => $siklusFilter,
+                'tahun_akademik' => $tahunFilter,
+                'status_review' => $statusFilter,
+                'aging' => $agingFilter,
+                'search' => $search
+            ]
+        ]);
+    }
+
+    /**
+     * Manajemen Akses Unggah Dokumen & Tenggat Waktu (LPM)
+     */
+    public function uploadAccess(): void {
+        // 1. Data Seluruh Tahun Akademik & Deadline
+        $deadlines = $this->db->query("
+            SELECT * FROM academic_year_deadlines 
+            ORDER BY tahun_akademik DESC
+        ")->fetchAll() ?: [];
+
+        $activeAy = get_active_tahun_akademik($this->db);
+
+        // 2. Data Seluruh Permohonan Izin Buka Akses dari Prodi & Fakultas
+        $requests = $this->db->query("
+            SELECT r.*,
+                   u.name as pemohon_name, u.email as pemohon_email, u.role as pemohon_role,
+                   p.nama_prodi, p.kode_prodi, p.jenjang,
+                   f.nama_fakultas, f.kode_fakultas,
+                   admin_u.name as processor_name
+            FROM upload_access_requests r
+            LEFT JOIN users u ON r.user_id = u.id
+            LEFT JOIN prodis p ON r.prodi_id = p.id
+            LEFT JOIN fakultas f ON (r.fakultas_id = f.id OR p.fakultas_id = f.id)
+            LEFT JOIN users admin_u ON r.processed_by = admin_u.id
+            ORDER BY r.created_at DESC
+        ")->fetchAll() ?: [];
+
+        $pendingCount = count(array_filter($requests, fn($r) => $r['status'] === 'pending'));
+        $approvedCount = count(array_filter($requests, fn($r) => $r['status'] === 'approved'));
+
+        $this->render('super_admin/upload_access', [
+            'pageTitle' => 'Manajemen Akses & Tenggat Waktu Unggah',
+            'deadlines' => $deadlines,
+            'activeAy' => $activeAy,
+            'requests' => $requests,
+            'pendingCount' => $pendingCount,
+            'approvedCount' => $approvedCount
+        ]);
+    }
+
+    /**
+     * Simpan / Perbarui Tenggat Waktu & Tahun Akademik Aktif (LPM)
+     */
+    public function saveAcademicDeadline(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('admin/upload-access');
+            return;
+        }
+
+        $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+        $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+        $isActive = !empty($_POST['is_active']) ? 1 : 0;
+        $deadlineUpload = !empty($_POST['deadline_upload']) ? trim($_POST['deadline_upload']) : null;
+        $keterangan = trim($_POST['keterangan'] ?? '');
+
+        if (empty($tahunAkademik)) {
+            Auth::setFlash('danger', 'Tahun akademik wajib diisi.');
+            redirect('admin/upload-access');
+            return;
+        }
+
+        try {
+            $this->db->beginTransaction();
+
+            if ($isActive === 1) {
+                // Set seluruh tahun akademik lain menjadi non-aktif
+                $this->db->exec("UPDATE academic_year_deadlines SET is_active = 0");
+            }
+
+            if ($id) {
+                $stmt = $this->db->prepare("
+                    UPDATE academic_year_deadlines 
+                    SET tahun_akademik = ?, is_active = ?, deadline_upload = ?, keterangan = ?, updated_at = NOW()
+                    WHERE id = ?
+                ");
+                $stmt->execute([$tahunAkademik, $isActive, $deadlineUpload, $keterangan, $id]);
+                $actionType = 'UPDATE';
+            } else {
+                $stmt = $this->db->prepare("
+                    INSERT INTO academic_year_deadlines (tahun_akademik, is_active, deadline_upload, keterangan, created_at)
+                    VALUES (?, ?, ?, ?, NOW())
+                    ON DUPLICATE KEY UPDATE is_active = VALUES(is_active), deadline_upload = VALUES(deadline_upload), keterangan = VALUES(keterangan), updated_at = NOW()
+                ");
+                $stmt->execute([$tahunAkademik, $isActive, $deadlineUpload, $keterangan]);
+                $id = (int)$this->db->lastInsertId();
+                $actionType = 'CREATE';
+            }
+
+            $this->db->commit();
+
+            AuditLogger::log($actionType, 'Pengaturan Tenggat Akademik', (string)$id, "TA {$tahunAkademik} (Aktif: {$isActive}, Deadline: {$deadlineUpload})");
+            Auth::setFlash('success', "Pengaturan tenggat Tahun Akademik {$tahunAkademik} berhasil disimpan.");
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            Auth::setFlash('danger', 'Gagal menyimpan pengaturan tahun akademik: ' . $e->getMessage());
+        }
+
+        redirect('admin/upload-access');
+    }
+
+    /**
+     * Proses Persetujuan / Penolakan Permohonan Akses Upload dari Unit (LPM)
+     */
+    public function processAccessRequest(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('admin/upload-access');
+            return;
+        }
+
+        $requestId = (int)($_POST['request_id'] ?? 0);
+        $action = trim($_POST['action'] ?? ''); // 'approve' or 'reject'
+        $catatanLpm = trim($_POST['catatan_lpm'] ?? '');
+        $durasiHari = (int)($_POST['durasi_hari'] ?? 7);
+        $customExpiredAt = !empty($_POST['custom_expired_at']) ? trim($_POST['custom_expired_at']) : null;
+
+        if (!$requestId || !in_array($action, ['approve', 'reject'])) {
+            Auth::setFlash('danger', 'Permintaan proses akses tidak valid.');
+            redirect('admin/upload-access');
+            return;
+        }
+
+        try {
+            $stmtOld = $this->db->prepare("SELECT * FROM upload_access_requests WHERE id = ?");
+            $stmtOld->execute([$requestId]);
+            $req = $stmtOld->fetch();
+
+            if (!$req) {
+                Auth::setFlash('danger', 'Permohonan akses tidak ditemukan.');
+                redirect('admin/upload-access');
+                return;
+            }
+
+            if ($action === 'approve') {
+                $status = 'approved';
+                if (!empty($customExpiredAt)) {
+                    $aksesBerlakuSampai = $customExpiredAt;
+                } else {
+                    $aksesBerlakuSampai = date('Y-m-d 23:59:59', strtotime("+{$durasiHari} days"));
+                }
+                $pesanSukses = "Permohonan akses upload TA {$req['tahun_akademik']} berhasil DISETUJUI sampai dengan " . date('d M Y, H:i', strtotime($aksesBerlakuSampai)) . " WIB.";
+            } else {
+                $status = 'rejected';
+                $aksesBerlakuSampai = null;
+                $pesanSukses = "Permohonan akses upload TA {$req['tahun_akademik']} telah DITOLAK.";
+            }
+
+            $stmtUpd = $this->db->prepare("
+                UPDATE upload_access_requests 
+                SET status = ?, akses_berlaku_sampai = ?, catatan_lpm = ?, processed_by = ?, processed_at = NOW(), updated_at = NOW()
+                WHERE id = ?
+            ");
+            $stmtUpd->execute([
+                $status,
+                $aksesBerlakuSampai,
+                $catatanLpm,
+                Auth::id(),
+                $requestId
+            ]);
+
+            AuditLogger::log('UPDATE', 'Persetujuan Akses Upload', (string)$requestId, "Permohonan ID #{$requestId} diproses: {$status}", $req, [
+                'status' => $status,
+                'akses_berlaku_sampai' => $aksesBerlakuSampai,
+                'catatan_lpm' => $catatanLpm
+            ]);
+
+            Auth::setFlash('success', $pesanSukses);
+        } catch (\Throwable $e) {
+            Auth::setFlash('danger', 'Gagal memproses permohonan akses: ' . $e->getMessage());
+        }
+
+        redirect('admin/upload-access');
+    }
 }
+

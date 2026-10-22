@@ -156,6 +156,23 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                 input.dispatchEvent(new Event('change', { bubbles: true }));
             }
         };
+
+        window.calculateTahunAkademikFromDate = function(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                if (!isNaN(year) && !isNaN(month)) {
+                    return (month >= 9) ? (year + '/' + (year + 1)) : ((year - 1) + '/' + year);
+                }
+            }
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1;
+            return (month >= 9) ? (year + '/' + (year + 1)) : ((year - 1) + '/' + year);
+        };
         (function() {
             var isDesktop = window.innerWidth > 991.98;
             var storedCollapsed = localStorage.getItem('admin_sidebar_collapsed');
