@@ -1502,7 +1502,7 @@ function createDocCardTemplate(idx, presetData = null) {
                     </div>
                 </div>
 
-                <!-- Bagian 2: Folder Berkas Lampiran (File Dokumen, Foto & Google Drive) -->
+                <!-- Bagian 2: Folder Berkas Lampiran (File Dokumen & Google Drive) -->
                 <div class="p-3.5 p-md-4 rounded-4 border shadow-2xs" style="background: #F8FAFC !important; border-color: #E2E8F0 !important;">
                     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 pb-2.5 mb-3.5 border-bottom">
                         <div>
@@ -1510,10 +1510,10 @@ function createDocCardTemplate(idx, presetData = null) {
                                 <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary p-2" style="width: 28px; height: 28px; font-size: 0.75rem;">
                                     <i class="fas fa-folder-tree"></i>
                                 </span>
-                                <span>Bagian 2: Folder Berkas, Foto &amp; Tautan Lampiran</span>
+                                <span>Bagian 2: Folder Berkas &amp; Tautan Lampiran</span>
                             </h6>
                             <div class="text-muted small mt-1" style="font-size: 0.74rem;">
-                                Kelola folder untuk bidang ini. Anda dapat menambahkan lebih dari 1 folder, dan di setiap folder bisa diunggah file dokumen, foto, maupun tautan Google Drive.
+                                Kelola folder untuk bidang ini. Anda dapat menambahkan lebih dari 1 folder, dan di setiap folder bisa diunggah file dokumen maupun tautan Google Drive.
                             </div>
                         </div>
                         <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs flex-shrink-0" onclick="addFolderToCard(${idx})">
@@ -1798,7 +1798,7 @@ function renderCardFolders(idx) {
             itemsHtml = `
                 <div class="p-3 text-center rounded-3 border border-dashed bg-light-subtle text-muted small">
                     <i class="fas fa-folder-open text-secondary mb-1 fa-lg d-block opacity-50"></i>
-                    <span>Folder ini masih kosong. Klik tombol <strong>+ Dokumen</strong>, <strong>+ Foto</strong>, atau <strong>+ Link GDrive</strong> di atas untuk menambahkan berkas.</span>
+                    <span>Folder ini masih kosong. Klik tombol <strong>+ Dokumen</strong> atau <strong>+ Link GDrive</strong> di atas untuk menambahkan berkas.</span>
                 </div>
             `;
         } else {
@@ -1952,11 +1952,6 @@ function renderCardFolders(idx) {
                                 onclick="triggerAddFolderFiles(${idx}, '${folder.id}', 'file')" title="Unggah berkas dokumen (PDF, Word, Excel) ke folder ini">
                             <i class="fas fa-file-circle-plus text-primary"></i>
                             <span style="font-size: 0.75rem;">+ Dokumen</span>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" 
-                                onclick="triggerAddFolderFiles(${idx}, '${folder.id}', 'photo')" title="Unggah foto/gambar (JPG, PNG) ke folder ini">
-                            <i class="fas fa-image text-info"></i>
-                            <span style="font-size: 0.75rem;">+ Foto</span>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" 
                                 onclick="addDriveLinkToFolder(${idx}, '${folder.id}')" title="Tambahkan tautan Google Drive ke folder ini">

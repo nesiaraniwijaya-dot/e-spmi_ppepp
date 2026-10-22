@@ -1828,31 +1828,101 @@ class SuperAdminController extends Controller {
     }
 
     /**
+     * Memastikan tabel academic_year_deadlines & upload_access_requests tersedia di database
+     */
+    private function ensureUploadAccessTables(): void {
+        try {
+            $this->db->exec("
+                CREATE TABLE IF NOT EXISTS `academic_year_deadlines` (
+                    `id` int(11) NOT NULL AUTO_INCREMENT,
+                    `tahun_akademik` varchar(20) NOT NULL UNIQUE,
+                    `is_active` tinyint(1) NOT NULL DEFAULT 0,
+                    `deadline_upload` datetime DEFAULT NULL,
+                    `keterangan` varchar(255) DEFAULT NULL,
+                    `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+
+            // Seed tahun akademik default jika tabel baru/masih kosong
+            $count = (int)$this->db->query("SELECT COUNT(*) FROM `academic_year_deadlines`")->fetchColumn();
+            if ($count === 0) {
+                $now = date('Y-m-d H:i:s');
+                $defaultYears = [
+                    ['2026/2027', 1, null, 'Tahun Akademik Berjalan (Aktif)'],
+                    ['2025/2026', 0, '2026-08-31 23:59:59', 'Tahun Lampau (Tutup)'],
+                    ['2024/2025', 0, '2025-08-31 23:59:59', 'Tahun Lampau (Tutup)'],
+                    ['2023/2024', 0, '2024-08-31 23:59:59', 'Tahun Lampau (Tutup)'],
+                ];
+                $stmtIns = $this->db->prepare("INSERT IGNORE INTO `academic_year_deadlines` (`tahun_akademik`, `is_active`, `deadline_upload`, `keterangan`, `created_at`) VALUES (?, ?, ?, ?, ?)");
+                foreach ($defaultYears as $row) {
+                    $stmtIns->execute([$row[0], $row[1], $row[2], $row[3], $now]);
+                }
+            }
+
+            $this->db->exec("
+                CREATE TABLE IF NOT EXISTS `upload_access_requests` (
+                    `id` int(11) NOT NULL AUTO_INCREMENT,
+                    `user_id` int(11) NOT NULL,
+                    `level` enum('prodi','fakultas') NOT NULL,
+                    `prodi_id` int(11) DEFAULT NULL,
+                    `fakultas_id` int(11) DEFAULT NULL,
+                    `tahun_akademik` varchar(20) NOT NULL,
+                    `alasan` text NOT NULL,
+                    `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+                    `akses_berlaku_sampai` datetime DEFAULT NULL,
+                    `catatan_admin` text DEFAULT NULL,
+                    `processed_by` int(11) DEFAULT NULL,
+                    `processed_at` datetime DEFAULT NULL,
+                    `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+        } catch (\Throwable $e) {
+            error_log('[ensureUploadAccessTables] Error: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Manajemen Akses Unggah Dokumen & Tenggat Waktu (LPM)
      */
     public function uploadAccess(): void {
+        $this->ensureUploadAccessTables();
+
         // 1. Data Seluruh Tahun Akademik & Deadline
-        $deadlines = $this->db->query("
-            SELECT * FROM academic_year_deadlines 
-            ORDER BY tahun_akademik DESC
-        ")->fetchAll() ?: [];
+        $deadlines = [];
+        try {
+            $deadlines = $this->db->query("
+                SELECT * FROM academic_year_deadlines 
+                ORDER BY tahun_akademik DESC
+            ")->fetchAll() ?: [];
+        } catch (\Throwable $e) {
+            $deadlines = [];
+        }
 
         $activeAy = get_active_tahun_akademik($this->db);
 
         // 2. Data Seluruh Permohonan Izin Buka Akses dari Prodi & Fakultas
-        $requests = $this->db->query("
-            SELECT r.*,
-                   u.name as pemohon_name, u.email as pemohon_email, u.role as pemohon_role,
-                   p.nama_prodi, p.kode_prodi, p.jenjang,
-                   f.nama_fakultas, f.kode_fakultas,
-                   admin_u.name as processor_name
-            FROM upload_access_requests r
-            LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN prodis p ON r.prodi_id = p.id
-            LEFT JOIN fakultas f ON (r.fakultas_id = f.id OR p.fakultas_id = f.id)
-            LEFT JOIN users admin_u ON r.processed_by = admin_u.id
-            ORDER BY r.created_at DESC
-        ")->fetchAll() ?: [];
+        $requests = [];
+        try {
+            $requests = $this->db->query("
+                SELECT r.*,
+                       u.name as pemohon_name, u.email as pemohon_email, u.role as pemohon_role,
+                       p.nama_prodi, p.kode_prodi, p.jenjang,
+                       f.nama_fakultas, f.kode_fakultas,
+                       admin_u.name as processor_name
+                FROM upload_access_requests r
+                LEFT JOIN users u ON r.user_id = u.id
+                LEFT JOIN prodis p ON r.prodi_id = p.id
+                LEFT JOIN fakultas f ON (r.fakultas_id = f.id OR p.fakultas_id = f.id)
+                LEFT JOIN users admin_u ON r.processed_by = admin_u.id
+                ORDER BY r.created_at DESC
+            ")->fetchAll() ?: [];
+        } catch (\Throwable $e) {
+            $requests = [];
+        }
 
         $pendingCount = count(array_filter($requests, fn($r) => $r['status'] === 'pending'));
         $approvedCount = count(array_filter($requests, fn($r) => $r['status'] === 'approved'));
@@ -1875,6 +1945,8 @@ class SuperAdminController extends Controller {
             redirect('admin/upload-access#tab-deadlines');
             return;
         }
+
+        $this->ensureUploadAccessTables();
 
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
@@ -1954,6 +2026,8 @@ class SuperAdminController extends Controller {
             redirect('admin/upload-access#tab-deadlines');
             return;
         }
+
+        $this->ensureUploadAccessTables();
 
         $id = (int)($_POST['id'] ?? 0);
         $isActive = !empty($_POST['is_active']) ? 1 : 0;
@@ -2042,6 +2116,8 @@ class SuperAdminController extends Controller {
             redirect('admin/upload-access');
             return;
         }
+
+        $this->ensureUploadAccessTables();
 
         $requestId = (int)($_POST['request_id'] ?? 0);
         $action = trim($_POST['action'] ?? ''); // 'approve' or 'reject'
