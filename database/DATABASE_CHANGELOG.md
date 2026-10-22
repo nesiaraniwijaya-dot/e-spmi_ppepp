@@ -111,12 +111,22 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
       - Menyimpan status permohonan (`pending`, `approved`, `rejected`), masa berlaku dispensasi (`akses_berlaku_sampai`), dan catatan evaluasi LPM.
     - Skrip migrasi terpasang: `database/migration_fitur_akademik_dan_gpm.php`.
 
+12. **Dukungan Multi-Folder & Pemantauan Lalu Lintas Dokumen LPM (22 Oktober 2026)**:
+    - **Tabel `tahun_akademik_settings`**:
+      - Menampung master pengaturan periode tahun akademik (`tanggal_mulai`, `tanggal_selesai`, `is_open`, `catatan`).
+    - **Kolom `folder_name` pada `ppepp_document_files` (VARCHAR(255) DEFAULT 'Utama')**:
+      - Mengizinkan pengelompokan berkas dokumen ke dalam folder-folder terstruktur saat diunggah.
+    - **Kolom `file_category` pada `ppepp_document_files` (ENUM('file', 'link', 'photo') DEFAULT 'file')**:
+      - Menandai tipe berkas (file fisik dokumen, tautan Google Drive, atau foto pendukung).
+    - Skrip migrasi terpasang: `database/migration_lpm_traffic_and_academic_year.php`.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
 Cukup jalankan skrip migrasi PHP:
 ```bash
 php database/migration_fitur_akademik_dan_gpm.php
+php database/migration_lpm_traffic_and_academic_year.php
 ```
 atau impor berkas master terpusat:
 ```bash
