@@ -331,7 +331,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header bg-navy text-white px-4 py-3 border-0">
-                <h6 class="modal-title fw-bold mb-0" id="ayModalTitle">
+                <h6 class="modal-title text-white fw-bold mb-0" id="ayModalTitle" style="color: #ffffff !important;">
                     <i class="fas fa-calendar-plus me-1 text-info"></i> Atur Tahun Akademik &amp; Tenggat Waktu
                 </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -380,7 +380,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header bg-success text-white px-4 py-3 border-0">
-                <h6 class="modal-title fw-bold mb-0">
+                <h6 class="modal-title text-white fw-bold mb-0" style="color: #ffffff !important;">
                     <i class="fas fa-unlock me-1"></i> Persetujuan Akses Unggah Dokumen
                 </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -433,7 +433,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header bg-danger text-white px-4 py-3 border-0">
-                <h6 class="modal-title fw-bold mb-0">
+                <h6 class="modal-title text-white fw-bold mb-0" style="color: #ffffff !important;">
                     <i class="fas fa-ban me-1"></i> Tolak Permohonan Akses Unggah
                 </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

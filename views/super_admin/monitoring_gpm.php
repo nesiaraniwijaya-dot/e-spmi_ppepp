@@ -822,7 +822,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <i class="fas fa-bell"></i>
                     </div>
                     <div>
-                        <h6 class="modal-title fw-bold mb-0">Kirim Pengingat Telaah GPM</h6>
+                        <h6 class="modal-title text-white fw-bold mb-0" style="color: #ffffff !important;">Kirim Pengingat Telaah GPM</h6>
                         <div class="small text-white-50" style="font-size: 0.72rem;">Pesan resmi LPM untuk mempercepat proses telaah mutu</div>
                     </div>
                 </div>

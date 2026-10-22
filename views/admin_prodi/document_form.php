@@ -2642,7 +2642,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <form action="<?= base_url('prodi/request-upload-access') ?>" method="POST" id="formRequestUploadAccess">
                 <div class="modal-header bg-dark-blue text-white py-3 px-4 border-0">
-                    <h6 class="modal-title fw-bold d-flex align-items-center gap-2" id="modalRequestUploadAccessLabel">
+                    <h6 class="modal-title text-white fw-bold d-flex align-items-center gap-2" id="modalRequestUploadAccessLabel" style="color: #ffffff !important;">
                         <i class="fas fa-key text-warning"></i> Permohonan Izin Buka Akses Unggah (LPM)
                     </h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
