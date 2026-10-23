@@ -8,6 +8,9 @@
 $isEdit = !empty($doc);
 $defaultTahun = date('Y') . '/' . (date('Y') + 1);
 $currentTahun = $isEdit ? ($doc['tahun_akademik'] ?? $defaultTahun) : $defaultTahun;
+$currentTanggal = !empty($doc['tanggal_dokumen']) 
+    ? $doc['tanggal_dokumen'] 
+    : (!empty($doc['created_at']) ? date('Y-m-d', strtotime($doc['created_at'])) : date('Y-m-d'));
 $currentSiklus = $isEdit ? ($doc['siklus'] ?? '') : '';
 $savedLinks = $isEdit ? parse_external_links($doc['external_link'] ?? '') : [];
 $currentJenis = $isEdit ? ($doc['jenis_upload'] ?? 'file') : 'file';
@@ -178,25 +181,43 @@ $siklusDefinitions = [
                                    placeholder="Contoh: Standar Penilaian Pembelajaran Mahasiswa" required>
                         </div>
 
-                        <!-- Nomor Dokumen & Tahun Akademik -->
+                        <!-- Tanggal Dokumen, Tahun Akademik & Nomor Dokumen -->
                         <div class="row g-3 mb-3">
-                            <div class="col-md-7">
+                            <div class="col-md-4">
+                                <label for="tanggal_dokumen" class="form-label fw-semibold small text-secondary">
+                                    Tanggal Dokumen / SK <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control" id="tanggal_dokumen" name="tanggal_dokumen" 
+                                       value="<?= htmlspecialchars($currentTanggal) ?>" required
+                                       onchange="handleSingleDateChange(this.value)">
+                                <div class="form-text small text-muted" style="font-size: 0.72rem;">Tanggal pengesahan / terbit</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="tahun_akademik" class="form-label fw-semibold small text-secondary">
+                                    Tahun Akademik <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control input-tahun-akademik bg-light" id="tahun_akademik" name="tahun_akademik" 
+                                           value="<?= htmlspecialchars($currentTahun) ?>" 
+                                           placeholder="Contoh: 2026/2027" maxlength="9" required readonly>
+                                    <span class="input-group-text bg-white border-start-0 text-muted" title="Otomatis dihitung dari Tanggal Dokumen (1 Sep – 31 Ags)">
+                                        <i class="fas fa-magic text-primary" style="font-size: 0.85rem;"></i>
+                                    </span>
+                                </div>
+                                <div class="form-text small text-muted" style="font-size: 0.72rem;">
+                                    Otomatis: 1 Sep – 31 Ags
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <label for="nomor_dokumen" class="form-label fw-semibold small text-secondary">Nomor Dokumen / SK (Opsional)</label>
                                 <input type="text" class="form-control" id="nomor_dokumen" name="nomor_dokumen" 
                                        value="<?= htmlspecialchars($doc['nomor_dokumen'] ?? '') ?>" 
                                        placeholder="Contoh: SK-PRODI/2026/01">
                             </div>
-                            <div class="col-md-5">
-                                <label for="tahun_akademik" class="form-label fw-semibold small text-secondary">
-                                    Tahun Akademik <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control input-tahun-akademik" id="tahun_akademik" name="tahun_akademik" 
-                                       value="<?= htmlspecialchars($currentTahun) ?>" 
-                                       placeholder="Contoh: 2026/2027" maxlength="9" required
-                                       oninput="autoPairTahunAkademik(this, event)" onblur="autoPairTahunAkademik(this, event)">
-                                <div class="form-text small" style="font-size: 0.72rem;">Format: <code>YYYY/YYYY</code> (Ketik 4 angka tahun awal, otomatis dipasangkan)</div>
-                            </div>
                         </div>
+
+                        <!-- Banner Status Akses Upload & Tenggat Waktu (Single Edit) -->
+                        <div id="singleAccessAlert" class="mb-3 d-none"></div>
 
                         <!-- Siklus PPEPP (5 Interactive Cards) -->
                         <div class="mb-4">
@@ -607,10 +628,10 @@ $siklusDefinitions = [
                             <!-- Action Submit Buttons -->
                             <div class="mt-4 pt-3.5 border-top">
                                 <div class="d-flex flex-column flex-sm-row justify-content-end align-items-center gap-2.5">
-                                    <button type="submit" name="action_submit" value="draft" class="btn btn-outline-secondary px-4 py-2.5 fw-semibold rounded-pill w-100 w-sm-auto order-2 order-sm-1">
+                                    <button type="submit" name="action_submit" value="draft" class="btn btn-outline-secondary px-4 py-2.5 fw-semibold rounded-pill w-100 w-sm-auto order-2 order-sm-1" id="btnSubmitDraftSingle">
                                         <i class="fas fa-floppy-disk me-1.5"></i> Simpan Sebagai Draf
                                     </button>
-                                    <button type="submit" name="action_submit" value="publish" class="btn btn-warning px-4 py-2.5 fw-bold rounded-pill text-dark shadow-sm w-100 w-sm-auto order-1 order-sm-2">
+                                    <button type="submit" name="action_submit" value="publish" class="btn btn-warning px-4 py-2.5 fw-bold rounded-pill text-dark shadow-sm w-100 w-sm-auto order-1 order-sm-2" id="btnSubmitPublishSingle">
                                         <i class="fas fa-paper-plane me-1.5"></i> <?= in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']) ? ('Simpan &amp; Ajukan Ulang ' . (($doc['status_review'] ?? '') === 'revisi_gpm' ? 'ke GPM' : 'ke LPM')) : 'Simpan &amp; Ajukan ke LPM' ?>
                                     </button>
                                 </div>
@@ -1399,7 +1420,15 @@ function createDocCardTemplate(idx, presetData = null) {
 
     const docTitleVal = presetData && presetData.judul_siklus ? presetData.judul_siklus : '';
     const cycleIdVal = presetData && presetData.cycle_id ? presetData.cycle_id : '';
-    const tahunAkadVal = presetData && presetData.tahun_akademik ? presetData.tahun_akademik : defaultTahunVal;
+    const todayStr = '<?= date('Y-m-d') ?>';
+    const docDateVal = presetData && presetData.tanggal_dokumen ? presetData.tanggal_dokumen : todayStr;
+    let tahunAkadVal = presetData && presetData.tahun_akademik ? presetData.tahun_akademik : '';
+    if (!tahunAkadVal && docDateVal) {
+        tahunAkadVal = (typeof window.calculateTahunAkademikFromDate === 'function') ? window.calculateTahunAkademikFromDate(docDateVal) : '';
+    }
+    if (!tahunAkadVal) {
+        tahunAkadVal = defaultTahunVal;
+    }
     const titlePreview = docTitleVal ? docTitleVal : '(Belum ada judul)';
 
     return `
@@ -1470,18 +1499,31 @@ function createDocCardTemplate(idx, presetData = null) {
                         ` : ''}
                     </div>
 
-                    <!-- Nomor Dokumen & Tahun Akademik -->
+                    <!-- Tanggal Dokumen, Tahun Akademik & Nomor Dokumen -->
                     <div class="row g-3 mb-3">
-                        <div class="col-md-7">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small text-secondary">Tanggal Dokumen / SK <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control input-tanggal-dokumen" name="docs[${idx}][tanggal_dokumen]" id="doc_tanggal_${idx}" value="${docDateVal}" required onchange="handleCardDateChange(${idx}, this.value)">
+                            <div class="form-text small" style="font-size: 0.68rem;">Tanggal pengesahan / terbit</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small text-secondary">Tahun Akademik <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control input-tahun-akademik bg-light" name="docs[${idx}][tahun_akademik]" id="doc_ta_${idx}" value="${tahunAkadVal}" placeholder="Contoh: 2026/2027" maxlength="9" required readonly>
+                                <span class="input-group-text bg-white border-start-0 text-muted" title="Otomatis dihitung dari Tanggal Dokumen (1 Sep – 31 Ags)">
+                                    <i class="fas fa-magic text-primary" style="font-size: 0.8rem;"></i>
+                                </span>
+                            </div>
+                            <div class="form-text small text-muted" style="font-size: 0.68rem;">Otomatis: 1 Sep – 31 Ags</div>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold small text-secondary">Nomor Dokumen / SK (Opsional)</label>
                             <input type="text" class="form-control" name="docs[${idx}][nomor_dokumen]" placeholder="Contoh: SK-PRODI/2026/01">
                         </div>
-                        <div class="col-md-5">
-                            <label class="form-label fw-semibold small text-secondary">Tahun Akademik <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control input-tahun-akademik" name="docs[${idx}][tahun_akademik]" value="${tahunAkadVal}" placeholder="Contoh: 2026/2027" maxlength="9" required oninput="autoPairTahunAkademik(this, event)" onblur="autoPairTahunAkademik(this, event)">
-                            <div class="form-text small" style="font-size: 0.68rem;">Format: <code>YYYY/YYYY</code> (Otomatis berpasangan)</div>
-                        </div>
                     </div>
+
+                    <!-- Alert Status Akses / Terkunci per Card -->
+                    <div id="card_access_alert_${idx}" class="d-none mb-3"></div>
 
                     <!-- Siklus PPEPP -->
                     <div class="mb-3.5">
@@ -1996,6 +2038,13 @@ function addNewDocCard(presetData = null) {
             handleBatchCardBidangChange(currentIdx, presetData.bidang_id);
         }
 
+        // Periksa status akses unggah untuk kartu ini
+        const initDateInput = document.getElementById(`doc_tanggal_${currentIdx}`);
+        const initTaInput = document.getElementById(`doc_ta_${currentIdx}`);
+        if (initTaInput && initTaInput.value) {
+            checkCardUploadAccess(currentIdx, initTaInput.value, initDateInput ? initDateInput.value : '');
+        }
+
         cardCounter++;
         updateTotalCardCounter();
     } catch (err) {
@@ -2460,6 +2509,306 @@ function validateAllGdriveInputs(container) {
     }
     return true;
 }
+
+/**
+ * Handle perubahan tanggal pada Single Edit Form
+ */
+function handleSingleDateChange(dateVal) {
+    if (!dateVal) return;
+    const computedTa = (typeof window.calculateTahunAkademikFromDate === 'function') 
+        ? window.calculateTahunAkademikFromDate(dateVal) 
+        : '';
+    const taInput = document.getElementById('tahun_akademik');
+    if (taInput && computedTa) {
+        taInput.value = computedTa;
+        checkSingleUploadAccess(computedTa, dateVal);
+    }
+}
+
+/**
+ * Handle perubahan tanggal pada Kartu Batch Form
+ */
+function handleCardDateChange(cardIdx, dateVal) {
+    if (!dateVal) return;
+    const computedTa = (typeof window.calculateTahunAkademikFromDate === 'function') 
+        ? window.calculateTahunAkademikFromDate(dateVal) 
+        : '';
+    const taInput = document.getElementById(`doc_ta_${cardIdx}`);
+    if (taInput && computedTa) {
+        taInput.value = computedTa;
+        checkCardUploadAccess(cardIdx, computedTa, dateVal);
+    }
+}
+
+/**
+ * Cek status akses upload single form ke API
+ */
+function checkSingleUploadAccess(ta, dateVal) {
+    const alertBox = document.getElementById('singleAccessAlert');
+    const submitBtn = document.getElementById('btnSubmitPublishSingle');
+    if (!alertBox) return;
+
+    fetch(`<?= base_url('api/check-upload-access') ?>?tahun_akademik=${encodeURIComponent(ta)}&date=${encodeURIComponent(dateVal || '')}&level=prodi&prodi_id=<?= (int)($prodi['id'] ?? 0) ?>`)
+        .then(res => res.json())
+        .then(res => {
+            if (res && res.success) {
+                if (res.is_locked) {
+                    alertBox.className = 'alert alert-warning border border-warning rounded-3 p-3 mb-3';
+                    alertBox.innerHTML = `
+                        <div class="d-flex align-items-start gap-2.5">
+                            <i class="fas fa-lock text-danger fa-lg mt-0.5"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-dark mb-0.5" style="font-size:0.88rem;">Akses Unggah Terkunci (${escapeHtml(ta)})</div>
+                                <div class="small text-muted mb-2" style="font-size:0.8rem; line-height:1.4;">${escapeHtml(res.reason || 'Tahun akademik ini tidak aktif atau melewati batas tenggat upload.')}</div>
+                                ${res.has_pending_request ? `
+                                    <span class="badge bg-warning text-dark border border-warning px-2.5 py-1 rounded-pill fw-semibold" style="font-size:0.75rem;">
+                                        <i class="fas fa-hourglass-half me-1"></i> Permohonan Izin Menunggu Tinjauan LPM
+                                    </span>
+                                ` : `
+                                    <button type="button" class="btn btn-sm btn-danger rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="font-size:0.78rem;" onclick="openRequestAccessModal('${escapeHtml(ta)}')">
+                                        <i class="fas fa-key"></i>
+                                        <span>Ajukan Izin Buka Akses ke LPM</span>
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.title = 'Akses upload terkunci. Ajukan izin buka akses ke LPM terlebih dahulu.';
+                    }
+                } else {
+                    if (res.has_waiver) {
+                        alertBox.className = 'alert alert-success border border-success rounded-3 p-2.5 mb-3';
+                        alertBox.innerHTML = `
+                            <div class="d-flex align-items-center gap-2 small text-success fw-bold" style="font-size:0.8rem;">
+                                <i class="fas fa-circle-check"></i>
+                                <span>Akses Terbuka Berdasarkan Izin Dispensasi LPM (Berlaku s/d ${escapeHtml(res.waiver ? res.waiver.akses_berlaku_sampai : 'selesai')}).</span>
+                            </div>
+                        `;
+                    } else {
+                        alertBox.className = 'd-none';
+                        alertBox.innerHTML = '';
+                    }
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.title = '';
+                    }
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Error checking upload access:', err);
+        });
+}
+
+/**
+ * Cek status akses upload per-kartu batch form ke API
+ */
+function checkCardUploadAccess(cardIdx, ta, dateVal) {
+    const alertBox = document.getElementById(`card_access_alert_${cardIdx}`);
+    if (!alertBox) return;
+
+    fetch(`<?= base_url('api/check-upload-access') ?>?tahun_akademik=${encodeURIComponent(ta)}&date=${encodeURIComponent(dateVal || '')}&level=prodi&prodi_id=<?= (int)($prodi['id'] ?? 0) ?>`)
+        .then(res => res.json())
+        .then(res => {
+            if (res && res.success) {
+                if (res.is_locked) {
+                    alertBox.className = 'alert alert-warning border border-warning rounded-3 p-2.5 mb-3';
+                    alertBox.innerHTML = `
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-lock text-danger mt-0.5"></i>
+                            <div class="flex-grow-1 small">
+                                <strong class="text-dark">Akses Terkunci:</strong>
+                                <span class="text-muted ms-1">${escapeHtml(res.reason || 'Tahun akademik ini terkunci.')}</span>
+                                <div class="mt-1.5">
+                                    ${res.has_pending_request ? `
+                                        <span class="badge bg-warning text-dark border border-warning px-2 py-0.5 rounded-pill" style="font-size:0.72rem;">
+                                            <i class="fas fa-hourglass-half me-1"></i> Permohonan izin menunggu LPM
+                                        </span>
+                                    ` : `
+                                        <button type="button" class="btn btn-xs btn-danger rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" style="font-size:0.74rem;" onclick="openRequestAccessModal('${escapeHtml(ta)}')">
+                                            <i class="fas fa-key"></i>
+                                            <span>Minta Izin Buka Akses LPM</span>
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    if (res.has_waiver) {
+                        alertBox.className = 'alert alert-success border border-success rounded-3 p-2 mb-3';
+                        alertBox.innerHTML = `
+                            <div class="d-flex align-items-center gap-1.5 small text-success fw-bold" style="font-size:0.75rem;">
+                                <i class="fas fa-circle-check"></i>
+                                <span>Akses terbuka berdasarkan izin dispensasi LPM.</span>
+                            </div>
+                        `;
+                    } else {
+                        alertBox.className = 'd-none';
+                        alertBox.innerHTML = '';
+                    }
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Error checking card upload access:', err);
+        });
+}
+
+/**
+ * Buka Modal Permohonan Akses ke LPM
+ */
+function openRequestAccessModal(ta) {
+    const modalEl = document.getElementById('modalRequestUploadAccess');
+    if (!modalEl) return;
+    const inpTa = document.getElementById('req_tahun_akademik');
+    const inpAlasan = document.getElementById('req_alasan');
+    const feedback = document.getElementById('reqAccessFeedback');
+    if (inpTa) inpTa.value = ta || '';
+    if (inpAlasan) inpAlasan.value = '';
+    if (feedback) {
+        feedback.className = 'd-none';
+        feedback.innerHTML = '';
+    }
+    const bsModal = new bootstrap.Modal(modalEl);
+    bsModal.show();
+}
+
+/**
+ * Submit Form Permohonan Akses ke LPM via AJAX
+ */
+function submitRequestUploadAccess(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitReqAccess');
+    const inpTa = document.getElementById('req_tahun_akademik');
+    const inpAlasan = document.getElementById('req_alasan');
+    const feedback = document.getElementById('reqAccessFeedback');
+
+    const ta = inpTa ? inpTa.value.trim() : '';
+    const alasan = inpAlasan ? inpAlasan.value.trim() : '';
+
+    if (!ta || !alasan) {
+        alert('Tahun akademik dan alasan permohonan wajib diisi.');
+        return;
+    }
+
+    const origBtnHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1.5"></i> Mengirim...';
+
+    fetch('<?= base_url('prodi/request-upload-access') ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            tahun_akademik: ta,
+            alasan: alasan
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = origBtnHtml;
+        if (data && data.success) {
+            feedback.className = 'alert alert-success border border-success rounded-3 p-2.5 small mt-3';
+            feedback.innerHTML = `<i class="fas fa-circle-check me-1.5"></i> ${escapeHtml(data.message)}`;
+            setTimeout(() => {
+                const modalEl = document.getElementById('modalRequestUploadAccess');
+                const bsModal = bootstrap.Modal.getInstance(modalEl);
+                if (bsModal) bsModal.hide();
+
+                // Refresh status pada single atau kartu batch
+                const singleTa = document.getElementById('tahun_akademik');
+                const singleDate = document.getElementById('tanggal_dokumen');
+                if (singleTa && singleTa.value === ta) {
+                    checkSingleUploadAccess(ta, singleDate ? singleDate.value : '');
+                }
+                document.querySelectorAll('.input-tahun-akademik').forEach(inp => {
+                    if (inp.value === ta) {
+                        const card = inp.closest('.doc-batch-card');
+                        if (card) {
+                            const cIdx = card.getAttribute('data-card-idx');
+                            const cDate = card.querySelector('.input-tanggal-dokumen');
+                            if (cIdx !== null) checkCardUploadAccess(parseInt(cIdx), ta, cDate ? cDate.value : '');
+                        }
+                    }
+                });
+            }, 1400);
+        } else {
+            feedback.className = 'alert alert-danger border border-danger rounded-3 p-2.5 small mt-3';
+            feedback.innerHTML = `<i class="fas fa-triangle-exclamation me-1.5"></i> ${escapeHtml(data.message || 'Gagal mengirim permohonan.')}`;
+        }
+    })
+    .catch(err => {
+        console.error('Error submitting access request:', err);
+        btn.disabled = false;
+        btn.innerHTML = origBtnHtml;
+        feedback.className = 'alert alert-danger border border-danger rounded-3 p-2.5 small mt-3';
+        feedback.innerHTML = '<i class="fas fa-triangle-exclamation me-1.5"></i> Terjadi kesalahan jaringan saat mengirim permohonan.';
+    });
+}
+
+// Inisialisasi pengecekan awal pada Single Edit saat halaman selesai dimuat
+document.addEventListener('DOMContentLoaded', function() {
+    const singleTa = document.getElementById('tahun_akademik');
+    const singleDate = document.getElementById('tanggal_dokumen');
+    if (singleTa && singleTa.value) {
+        checkSingleUploadAccess(singleTa.value, singleDate ? singleDate.value : '');
+    }
+});
 </script>
+
+<!-- Modal Pengajuan Izin Buka Akses ke LPM -->
+<div class="modal fade" id="modalRequestUploadAccess" tabindex="-1" aria-labelledby="modalRequestUploadAccessLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-primary bg-opacity-10 py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white rounded-circle p-2" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-key"></i>
+                    </span>
+                    <h5 class="modal-title fw-bold text-dark-blue mb-0" id="modalRequestUploadAccessLabel" style="font-size: 1.05rem;">
+                        Permohonan Izin Buka Akses Unggah
+                    </h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formRequestUploadAccess" onsubmit="submitRequestUploadAccess(event)">
+                <div class="modal-body p-4">
+                    <div class="alert alert-light border rounded-3 p-3 mb-3 small text-muted">
+                        <i class="fas fa-circle-info text-primary me-1"></i>
+                        Akses unggah untuk Tahun Akademik ini terkunci (tahun lampau atau telah melewati batas tenggat). Anda dapat mengajukan permohonan pembukaan dispensasi akses ke <strong>Pusat Penjaminan Mutu (LPM)</strong>.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">Tahun Akademik yang Diajukan</label>
+                        <input type="text" class="form-control fw-bold bg-light" id="req_tahun_akademik" name="tahun_akademik" readonly required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">
+                            Alasan Kebutuhan Pembukaan Akses <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="req_alasan" name="alasan" rows="3" 
+                                  placeholder="Contoh: Pemenuhan kelengkapan dokumen Audit Mutu Internal (AMI) susulan atau persiapan akreditasi LAM-INFOKOM..." required></textarea>
+                    </div>
+
+                    <div id="reqAccessFeedback" class="d-none"></div>
+                </div>
+                <div class="modal-footer border-top bg-light px-4 py-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" id="btnSubmitReqAccess">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Kirim Permohonan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

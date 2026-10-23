@@ -203,4 +203,78 @@ class ApiController extends Controller {
             exit;
         }
     }
+
+    /**
+     * API JSON: Periksa Status Keterbukaan / Kunci Unggah Tahun Akademik Berdasarkan Tanggal Dokumen
+     */
+    public function checkUploadAccess(): void {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $user = Auth::user();
+            $level = trim($_GET['level'] ?? ($_POST['level'] ?? ($user['role'] ?? 'prodi')));
+            $prodiId = !empty($_GET['prodi_id']) ? (int)$_GET['prodi_id'] : (!empty($_POST['prodi_id']) ? (int)$_POST['prodi_id'] : ($user['prodi_id'] ?? null));
+            $fakultasId = !empty($_GET['fakultas_id']) ? (int)$_GET['fakultas_id'] : (!empty($_POST['fakultas_id']) ? (int)$_POST['fakultas_id'] : ($user['fakultas_id'] ?? null));
+
+            $date = trim($_GET['date'] ?? ($_POST['date'] ?? ''));
+            $taInput = trim($_GET['tahun_akademik'] ?? ($_POST['tahun_akademik'] ?? ''));
+
+            if (!empty($date)) {
+                $tahunAkademik = calculate_tahun_akademik_from_date($date);
+            } elseif (!empty($taInput)) {
+                $tahunAkademik = normalize_tahun_akademik($taInput);
+            } else {
+                $activeAy = get_active_tahun_akademik($this->db);
+                $tahunAkademik = $activeAy['tahun_akademik'] ?? date('Y') . '/' . (date('Y') + 1);
+            }
+
+            $activeAy = get_active_tahun_akademik($this->db);
+            $activeTaStr = $activeAy['tahun_akademik'] ?? '';
+
+            $accessResult = check_academic_year_upload_access($tahunAkademik, $level, $prodiId, $fakultasId, $this->db);
+
+            // Cek apakah unit sudah memiliki permohonan pending untuk TA ini
+            $hasPendingRequest = false;
+            try {
+                $sqlPend = "SELECT id, created_at FROM upload_access_requests WHERE status = 'pending' AND tahun_akademik = ? AND level = ?";
+                $pendParams = [$tahunAkademik, $level];
+                if ($level === 'prodi') {
+                    $sqlPend .= " AND prodi_id = ?";
+                    $pendParams[] = (int)$prodiId;
+                } else {
+                    $sqlPend .= " AND fakultas_id = ?";
+                    $pendParams[] = (int)$fakultasId;
+                }
+                $sqlPend .= " ORDER BY id DESC LIMIT 1";
+                $stmtPend = $this->db->prepare($sqlPend);
+                $stmtPend->execute($pendParams);
+                $pendingReq = $stmtPend->fetch();
+                if ($pendingReq) {
+                    $hasPendingRequest = true;
+                }
+            } catch (\Throwable $e) {}
+
+            echo json_encode([
+                'success' => true,
+                'tanggal_dokumen' => $date,
+                'tahun_akademik' => $tahunAkademik,
+                'active_tahun_akademik' => $activeTaStr,
+                'is_active_year' => ($tahunAkademik === $activeTaStr),
+                'is_locked' => $accessResult['is_locked'],
+                'reason' => $accessResult['reason'],
+                'has_waiver' => $accessResult['has_waiver'],
+                'waiver' => $accessResult['waiver'],
+                'is_past_year' => $accessResult['is_past_year'],
+                'is_past_deadline' => $accessResult['is_past_deadline'],
+                'has_pending_request' => $hasPendingRequest
+            ]);
+            exit;
+        } catch (\Throwable $e) {
+            echo json_encode([
+                'success' => false,
+                'is_locked' => false,
+                'message' => $e->getMessage()
+            ]);
+            exit;
+        }
+    }
 }

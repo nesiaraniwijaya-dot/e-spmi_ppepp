@@ -471,7 +471,15 @@ class AdminProdiController extends Controller {
                     $bidangId = !empty($d['bidang_id']) ? (int)$d['bidang_id'] : null;
                     $subBidangId = !empty($d['sub_bidang_id']) ? (int)$d['sub_bidang_id'] : null;
                     $siklus = trim($d['siklus'] ?? '');
-                    $tahunAkademik = normalize_tahun_akademik($d['tahun_akademik'] ?? '');
+                    $tanggalDokumen = !empty($d['tanggal_dokumen']) ? trim($d['tanggal_dokumen']) : null;
+                    if (!empty($tanggalDokumen)) {
+                        $tahunAkademik = calculate_tahun_akademik_from_date($tanggalDokumen);
+                    } else {
+                        $tahunAkademik = normalize_tahun_akademik($d['tahun_akademik'] ?? '');
+                    }
+                    if (empty($tanggalDokumen) && !empty($tahunAkademik)) {
+                        $tanggalDokumen = date('Y-m-d');
+                    }
                     $startDate = null;
                     $endDate = null;
                     $jenisUpload = trim($d['jenis_upload'] ?? 'file');
@@ -670,16 +678,11 @@ class AdminProdiController extends Controller {
                         throw new \Exception("Tahun akademik pada Dokumen #{$docNumber} wajib diisi.");
                     }
 
-                    // Validasi Jatah Buka / Tutup Upload Tahun Akademik oleh LPM
-                    $stmtCheckTA = $this->db->prepare("SELECT is_open, tanggal_mulai, tanggal_selesai FROM tahun_akademik_settings WHERE tahun_akademik = ?");
-                    $stmtCheckTA->execute([$tahunAkademik]);
-                    $taSetting = $stmtCheckTA->fetch();
-                    if ($taSetting && (int)$taSetting['is_open'] === 0) {
-                        throw new \Exception("Pengunggahan dokumen untuk Tahun Akademik {$tahunAkademik} saat ini sedang DITUTUP oleh LPM.");
-                    }
-                    if ($taSetting && !empty($startDate)) {
-                        if ($startDate < $taSetting['tanggal_mulai'] || $startDate > $taSetting['tanggal_selesai']) {
-                            throw new \Exception("Tanggal dokumen ({$startDate}) pada Dokumen #{$docNumber} berada di luar rentang resmi Tahun Akademik {$tahunAkademik} (" . date('d/m/Y', strtotime($taSetting['tanggal_mulai'])) . " s/d " . date('d/m/Y', strtotime($taSetting['tanggal_selesai'])) . ").");
+                    // Validasi Kunci Akses & Tenggat Waktu Unggah (LPM)
+                    if (!$isDraft) {
+                        $accessCheck = check_academic_year_upload_access($tahunAkademik, 'prodi', $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), $this->db);
+                        if ($accessCheck['is_locked']) {
+                            throw new \Exception("Akses unggah untuk Tahun Akademik {$tahunAkademik} pada Dokumen #{$docNumber} terkunci: {$accessCheck['reason']}. Silakan ajukan izin buka akses ke LPM.");
                         }
                     }
                     if (empty($siklus)) {
@@ -765,14 +768,14 @@ class AdminProdiController extends Controller {
                     // Insert into ppepp_documents
                     $stmt = $this->db->prepare("
                         INSERT INTO ppepp_documents 
-                        (cycle_id, prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, 
+                        (cycle_id, prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, tanggal_dokumen,
                          tanggal_berlaku_mulai, tanggal_berlaku_selesai, jenis_upload, file_path, file_size, 
                          file_extension, external_link, public_page_limit, can_download_public, status_review, tahap_review, deskripsi)
-                        VALUES (?, ?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
                     $stmt->execute([
                         $cycleId, $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), Auth::id(), $bidangId, $subBidangId, $namaDokumen, $nomorDokumen,
-                        $siklus, $tahunAkademik, $startDate, $endDate, $jenisUpload,
+                        $siklus, $tahunAkademik, $tanggalDokumen, $startDate, $endDate, $jenisUpload,
                         $filePath, $fileSize, $fileExt, $externalLink,
                         $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview, $deskripsi
                     ]);
@@ -878,19 +881,25 @@ class AdminProdiController extends Controller {
         $bidangId = !empty($_POST['bidang_id']) ? (int)$_POST['bidang_id'] : null;
         $subBidangId = !empty($_POST['sub_bidang_id']) ? (int)$_POST['sub_bidang_id'] : null;
         $siklus = trim($_POST['siklus'] ?? '');
-        $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+        $tanggalDokumen = !empty($_POST['tanggal_dokumen']) ? trim($_POST['tanggal_dokumen']) : null;
+        if (!empty($tanggalDokumen)) {
+            $tahunAkademik = calculate_tahun_akademik_from_date($tanggalDokumen);
+        } else {
+            $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+        }
+        if (empty($tanggalDokumen) && !empty($tahunAkademik)) {
+            $tanggalDokumen = date('Y-m-d');
+        }
         $startDate = null;
         $endDate = null;
         $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
         
         $redirectUrl = $isEdit ? "prodi/dokumen/edit/{$id}" : 'prodi/dokumen/create';
 
-        if (!$isEdit) {
-            $stmtCheckTA = $this->db->prepare("SELECT is_open, tanggal_mulai, tanggal_selesai FROM tahun_akademik_settings WHERE tahun_akademik = ?");
-            $stmtCheckTA->execute([$tahunAkademik]);
-            $taSetting = $stmtCheckTA->fetch();
-            if ($taSetting && (int)$taSetting['is_open'] === 0) {
-                Auth::setFlash('danger', "Pengunggahan dokumen untuk Tahun Akademik {$tahunAkademik} saat ini sedang DITUTUP oleh LPM. Hubungi Admin LPM untuk permohonan pembukaan periode.");
+        if (!$isDraft) {
+            $accessCheck = check_academic_year_upload_access($tahunAkademik, 'prodi', $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), $this->db);
+            if ($accessCheck['is_locked']) {
+                Auth::setFlash('danger', "Akses unggah untuk Tahun Akademik {$tahunAkademik} saat ini terkunci: {$accessCheck['reason']}. Silakan ajukan izin pembukaan akses ke LPM.");
                 redirect($redirectUrl);
                 return;
             }
@@ -1369,7 +1378,7 @@ class AdminProdiController extends Controller {
             $stmt = $this->db->prepare("
                 UPDATE ppepp_documents 
                 SET bidang_id = ?, sub_bidang_id = ?, nama_dokumen = ?, nomor_dokumen = ?, siklus = ?, 
-                    tahun_akademik = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?, 
+                    tahun_akademik = ?, tanggal_dokumen = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?, 
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, 
                     external_link = ?, public_page_limit = ?, can_download_public = ?, 
                     status_review = ?, tahap_review = ?, deskripsi = ?, updated_at = NOW()
@@ -1377,7 +1386,7 @@ class AdminProdiController extends Controller {
             ");
             $stmt->execute([
                 $bidangId, $subBidangId, $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik,
-                $startDate, $endDate, $jenisUpload, $filePath, $fileSize, $fileExt,
+                $tanggalDokumen, $startDate, $endDate, $jenisUpload, $filePath, $fileSize, $fileExt,
                 $externalLink, $publicPageLimit, $canDownloadPublic, 
                 $newStatusReview, $newTahapReview, $deskripsi, $id, $this->prodiId
             ]);
@@ -1524,14 +1533,14 @@ class AdminProdiController extends Controller {
 
         $stmt = $this->db->prepare("
             INSERT INTO ppepp_documents 
-            (cycle_id, prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, 
+            (cycle_id, prodi_id, fakultas_id, level, user_id, bidang_id, sub_bidang_id, nama_dokumen, nomor_dokumen, siklus, tahun_akademik, tanggal_dokumen,
              tanggal_berlaku_mulai, tanggal_berlaku_selesai, jenis_upload, file_path, file_size, 
              file_extension, external_link, public_page_limit, can_download_public, status_review, tahap_review, deskripsi)
-            VALUES (?, ?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, 'prodi', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $cycleId, $this->prodiId, (int)($this->prodi['fakultas_id'] ?? 0), Auth::id(), $bidangId, $subBidangId, $namaDokumen, $nomorDokumen,
-            $siklus, $tahunAkademik, $startDate, $endDate, $jenisUpload,
+            $siklus, $tahunAkademik, $tanggalDokumen, $startDate, $endDate, $jenisUpload,
             $filePath, $fileSize, $fileExt, $externalLink,
             $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview, $deskripsi
         ]);
@@ -1755,5 +1764,56 @@ class AdminProdiController extends Controller {
 
         Auth::setFlash('success', 'Informasi Ketua dan Sekretaris Program Studi berhasil diperbarui.');
         redirect('prodi/kaprodi');
+    }
+
+    /**
+     * Permohonan Izin Buka Akses Upload Dokumen ke LPM (Prodi)
+     */
+    public function requestUploadAccess(): void {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+            $tahunAkademik = normalize_tahun_akademik($input['tahun_akademik'] ?? '');
+            $alasan = trim($input['alasan'] ?? '');
+
+            if (empty($tahunAkademik)) {
+                echo json_encode(['success' => false, 'message' => 'Tahun akademik yang diajukan wajib ditentukan.']);
+                exit;
+            }
+            if (empty($alasan)) {
+                echo json_encode(['success' => false, 'message' => 'Alasan permohonan izin buka akses wajib diisi.']);
+                exit;
+            }
+
+            // Cek apakah permohonan pending sudah ada
+            $stmtPending = $this->db->prepare("
+                SELECT id FROM upload_access_requests 
+                WHERE level = 'prodi' AND prodi_id = ? AND tahun_akademik = ? AND status = 'pending'
+            ");
+            $stmtPending->execute([$this->prodiId, $tahunAkademik]);
+            if ($stmtPending->fetch()) {
+                echo json_encode(['success' => true, 'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} sudah ada dalam antrean dan sedang menunggu tinjauan LPM."]);
+                exit;
+            }
+
+            $stmt = $this->db->prepare("
+                INSERT INTO upload_access_requests 
+                (user_id, level, prodi_id, fakultas_id, tahun_akademik, alasan, status, created_at)
+                VALUES (?, 'prodi', ?, ?, ?, ?, 'pending', NOW())
+            ");
+            $stmt->execute([
+                Auth::id(),
+                $this->prodiId,
+                (int)($this->prodi['fakultas_id'] ?? 0),
+                $tahunAkademik,
+                $alasan
+            ]);
+
+            echo json_encode(['success' => true, 'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} berhasil diajukan ke LPM. Silakan menunggu persetujuan Admin LPM."]);
+            exit;
+        } catch (\Throwable $e) {
+            echo json_encode(['success' => false, 'message' => 'Gagal mengajukan permohonan: ' . $e->getMessage()]);
+            exit;
+        }
     }
 }

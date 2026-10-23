@@ -503,7 +503,15 @@ class AdminFakultasController extends Controller {
                     $bidangId = !empty($d['bidang_id']) ? (int)$d['bidang_id'] : null;
                     $subBidangId = !empty($d['sub_bidang_id']) ? (int)$d['sub_bidang_id'] : null;
                     $siklus = trim($d['siklus'] ?? '');
-                    $tahunAkademik = normalize_tahun_akademik($d['tahun_akademik'] ?? '');
+                    $tanggalDokumen = !empty($d['tanggal_dokumen']) ? trim($d['tanggal_dokumen']) : null;
+                    if (!empty($tanggalDokumen)) {
+                        $tahunAkademik = calculate_tahun_akademik_from_date($tanggalDokumen);
+                    } else {
+                        $tahunAkademik = normalize_tahun_akademik($d['tahun_akademik'] ?? '');
+                    }
+                    if (empty($tanggalDokumen) && !empty($tahunAkademik)) {
+                        $tanggalDokumen = date('Y-m-d');
+                    }
                     $startDate = null;
                     $endDate = null;
                     $jenisUpload = trim($d['jenis_upload'] ?? 'file');
@@ -695,16 +703,11 @@ class AdminFakultasController extends Controller {
                     if (empty($namaDokumen)) throw new \Exception("Nama dokumen pada Dokumen #{$docNumber} wajib diisi.");
                     if (empty($tahunAkademik)) throw new \Exception("Tahun akademik pada Dokumen #{$docNumber} wajib diisi.");
 
-                    // Validasi Jatah Buka / Tutup Upload Tahun Akademik oleh LPM
-                    $stmtCheckTA = $this->db->prepare("SELECT is_open, tanggal_mulai, tanggal_selesai FROM tahun_akademik_settings WHERE tahun_akademik = ?");
-                    $stmtCheckTA->execute([$tahunAkademik]);
-                    $taSetting = $stmtCheckTA->fetch();
-                    if ($taSetting && (int)$taSetting['is_open'] === 0) {
-                        throw new \Exception("Pengunggahan dokumen untuk Tahun Akademik {$tahunAkademik} saat ini sedang DITUTUP oleh LPM.");
-                    }
-                    if ($taSetting && !empty($startDate)) {
-                        if ($startDate < $taSetting['tanggal_mulai'] || $startDate > $taSetting['tanggal_selesai']) {
-                            throw new \Exception("Tanggal dokumen ({$startDate}) pada Dokumen #{$docNumber} berada di luar rentang resmi Tahun Akademik {$tahunAkademik} (" . date('d/m/Y', strtotime($taSetting['tanggal_mulai'])) . " s/d " . date('d/m/Y', strtotime($taSetting['tanggal_selesai'])) . ").");
+                    // Validasi Kunci Akses & Tenggat Waktu Unggah (LPM)
+                    if (!$isDraft) {
+                        $accessCheck = check_academic_year_upload_access($tahunAkademik, 'fakultas', null, $this->fakultasId, $this->db);
+                        if ($accessCheck['is_locked']) {
+                            throw new \Exception("Akses unggah untuk Tahun Akademik {$tahunAkademik} pada Dokumen #{$docNumber} terkunci: {$accessCheck['reason']}. Silakan ajukan izin buka akses ke LPM.");
                         }
                     }
 
@@ -786,13 +789,13 @@ class AdminFakultasController extends Controller {
                     $stmt = $this->db->prepare("
                         INSERT INTO ppepp_documents (
                             cycle_id, fakultas_id, prodi_id, user_id, bidang_id, sub_bidang_id,
-                            nama_dokumen, nomor_dokumen, siklus, tahun_akademik,
+                            nama_dokumen, nomor_dokumen, siklus, tahun_akademik, tanggal_dokumen,
                             tanggal_berlaku_mulai, tanggal_berlaku_selesai,
                             jenis_upload, file_path, file_size, file_extension, external_link,
                             public_page_limit, can_download_public, status_review, tahap_review, level, created_at
                         ) VALUES (
                             ?, ?, NULL, ?, ?, ?,
-                            ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?,
                             ?, ?,
                             ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, 'fakultas', NOW()
@@ -800,7 +803,7 @@ class AdminFakultasController extends Controller {
                     ");
                     $stmt->execute([
                         $cycleId, $this->fakultasId, Auth::id(), $bidangId, $subBidangId,
-                        $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik,
+                        $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik, $tanggalDokumen,
                         $startDate, $endDate,
                         $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
                         $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview
@@ -920,15 +923,21 @@ class AdminFakultasController extends Controller {
             $bidangId = !empty($_POST['bidang_id']) ? (int)$_POST['bidang_id'] : null;
             $subBidangId = !empty($_POST['sub_bidang_id']) ? (int)$_POST['sub_bidang_id'] : null;
             $siklus = trim($_POST['siklus'] ?? '');
-            $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+            $tanggalDokumen = !empty($_POST['tanggal_dokumen']) ? trim($_POST['tanggal_dokumen']) : null;
+            if (!empty($tanggalDokumen)) {
+                $tahunAkademik = calculate_tahun_akademik_from_date($tanggalDokumen);
+            } else {
+                $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+            }
+            if (empty($tanggalDokumen) && !empty($tahunAkademik)) {
+                $tanggalDokumen = date('Y-m-d');
+            }
 
-            // Validasi jika mengubah ke Tahun Akademik yang ditutup
-            if ($tahunAkademik !== ($existing['tahun_akademik'] ?? '')) {
-                $stmtCheckTA = $this->db->prepare("SELECT is_open FROM tahun_akademik_settings WHERE tahun_akademik = ?");
-                $stmtCheckTA->execute([$tahunAkademik]);
-                $taSetting = $stmtCheckTA->fetch();
-                if ($taSetting && (int)$taSetting['is_open'] === 0) {
-                    Auth::setFlash('danger', "Tahun Akademik {$tahunAkademik} saat ini sedang DITUTUP oleh LPM.");
+            // Validasi Kunci Akses & Tenggat Waktu Unggah (LPM)
+            if (!$isDraft) {
+                $accessCheck = check_academic_year_upload_access($tahunAkademik, 'fakultas', null, $this->fakultasId, $this->db);
+                if ($accessCheck['is_locked']) {
+                    Auth::setFlash('danger', "Akses unggah untuk Tahun Akademik {$tahunAkademik} saat ini terkunci: {$accessCheck['reason']}. Silakan ajukan izin pembukaan akses ke LPM.");
                     redirect("fakultas/dokumen/edit/{$id}");
                     return;
                 }
@@ -1302,14 +1311,14 @@ class AdminFakultasController extends Controller {
             $stmtUpdate = $this->db->prepare("
                 UPDATE ppepp_documents SET 
                     nama_dokumen = ?, nomor_dokumen = ?, bidang_id = ?, sub_bidang_id = ?,
-                    siklus = ?, tahun_akademik = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?,
+                    siklus = ?, tahun_akademik = ?, tanggal_dokumen = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?,
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, external_link = ?,
                     public_page_limit = ?, can_download_public = ?, status_review = ?, tahap_review = ?, updated_at = NOW()
                 WHERE id = ? AND fakultas_id = ? AND level = 'fakultas'
             ");
             $stmtUpdate->execute([
                 $namaDokumen, $nomorDokumen, $bidangId, $subBidangId,
-                $siklus, $tahunAkademik, $startDate, $endDate,
+                $siklus, $tahunAkademik, $tanggalDokumen, $startDate, $endDate,
                 $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
                 $publicPageLimit, $canDownloadPublic, $newStatusReview, $newTahapReview,
                 $id, $this->fakultasId
@@ -1584,5 +1593,55 @@ class AdminFakultasController extends Controller {
             }
         }
         unset($d);
+    }
+
+    /**
+     * Permohonan Izin Buka Akses Upload Dokumen ke LPM (Fakultas)
+     */
+    public function requestUploadAccess(): void {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+            $tahunAkademik = normalize_tahun_akademik($input['tahun_akademik'] ?? '');
+            $alasan = trim($input['alasan'] ?? '');
+
+            if (empty($tahunAkademik)) {
+                echo json_encode(['success' => false, 'message' => 'Tahun akademik yang diajukan wajib ditentukan.']);
+                exit;
+            }
+            if (empty($alasan)) {
+                echo json_encode(['success' => false, 'message' => 'Alasan permohonan izin buka akses wajib diisi.']);
+                exit;
+            }
+
+            // Cek apakah permohonan pending sudah ada
+            $stmtPending = $this->db->prepare("
+                SELECT id FROM upload_access_requests 
+                WHERE level = 'fakultas' AND fakultas_id = ? AND tahun_akademik = ? AND status = 'pending'
+            ");
+            $stmtPending->execute([$this->fakultasId, $tahunAkademik]);
+            if ($stmtPending->fetch()) {
+                echo json_encode(['success' => true, 'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} sudah ada dalam antrean dan sedang menunggu tinjauan LPM."]);
+                exit;
+            }
+
+            $stmt = $this->db->prepare("
+                INSERT INTO upload_access_requests 
+                (user_id, level, prodi_id, fakultas_id, tahun_akademik, alasan, status, created_at)
+                VALUES (?, 'fakultas', NULL, ?, ?, ?, 'pending', NOW())
+            ");
+            $stmt->execute([
+                Auth::id(),
+                $this->fakultasId,
+                $tahunAkademik,
+                $alasan
+            ]);
+
+            echo json_encode(['success' => true, 'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} berhasil diajukan ke LPM. Silakan menunggu persetujuan Admin LPM."]);
+            exit;
+        } catch (\Throwable $e) {
+            echo json_encode(['success' => false, 'message' => 'Gagal mengajukan permohonan: ' . $e->getMessage()]);
+            exit;
+        }
     }
 }

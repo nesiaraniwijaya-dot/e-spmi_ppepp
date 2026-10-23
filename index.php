@@ -162,6 +162,7 @@ $router->get('gpm/draft', ['GpmController', 'draft']);
 $router->get('gpm/dokumen/create', ['GpmController', 'createDocument']);
 $router->get('gpm/dokumen/edit/{id:\d+}', ['GpmController', 'editDocument']);
 $router->post('gpm/dokumen/save', ['GpmController', 'saveDocument']);
+$router->post('gpm/request-upload-access', ['GpmController', 'requestUploadAccess']);
 $router->post('gpm/dokumen/ajukan/{id:\d+}', ['GpmController', 'ajukanDraft']);
 $router->post('gpm/dokumen/delete/{id:\d+}', ['GpmController', 'softDeleteDocument']);
 $router->post('gpm/dokumen/restore/{id:\d+}', ['GpmController', 'restoreDocument']);
@@ -172,6 +173,8 @@ $router->get('gpm/dokumen/arsip', ['GpmController', 'arsip']);
 $router->post('gpm/review/submit', ['GpmController', 'submitReview']);
 
 $router->get('api/document-review-history/{id:\d+}', ['ApiController', 'reviewHistoryJson']);
+$router->get('api/check-upload-access', ['ApiController', 'checkUploadAccess']);
+$router->post('api/check-upload-access', ['ApiController', 'checkUploadAccess']);
 
 // Profil & Foto GPM (Hanya Profil Akun, Tanpa Dekanat / Kaprodi)
 $router->get('gpm/profile', ['ProfileController', 'index']);

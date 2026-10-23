@@ -535,7 +535,15 @@ class GpmController extends Controller {
                     $bidangId = !empty($d['bidang_id']) ? (int)$d['bidang_id'] : null;
                     $subBidangId = !empty($d['sub_bidang_id']) ? (int)$d['sub_bidang_id'] : null;
                     $siklus = trim($d['siklus'] ?? '');
-                    $tahunAkademik = trim($d['tahun_akademik'] ?? '');
+                    $tanggalDokumen = !empty($d['tanggal_dokumen']) ? trim($d['tanggal_dokumen']) : null;
+                    if (!empty($tanggalDokumen)) {
+                        $tahunAkademik = calculate_tahun_akademik_from_date($tanggalDokumen);
+                    } else {
+                        $tahunAkademik = normalize_tahun_akademik($d['tahun_akademik'] ?? '');
+                    }
+                    if (empty($tanggalDokumen) && !empty($tahunAkademik)) {
+                        $tanggalDokumen = date('Y-m-d');
+                    }
                     $startDate = null;
                     $endDate = null;
                     $jenisUpload = trim($d['jenis_upload'] ?? 'file');
@@ -708,14 +716,14 @@ class GpmController extends Controller {
                     $stmtIns = $this->db->prepare("
                         INSERT INTO ppepp_documents (
                             prodi_id, fakultas_id, level, user_id, nama_dokumen, nomor_dokumen,
-                            bidang_id, sub_bidang_id, siklus, tahun_akademik,
+                            bidang_id, sub_bidang_id, siklus, tahun_akademik, tanggal_dokumen,
                             tanggal_berlaku_mulai, tanggal_berlaku_selesai,
                             jenis_upload, file_path, file_size, file_extension, external_link,
                             public_page_limit, can_download_public,
                             status_review, created_at, updated_at
                         ) VALUES (
                             ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?,
                             ?, ?,
                             ?, ?, ?, ?, ?,
                             ?, ?,
@@ -724,7 +732,7 @@ class GpmController extends Controller {
                     ");
                     $stmtIns->execute([
                         $docProdiId, $docFakultasId, $docLevel, Auth::id(), $namaDokumen, $nomorDokumen,
-                        $bidangId, $subBidangId, $siklus, $tahunAkademik,
+                        $bidangId, $subBidangId, $siklus, $tahunAkademik, $tanggalDokumen,
                         $startDate, $endDate,
                         $jenisUpload, $primaryFilePath, $primaryFileSize, $primaryFileExt, $externalLink,
                         $publicPageLimit, $canDownloadPublic,
@@ -829,7 +837,15 @@ class GpmController extends Controller {
             $bidangId = !empty($_POST['bidang_id']) ? (int)$_POST['bidang_id'] : null;
             $subBidangId = !empty($_POST['sub_bidang_id']) ? (int)$_POST['sub_bidang_id'] : null;
             $siklus = trim($_POST['siklus'] ?? '');
-            $tahunAkademik = trim($_POST['tahun_akademik'] ?? '');
+            $tanggalDokumen = !empty($_POST['tanggal_dokumen']) ? trim($_POST['tanggal_dokumen']) : null;
+            if (!empty($tanggalDokumen)) {
+                $tahunAkademik = calculate_tahun_akademik_from_date($tanggalDokumen);
+            } else {
+                $tahunAkademik = normalize_tahun_akademik($_POST['tahun_akademik'] ?? '');
+            }
+            if (empty($tanggalDokumen) && !empty($tahunAkademik)) {
+                $tanggalDokumen = date('Y-m-d');
+            }
             $startDate = null;
             $endDate = null;
             $jenisUpload = trim($_POST['jenis_upload'] ?? 'file');
@@ -1127,7 +1143,7 @@ class GpmController extends Controller {
                 UPDATE ppepp_documents SET
                     prodi_id = ?, fakultas_id = ?, level = ?,
                     nama_dokumen = ?, nomor_dokumen = ?,
-                    bidang_id = ?, sub_bidang_id = ?, siklus = ?, tahun_akademik = ?,
+                    bidang_id = ?, sub_bidang_id = ?, siklus = ?, tahun_akademik = ?, tanggal_dokumen = ?,
                     tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?,
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, external_link = ?,
                     public_page_limit = ?, can_download_public = ?,
@@ -1137,7 +1153,7 @@ class GpmController extends Controller {
             $stmtUpd->execute([
                 $docProdiId, $docFakultasId, $docLevel,
                 $namaDokumen, $nomorDokumen,
-                $bidangId, $subBidangId, $siklus, $tahunAkademik,
+                $bidangId, $subBidangId, $siklus, $tahunAkademik, $tanggalDokumen,
                 $startDate, $endDate,
                 $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
                 $publicPageLimit, $canDownloadPublic,
@@ -1332,5 +1348,68 @@ class GpmController extends Controller {
             }
         }
         unset($d);
+    }
+
+    /**
+     * Mengajukan permohonan izin dispensasi buka akses upload ke LPM (GPM)
+     */
+    public function requestUploadAccess(): void {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+            $tahunAkademik = normalize_tahun_akademik($input['tahun_akademik'] ?? '');
+            $alasan = trim($input['alasan'] ?? '');
+            $level = in_array($input['level'] ?? '', ['prodi', 'fakultas']) ? $input['level'] : 'fakultas';
+            $prodiId = !empty($input['prodi_id']) ? (int)$input['prodi_id'] : null;
+
+            if (empty($tahunAkademik)) {
+                echo json_encode(['success' => false, 'message' => 'Tahun akademik yang diajukan wajib ditentukan.']);
+                exit;
+            }
+            if (empty($alasan)) {
+                echo json_encode(['success' => false, 'message' => 'Alasan permohonan izin buka akses wajib diisi.']);
+                exit;
+            }
+
+            // Cek apakah permohonan pending sudah ada
+            if ($level === 'prodi' && $prodiId) {
+                $stmtPending = $this->db->prepare("
+                    SELECT id FROM upload_access_requests 
+                    WHERE level = 'prodi' AND prodi_id = ? AND tahun_akademik = ? AND status = 'pending'
+                ");
+                $stmtPending->execute([$prodiId, $tahunAkademik]);
+            } else {
+                $stmtPending = $this->db->prepare("
+                    SELECT id FROM upload_access_requests 
+                    WHERE level = 'fakultas' AND fakultas_id = ? AND tahun_akademik = ? AND status = 'pending'
+                ");
+                $stmtPending->execute([$this->fakultasId, $tahunAkademik]);
+            }
+
+            if ($stmtPending->fetch()) {
+                echo json_encode(['success' => true, 'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} sudah ada dalam antrean dan sedang menunggu tinjauan LPM."]);
+                exit;
+            }
+
+            $stmt = $this->db->prepare("
+                INSERT INTO upload_access_requests 
+                (user_id, level, prodi_id, fakultas_id, tahun_akademik, alasan, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())
+            ");
+            $stmt->execute([
+                Auth::id(),
+                $level,
+                $level === 'prodi' ? $prodiId : null,
+                $this->fakultasId,
+                $tahunAkademik,
+                $alasan
+            ]);
+
+            echo json_encode(['success' => true, 'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} berhasil diajukan ke LPM. Silakan menunggu persetujuan Admin LPM."]);
+            exit;
+        } catch (\Throwable $e) {
+            echo json_encode(['success' => false, 'message' => 'Gagal mengajukan permohonan: ' . $e->getMessage()]);
+            exit;
+        }
     }
 }
