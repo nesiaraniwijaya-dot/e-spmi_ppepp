@@ -235,518 +235,46 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <th class="text-center text-nowrap" style="width: 130px;">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="prodiDocTableBody">
                     <?php if (empty($documents)): ?>
-                        <tr class="no-matching-docs">
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
-                                <h6 class="fw-bold">Belum Ada Dokumen Mutu</h6>
-                                <p class="small mb-3">Program studi Anda belum memiliki dokumen PPEPP yang diunggah.</p>
-                                <a href="<?= base_url('prodi/dokumen/create') ?>" class="btn btn-primary btn-sm rounded-pill px-3 bg-scu-blue border-0">
-                                    <i class="fas fa-plus me-1"></i> Unggah Dokumen Sekarang
-                                </a>
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fas fa-folder-open fa-3x text-secondary opacity-50 mb-3 d-block"></i>
+                                <h6 class="fw-bold">Tidak Ada Dokumen yang Sesuai</h6>
+                                <p class="small mb-0">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
                             </td>
                         </tr>
                     <?php else: ?>
-                        <?php $no = 1; foreach ($documents as $doc): 
-                            $status = $doc['status_review'] ?? 'belum_direview';
-                            $hasNotes = !empty($doc['catatan_review']);
-                            $isPerluPerbaikan = ($status === 'perlu_perbaikan');
+                        <?php 
+                        $no = $startNum; 
+                        require ROOT_PATH . '/views/admin_prodi/documents_rows.php'; 
                         ?>
-                            <tr class="doc-row <?= $isPerluPerbaikan ? 'table-row-revision' : '' ?>" 
-                                data-title="<?= htmlspecialchars($doc['nama_dokumen']) ?>" 
-                                data-nomor="<?= htmlspecialchars($doc['nomor_dokumen'] ?? '') ?>" 
-                                data-bidang-id="<?= $doc['bidang_id'] ?? '' ?>"
-                                data-siklus="<?= $doc['siklus'] ?>"
-                                data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
-                                data-status-review="<?= $status ?>"
-                                style="<?= $isPerluPerbaikan ? 'border-left: 4px solid #DC2626 !important; background: #FFFBFB;' : '' ?>">
-                                <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
-                                <td>
-                                    <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen']) ?></div>
-                                    <?php if ($doc['nomor_dokumen']): ?>
-                                        <div class="small text-muted" style="font-size: 0.72rem;"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
-                                    <?php endif; ?>
-                                    <?php if ($doc['tahun_akademik']): ?>
-                                        <span class="badge bg-light text-secondary border me-1" style="font-size: 0.68rem;"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?= siklus_badge($doc['siklus']) ?>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold text-dark mb-0.5">
-                                        <?= htmlspecialchars($doc['nama_bidang'] ?: 'Umum / Lainnya') ?>
-                                    </div>
-                                    <?php if (!empty($doc['nama_sub_bidang'])): ?>
-                                        <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem;">
-                                            <i class="fas fa-turn-up fa-rotate-90 text-secondary opacity-50"></i>
-                                            <span class="badge bg-light text-secondary border px-1.5 py-0.5"><?= htmlspecialchars($doc['nama_sub_bidang']) ?></span>
-                                        </div>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php 
-                                    $files = $doc['files'] ?? [];
-                                    $filesCount = count($files);
-                                    $gdriveLinks = parse_external_links($doc['external_link'] ?? '');
-                                    $linkCount = count($gdriveLinks);
-                                    $hasFiles = ($filesCount > 0 || (!empty($doc['file_path']) && $doc['jenis_upload'] !== 'link'));
-                                    $hasLinks = ($linkCount > 0);
-                                    $isKombinasi = ($doc['jenis_upload'] === 'kombinasi') || ($hasFiles && $hasLinks);
-                                    ?>
-                                    <div class="d-flex flex-column align-items-start gap-1.5">
-                                        <?php if ($isKombinasi): ?>
-                                            <span class="badge rounded-pill px-2 py-0.5" style="background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE; font-size: 0.67rem; font-weight: 600;">
-                                                <i class="fas fa-layer-group me-1"></i>Kombinasi
-                                            </span>
-                                        <?php endif; ?>
-
-                                        <?php if ($hasFiles): ?>
-                                            <?php if ($filesCount > 1): ?>
-                                                <div class="dropdown d-inline-block">
-                                                    <button class="btn btn-xs btn-outline-danger dropdown-toggle rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
-                                                            type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.72rem;">
-                                                        <i class="fas fa-folder-open text-danger"></i> <?= $filesCount ?> Berkas
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 320px; max-width: 440px; width: max-content; font-size: 0.78rem;">
-                                                        <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS DOKUMEN:</li>
-                                                        <?php foreach ($files as $fItem): 
-                                                            $fLimit = isset($fItem['is_page_limited']) && (int)$fItem['is_page_limited'] === 0 ? 0 : (int)($fItem['public_page_limit'] ?? 1);
-                                                            $fCanDl = (int)($fItem['can_download_public'] ?? 0);
-                                                        ?>
-                                                            <li class="mb-1.5">
-                                                                <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
-                                                                        data-bs-toggle="modal" 
-                                                                        data-bs-target="#pdfPreviewModal" 
-                                                                        data-pdf-url="<?= base_url($fItem['file_path']) ?>" 
-                                                                        data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
-                                                                        data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
-                                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
-                                                                        data-public-limit="<?= $fLimit ?>"
-                                                                        data-can-download="<?= $fCanDl ?>"
-                                                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
-                                                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                                                                        <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($fItem['file_name']) ?>">
-                                                                            <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
-                                                                            <span class="text-truncate" style="max-width: 220px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
-                                                                        </span>
-                                                                        <span class="badge bg-light text-muted border flex-shrink-0" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
-                                                                    </div>
-                                                                    <?php if (!empty($fItem['narasi'])): ?>
-                                                                        <div class="small text-muted bg-light p-1.5 rounded border border-light-subtle" style="font-size: 0.72rem; line-height: 1.45; white-space: pre-line; word-break: break-word;">
-                                                                            <i class="fas fa-quote-left text-primary opacity-50 me-1"></i><?= htmlspecialchars($fItem['narasi']) ?>
-                                                                        </div>
-                                                                    <?php endif; ?>
-                                                                </button>
-                                                            </li>
-                                                        <?php endforeach; ?>
-                                                    </ul>
-                                                </div>
-                                            <?php else: ?>
-                                                <?php 
-                                                $singleFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => '']; 
-                                                $sLimit = isset($singleFile['is_page_limited']) && (int)$singleFile['is_page_limited'] === 0 ? 0 : (int)($singleFile['public_page_limit'] ?? $doc['public_page_limit'] ?? 1);
-                                                $sCanDl = (int)($singleFile['can_download_public'] ?? $doc['can_download_public'] ?? 0);
-                                                ?>
-                                                <div class="d-inline-flex flex-column align-items-start gap-1">
-                                                    <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#pdfPreviewModal" 
-                                                            data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
-                                                            data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>" 
-                                                            data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>" 
-                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>" 
-                                                            data-public-limit="<?= $sLimit ?>" 
-                                                            data-can-download="<?= $sCanDl ?>" 
-                                                            data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
-                                                            style="font-size: 0.72rem;">
-                                                        <i class="fas fa-file-pdf"></i> PDF
-                                                    </button>
-                                                    <?php if (!empty($singleFile['narasi'])): ?>
-                                                        <div class="text-muted fst-italic text-truncate" style="max-width: 180px; font-size: 0.68rem;" title="<?= htmlspecialchars($singleFile['narasi']) ?>">
-                                                            <i class="fas fa-comment-dots text-primary me-0.5"></i> <?= htmlspecialchars($singleFile['narasi']) ?>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-
-                                        <?php if ($hasLinks): ?>
-                                            <?php if ($linkCount > 1): ?>
-                                                <div class="dropdown d-inline-block">
-                                                    <button class="btn btn-xs btn-outline-primary dropdown-toggle rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold" 
-                                                            type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.72rem;">
-                                                        <i class="fab fa-google-drive text-primary"></i> <?= $linkCount ?> Link GDrive
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 320px; max-width: 440px; width: max-content; font-size: 0.78rem;">
-                                                        <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH TAUTAN GDRIVE:</li>
-                                                        <?php foreach ($gdriveLinks as $lIdx => $linkObj): 
-                                                            $gUrl = $linkObj['url'];
-                                                            $gNarasi = $linkObj['narasi'];
-                                                        ?>
-                                                            <li class="mb-1.5">
-                                                                <a href="<?= htmlspecialchars($gUrl) ?>" target="_blank" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light">
-                                                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                                                                        <span class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
-                                                                            <i class="fab fa-google-drive"></i>
-                                                                            <span>Tautan GDrive #<?= $lIdx + 1 ?></span>
-                                                                        </span>
-                                                                         <i class="fas fa-arrow-up-right-from-square text-muted" style="font-size: 0.68rem;"></i>
-                                                                    </div>
-                                                                    <?php if (!empty($gNarasi)): ?>
-                                                                        <div class="small text-muted bg-light p-1.5 rounded border border-light-subtle" style="font-size: 0.72rem; line-height: 1.45; white-space: pre-line; word-break: break-word;">
-                                                                            <i class="fas fa-quote-left text-primary opacity-50 me-1"></i><?= htmlspecialchars($gNarasi) ?>
-                                                                        </div>
-                                                                    <?php endif; ?>
-                                                                </a>
-                                                            </li>
-                                                        <?php endforeach; ?>
-                                                    </ul>
-                                                </div>
-                                            <?php elseif ($linkCount === 1): 
-                                                $singleLink = $gdriveLinks[0];
-                                            ?>
-                                                <div class="d-inline-flex flex-column align-items-start gap-1">
-                                                    <a href="<?= htmlspecialchars($singleLink['url']) ?>" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs" style="font-size: 0.72rem;">
-                                                        <i class="fab fa-google-drive"></i> GDrive
-                                                    </a>
-                                                    <?php if (!empty($singleLink['narasi'])): ?>
-                                                        <div class="text-muted fst-italic text-truncate" style="max-width: 180px; font-size: 0.68rem;" title="<?= htmlspecialchars($singleLink['narasi']) ?>">
-                                                            <i class="fas fa-comment-dots text-primary me-0.5"></i> <?= htmlspecialchars($singleLink['narasi']) ?>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-
-                                        <?php if (!$hasFiles && !$hasLinks): ?>
-                                            <span class="text-muted small">-</span>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column align-items-start gap-1">
-                                        <?= render_review_status_badge($status, $doc['tahap_review'] ?? null) ?>
-
-                                        <?php if (in_array($status, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])): 
-                                            $isGpmRev = ($status === 'revisi_gpm');
-                                            $noteText = $isGpmRev ? ($doc['gpm_catatan'] ?: $doc['catatan_review']) : ($doc['catatan_review'] ?: $doc['gpm_catatan']);
-                                            $reviewerName = $isGpmRev ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
-                                            $revDate = !empty($doc['gpm_reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['gpm_reviewed_at'])) : (!empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : '');
-                                        ?>
-                                            <div class="d-flex flex-wrap gap-1 mt-0.5">
-                                                <?php if (!empty($noteText)): ?>
-                                                    <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs btn-prodi-note" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#prodiViewNoteModal"
-                                                            data-id="<?= $doc['id'] ?>"
-                                                            data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
-                                                            data-notes="<?= htmlspecialchars($noteText ?? '', ENT_QUOTES) ?>"
-                                                            data-reviewer="<?= htmlspecialchars($reviewerName, ENT_QUOTES) ?>"
-                                                            data-date="<?= $revDate ?>"
-                                                            data-status="<?= $status ?>"
-                                                            data-edit-url="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>"
-                                                            style="font-size: 0.7rem;">
-                                                        <i class="fas fa-comment-dots"></i> Catatan <?= $isGpmRev ? 'GPM' : 'LPM' ?>
-                                                    </button>
-                                                <?php endif; ?>
-                                                <a href="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>" class="btn btn-xs btn-danger text-white rounded-pill px-2.5 py-0.5 d-inline-flex align-items-center gap-1 shadow-2xs text-decoration-none" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-wrench"></i> Perbaiki
-                                                </a>
-                                            </div>
-                                        <?php elseif (!empty($doc['gpm_catatan'])): ?>
-                                            <div class="p-1.5 rounded text-start mt-0.5" style="background: #FEF3C7; border: 1px solid #FCD34D; max-width: 230px;">
-                                                <div class="fw-bold text-warning-emphasis d-flex align-items-center gap-1" style="font-size: 0.68rem;">
-                                                    <i class="fas fa-shield-halved text-warning"></i> Catatan GPM:
-                                                </div>
-                                                <div class="text-truncate text-secondary" style="font-size: 0.68rem;" title="<?= htmlspecialchars($doc['gpm_catatan']) ?>">
-                                                    <?= htmlspecialchars($doc['gpm_catatan']) ?>
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
-
-                                        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5 btn-review-history d-inline-flex align-items-center gap-1 mt-0.5 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>" style="font-size: 0.68rem;">
-                                            <i class="fas fa-history text-secondary"></i> Riwayat Review
-                                        </button>
-                                    </div>
-                                </td>
-                                <td class="text-center text-nowrap" style="width: 130px;">
-                                    <div class="d-inline-flex align-items-center justify-content-center gap-1.5">
-                                        <!-- Aksi 1: Lihat Rincian Dokumen -->
-                                        <button type="button" 
-                                                class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" 
-                                                style="width: 36px; height: 36px;" 
-                                                title="Lihat Rincian Dokumen" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#docModal<?= $doc['id'] ?>">
-                                            <i class="fas fa-eye text-primary" style="font-size: 0.85rem;"></i>
-                                        </button>
-
-                                        <!-- Aksi 2: Ubah / Edit Dokumen -->
-                                        <a href="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>" 
-                                           class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" 
-                                           style="width: 36px; height: 36px;" 
-                                           title="Edit / Ubah Dokumen">
-                                            <i class="fas fa-pen text-warning" style="font-size: 0.85rem;"></i>
-                                        </a>
-
-                                        <!-- Aksi 3: Hapus Dokumen -->
-                                        <form action="<?= base_url('prodi/dokumen/delete/' . $doc['id']) ?>" method="POST" class="d-inline m-0 p-0">
-                                            <button type="button" 
-                                                    class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs btn-delete-confirm" 
-                                                    data-name="<?= htmlspecialchars($doc['nama_dokumen']) ?>" 
-                                                    style="width: 36px; height: 36px;" 
-                                                    title="Hapus Dokumen">
-                                                <i class="fas fa-trash-can text-danger" style="font-size: 0.85rem;"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <!-- Modal Detail Dokumen (Rincian Dokumen Mutu) -->
-                            <div class="modal fade" id="docModal<?= $doc['id'] ?>" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-lg">
-                                    <div class="modal-content rounded-4 border-0 shadow">
-                                        <div class="modal-header border-0 px-4 py-3 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #0A192F 0%, #1E3E62 100%) !important;">
-                                            <div class="d-flex align-items-center gap-2.5">
-                                                <div class="p-2 rounded-3 bg-white bg-opacity-10 text-info d-flex align-items-center justify-content-center">
-                                                    <i class="fas fa-file-lines fa-lg"></i>
-                                                </div>
-                                                <div>
-                                                    <h6 class="modal-title fw-bold text-white mb-0" style="font-size: 1.05rem; letter-spacing: -0.2px;">Rincian Dokumen Mutu</h6>
-                                                    <div class="text-white-50 small" style="font-size: 0.72rem;">Detail metadata dan berkas lampiran</div>
-                                                </div>
-                                            </div>
-                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body p-4 text-start">
-                                            <div class="row g-3 mb-3">
-                                                <div class="col-md-6">
-                                                    <span class="small text-muted d-block mb-1">Unit Pemilik / Sasaran:</span>
-                                                    <div>
-                                                        <span class="badge rounded-pill px-2.5 py-1.5 fw-semibold" style="background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0;">
-                                                            <i class="fas fa-graduation-cap me-1"></i> <?= htmlspecialchars($doc['jenjang'] ?? 'S1') ?> <?= htmlspecialchars($doc['nama_prodi'] ?? $_SESSION['user']['nama_prodi'] ?? 'Program Studi') ?>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <span class="small text-muted d-block mb-1">Siklus PPEPP & Status:</span>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <?= siklus_badge($doc['siklus']) ?>
-                                                        <?= review_status_badge($status) ?>
-                                                    </div>
-                                                </div>
-                                                <div class="col-12">
-                                                    <span class="small text-muted d-block mb-1">Nama Dokumen:</span>
-                                                    <h5 class="fw-bold text-dark-blue mb-0"><?= htmlspecialchars($doc['nama_dokumen']) ?></h5>
-                                                    <?php if (!empty($doc['nomor_dokumen'])): ?>
-                                                        <div class="small text-muted mt-1"><i class="fas fa-hashtag me-1"></i> Nomor: <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <span class="small text-muted d-block mb-1">Bidang & Standar:</span>
-                                                    <div class="fw-semibold text-dark"><?= htmlspecialchars($doc['nama_bidang'] ?? 'Standar Mutu') ?></div>
-                                                    <?php if (!empty($doc['nama_sub_bidang'])): ?>
-                                                        <div class="small text-muted"><?= htmlspecialchars($doc['nama_sub_bidang']) ?></div>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <span class="small text-muted d-block mb-1">Tahun Akademik:</span>
-                                                    <div class="fw-semibold text-dark">TA <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Catatan Evaluasi Reviewer (GPM / LPM) -->
-                                            <?php 
-                                            $isGpm = ($status === 'revisi_gpm');
-                                            if ($isGpm) {
-                                                $evalReviewer = 'Gugus Penjaminan Mutu (GPM) Fakultas';
-                                                $evalDate = $doc['gpm_reviewed_at'] ?? $doc['reviewed_at'] ?? null;
-                                                $noteToShow = trim($doc['gpm_catatan'] ?: ($doc['catatan_review'] ?? ''));
-                                            } else {
-                                                $evalReviewer = 'Pusat Penjaminan Mutu LPM';
-                                                $evalDate = $doc['lpm_reviewed_at'] ?? $doc['reviewed_at'] ?? ($doc['gpm_reviewed_at'] ?? null);
-                                                $noteToShow = trim($doc['lpm_catatan'] ?: ($doc['catatan_review'] ?: ($doc['gpm_catatan'] ?? '')));
-                                            }
-                                            ?>
-                                            <?php if (!empty($noteToShow)): ?>
-                                                <div class="p-3 rounded-3 mb-3 border <?= in_array($status, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'border-danger' : 'border-primary' ?>" style="background: <?= in_array($status, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#FFF1F2' : '#EFF6FF' ?>; border-left: 4px solid <?= in_array($status, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#DC2626' : '#2563EB' ?> !important;">
-                                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                                        <span class="small fw-bold text-uppercase <?= in_array($status, ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'text-danger' : 'text-primary' ?>" style="font-size: 0.74rem;">
-                                                            <i class="fas fa-comment-dots me-1"></i> Catatan Evaluasi Reviewer <?= $isGpm ? 'GPM Fakultas' : 'LPM' ?>:
-                                                        </span>
-                                                        <span class="badge <?= $isGpm ? 'bg-purple text-purple border-purple' : 'bg-primary text-primary border-primary' ?> bg-opacity-10 border border-opacity-25 px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
-                                                            <i class="fas <?= $isGpm ? 'fa-shield-halved' : 'fa-award' ?> me-0.5"></i> <?= htmlspecialchars($evalReviewer) ?>
-                                                        </span>
-                                                    </div>
-                                                    <div class="small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($noteToShow) ?></div>
-                                                    <div class="small text-muted d-flex align-items-center gap-2 pt-1 border-top" style="font-size: 0.72rem; border-color: rgba(0,0,0,0.06) !important;">
-                                                        <span><i class="fas <?= $isGpm ? 'fa-shield-halved text-purple' : 'fa-building-columns text-primary' ?> me-1"></i><?= htmlspecialchars($evalReviewer) ?></span>
-                                                        <?php if (!empty($evalDate)): ?>
-                                                            <span>&bull;</span>
-                                                            <span><i class="far fa-clock text-secondary me-1"></i><?= date('d M Y, H:i', strtotime($evalDate)) ?> WIB</span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            <?php endif; ?>
-
-                                            <!-- Berkas Lampiran Fisik -->
-                                            <?php if (!empty($files)): ?>
-                                                <div class="p-3.5 p-md-4 rounded-4 bg-light border mb-4">
-                                                    <div class="d-flex align-items-center justify-content-between pb-2.5 mb-3 border-bottom border-light-subtle">
-                                                        <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-2" style="font-size: 0.78rem; letter-spacing: 0.5px;">
-                                                            <i class="fas fa-paperclip text-primary"></i> Berkas Lampiran Dokumen (<?= count($files) ?>):
-                                                        </span>
-                                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2.5 py-1 rounded-pill fw-medium" style="font-size: 0.7rem;">PDF Interaktif</span>
-                                                    </div>
-                                                    <div class="d-flex flex-column gap-3">
-                                                        <?php foreach ($files as $f): 
-                                                            $subBadgesHtml = render_sub_standar_badges($f['sub_bidang_ids'] ?? null);
-                                                        ?>
-                                                            <div class="card border rounded-3 p-3.5 bg-white shadow-2xs">
-                                                                <div class="d-flex flex-column flex-sm-row sm-align-items-center justify-content-between gap-3">
-                                                                    <div class="d-flex align-items-start gap-3 me-sm-2">
-                                                                        <div class="p-2.5 rounded-3 bg-danger bg-opacity-10 text-danger flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
-                                                                            <i class="fas fa-file-pdf fa-xl"></i>
-                                                                        </div>
-                                                                        <div class="min-w-0">
-                                                                            <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; line-height: 1.35; word-break: break-word;">
-                                                                                <?= htmlspecialchars($f['file_name']) ?>
-                                                                            </div>
-                                                                            <?php if (!empty($f['file_size'])): ?>
-                                                                                <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
-                                                                                    <?= htmlspecialchars($f['file_size']) ?>
-                                                                                </span>
-                                                                            <?php endif; ?>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-sm-center align-self-end">
-                                                                        <button type="button" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs fw-semibold"
-                                                                                data-bs-toggle="modal" 
-                                                                                data-bs-target="#pdfPreviewModal" 
-                                                                                data-pdf-url="<?= base_url($f['file_path']) ?>" 
-                                                                                data-doc-title="<?= htmlspecialchars($f['file_name']) ?>" 
-                                                                                data-doc-narasi="<?= htmlspecialchars($f['narasi'] ?? '') ?>" 
-                                                                                data-doc-standar="<?= htmlspecialchars($subBadgesHtml) ?>" 
-                                                                                data-public-limit="0" 
-                                                                                data-can-download="1"
-                                                                                data-can-access="1"
-                                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
-                                                                                style="font-size: 0.78rem;">
-                                                                            <i class="fas fa-eye"></i> Pratinjau
-                                                                        </button>
-                                                                        <a href="<?= base_url($f['file_path']) ?>" target="_blank" download class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold" style="font-size: 0.78rem;">
-                                                                            <i class="fas fa-download"></i> Unduh
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-
-                                                                <?php if (!empty($subBadgesHtml)): ?>
-                                                                    <div class="mt-2.5 pt-1 d-flex flex-wrap align-items-center gap-1.5">
-                                                                        <?= $subBadgesHtml ?>
-                                                                    </div>
-                                                                <?php endif; ?>
-
-                                                                <?php if (!empty($f['narasi'])): ?>
-                                                                    <div class="mt-2.5 p-2.5 px-3 rounded-3 bg-light-subtle border border-light-subtle text-secondary small d-flex align-items-start gap-2" style="font-size: 0.8rem; line-height: 1.5;">
-                                                                        <i class="fas fa-comment-dots text-primary mt-0.5 opacity-75 flex-shrink-0"></i>
-                                                                        <span class="text-break"><?= htmlspecialchars($f['narasi']) ?></span>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        <?php endforeach; ?>
-                                                    </div>
-                                                </div>
-                                            <?php endif; ?>
-
-                                            <!-- Tautan Google Drive Eksternal -->
-                                            <?php if (!empty($gdriveLinks)): ?>
-                                                <div class="p-3.5 p-md-4 rounded-4 bg-light border mb-4">
-                                                    <div class="d-flex align-items-center justify-content-between pb-2.5 mb-3 border-bottom border-light-subtle">
-                                                        <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-2" style="font-size: 0.78rem; letter-spacing: 0.5px;">
-                                                            <i class="fab fa-google-drive text-success"></i> Tautan Google Drive Eksternal (<?= count($gdriveLinks) ?>):
-                                                        </span>
-                                                        <span class="badge bg-success bg-opacity-10 text-success border px-2.5 py-1 rounded-pill fw-medium" style="font-size: 0.7rem;">Cloud Storage</span>
-                                                    </div>
-                                                    <div class="d-flex flex-column gap-3">
-                                                        <?php foreach ($gdriveLinks as $lIdx => $l): 
-                                                            $subBadgesHtml = render_sub_standar_badges($l['sub_bidang_ids'] ?? null);
-                                                        ?>
-                                                            <div class="card border rounded-3 p-3.5 bg-white shadow-2xs">
-                                                                <div class="d-flex flex-column flex-sm-row sm-align-items-center justify-content-between gap-3">
-                                                                    <div class="d-flex align-items-start gap-3 me-sm-2">
-                                                                        <div class="p-2.5 rounded-3 bg-success bg-opacity-10 text-success flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
-                                                                            <i class="fab fa-google-drive fa-xl"></i>
-                                                                        </div>
-                                                                        <div class="min-w-0">
-                                                                            <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; line-height: 1.35; word-break: break-word;">
-                                                                                <?= htmlspecialchars($l['narasi'] ?: ('Tautan Google Drive #' . ($lIdx + 1))) ?>
-                                                                            </div>
-                                                                            <div class="text-muted text-break small" style="font-size: 0.76rem;">
-                                                                                <i class="fas fa-link text-secondary me-1 opacity-75"></i><?= htmlspecialchars($l['url']) ?>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-sm-center align-self-end">
-                                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold"
-                                                                                data-bs-toggle="modal" 
-                                                                                data-bs-target="#pdfPreviewModal" 
-                                                                                data-is-link="1" 
-                                                                                data-link-url="<?= htmlspecialchars($l['url']) ?>" 
-                                                                                data-doc-title="<?= htmlspecialchars($l['narasi'] ?: $doc['nama_dokumen']) ?>" 
-                                                                                data-doc-narasi="<?= htmlspecialchars($l['narasi'] ?? '') ?>" 
-                                                                                data-doc-standar="<?= htmlspecialchars($subBadgesHtml) ?>" 
-                                                                                data-can-access="1" 
-                                                                                data-can-download="1"
-                                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
-                                                                                style="font-size: 0.78rem;">
-                                                                            <i class="fas fa-eye"></i> Pratinjau
-                                                                        </button>
-                                                                        <a href="<?= htmlspecialchars($l['url']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold" style="font-size: 0.78rem;">
-                                                                            <i class="fas fa-arrow-up-right-from-square"></i> Buka Link
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-
-                                                                <?php if (!empty($subBadgesHtml)): ?>
-                                                                    <div class="mt-2.5 pt-1 d-flex flex-wrap align-items-center gap-1.5">
-                                                                        <?= $subBadgesHtml ?>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        <?php endforeach; ?>
-                                                    </div>
-                                                </div>
-                                            <?php endif; ?>
-
-                                            <!-- Jika tidak ada berkas maupun tautan sama sekali -->
-                                            <?php if (empty($files) && empty($gdriveLinks)): ?>
-                                                <div class="p-3 rounded-3 bg-light border text-center text-muted small mb-3">
-                                                    <i class="fas fa-circle-info text-secondary me-1"></i> Belum ada berkas fisik maupun tautan yang dilampirkan pada dokumen ini.
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="modal-footer border-top pt-3">
-                                            <button type="button" class="btn btn-light rounded-pill px-3.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                                            <a href="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs">
-                                                <i class="fas fa-pen me-1.5"></i> Edit Dokumen
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
 
         <!-- Pagination Footer -->
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 pt-3 border-top mt-3">
-            <div id="tableInfo" class="small text-muted"></div>
-            <div id="tablePagination"></div>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 pt-3 border-top mt-3" id="prodiPaginationWrapper">
+            <div id="tableInfo" class="small text-muted">
+                Menampilkan <span class="fw-bold text-dark" id="prodiStartNum"><?= $startNum ?></span> - <span class="fw-bold text-dark" id="prodiEndNum"><?= $endNum ?></span> dari <span class="fw-bold text-dark" id="prodiTotalFiltered"><?= number_format($totalFiltered, 0, ',', '.') ?></span> Dokumen
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2.5">
+                <div class="d-flex align-items-center gap-1.5 small text-muted">
+                    <span style="font-size: 0.78rem;">Ukuran Halaman:</span>
+                    <select class="form-select form-select-sm" id="prodiPerPageSelect" style="width: 95px; font-size: 0.78rem;" onchange="changeProdiPerPage(this.value)">
+                        <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
+                        <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
+                        <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
+                        <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100 data</option>
+                    </select>
+                </div>
+                <nav aria-label="Prodi Pagination">
+                    <ul class="pagination pagination-sm mb-0" id="prodiPaginationNav">
+                        <!-- Populated dynamically -->
+                    </ul>
+                </nav>
+            </div>
         </div>
 
     </div>
@@ -791,6 +319,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
 <script>
 let isReviewStatusFilterActive = false;
+let currentProdiPage = <?= (int)$page ?>;
+let currentProdiPerPage = <?= (int)$perPage ?>;
+let prodiTotalPages = <?= (int)$totalPages ?>;
+let currentProdiSiklus = '';
+let currentReviewStatus = '';
+let prodiSearchTimer = null;
 
 function toggleFilterReviewStatus(status) {
     isReviewStatusFilterActive = !isReviewStatusFilterActive;
@@ -803,45 +337,169 @@ function toggleFilterReviewStatus(status) {
             btn.classList.add('btn-danger', 'text-white');
         }
         if (txt) txt.textContent = 'Menampilkan Dokumen Revisi Saja (Reset Filter)';
-        if (typeof window.setProdiPpeppReviewStatusFilter === 'function') {
-            window.setProdiPpeppReviewStatusFilter(status);
-        }
+        currentReviewStatus = 'revisi';
     } else {
         if (btn) {
             btn.classList.remove('btn-danger', 'text-white');
             btn.classList.add('btn-outline-danger');
         }
         if (txt) txt.textContent = 'Filter Tabel: Dokumen Revisi Saja';
-        if (typeof window.setProdiPpeppReviewStatusFilter === 'function') {
-            window.setProdiPpeppReviewStatusFilter('');
-        }
+        currentReviewStatus = '';
     }
+    fetchProdiData(1);
 }
-
-// Collapse icon toggle
-document.addEventListener('DOMContentLoaded', function() {
-    const hubCollapse = document.getElementById('collapseProdiRevisiHub');
-    const iconCollapse = document.getElementById('iconCollapseHub');
-    if (hubCollapse && iconCollapse) {
-        hubCollapse.addEventListener('hidden.bs.collapse', function() {
-            iconCollapse.className = 'fas fa-chevron-down';
-        });
-        hubCollapse.addEventListener('shown.bs.collapse', function() {
-            iconCollapse.className = 'fas fa-chevron-up';
-        });
-    }
-});
 
 function selectProdiSiklusTab(btn, siklus) {
     const tabButtons = document.querySelectorAll('#prodiPpeppTabs .nav-link');
     tabButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    if (typeof window.setProdiPpeppCycleFilter === 'function') {
-        window.setProdiPpeppCycleFilter(siklus);
-    }
+    currentProdiSiklus = siklus || '';
+    fetchProdiData(1);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+function changeProdiPerPage(val) {
+    currentProdiPerPage = parseInt(val, 10) || 50;
+    fetchProdiData(1);
+}
+
+function onProdiFilterChange() {
+    clearTimeout(prodiSearchTimer);
+    prodiSearchTimer = setTimeout(() => {
+        fetchProdiData(1);
+    }, 280);
+}
+
+function fetchProdiData(page) {
+    currentProdiPage = page || 1;
+    const searchVal = document.getElementById('tableSearchInput') ? document.getElementById('tableSearchInput').value.trim() : '';
+    const bidangVal = document.getElementById('tableBidangFilter') ? document.getElementById('tableBidangFilter').value : '';
+    const tahunVal = document.getElementById('tableTahunFilter') ? document.getElementById('tableTahunFilter').value.trim() : '';
+
+    const tbody = document.getElementById('prodiDocTableBody');
+    if (tbody) tbody.style.opacity = '0.5';
+
+    const params = new URLSearchParams({
+        ajax: '1',
+        page: currentProdiPage,
+        per_page: currentProdiPerPage,
+        siklus: currentProdiSiklus,
+        bidang_id: bidangVal,
+        tahun_akademik: tahunVal,
+        status_review: currentReviewStatus,
+        search: searchVal
+    });
+
+    fetch('<?= base_url("prodi/dokumen") ?>?' + params.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (tbody) {
+            tbody.style.opacity = '1';
+            tbody.innerHTML = data.html || '';
+        }
+
+        prodiTotalPages = data.total_pages || 1;
+        currentProdiPage = data.page || 1;
+
+        const startEl = document.getElementById('prodiStartNum');
+        const endEl = document.getElementById('prodiEndNum');
+        const totalEl = document.getElementById('prodiTotalFiltered');
+
+        if (startEl) startEl.textContent = data.start_num || 0;
+        if (endEl) endEl.textContent = data.end_num || 0;
+        if (totalEl) totalEl.textContent = Number(data.total || 0).toLocaleString('id-ID');
+
+        renderProdiPagination(prodiTotalPages, currentProdiPage);
+    })
+    .catch(err => {
+        console.error("Error fetching prodi data:", err);
+        if (tbody) tbody.style.opacity = '1';
+    });
+}
+
+function renderProdiPagination(totalPages, currentPage) {
+    const nav = document.getElementById('prodiPaginationNav');
+    if (!nav) return;
+    nav.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    // Prev Button
+    const prevLi = document.createElement('li');
+    prevLi.className = 'page-item ' + (currentPage <= 1 ? 'disabled' : '');
+    prevLi.innerHTML = '<a class="page-link" href="javascript:void(0)" aria-label="Previous"><i class="fas fa-chevron-left" style="font-size: 0.72rem;"></i></a>';
+    if (currentPage > 1) {
+        prevLi.querySelector('a').onclick = () => fetchProdiData(currentPage - 1);
+    }
+    nav.appendChild(prevLi);
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+        const firstLi = document.createElement('li');
+        firstLi.className = 'page-item';
+        firstLi.innerHTML = '<a class="page-link" href="javascript:void(0)">1</a>';
+        firstLi.querySelector('a').onclick = () => fetchProdiData(1);
+        nav.appendChild(firstLi);
+
+        if (startPage > 2) {
+            const dotsLi = document.createElement('li');
+            dotsLi.className = 'page-item disabled';
+            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            nav.appendChild(dotsLi);
+        }
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+        const li = document.createElement('li');
+        li.className = 'page-item ' + (p === currentPage ? 'active' : '');
+        li.innerHTML = '<a class="page-link" href="javascript:void(0)">' + p + '</a>';
+        if (p !== currentPage) {
+            li.querySelector('a').onclick = ((pageNum) => () => fetchProdiData(pageNum))(p);
+        }
+        nav.appendChild(li);
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const dotsLi = document.createElement('li');
+            dotsLi.className = 'page-item disabled';
+            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            nav.appendChild(dotsLi);
+        }
+        const lastLi = document.createElement('li');
+        lastLi.className = 'page-item';
+        lastLi.innerHTML = '<a class="page-link" href="javascript:void(0)">' + totalPages + '</a>';
+        lastLi.querySelector('a').onclick = () => fetchProdiData(totalPages);
+        nav.appendChild(lastLi);
+    }
+
+    // Next Button
+    const nextLi = document.createElement('li');
+    nextLi.className = 'page-item ' + (currentPage >= totalPages ? 'disabled' : '');
+    nextLi.innerHTML = '<a class="page-link" href="javascript:void(0)" aria-label="Next"><i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i></a>';
+    if (currentPage < totalPages) {
+        nextLi.querySelector('a').onclick = () => fetchProdiData(currentPage + 1);
+    }
+    nav.appendChild(nextLi);
+}
+
+// Attach event listeners to input search & dropdowns
+document.addEventListener('DOMContentLoaded', function() {
+    renderProdiPagination(prodiTotalPages, currentProdiPage);
+
+    const sIn = document.getElementById('tableSearchInput');
+    if (sIn) sIn.addEventListener('keyup', onProdiFilterChange);
+
+    const bFilter = document.getElementById('tableBidangFilter');
+    if (bFilter) bFilter.addEventListener('change', onProdiFilterChange);
+
+    const tFilter = document.getElementById('tableTahunFilter');
+    if (tFilter) tFilter.addEventListener('change', onProdiFilterChange);
+
+    // Modal Catatan Perbaikan
     const prodiNoteModal = document.getElementById('prodiViewNoteModal');
     if (prodiNoteModal) {
         prodiNoteModal.addEventListener('show.bs.modal', function (event) {

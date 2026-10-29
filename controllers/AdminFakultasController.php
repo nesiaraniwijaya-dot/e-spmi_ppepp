@@ -106,10 +106,83 @@ class AdminFakultasController extends Controller {
      * Daftar Dokumen PPEPP Tingkat Fakultas
      */
     public function documents(): void {
-        $siklus = trim($_GET['siklus'] ?? '');
-        $bidangId = !empty($_GET['bidang_id']) ? (int)$_GET['bidang_id'] : null;
-        $search = trim($_GET['q'] ?? '');
+        $siklus       = trim($_GET['siklus'] ?? '');
+        $bidangId     = !empty($_GET['bidang_id']) ? (int)$_GET['bidang_id'] : null;
+        $tahunFilter  = trim($_GET['tahun_akademik'] ?? '');
+        $statusFilter = trim($_GET['status_review'] ?? '');
+        $search       = trim($_GET['q'] ?? $_GET['search'] ?? '');
+        $perPage      = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
+        if (!in_array($perPage, [10, 20, 50, 100])) {
+            $perPage = 50;
+        }
+        $page = max(1, (int)($_GET['page'] ?? 1));
 
+        // Fetch all bidang for filter
+        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active=1 ORDER BY id ASC")->fetchAll();
+
+        // Per-cycle counts (excluding draft) via SQL
+        $cycleCounts = [
+            'semua'        => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND deleted_at IS NULL")->fetchColumn(),
+            'penetapan'    => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='penetapan' AND deleted_at IS NULL")->fetchColumn(),
+            'pelaksanaan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='pelaksanaan' AND deleted_at IS NULL")->fetchColumn(),
+            'evaluasi'     => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='evaluasi' AND deleted_at IS NULL")->fetchColumn(),
+            'pengendalian' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='pengendalian' AND deleted_at IS NULL")->fetchColumn(),
+            'peningkatan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='peningkatan' AND deleted_at IS NULL")->fetchColumn(),
+        ];
+
+        // Hitung total banner revisi, antrean & draf
+        $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
+        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm') AND deleted_at IS NULL")->fetchColumn();
+        $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
+
+        // Base WHERE
+        $where = ["d.fakultas_id = ?", "d.level = 'fakultas'", "d.deleted_at IS NULL", "d.status_review != 'draft'"];
+        $params = [$this->fakultasId];
+
+        if (!empty($siklus) && in_array(strtolower($siklus), ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = strtolower($siklus);
+        }
+
+        if (!empty($bidangId)) {
+            $where[] = "d.bidang_id = ?";
+            $params[] = $bidangId;
+        }
+
+        if (!empty($tahunFilter)) {
+            $where[] = "d.tahun_akademik = ?";
+            $params[] = $tahunFilter;
+        }
+
+        if (!empty($statusFilter)) {
+            if ($statusFilter === 'revisi') {
+                $where[] = "d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+            } else {
+                $where[] = "d.status_review = ?";
+                $params[] = $statusFilter;
+            }
+        }
+
+        if (!empty($search)) {
+            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ?)";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+        }
+
+        $whereClause = implode(" AND ", $where);
+
+        // Count total
+        $stmtCount = $this->db->prepare("SELECT COUNT(*) FROM ppepp_documents d WHERE {$whereClause}");
+        $stmtCount->execute($params);
+        $totalFiltered = (int)$stmtCount->fetchColumn();
+
+        $totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        // Fetch paginated
         $sql = "
             SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang,
                    u.name as creator_name, rev.name as reviewer_name
@@ -118,79 +191,57 @@ class AdminFakultasController extends Controller {
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id 
             LEFT JOIN users rev ON d.reviewed_by = rev.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            WHERE {$whereClause}
+            ORDER BY d.created_at DESC
+            LIMIT {$perPage} OFFSET {$offset}
         ";
-        $params = [$this->fakultasId];
-
-        if (!empty($siklus) && in_array($siklus, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
-            $sql .= " AND d.siklus = ?";
-            $params[] = $siklus;
-        }
-
-        if (!empty($bidangId)) {
-            $sql .= " AND d.bidang_id = ?";
-            $params[] = $bidangId;
-        }
-
-        if (!empty($search)) {
-            $sql .= " AND (d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ?)";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-        }
-
-        $sql .= " ORDER BY d.created_at DESC";
-
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $documents = $stmt->fetchAll();
         $this->attachFilesToDocs($documents);
 
-        // Fetch all bidang for filter
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active=1 ORDER BY id ASC")->fetchAll();
+        $startNum = $totalFiltered > 0 ? $offset + 1 : 0;
+        $endNum = min($offset + $perPage, $totalFiltered);
 
-        // Per-cycle counts (excluding draft)
-        $cycleCounts = [
-            'semua' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND deleted_at IS NULL")->fetchColumn(),
-            'penetapan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND siklus='penetapan' AND deleted_at IS NULL")->fetchColumn(),
-            'pelaksanaan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND siklus='pelaksanaan' AND deleted_at IS NULL")->fetchColumn(),
-            'evaluasi' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND siklus='evaluasi' AND deleted_at IS NULL")->fetchColumn(),
-            'pengendalian' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND siklus='pengendalian' AND deleted_at IS NULL")->fetchColumn(),
-            'peningkatan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND siklus='peningkatan' AND deleted_at IS NULL")->fetchColumn(),
-        ];
+        if (!empty($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')) {
+            header('Content-Type: application/json; charset=utf-8');
+            ob_start();
+            $no = $startNum;
+            require ROOT_PATH . '/views/admin_fakultas/documents_rows.php';
+            $rowsHtml = ob_get_clean();
 
-        // Total dokumen perlu perbaikan & daftar dokumen perlu perbaikan
-        $stmtPerlu = $this->db->prepare("
-            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang,
-                   rev.name as reviewer_name, rev.role as reviewer_role
-            FROM ppepp_documents d 
-            LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
-            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
-            LEFT JOIN users rev ON d.reviewed_by = rev.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND d.deleted_at IS NULL
-            ORDER BY d.reviewed_at DESC, d.updated_at DESC
-        ");
-        $stmtPerlu->execute([$this->fakultasId]);
-        $perluPerbaikanDocs = $stmtPerlu->fetchAll();
-        $this->attachFilesToDocs($perluPerbaikanDocs);
-        $perluPerbaikanCount = count($perluPerbaikanDocs);
-
-        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm') AND deleted_at IS NULL")->fetchColumn();
-
-        $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
+            echo json_encode([
+                'success'      => true,
+                'html'         => $rowsHtml,
+                'page'         => $page,
+                'per_page'     => $perPage,
+                'total'        => $totalFiltered,
+                'total_pages'  => $totalPages,
+                'start_num'    => $startNum,
+                'end_num'      => $endNum
+            ]);
+            exit;
+        }
 
         $this->render('admin_fakultas/documents', [
-            'pageTitle' => 'Dokumen PPEPP ' . $this->fakultas['nama_fakultas'],
-            'fakultas' => $this->fakultas,
-            'documents' => $documents,
-            'bidangList' => $bidangList,
-            'cycleCounts' => $cycleCounts,
-            'perluPerbaikanDocs' => $perluPerbaikanDocs,
+            'pageTitle'           => 'Dokumen PPEPP ' . $this->fakultas['nama_fakultas'],
+            'fakultas'            => $this->fakultas,
+            'documents'           => $documents,
+            'bidangList'          => $bidangList,
+            'cycleCounts'         => $cycleCounts,
+            'perluPerbaikanDocs'  => [],
             'perluPerbaikanCount' => $perluPerbaikanCount,
-            'sudahDiperbaikiCount' => $sudahDiperbaikiCount,
-            'draftCount' => $draftCount,
-            'activeSiklus' => $siklus,
-            'activeBidang' => $bidangId,
-            'search' => $search
+            'sudahDiperbaikiCount'=> $sudahDiperbaikiCount,
+            'draftCount'          => $draftCount,
+            'activeSiklus'        => $siklus,
+            'activeBidang'        => $bidangId,
+            'search'              => $search,
+            'page'                => $page,
+            'perPage'             => $perPage,
+            'totalFiltered'       => $totalFiltered,
+            'totalPages'          => $totalPages,
+            'startNum'            => $startNum,
+            'endNum'              => $endNum
         ]);
     }
 

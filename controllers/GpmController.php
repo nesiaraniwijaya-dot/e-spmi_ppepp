@@ -249,10 +249,92 @@ class GpmController extends Controller {
         $statusFilter = trim($_GET['status_review'] ?? '');
         $tahunFilter  = trim($_GET['tahun_akademik'] ?? '');
         $search       = trim($_GET['search'] ?? '');
+        $perPage      = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
+        if (!in_array($perPage, [10, 20, 50, 100])) {
+            $perPage = 50;
+        }
+        $page = max(1, (int)($_GET['page'] ?? 1));
 
         $prodiIds = array_column($this->prodisList, 'id');
         $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
 
+        // Base WHERE
+        $where = ["d.deleted_at IS NULL"];
+        $params = [];
+
+        // Filter Kepemilikan Dokumen (Unit Scope)
+        if ($unitFilter === 'fakultas') {
+            $where[] = "(d.fakultas_id = ? AND (d.level = 'fakultas' OR d.prodi_id IS NULL))";
+            $params[] = $this->fakultasId;
+        } elseif (is_numeric($unitFilter) && in_array((int)$unitFilter, $prodiIds)) {
+            $where[] = "d.prodi_id = ?";
+            $params[] = (int)$unitFilter;
+        } else {
+            // All: Tingkat Fakultas ATAU Seluruh Prodi di bawah fakultas ini
+            $where[] = "(d.fakultas_id = ? OR d.prodi_id IN ({$prodiIdPlaceholder}))";
+            $params[] = $this->fakultasId;
+        }
+
+        if ($siklusFilter && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = strtolower($siklusFilter);
+        }
+
+        if ($bidangFilter) {
+            $where[] = "d.bidang_id = ?";
+            $params[] = $bidangFilter;
+        }
+
+        if ($statusFilter) {
+            if ($statusFilter === 'menunggu_review_gpm' || $statusFilter === 'belum_direview') {
+                $where[] = "d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview')";
+            } elseif ($statusFilter === 'revisi_gpm') {
+                $where[] = "d.status_review = 'revisi_gpm'";
+            } elseif ($statusFilter === 'menunggu_review_lpm') {
+                $where[] = "d.status_review = 'menunggu_review_lpm'";
+            } elseif ($statusFilter === 'revisi_lpm') {
+                $where[] = "d.status_review IN ('revisi_lpm', 'perlu_perbaikan')";
+            } elseif ($statusFilter === 'perlu_perbaikan') {
+                $where[] = "d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+            } elseif (in_array($statusFilter, ['draft', 'sesuai', 'sudah_diperbaiki'])) {
+                $where[] = "d.status_review = ?";
+                $params[] = $statusFilter;
+            }
+        }
+
+        if ($tahunFilter) {
+            $where[] = "d.tahun_akademik = ?";
+            $params[] = $tahunFilter;
+        }
+
+        if ($search) {
+            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR b.nama_bidang LIKE ? OR p.nama_prodi LIKE ?)";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+        }
+
+        $whereClause = implode(" AND ", $where);
+
+        // Count total
+        $stmtCount = $this->db->prepare("
+            SELECT COUNT(*)
+            FROM ppepp_documents d
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            WHERE {$whereClause}
+        ");
+        $stmtCount->execute($params);
+        $totalFiltered = (int)$stmtCount->fetchColumn();
+
+        $totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        // Ambil data per halaman
         $sql = "
             SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang, f.nama_fakultas, u.name as reviewer_name,
                    up.name as uploader_name
@@ -263,76 +345,43 @@ class GpmController extends Controller {
             LEFT JOIN fakultas f ON d.fakultas_id = f.id
             LEFT JOIN users u ON d.reviewed_by = u.id
             LEFT JOIN users up ON d.user_id = up.id
-            WHERE d.deleted_at IS NULL
+            WHERE {$whereClause}
+            ORDER BY 
+                CASE 
+                    WHEN d.status_review IN ('sudah_diperbaiki', 'menunggu_review_gpm', 'belum_direview') THEN 0
+                    WHEN d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') THEN 1
+                    WHEN d.status_review = 'menunggu_review_lpm' THEN 2
+                    ELSE 3
+                END, d.updated_at DESC
+            LIMIT {$perPage} OFFSET {$offset}
         ";
-        $params = [];
-
-        // Filter Kepemilikan Dokumen (Unit Scope)
-        if ($unitFilter === 'fakultas') {
-            $sql .= " AND (d.fakultas_id = ? AND (d.level = 'fakultas' OR d.prodi_id IS NULL))";
-            $params[] = $this->fakultasId;
-        } elseif (is_numeric($unitFilter) && in_array((int)$unitFilter, $prodiIds)) {
-            $sql .= " AND d.prodi_id = ?";
-            $params[] = (int)$unitFilter;
-        } else {
-            // All: Tingkat Fakultas ATAU Seluruh Prodi di bawah fakultas ini
-            $sql .= " AND (d.fakultas_id = ? OR d.prodi_id IN ({$prodiIdPlaceholder}))";
-            $params[] = $this->fakultasId;
-        }
-
-        if ($siklusFilter && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
-            $sql .= " AND d.siklus = ?";
-            $params[] = $siklusFilter;
-        }
-
-        if ($bidangFilter) {
-            $sql .= " AND d.bidang_id = ?";
-            $params[] = $bidangFilter;
-        }
-
-        if ($statusFilter) {
-            if ($statusFilter === 'menunggu_review_gpm' || $statusFilter === 'belum_direview') {
-                $sql .= " AND d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview')";
-            } elseif ($statusFilter === 'revisi_gpm') {
-                $sql .= " AND d.status_review = 'revisi_gpm'";
-            } elseif ($statusFilter === 'menunggu_review_lpm') {
-                $sql .= " AND d.status_review = 'menunggu_review_lpm'";
-            } elseif ($statusFilter === 'revisi_lpm') {
-                $sql .= " AND d.status_review IN ('revisi_lpm', 'perlu_perbaikan')";
-            } elseif ($statusFilter === 'perlu_perbaikan') {
-                $sql .= " AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
-            } elseif (in_array($statusFilter, ['draft', 'sesuai', 'sudah_diperbaiki'])) {
-                $sql .= " AND d.status_review = ?";
-                $params[] = $statusFilter;
-            }
-        }
-
-        if ($tahunFilter) {
-            $sql .= " AND d.tahun_akademik = ?";
-            $params[] = $tahunFilter;
-        }
-
-        if ($search) {
-            $sql .= " AND (d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR b.nama_bidang LIKE ? OR p.nama_prodi LIKE ?)";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-        }
-
-        // Urutan: Prioritaskan dokumen yang Menunggu Review GPM terlebih dahulu, lalu revisi, lalu menunggu LPM, lalu lainnya
-        $sql .= " ORDER BY 
-            CASE 
-                WHEN d.status_review IN ('sudah_diperbaiki', 'menunggu_review_gpm', 'belum_direview') THEN 0
-                WHEN d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') THEN 1
-                WHEN d.status_review = 'menunggu_review_lpm' THEN 2
-                ELSE 3
-            END, d.updated_at DESC";
-
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $documents = $stmt->fetchAll();
         $this->attachFilesToDocs($documents);
+
+        $startNum = $totalFiltered > 0 ? $offset + 1 : 0;
+        $endNum = min($offset + $perPage, $totalFiltered);
+
+        if (!empty($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')) {
+            header('Content-Type: application/json; charset=utf-8');
+            ob_start();
+            $no = $startNum;
+            require ROOT_PATH . '/views/gpm/documents_rows.php';
+            $rowsHtml = ob_get_clean();
+
+            echo json_encode([
+                'success'      => true,
+                'html'         => $rowsHtml,
+                'page'         => $page,
+                'per_page'     => $perPage,
+                'total'        => $totalFiltered,
+                'total_pages'  => $totalPages,
+                'start_num'    => $startNum,
+                'end_num'      => $endNum
+            ]);
+            exit;
+        }
 
         // Ambil daftar bidang untuk dropdown filter
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
@@ -365,7 +414,13 @@ class GpmController extends Controller {
             'gpmRevisiLpmCount'      => $gpmRevisiLpmCount,
             'gpmPerluCount'          => $gpmPerluCount,
             'gpmSesuaiCount'         => $gpmSesuaiCount,
-            'gpmDraftCount'          => $gpmDraftCount
+            'gpmDraftCount'          => $gpmDraftCount,
+            'page'                   => $page,
+            'perPage'                => $perPage,
+            'totalFiltered'          => $totalFiltered,
+            'totalPages'             => $totalPages,
+            'startNum'               => $startNum,
+            'endNum'                 => $endNum
         ]);
     }
 

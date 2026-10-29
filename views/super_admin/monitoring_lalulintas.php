@@ -191,127 +191,15 @@ function formatDurationHours(?int $hours): string {
                                 <th style="width: 120px;" class="text-center">Aksi LPM</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php if (empty($documents)): ?>
-                                <tr>
-                                    <td colspan="7" class="text-center py-5 text-muted">
-                                        <div class="mb-2"><i class="fas fa-inbox fa-3x text-light-subtle"></i></div>
-                                        Tidak ada berkas dokumen yang sesuai dengan filter pencarian.
-                                    </td>
-                                </tr>
-                            <?php else: ?>
-                                <?php $no = 1; foreach ($documents as $d): 
-                                    $isFakultas = ($d['level'] === 'fakultas');
-                                    $unitName = $isFakultas ? $d['nama_fakultas'] : ($d['nama_prodi'] . ' (' . ($d['jenjang'] ?? 'S1') . ')');
-                                    $reviewUrl = $isFakultas ? base_url('admin/review-fakultas/' . $d['fakultas_id']) : base_url('admin/review-prodi/' . $d['prodi_id']);
-                                    
-                                    // Turnaround calculation
-                                    $hasGpmReview = !empty($d['gpm_reviewed_at']);
-                                    $gpmDuration = $hasGpmReview ? formatDurationHours((int)$d['diff_hours_upload_to_gpm']) : null;
-                                ?>
-                                    <tr>
-                                        <td class="text-center text-muted fw-semibold"><?= $no++ ?></td>
-                                        <td>
-                                            <div class="fw-bold text-dark-blue mb-1" style="font-size: 0.9rem;">
-                                                <a href="<?= $reviewUrl ?>" class="text-dark-blue text-decoration-none hover-primary">
-                                                    <?= htmlspecialchars($d['nama_dokumen']) ?>
-                                                </a>
-                                            </div>
-                                            <div class="d-flex align-items-center gap-1.5 flex-wrap">
-                                                <span class="badge bg-light text-muted border" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-tag me-1"></i><?= htmlspecialchars($d['nama_bidang'] ?? 'Umum') ?>
-                                                </span>
-                                                <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.7rem;">
-                                                    TA <?= htmlspecialchars($d['tahun_akademik']) ?>
-                                                </span>
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size: 0.7rem;">
-                                                    <?= strtoupper($d['siklus']) ?>
-                                                </span>
-                                                <?php if (!empty($d['files_count'])): ?>
-                                                    <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">
-                                                        <i class="fas fa-paperclip text-muted me-1"></i><?= $d['files_count'] ?> Berkas
-                                                    </span>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark mb-0.5" style="font-size: 0.85rem;">
-                                                <?= htmlspecialchars($unitName) ?>
-                                            </div>
-                                            <div class="text-muted small" style="font-size: 0.73rem;">
-                                                <i class="fas fa-user-pen me-1"></i><?= htmlspecialchars($d['uploader_name'] ?? 'Uploader') ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark small">
-                                                <?= date('d M Y', strtotime($d['created_at'])) ?>
-                                            </div>
-                                            <div class="text-muted" style="font-size: 0.72rem;">
-                                                <?= date('H:i', strtotime($d['created_at'])) ?> WIB
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <?php if ($hasGpmReview): ?>
-                                                <div class="d-flex align-items-center gap-1.5 mb-1">
-                                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.72rem;">
-                                                        <i class="fas fa-check me-1"></i> Direview
-                                                    </span>
-                                                    <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;" title="Durasi sejak diunggah hingga direview GPM">
-                                                        <i class="fas fa-stopwatch text-primary me-1"></i> <?= $gpmDuration ?>
-                                                    </span>
-                                                </div>
-                                                <div class="small fw-semibold text-dark" style="font-size: 0.78rem;">
-                                                    <i class="fas fa-user-check text-success me-1"></i><?= htmlspecialchars($d['gpm_reviewer_name'] ?? 'Reviewer GPM') ?>
-                                                </div>
-                                                <div class="text-muted" style="font-size: 0.72rem;">
-                                                    <?= date('d M Y H:i', strtotime($d['gpm_reviewed_at'])) ?>
-                                                </div>
-                                                <?php if (!empty($d['gpm_catatan'])): ?>
-                                                    <div class="text-muted fst-italic mt-1 p-1.5 rounded bg-light border" style="font-size: 0.72rem; max-width: 250px;">
-                                                        "<?= htmlspecialchars(mb_strimwidth($d['gpm_catatan'], 0, 70, '...')) ?>"
-                                                    </div>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                <?php $pDays = (int)$d['pending_days_gpm']; ?>
-                                                <div class="mb-1">
-                                                    <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25 rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
-                                                        <i class="fas fa-hourglass-half text-warning me-1"></i> Menunggu GPM
-                                                    </span>
-                                                </div>
-                                                <div class="fw-semibold <?= $pDays > 3 ? 'text-danger' : 'text-muted' ?>" style="font-size: 0.75rem;">
-                                                    <i class="fas fa-clock me-1"></i> Tertahan <?= $pDays ?> hari di antrean
-                                                </div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            $lpmBadge = match($d['status_review']) {
-                                                'menunggu_review_gpm' => '<span class="badge bg-light text-muted border px-2 py-1">Belum Sampai</span>',
-                                                'menunggu_review_lpm' => '<span class="badge bg-purple bg-opacity-10 text-purple border px-2.5 py-1 rounded-pill fw-bold" style="color:#7E22CE;">Antrean LPM</span>',
-                                                'revisi_lpm', 'perlu_perbaikan' => '<span class="badge bg-danger bg-opacity-10 text-danger border px-2.5 py-1 rounded-pill fw-bold">Revisi Balik</span>',
-                                                'sesuai' => '<span class="badge bg-success bg-opacity-10 text-success border px-2.5 py-1 rounded-pill fw-bold">Disetujui Sah</span>',
-                                                default => '<span class="badge bg-light text-dark border px-2 py-1">' . htmlspecialchars(ucwords(str_replace('_', ' ', $d['status_review']))) . '</span>',
-                                            };
-                                            echo $lpmBadge;
-                                            ?>
-                                            <?php if (!empty($d['lpm_reviewed_at'])): ?>
-                                                <div class="text-muted mt-1" style="font-size: 0.72rem;">
-                                                    <?= date('d M Y', strtotime($d['lpm_reviewed_at'])) ?>
-                                                </div>
-                                                <div class="small fw-semibold text-dark" style="font-size: 0.75rem;">
-                                                    <?= htmlspecialchars($d['lpm_reviewer_name'] ?? 'Admin LPM') ?>
-                                                </div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center">
-                                            <a href="<?= $reviewUrl ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs" style="font-size: 0.78rem;">
-                                                <i class="fas fa-magnifying-glass"></i>
-                                                <span>Review</span>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
+                        <tbody id="tableBody">
+                            <?php 
+                            $dataForRows = [
+                                'documents' => $documents,
+                                'startNum'  => $startNum ?? 1
+                            ];
+                            extract($dataForRows);
+                            include ROOT_PATH . '/views/super_admin/monitoring_lalulintas_rows.php'; 
+                            ?>
                         </tbody>
                     </table>
                 </div>
@@ -407,10 +295,133 @@ function formatDurationHours(?int $hours): string {
                             </div>
                         <?php endif; ?>
                     </div>
+                
+                <!-- Pagination Footer Bar -->
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 pt-3 border-top mt-3" id="paginationContainer">
+                    <div class="text-muted small">
+                        Menampilkan <span class="fw-semibold text-dark" id="infoStart"><?= $startNum ?? 0 ?></span> - 
+                        <span class="fw-semibold text-dark" id="infoEnd"><?= $endNum ?? 0 ?></span> dari 
+                        <span class="fw-semibold text-dark" id="infoTotal"><?= $totalFiltered ?? count($documents) ?></span> berkas dokumen
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;" onchange="changePerPage(this.value)">
+                            <option value="25" <?= ($perPage ?? 50) == 25 ? 'selected' : '' ?>>25 per hal</option>
+                            <option value="50" <?= ($perPage ?? 50) == 50 ? 'selected' : '' ?>>50 per hal</option>
+                            <option value="100" <?= ($perPage ?? 50) == 100 ? 'selected' : '' ?>>100 per hal</option>
+                        </select>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm mb-0" id="paginationUl">
+                                <?php 
+                                $tp = $totalPages ?? 1;
+                                $cp = $page ?? 1;
+                                ?>
+                                <li class="page-item <?= ($cp <= 1) ? 'disabled' : '' ?>">
+                                    <button class="page-link" onclick="goToPage(<?= $cp - 1 ?>)" aria-label="Previous">
+                                        <i class="fas fa-chevron-left small"></i>
+                                    </button>
+                                </li>
+                                <?php for($p = max(1, $cp - 2); $p <= min($tp, $cp + 2); $p++): ?>
+                                    <li class="page-item <?= ($p == $cp) ? 'active' : '' ?>">
+                                        <button class="page-link" onclick="goToPage(<?= $p ?>)"><?= $p ?></button>
+                                    </li>
+                                <?php endfor; ?>
+                                <li class="page-item <?= ($cp >= $tp) ? 'disabled' : '' ?>">
+                                    <button class="page-link" onclick="goToPage(<?= $cp + 1 ?>)" aria-label="Next">
+                                        <i class="fas fa-chevron-right small"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
+</div>
             </div>
         </div>
     </div>
 </div>
+<script>
+let currentPage = <?= $page ?? 1 ?>;
+let currentPerPage = <?= $perPage ?? 50 ?>;
+let totalPages = <?= $totalPages ?? 1 ?>;
+
+function goToPage(p) {
+    if (p < 1 || (totalPages > 0 && p > totalPages) || p === currentPage) return;
+    currentPage = p;
+    fetchLaluLintasData();
+}
+
+function changePerPage(limit) {
+    currentPerPage = parseInt(limit);
+    currentPage = 1;
+    fetchLaluLintasData();
+}
+
+function fetchLaluLintasData() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('ajax', '1');
+    url.searchParams.set('page', currentPage);
+    url.searchParams.set('per_page', currentPerPage);
+
+    const tbody = document.getElementById('tableBody');
+    if (tbody) {
+        tbody.style.opacity = '0.5';
+    }
+
+    fetch(url.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (tbody) {
+            tbody.innerHTML = data.html;
+            tbody.style.opacity = '1';
+        }
+        currentPage = data.page;
+        totalPages = data.totalPages;
+
+        const infoStart = document.getElementById('infoStart');
+        const infoEnd = document.getElementById('infoEnd');
+        const infoTotal = document.getElementById('infoTotal');
+        if (infoStart) infoStart.textContent = data.startNum;
+        if (infoEnd) infoEnd.textContent = data.endNum;
+        if (infoTotal) infoTotal.textContent = data.totalFiltered;
+
+        renderPaginationUl(data.page, data.totalPages);
+    })
+    .catch(err => {
+        console.error('Fetch error:', err);
+        if (tbody) tbody.style.opacity = '1';
+    });
+}
+
+function renderPaginationUl(cp, tp) {
+    const ul = document.getElementById('paginationUl');
+    if (!ul) return;
+    let html = '';
+    
+    html += `<li class="page-item ${cp <= 1 ? 'disabled' : ''}">
+        <button class="page-link" onclick="goToPage(${cp - 1})" aria-label="Previous">
+            <i class="fas fa-chevron-left small"></i>
+        </button>
+    </li>`;
+
+    const start = Math.max(1, cp - 2);
+    const end = Math.min(tp, cp + 2);
+    for (let p = start; p <= end; p++) {
+        html += `<li class="page-item ${p === cp ? 'active' : ''}">
+            <button class="page-link" onclick="goToPage(${p})">${p}</button>
+        </li>`;
+    }
+
+    html += `<li class="page-item ${cp >= tp ? 'disabled' : ''}">
+        <button class="page-link" onclick="goToPage(${cp + 1})" aria-label="Next">
+            <i class="fas fa-chevron-right small"></i>
+        </button>
+    </li>`;
+
+    ul.innerHTML = html;
+}
+</script>
+
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

@@ -135,6 +135,100 @@ class AdminProdiController extends Controller {
     public function documents(): void {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
+        // Parameter filter & paginasi
+        $siklusFilter  = strtolower(trim($_GET['siklus'] ?? ''));
+        $bidangFilter  = !empty($_GET['bidang_id']) ? (int)$_GET['bidang_id'] : 0;
+        $tahunFilter   = trim($_GET['tahun_akademik'] ?? '');
+        $statusFilter  = trim($_GET['status_review'] ?? '');
+        $search        = trim($_GET['search'] ?? '');
+        $perPage       = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
+        if (!in_array($perPage, [10, 20, 50, 100])) {
+            $perPage = 50;
+        }
+        $page = max(1, (int)($_GET['page'] ?? 1));
+
+        // Hitung count banner cepat
+        $perluCount = (int)$this->db->query("
+            SELECT COUNT(*) 
+            FROM ppepp_documents 
+            WHERE prodi_id = {$this->prodiId} 
+              AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') 
+              AND deleted_at IS NULL
+        ")->fetchColumn();
+
+        $sudahCount = (int)$this->db->query("
+            SELECT COUNT(*) 
+            FROM ppepp_documents 
+            WHERE prodi_id = {$this->prodiId} 
+              AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm') 
+              AND deleted_at IS NULL
+        ")->fetchColumn();
+
+        $draftCount = (int)$this->db->query("
+            SELECT COUNT(*) 
+            FROM ppepp_documents 
+            WHERE prodi_id = {$this->prodiId} 
+              AND status_review = 'draft' 
+              AND deleted_at IS NULL
+        ")->fetchColumn();
+
+        // Query filter dinamis
+        $where = ["d.prodi_id = ?", "d.deleted_at IS NULL", "d.status_review != 'draft'"];
+        $params = [$this->prodiId];
+
+        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = $siklusFilter;
+        }
+
+        if (!empty($bidangFilter)) {
+            $where[] = "d.bidang_id = ?";
+            $params[] = $bidangFilter;
+        }
+
+        if (!empty($tahunFilter)) {
+            $where[] = "d.tahun_akademik = ?";
+            $params[] = $tahunFilter;
+        }
+
+        if (!empty($statusFilter)) {
+            if ($statusFilter === 'revisi') {
+                $where[] = "d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+            } elseif ($statusFilter === 'antrean') {
+                $where[] = "d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm')";
+            } else {
+                $where[] = "d.status_review = ?";
+                $params[] = $statusFilter;
+            }
+        }
+
+        if (!empty($search)) {
+            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
+            $sParam = '%' . $search . '%';
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+        }
+
+        $whereClause = implode(" AND ", $where);
+
+        // Count total
+        $stmtCount = $this->db->prepare("
+            SELECT COUNT(*)
+            FROM ppepp_documents d
+            LEFT JOIN users u ON d.user_id = u.id
+            WHERE {$whereClause}
+        ");
+        $stmtCount->execute($params);
+        $totalFiltered = (int)$stmtCount->fetchColumn();
+
+        $totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        // Fetch paginated
         $stmt = $this->db->prepare("
             SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, u.name as uploader_name,
                    rev.name as reviewer_name, rev.role as reviewer_role
@@ -143,28 +237,57 @@ class AdminProdiController extends Controller {
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
-            WHERE d.prodi_id = ? AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            WHERE {$whereClause}
             ORDER BY d.created_at DESC
+            LIMIT {$perPage} OFFSET {$offset}
         ");
-        $stmt->execute([$this->prodiId]);
+        $stmt->execute($params);
         $documents = $stmt->fetchAll();
 
         $this->attachFilesToDocs($documents);
 
-        $perluPerbaikanDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
-        $sudahDiperbaikiDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm'])));
+        $startNum = $totalFiltered > 0 ? $offset + 1 : 0;
+        $endNum = min($offset + $perPage, $totalFiltered);
 
-        $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE prodi_id = {$this->prodiId} AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
+        if (!empty($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')) {
+            header('Content-Type: application/json; charset=utf-8');
+            ob_start();
+            $no = $startNum;
+            require ROOT_PATH . '/views/admin_prodi/documents_rows.php';
+            $rowsHtml = ob_get_clean();
+
+            echo json_encode([
+                'success'      => true,
+                'html'         => $rowsHtml,
+                'page'         => $page,
+                'per_page'     => $perPage,
+                'total'        => $totalFiltered,
+                'total_pages'  => $totalPages,
+                'start_num'    => $startNum,
+                'end_num'      => $endNum
+            ]);
+            exit;
+        }
 
         $this->render('admin_prodi/documents', [
-            'pageTitle' => 'Dokumen PPEPP ' . $this->prodi['nama_prodi'],
-            'prodi' => $this->prodi,
-            'bidangList' => $bidangList,
-            'documents' => $documents,
-            'perluPerbaikanDocs' => $perluPerbaikanDocs,
-            'sudahDiperbaikiDocs' => $sudahDiperbaikiDocs,
-            'perluCount' => count($perluPerbaikanDocs),
-            'draftCount' => $draftCount
+            'pageTitle'           => 'Dokumen PPEPP ' . $this->prodi['nama_prodi'],
+            'prodi'               => $this->prodi,
+            'bidangList'          => $bidangList,
+            'documents'           => $documents,
+            'perluCount'          => $perluCount,
+            'sudahCount'          => $sudahCount,
+            'draftCount'          => $draftCount,
+            'page'                => $page,
+            'perPage'             => $perPage,
+            'totalFiltered'       => $totalFiltered,
+            'totalPages'          => $totalPages,
+            'startNum'            => $startNum,
+            'endNum'              => $endNum,
+            'currentSiklus'       => $siklusFilter,
+            'currentBidang'       => $bidangFilter,
+            'currentTahun'        => $tahunFilter,
+            'currentStatus'       => $statusFilter,
+            'currentSearch'       => $search
         ]);
     }
 

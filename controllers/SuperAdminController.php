@@ -699,8 +699,151 @@ class SuperAdminController extends Controller {
      * Pusat Review Dokumen Mutu Terpusat (Admin LPM / Super Admin)
      */
     public function reviewHub(): void {
-        // Ambil semua dokumen PPEPP aktif yang telah disetujui GPM dan diteruskan ke LPM
-        $stmtDocs = $this->db->query("
+        // Parameter pagination & filter
+        $statusFilter  = trim($_GET['status'] ?? 'perlu_tindakan');
+        $fakultasId    = !empty($_GET['fakultas_id']) ? (int)$_GET['fakultas_id'] : 0;
+        $prodiId       = !empty($_GET['prodi_id']) ? (int)$_GET['prodi_id'] : 0;
+        $siklusFilter  = strtolower(trim($_GET['siklus'] ?? ''));
+        $bidangId      = !empty($_GET['bidang_id']) ? (int)$_GET['bidang_id'] : 0;
+        $tahunAkademik = trim($_GET['tahun_akademik'] ?? '');
+        $search        = trim($_GET['search'] ?? '');
+        $perPage       = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
+        if (!in_array($perPage, [10, 20, 50, 100])) {
+            $perPage = 50;
+        }
+        $page = max(1, (int)($_GET['page'] ?? 1));
+
+        // Kondisi dasar dokumen review LPM
+        $baseLpmCondition = "
+            d.deleted_at IS NULL 
+            AND d.status_review != 'draft'
+            AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
+            AND (
+                d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
+                OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
+                OR (d.level = 'universitas')
+            )
+        ";
+
+        // Hitung statistik review terpusat LPM secara kilat dengan 1 agregasi SQL
+        $stmtStats = $this->db->query("
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_lpm', 'belum_direview') THEN 1 ELSE 0 END) as menunggu_review_lpm,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_lpm', 'belum_direview') THEN 1 ELSE 0 END) as belum_direview,
+                SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' THEN 1 ELSE 0 END) as sudah_diperbaiki,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_lpm', 'belum_direview', 'sudah_diperbaiki') THEN 1 ELSE 0 END) as perlu_tindakan,
+                SUM(CASE WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm') THEN 1 ELSE 0 END) as perlu_perbaikan,
+                SUM(CASE WHEN d.status_review = 'sesuai' THEN 1 ELSE 0 END) as sesuai,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'penetapan' THEN 1 ELSE 0 END) as penetapan,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'pelaksanaan' THEN 1 ELSE 0 END) as pelaksanaan,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'evaluasi' THEN 1 ELSE 0 END) as evaluasi,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'pengendalian' THEN 1 ELSE 0 END) as pengendalian,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'peningkatan' THEN 1 ELSE 0 END) as peningkatan
+            FROM ppepp_documents d
+            WHERE {$baseLpmCondition}
+        ");
+        $rawStats = $stmtStats->fetch() ?: [];
+
+        $reviewStats = [
+            'total'               => (int)($rawStats['total'] ?? 0),
+            'perlu_tindakan'      => (int)($rawStats['perlu_tindakan'] ?? 0),
+            'menunggu_review_lpm' => (int)($rawStats['menunggu_review_lpm'] ?? 0),
+            'belum_direview'      => (int)($rawStats['belum_direview'] ?? 0),
+            'sudah_diperbaiki'    => (int)($rawStats['sudah_diperbaiki'] ?? 0),
+            'perlu_perbaikan'     => (int)($rawStats['perlu_perbaikan'] ?? 0),
+            'sesuai'              => (int)($rawStats['sesuai'] ?? 0)
+        ];
+
+        $cycleStats = [
+            'penetapan'    => (int)($rawStats['penetapan'] ?? 0),
+            'pelaksanaan'  => (int)($rawStats['pelaksanaan'] ?? 0),
+            'evaluasi'     => (int)($rawStats['evaluasi'] ?? 0),
+            'pengendalian' => (int)($rawStats['pengendalian'] ?? 0),
+            'peningkatan'  => (int)($rawStats['peningkatan'] ?? 0)
+        ];
+
+        // Bangun kondisi WHERE sesuai filter aktif
+        $where = [$baseLpmCondition];
+        $params = [];
+
+        // Filter status
+        if ($statusFilter === 'perlu_tindakan') {
+            $where[] = "(d.status_review IN ('menunggu_review_lpm', 'belum_direview') OR d.status_review = 'sudah_diperbaiki')";
+        } elseif ($statusFilter === 'menunggu_review_lpm' || $statusFilter === 'belum_direview') {
+            $where[] = "d.status_review IN ('menunggu_review_lpm', 'belum_direview')";
+        } elseif ($statusFilter === 'sudah_diperbaiki') {
+            $where[] = "d.status_review = 'sudah_diperbaiki'";
+        } elseif ($statusFilter === 'perlu_perbaikan') {
+            $where[] = "d.status_review IN ('perlu_perbaikan', 'revisi_lpm')";
+        } elseif ($statusFilter === 'sesuai') {
+            $where[] = "d.status_review = 'sesuai'";
+        } // jika 'all', tampilkan semua status
+
+        // Filter fakultas
+        if (!empty($fakultasId)) {
+            $where[] = "(d.fakultas_id = :fakultas1 OR p.fakultas_id = :fakultas2)";
+            $params[':fakultas1'] = $fakultasId;
+            $params[':fakultas2'] = $fakultasId;
+        }
+
+        // Filter prodi
+        if (!empty($prodiId)) {
+            $where[] = "d.prodi_id = :prodi";
+            $params[':prodi'] = $prodiId;
+        }
+
+        // Filter siklus
+        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = :siklus";
+            $params[':siklus'] = $siklusFilter;
+        }
+
+        // Filter bidang
+        if (!empty($bidangId)) {
+            $where[] = "d.bidang_id = :bidang";
+            $params[':bidang'] = $bidangId;
+        }
+
+        // Filter tahun akademik
+        if (!empty($tahunAkademik)) {
+            $where[] = "d.tahun_akademik = :tahun";
+            $params[':tahun'] = $tahunAkademik;
+        }
+
+        // Search query
+        if (!empty($search)) {
+            $where[] = "(d.nama_dokumen LIKE :s1 OR d.nomor_dokumen LIKE :s2 OR u.name LIKE :s3 OR p.nama_prodi LIKE :s4 OR f.nama_fakultas LIKE :s5)";
+            $searchParam = '%' . $search . '%';
+            $params[':s1'] = $searchParam;
+            $params[':s2'] = $searchParam;
+            $params[':s3'] = $searchParam;
+            $params[':s4'] = $searchParam;
+            $params[':s5'] = $searchParam;
+        }
+
+        $whereClause = implode(" AND ", $where);
+
+        // Hitung total data yang cocok
+        $stmtCount = $this->db->prepare("
+            SELECT COUNT(*)
+            FROM ppepp_documents d
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN fakultas f ON (f.id = COALESCE(d.fakultas_id, p.fakultas_id))
+            LEFT JOIN users u ON d.user_id = u.id
+            WHERE {$whereClause}
+        ");
+        $stmtCount->execute($params);
+        $totalFiltered = (int)$stmtCount->fetchColumn();
+
+        $totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        // Ambil data hanya sejumlah $perPage (default 50 dokumen)
+        $stmtDocs = $this->db->prepare("
             SELECT d.*, 
                    b.nama_bidang, b.kode_bidang, 
                    sb.nama_sub_bidang, sb.kode_sub_bidang, 
@@ -717,14 +860,7 @@ class SuperAdminController extends Controller {
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
             LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
-            WHERE d.deleted_at IS NULL 
-              AND d.status_review != 'draft'
-              AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
-              AND (
-                  d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
-                  OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
-                  OR (d.level = 'universitas')
-              )
+            WHERE {$whereClause}
             ORDER BY 
               CASE 
                 WHEN d.status_review = 'menunggu_review_lpm' THEN 1
@@ -734,47 +870,38 @@ class SuperAdminController extends Controller {
                 ELSE 5
               END ASC,
               d.updated_at DESC
+            LIMIT {$perPage} OFFSET {$offset}
         ");
+        $stmtDocs->execute($params);
         $documents = $stmtDocs->fetchAll();
+
+        // Lampirkan data file HANYA untuk dokumen di halaman aktif ini (cepat dan hemat memori)
         $this->attachFilesToDocs($documents);
 
-        // Hitung statistik review terpusat LPM
-        $reviewStats = [
-            'total' => count($documents),
-            'perlu_tindakan' => 0,
-            'menunggu_review_lpm' => 0,
-            'belum_direview' => 0,
-            'sudah_diperbaiki' => 0,
-            'perlu_perbaikan' => 0,
-            'sesuai' => 0
-        ];
+        $startNum = $totalFiltered > 0 ? $offset + 1 : 0;
+        $endNum = min($offset + $perPage, $totalFiltered);
 
-        $cycleStats = [
-            'penetapan' => 0,
-            'pelaksanaan' => 0,
-            'evaluasi' => 0,
-            'pengendalian' => 0,
-            'peningkatan' => 0
-        ];
+        // Jika request via AJAX, return JSON langsung
+        if (!empty($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')) {
+            header('Content-Type: application/json; charset=utf-8');
+            ob_start();
+            $rowNo = $startNum;
+            require ROOT_PATH . '/views/super_admin/review_hub_rows.php';
+            $rowsHtml = ob_get_clean();
 
-        foreach ($documents as $doc) {
-            $st = $doc['status_review'] ?? '';
-            if ($st === 'menunggu_review_lpm' || $st === 'belum_direview') {
-                $reviewStats['menunggu_review_lpm']++;
-                $reviewStats['belum_direview']++;
-                $reviewStats['perlu_tindakan']++;
-            } elseif ($st === 'sudah_diperbaiki') {
-                $reviewStats['sudah_diperbaiki']++;
-                $reviewStats['perlu_tindakan']++;
-            } elseif ($st === 'perlu_perbaikan' || $st === 'revisi_lpm') {
-                $reviewStats['perlu_perbaikan']++;
-            } elseif ($st === 'sesuai') {
-                $reviewStats['sesuai']++;
-            }
-            $cy = $doc['siklus'] ?? '';
-            if (isset($cycleStats[$cy])) {
-                $cycleStats[$cy]++;
-            }
+            echo json_encode([
+                'success'      => true,
+                'html'         => $rowsHtml,
+                'page'         => $page,
+                'per_page'     => $perPage,
+                'total'        => $totalFiltered,
+                'total_pages'  => $totalPages,
+                'start_num'    => $startNum,
+                'end_num'      => $endNum,
+                'review_stats' => $reviewStats,
+                'cycle_stats'  => $cycleStats
+            ]);
+            exit;
         }
 
         // Master lists untuk filter terpusat
@@ -828,32 +955,26 @@ class SuperAdminController extends Controller {
             $fakPerluReview = 0;
             $fakPerluRevisi = 0;
             $fakSesuai = 0;
+
             $processedCycles = [];
-
             foreach ($cycles as $c) {
-                $cycleId = (int)$c['id'];
+                $cId = (int)$c['id'];
 
-                $docs = [];
-                try {
-                    $stmtDocs = $this->db->prepare("
-                        SELECT id, nama_dokumen, nomor_dokumen, siklus, status_review, catatan_review, reviewed_by, reviewed_at,
-                               file_path, external_link, created_at, updated_at, tahap_review
-                        FROM ppepp_documents
-                        WHERE cycle_id = ? AND deleted_at IS NULL
-                        ORDER BY id ASC
-                    ");
-                    $stmtDocs->execute([$cycleId]);
-                    $docs = $stmtDocs->fetchAll();
-                } catch (\PDOException $e) {
-                    $docs = [];
-                }
+                $stmtStageDocs = $this->db->prepare("
+                    SELECT id, nama_dokumen, nomor_dokumen, siklus, status_review, tahap_review, file_path, external_link, jenis_upload, created_at
+                    FROM ppepp_documents
+                    WHERE cycle_id = ? AND deleted_at IS NULL AND status_review != 'draft'
+                    ORDER BY created_at ASC
+                ");
+                $stmtStageDocs->execute([$cId]);
+                $docs = $stmtStageDocs->fetchAll();
 
                 $stages = [
-                    'penetapan'    => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
-                    'pelaksanaan'  => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
-                    'evaluasi'     => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
-                    'pengendalian' => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
-                    'peningkatan'  => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                    'penetapan'    => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
+                    'pelaksanaan'  => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
+                    'evaluasi'     => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
+                    'pengendalian' => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
+                    'peningkatan'  => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
                 ];
 
                 $cycleDocsCount = count($docs);
@@ -906,15 +1027,28 @@ class SuperAdminController extends Controller {
         }
 
         $this->render('super_admin/review_hub', [
-            'pageTitle' => 'Pusat Review Dokumen Mutu PPEPP',
-            'documents' => $documents,
-            'reviewStats' => $reviewStats,
-            'cycleStats' => $cycleStats,
-            'fakultasList' => $fakultasList,
-            'prodiList' => $prodiList,
-            'bidangList' => $bidangList,
-            'prodiSummaries' => $prodiSummaries,
-            'fakultasSummaries' => $fakultasSummaries
+            'pageTitle'         => 'Pusat Review Dokumen Mutu PPEPP',
+            'documents'         => $documents,
+            'reviewStats'       => $reviewStats,
+            'cycleStats'        => $cycleStats,
+            'fakultasList'      => $fakultasList,
+            'prodiList'         => $prodiList,
+            'bidangList'        => $bidangList,
+            'prodiSummaries'    => $prodiSummaries,
+            'fakultasSummaries' => $fakultasSummaries,
+            'page'              => $page,
+            'perPage'           => $perPage,
+            'totalFiltered'     => $totalFiltered,
+            'totalPages'        => $totalPages,
+            'startNum'          => $startNum,
+            'endNum'            => $endNum,
+            'currentStatus'     => $statusFilter,
+            'currentFakultas'   => $fakultasId,
+            'currentProdi'      => $prodiId,
+            'currentSiklus'     => $siklusFilter,
+            'currentBidang'     => $bidangId,
+            'currentTahun'      => $tahunAkademik,
+            'currentSearch'     => $search
         ]);
     }
 
@@ -935,9 +1069,122 @@ class SuperAdminController extends Controller {
         if (!$prodi) {
             Auth::setFlash('danger', 'Program Studi tidak ditemukan.');
             redirect('admin/dashboard');
+            return;
         }
 
-        // Ambil semua dokumen aktif prodi ini yang telah disetujui GPM dan diteruskan ke LPM
+        // Filter & Pagination parameters
+        $siklusFilter  = strtolower(trim($_GET['siklus'] ?? ''));
+        $statusFilter  = trim($_GET['status_review'] ?? '');
+        $tahunFilter   = trim($_GET['tahun_akademik'] ?? '');
+        $search        = trim($_GET['search'] ?? '');
+        $perPage       = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
+        if (!in_array($perPage, [10, 20, 50, 100])) {
+            $perPage = 50;
+        }
+        $page = max(1, (int)($_GET['page'] ?? 1));
+
+        // Base condition untuk dokumen review LPM prodi
+        $baseProdiCondition = "
+            d.prodi_id = ? 
+            AND d.deleted_at IS NULL 
+            AND d.status_review != 'draft'
+            AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
+            AND (
+                d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
+                OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
+            )
+        ";
+
+        // Hitung statistik review & siklus prodi secara cepat via SQL
+        $stmtStats = $this->db->prepare("
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_lpm', 'belum_direview') THEN 1 ELSE 0 END) as belum_direview,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_lpm', 'belum_direview') THEN 1 ELSE 0 END) as menunggu_review_lpm,
+                SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' THEN 1 ELSE 0 END) as sudah_diperbaiki,
+                SUM(CASE WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm') THEN 1 ELSE 0 END) as perlu_perbaikan,
+                SUM(CASE WHEN d.status_review = 'sesuai' THEN 1 ELSE 0 END) as sesuai,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'penetapan' THEN 1 ELSE 0 END) as penetapan,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'pelaksanaan' THEN 1 ELSE 0 END) as pelaksanaan,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'evaluasi' THEN 1 ELSE 0 END) as evaluasi,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'pengendalian' THEN 1 ELSE 0 END) as pengendalian,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'peningkatan' THEN 1 ELSE 0 END) as peningkatan
+            FROM ppepp_documents d
+            WHERE {$baseProdiCondition}
+        ");
+        $stmtStats->execute([$id]);
+        $rawStats = $stmtStats->fetch() ?: [];
+
+        $reviewStats = [
+            'total'               => (int)($rawStats['total'] ?? 0),
+            'belum_direview'      => (int)($rawStats['belum_direview'] ?? 0),
+            'menunggu_review_lpm' => (int)($rawStats['menunggu_review_lpm'] ?? 0),
+            'perlu_perbaikan'     => (int)($rawStats['perlu_perbaikan'] ?? 0),
+            'sudah_diperbaiki'    => (int)($rawStats['sudah_diperbaiki'] ?? 0),
+            'sesuai'              => (int)($rawStats['sesuai'] ?? 0)
+        ];
+
+        $cycleStats = [
+            'penetapan'    => (int)($rawStats['penetapan'] ?? 0),
+            'pelaksanaan'  => (int)($rawStats['pelaksanaan'] ?? 0),
+            'evaluasi'     => (int)($rawStats['evaluasi'] ?? 0),
+            'pengendalian' => (int)($rawStats['pengendalian'] ?? 0),
+            'peningkatan'  => (int)($rawStats['peningkatan'] ?? 0)
+        ];
+
+        // Filter dinamis
+        $where = [$baseProdiCondition];
+        $params = [$id];
+
+        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = $siklusFilter;
+        }
+
+        if (!empty($statusFilter)) {
+            if ($statusFilter === 'belum_direview' || $statusFilter === 'menunggu_review_lpm') {
+                $where[] = "d.status_review IN ('menunggu_review_lpm', 'belum_direview')";
+            } elseif ($statusFilter === 'perlu_perbaikan') {
+                $where[] = "d.status_review IN ('perlu_perbaikan', 'revisi_lpm')";
+            } elseif ($statusFilter === 'sudah_diperbaiki') {
+                $where[] = "d.status_review = 'sudah_diperbaiki'";
+            } elseif ($statusFilter === 'sesuai') {
+                $where[] = "d.status_review = 'sesuai'";
+            }
+        }
+
+        if (!empty($tahunFilter)) {
+            $where[] = "d.tahun_akademik = ?";
+            $params[] = $tahunFilter;
+        }
+
+        if (!empty($search)) {
+            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
+            $sParam = '%' . $search . '%';
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+        }
+
+        $whereClause = implode(" AND ", $where);
+
+        // Count
+        $stmtCount = $this->db->prepare("
+            SELECT COUNT(*) 
+            FROM ppepp_documents d
+            LEFT JOIN users u ON d.user_id = u.id
+            WHERE {$whereClause}
+        ");
+        $stmtCount->execute($params);
+        $totalFiltered = (int)$stmtCount->fetchColumn();
+
+        $totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        // Ambil data dokumen per halaman (default 50)
         $stmtDocs = $this->db->prepare("
             SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, 
                    u.name as uploader_name, r.name as reviewer_name, gpm_u.name as gpm_reviewer_name
@@ -947,66 +1194,59 @@ class SuperAdminController extends Controller {
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
             LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
-            WHERE d.prodi_id = ? 
-              AND d.deleted_at IS NULL 
-              AND d.status_review != 'draft'
-              AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
-              AND (
-                  d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
-                  OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
-              )
+            WHERE {$whereClause}
             ORDER BY d.created_at DESC
+            LIMIT {$perPage} OFFSET {$offset}
         ");
-        $stmtDocs->execute([$id]);
+        $stmtDocs->execute($params);
         $documents = $stmtDocs->fetchAll();
 
         $this->attachFilesToDocs($documents);
 
-        // Hitung statistik review prodi ini
-        $reviewStats = [
-            'total' => count($documents),
-            'belum_direview' => 0,
-            'menunggu_review_lpm' => 0,
-            'perlu_perbaikan' => 0,
-            'sudah_diperbaiki' => 0,
-            'sesuai' => 0
-        ];
+        $startNum = $totalFiltered > 0 ? $offset + 1 : 0;
+        $endNum = min($offset + $perPage, $totalFiltered);
 
-        $cycleStats = [
-            'penetapan' => 0,
-            'pelaksanaan' => 0,
-            'evaluasi' => 0,
-            'pengendalian' => 0,
-            'peningkatan' => 0
-        ];
+        if (!empty($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')) {
+            header('Content-Type: application/json; charset=utf-8');
+            ob_start();
+            $no = $startNum;
+            require ROOT_PATH . '/views/super_admin/review_prodi_rows.php';
+            $rowsHtml = ob_get_clean();
 
-        foreach ($documents as $doc) {
-            $st = $doc['status_review'] ?? '';
-            if ($st === 'menunggu_review_lpm' || $st === 'belum_direview') {
-                $reviewStats['menunggu_review_lpm']++;
-                $reviewStats['belum_direview']++;
-            } elseif ($st === 'sudah_diperbaiki') {
-                $reviewStats['sudah_diperbaiki']++;
-            } elseif ($st === 'perlu_perbaikan' || $st === 'revisi_lpm') {
-                $reviewStats['perlu_perbaikan']++;
-            } elseif ($st === 'sesuai') {
-                $reviewStats['sesuai']++;
-            }
-            $cy = $doc['siklus'] ?? '';
-            if (isset($cycleStats[$cy])) {
-                $cycleStats[$cy]++;
-            }
+            echo json_encode([
+                'success'      => true,
+                'html'         => $rowsHtml,
+                'page'         => $page,
+                'per_page'     => $perPage,
+                'total'        => $totalFiltered,
+                'total_pages'  => $totalPages,
+                'start_num'    => $startNum,
+                'end_num'      => $endNum,
+                'review_stats' => $reviewStats,
+                'cycle_stats'  => $cycleStats
+            ]);
+            exit;
         }
 
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
         $this->render('super_admin/review_prodi', [
-            'pageTitle' => 'Review Dokumen: ' . $prodi['nama_prodi'],
-            'prodi' => $prodi,
-            'documents' => $documents,
-            'reviewStats' => $reviewStats,
-            'cycleStats' => $cycleStats,
-            'bidangList' => $bidangList
+            'pageTitle'     => 'Review Dokumen: ' . $prodi['nama_prodi'],
+            'prodi'         => $prodi,
+            'documents'     => $documents,
+            'reviewStats'   => $reviewStats,
+            'cycleStats'    => $cycleStats,
+            'bidangList'    => $bidangList,
+            'page'          => $page,
+            'perPage'       => $perPage,
+            'totalFiltered' => $totalFiltered,
+            'totalPages'    => $totalPages,
+            'startNum'      => $startNum,
+            'endNum'        => $endNum,
+            'currentSiklus' => $siklusFilter,
+            'currentStatus' => $statusFilter,
+            'currentTahun'  => $tahunFilter,
+            'currentSearch' => $search
         ]);
     }
 
@@ -1025,7 +1265,120 @@ class SuperAdminController extends Controller {
             return;
         }
 
-        // Ambil semua dokumen aktif fakultas ini yang telah disetujui GPM dan diteruskan ke LPM
+        // Filter & Pagination parameters
+        $siklusFilter  = strtolower(trim($_GET['siklus'] ?? ''));
+        $statusFilter  = trim($_GET['status_review'] ?? '');
+        $tahunFilter   = trim($_GET['tahun_akademik'] ?? '');
+        $search        = trim($_GET['search'] ?? '');
+        $perPage       = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
+        if (!in_array($perPage, [10, 20, 50, 100])) {
+            $perPage = 50;
+        }
+        $page = max(1, (int)($_GET['page'] ?? 1));
+
+        // Base condition untuk dokumen review LPM fakultas
+        $baseFakCondition = "
+            d.fakultas_id = ? 
+            AND d.level = 'fakultas' 
+            AND d.deleted_at IS NULL 
+            AND d.status_review != 'draft'
+            AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
+            AND (
+                d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
+                OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
+            )
+        ";
+
+        // Hitung statistik review & siklus fakultas secara cepat via SQL
+        $stmtStats = $this->db->prepare("
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_lpm', 'belum_direview') THEN 1 ELSE 0 END) as belum_direview,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_lpm', 'belum_direview') THEN 1 ELSE 0 END) as menunggu_review_lpm,
+                SUM(CASE WHEN d.status_review = 'sudah_diperbaiki' THEN 1 ELSE 0 END) as sudah_diperbaiki,
+                SUM(CASE WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm') THEN 1 ELSE 0 END) as perlu_perbaikan,
+                SUM(CASE WHEN d.status_review = 'sesuai' THEN 1 ELSE 0 END) as sesuai,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'penetapan' THEN 1 ELSE 0 END) as penetapan,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'pelaksanaan' THEN 1 ELSE 0 END) as pelaksanaan,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'evaluasi' THEN 1 ELSE 0 END) as evaluasi,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'pengendalian' THEN 1 ELSE 0 END) as pengendalian,
+                SUM(CASE WHEN LOWER(TRIM(d.siklus)) = 'peningkatan' THEN 1 ELSE 0 END) as peningkatan
+            FROM ppepp_documents d
+            WHERE {$baseFakCondition}
+        ");
+        $stmtStats->execute([$id]);
+        $rawStats = $stmtStats->fetch() ?: [];
+
+        $reviewStats = [
+            'total'               => (int)($rawStats['total'] ?? 0),
+            'belum_direview'      => (int)($rawStats['belum_direview'] ?? 0),
+            'menunggu_review_lpm' => (int)($rawStats['menunggu_review_lpm'] ?? 0),
+            'perlu_perbaikan'     => (int)($rawStats['perlu_perbaikan'] ?? 0),
+            'sudah_diperbaiki'    => (int)($rawStats['sudah_diperbaiki'] ?? 0),
+            'sesuai'              => (int)($rawStats['sesuai'] ?? 0)
+        ];
+
+        $cycleStats = [
+            'penetapan'    => (int)($rawStats['penetapan'] ?? 0),
+            'pelaksanaan'  => (int)($rawStats['pelaksanaan'] ?? 0),
+            'evaluasi'     => (int)($rawStats['evaluasi'] ?? 0),
+            'pengendalian' => (int)($rawStats['pengendalian'] ?? 0),
+            'peningkatan'  => (int)($rawStats['peningkatan'] ?? 0)
+        ];
+
+        // Filter dinamis
+        $where = [$baseFakCondition];
+        $params = [$id];
+
+        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = $siklusFilter;
+        }
+
+        if (!empty($statusFilter)) {
+            if ($statusFilter === 'belum_direview' || $statusFilter === 'menunggu_review_lpm') {
+                $where[] = "d.status_review IN ('menunggu_review_lpm', 'belum_direview')";
+            } elseif ($statusFilter === 'perlu_perbaikan') {
+                $where[] = "d.status_review IN ('perlu_perbaikan', 'revisi_lpm')";
+            } elseif ($statusFilter === 'sudah_diperbaiki') {
+                $where[] = "d.status_review = 'sudah_diperbaiki'";
+            } elseif ($statusFilter === 'sesuai') {
+                $where[] = "d.status_review = 'sesuai'";
+            }
+        }
+
+        if (!empty($tahunFilter)) {
+            $where[] = "d.tahun_akademik = ?";
+            $params[] = $tahunFilter;
+        }
+
+        if (!empty($search)) {
+            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
+            $sParam = '%' . $search . '%';
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+        }
+
+        $whereClause = implode(" AND ", $where);
+
+        // Count
+        $stmtCount = $this->db->prepare("
+            SELECT COUNT(*) 
+            FROM ppepp_documents d
+            LEFT JOIN users u ON d.user_id = u.id
+            WHERE {$whereClause}
+        ");
+        $stmtCount->execute($params);
+        $totalFiltered = (int)$stmtCount->fetchColumn();
+
+        $totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        // Fetch paginated
         $stmtDocs = $this->db->prepare("
             SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, 
                    u.name as uploader_name, r.name as reviewer_name, gpm_u.name as gpm_reviewer_name
@@ -1035,66 +1388,59 @@ class SuperAdminController extends Controller {
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users r ON d.reviewed_by = r.id
             LEFT JOIN users gpm_u ON d.gpm_reviewed_by = gpm_u.id
-            WHERE d.fakultas_id = ? 
-              AND d.level = 'fakultas' 
-              AND d.deleted_at IS NULL 
-              AND d.status_review != 'draft'
-              AND d.status_review NOT IN ('menunggu_review_gpm', 'revisi_gpm')
-              AND (
-                  d.status_review IN ('menunggu_review_lpm', 'revisi_lpm', 'perlu_perbaikan', 'sesuai')
-                  OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm')
-              )
+            WHERE {$whereClause}
             ORDER BY d.created_at DESC
+            LIMIT {$perPage} OFFSET {$offset}
         ");
-        $stmtDocs->execute([$id]);
+        $stmtDocs->execute($params);
         $documents = $stmtDocs->fetchAll();
 
         $this->attachFilesToDocs($documents);
 
-        $reviewStats = [
-            'total' => count($documents),
-            'belum_direview' => 0,
-            'menunggu_review_lpm' => 0,
-            'perlu_perbaikan' => 0,
-            'sudah_diperbaiki' => 0,
-            'sesuai' => 0
-        ];
+        $startNum = $totalFiltered > 0 ? $offset + 1 : 0;
+        $endNum = min($offset + $perPage, $totalFiltered);
 
-        $cycleStats = [
-            'penetapan' => 0,
-            'pelaksanaan' => 0,
-            'evaluasi' => 0,
-            'pengendalian' => 0,
-            'peningkatan' => 0
-        ];
+        if (!empty($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')) {
+            header('Content-Type: application/json; charset=utf-8');
+            ob_start();
+            $no = $startNum;
+            require ROOT_PATH . '/views/super_admin/review_fakultas_rows.php';
+            $rowsHtml = ob_get_clean();
 
-        foreach ($documents as $doc) {
-            $st = $doc['status_review'] ?? '';
-            if ($st === 'menunggu_review_lpm' || $st === 'belum_direview') {
-                $reviewStats['menunggu_review_lpm']++;
-                $reviewStats['belum_direview']++;
-            } elseif ($st === 'sudah_diperbaiki') {
-                $reviewStats['sudah_diperbaiki']++;
-            } elseif ($st === 'perlu_perbaikan' || $st === 'revisi_lpm') {
-                $reviewStats['perlu_perbaikan']++;
-            } elseif ($st === 'sesuai') {
-                $reviewStats['sesuai']++;
-            }
-            $cy = $doc['siklus'] ?? '';
-            if (isset($cycleStats[$cy])) {
-                $cycleStats[$cy]++;
-            }
+            echo json_encode([
+                'success'      => true,
+                'html'         => $rowsHtml,
+                'page'         => $page,
+                'per_page'     => $perPage,
+                'total'        => $totalFiltered,
+                'total_pages'  => $totalPages,
+                'start_num'    => $startNum,
+                'end_num'      => $endNum,
+                'review_stats' => $reviewStats,
+                'cycle_stats'  => $cycleStats
+            ]);
+            exit;
         }
 
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
         $this->render('super_admin/review_fakultas', [
-            'pageTitle' => 'Review Dokumen PPEPP ' . $fakultas['nama_fakultas'],
-            'fakultas' => $fakultas,
-            'documents' => $documents,
-            'reviewStats' => $reviewStats,
-            'cycleStats' => $cycleStats,
-            'bidangList' => $bidangList
+            'pageTitle'     => 'Review Dokumen PPEPP ' . $fakultas['nama_fakultas'],
+            'fakultas'      => $fakultas,
+            'documents'     => $documents,
+            'reviewStats'   => $reviewStats,
+            'cycleStats'    => $cycleStats,
+            'bidangList'    => $bidangList,
+            'page'          => $page,
+            'perPage'       => $perPage,
+            'totalFiltered' => $totalFiltered,
+            'totalPages'    => $totalPages,
+            'startNum'      => $startNum,
+            'endNum'        => $endNum,
+            'currentSiklus' => $siklusFilter,
+            'currentStatus' => $statusFilter,
+            'currentTahun'  => $tahunFilter,
+            'currentSearch' => $search
         ]);
     }
 
@@ -1729,14 +2075,96 @@ class SuperAdminController extends Controller {
             $sql .= " AND d.status_review = 'sesuai'";
         }
 
+        // Hitung total data hasil filter (server-side pagination)
+        $countSql = "SELECT COUNT(*) FROM ppepp_documents d
+                     LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+                     LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
+                     LEFT JOIN fakultas f ON d.fakultas_id = f.id
+                     LEFT JOIN prodis p ON d.prodi_id = p.id
+                     WHERE d.deleted_at IS NULL AND d.status_review != 'draft'";
+        $countParams = [];
+        if ($activeTA && $activeTA !== 'all') {
+            $countSql .= " AND d.tahun_akademik = ?";
+            $countParams[] = $activeTA;
+        }
+        if ($level && in_array($level, ['fakultas', 'prodi'])) {
+            $countSql .= " AND d.level = ?";
+            $countParams[] = $level;
+        }
+        if ($fakultasId) {
+            $countSql .= " AND (d.fakultas_id = ? OR p.fakultas_id = ?)";
+            $countParams[] = $fakultasId;
+            $countParams[] = $fakultasId;
+        }
+        if ($prodiId) {
+            $countSql .= " AND d.prodi_id = ?";
+            $countParams[] = $prodiId;
+        }
+        if ($siklus && in_array($siklus, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $countSql .= " AND d.siklus = ?";
+            $countParams[] = $siklus;
+        }
+        if ($statusReview) {
+            $countSql .= " AND d.status_review = ?";
+            $countParams[] = $statusReview;
+        }
+        if ($trafficFilter === 'menunggu_gpm') {
+            $countSql .= " AND d.status_review = 'menunggu_review_gpm'";
+        } elseif ($trafficFilter === 'revisi_unit') {
+            $countSql .= " AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+        } elseif ($trafficFilter === 'menunggu_lpm') {
+            $countSql .= " AND d.status_review = 'menunggu_review_lpm'";
+        } elseif ($trafficFilter === 'sesuai') {
+            $countSql .= " AND d.status_review = 'sesuai'";
+        }
+
+        $countStmt = $this->db->prepare($countSql);
+        $countStmt->execute($countParams);
+        $totalFiltered = (int)$countStmt->fetchColumn();
+
+        // Paginasi: default 50 dokumen per page
+        $perPage = !empty($_GET['per_page']) ? max(10, min(100, (int)$_GET['per_page'])) : 50;
+        $page = !empty($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+        if ($page > $totalPages) $page = $totalPages;
+        $offset = ($page - 1) * $perPage;
+
         $sql .= " ORDER BY FIELD(d.status_review, 'menunggu_review_gpm', 'menunggu_review_lpm', 'revisi_gpm', 'revisi_lpm', 'sudah_diperbaiki', 'sesuai'), d.created_at DESC";
+        $sql .= " LIMIT " . (int)$perPage . " OFFSET " . (int)$offset;
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $documents = $stmt->fetchAll();
 
-        // Lampirkan data file ke masing-masing dokumen
+        // Lampirkan data file ke masing-masing dokumen (hanya 50 dokumen aktif)
         $this->attachFilesToDocs($documents);
+
+        $startNum = $totalFiltered > 0 ? ($offset + 1) : 0;
+        $endNum = min($offset + count($documents), $totalFiltered);
+
+        if (!empty($_GET['ajax'])) {
+            header('Content-Type: application/json; charset=utf-8');
+            ob_start();
+            $dataForRows = [
+                'documents' => $documents,
+                'startNum'  => $startNum
+            ];
+            extract($dataForRows);
+            include ROOT_PATH . '/views/super_admin/monitoring_lalulintas_rows.php';
+            $rowsHtml = ob_get_clean();
+
+            echo json_encode([
+                'status'        => 'success',
+                'html'          => $rowsHtml,
+                'totalFiltered' => $totalFiltered,
+                'totalPages'    => $totalPages,
+                'page'          => $page,
+                'perPage'       => $perPage,
+                'startNum'      => $startNum,
+                'endNum'        => $endNum
+            ]);
+            exit;
+        }
 
         // Hitung KPI Lalu Lintas
         $whereTA = ($activeTA && $activeTA !== 'all') ? " AND tahun_akademik = " . $this->db->quote($activeTA) : "";
