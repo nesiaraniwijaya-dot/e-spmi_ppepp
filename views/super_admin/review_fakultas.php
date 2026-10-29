@@ -118,33 +118,38 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             </li>
         </ul>
 
-        <!-- Filter Toolbar -->
-        <div class="row g-3 align-items-center mb-4 pb-3 border-bottom">
-            <div class="col-lg-4 col-md-6">
+        <!-- Filter Toolbar: Pencarian (Baris 1) & Filter Dropdown (Baris 2) -->
+        <div class="mb-4 pb-3 border-bottom">
+            <!-- Baris 1: Pencarian Cepat (Full Width) -->
+            <div class="mb-2.5">
                 <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                    <input type="text" id="reviewSearchInput" class="form-control bg-light border-start-0 ps-0" placeholder="Cari nama dokumen, nomor SK, pengunggah..." onkeyup="filterReviewTable()">
+                    <span class="input-group-text bg-light border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
+                    <input type="text" id="reviewSearchInput" class="form-control bg-light border-start-0 ps-1" placeholder="Cari nama dokumen, nomor SK, pengunggah..." onkeyup="filterReviewTable()">
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6">
-                <select id="reviewStatusFilter" class="form-select bg-light" onchange="filterReviewTable()">
-                    <option value="">-- Semua Status Review --</option>
-                    <option value="belum_direview">⏳ Belum Direview</option>
-                    <option value="perlu_perbaikan">⚠️ Perlu Perbaikan (Revisi)</option>
-                    <option value="sudah_diperbaiki">🔄 Perlu Review Ulang</option>
-                    <option value="sesuai">✅ Sesuai Standar</option>
-                </select>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <select id="reviewTahunFilter" class="form-select bg-light" onchange="filterReviewTable()">
-                    <option value="">Semua Tahun Akademik</option>
-                    <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
-                        <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-lg-2 col-md-6 text-lg-end">
-                <span class="text-muted small" id="docCountLabel">Total <?= count($documents) ?> Dokumen</span>
+
+            <!-- Baris 2: Filter Status Review, Tahun Akademik, dan Info Total -->
+            <div class="row g-2.5 align-items-center">
+                <div class="col-md-5 col-sm-6">
+                    <select id="reviewStatusFilter" class="form-select bg-light" onchange="filterReviewTable()">
+                        <option value="">-- Semua Status Review --</option>
+                        <option value="belum_direview">⏳ Belum Direview</option>
+                        <option value="perlu_perbaikan">⚠️ Perlu Perbaikan (Revisi)</option>
+                        <option value="sudah_diperbaiki">🔄 Perlu Review Ulang</option>
+                        <option value="sesuai">✅ Sesuai Standar</option>
+                    </select>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <select id="reviewTahunFilter" class="form-select bg-light" onchange="filterReviewTable()">
+                        <option value="">Semua Tahun Akademik</option>
+                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-12 text-md-end ms-auto">
+                    <span class="text-muted small" id="docCountLabel">Total <?= count($documents) ?> Dokumen</span>
+                </div>
             </div>
         </div>
 
@@ -190,7 +195,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <span class="text-muted small" style="font-size: 0.72rem;"><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
                                         <?php endif; ?>
                                         <?php if ($doc['tahun_akademik']): ?>
-                                            <span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
+                                            <span class="badge bg-light text-secondary border" style="font-size: 0.68rem;"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
                                         <?php endif; ?>
                                     </div>
                                     <div class="text-muted" style="font-size: 0.7rem;">
@@ -235,6 +240,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                         data-pdf-url="<?= base_url($fItem['file_path']) ?>"
                                                                         data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
                                                                         data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
+                                                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                         data-public-limit="0"
                                                                         data-can-download="1">
                                                                     <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
@@ -271,6 +277,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                 data-pdf-url="<?= base_url($singleFile['file_path']) ?>"
                                                                 data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
                                                                 data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
+                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                 data-public-limit="0"
                                                                 data-can-download="1"
                                                                 style="font-size: 0.72rem; height: 26px; line-height: 1;">
@@ -571,6 +578,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                                 data-public-limit="0" 
                                                                                 data-can-download="1"
                                                                                 data-can-access="1"
+                                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                                 style="font-size: 0.78rem;">
                                                                             <i class="fas fa-eye"></i> Pratinjau
                                                                         </button>
@@ -637,6 +645,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                                 data-doc-standar="<?= htmlspecialchars($subBadgesHtml) ?>" 
                                                                                 data-can-access="1" 
                                                                                 data-can-download="1"
+                                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                                 style="font-size: 0.78rem;">
                                                                             <i class="fas fa-eye"></i> Pratinjau
                                                                         </button>

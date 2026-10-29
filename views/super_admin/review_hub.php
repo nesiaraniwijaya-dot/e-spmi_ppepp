@@ -177,75 +177,78 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </button>
                 </div>
 
-                <!-- 2. Horizontal Advanced Filter Bar -->
-                <div class="row g-2 mb-4 align-items-center bg-light p-3 rounded-3 border">
-                    <!-- Live Search -->
-                    <div class="col-lg-3 col-md-6">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                            <input type="text" id="liveSearchInput" class="form-control bg-white border-start-0" placeholder="Cari dokumen, SK, uploader..." onkeyup="filterHubTable()">
+                <!-- 2. Advanced Filter Bar: Pencarian (Baris 1) & Filter Dropdown (Baris 2) -->
+                <div class="bg-light p-3 rounded-3 border mb-4">
+                    <!-- Baris 1: Live Search & Reset Button -->
+                    <div class="row g-2.5 mb-2.5 align-items-center">
+                        <div class="col">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
+                                <input type="text" id="liveSearchInput" class="form-control bg-white border-start-0 ps-1" placeholder="Cari dokumen, SK, uploader..." onkeyup="filterHubTable()">
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="resetHubFilters()" title="Reset semua filter ke default">
+                                <i class="fas fa-arrow-rotate-left me-1"></i> Reset Filter
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Filter Fakultas -->
-                    <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm filter-hub-select" id="fakultasFilter" onchange="onFakultasChange()">
-                            <option value="">Semua Fakultas</option>
-                            <?php foreach ($fakultasList as $fak): ?>
-                                <option value="<?= $fak['id'] ?>"><?= htmlspecialchars($fak['nama_fakultas']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <!-- Baris 2: Dropdown Filter -->
+                    <div class="row g-2 align-items-center">
+                        <!-- Filter Fakultas -->
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <select class="form-select form-select-sm filter-hub-select" id="fakultasFilter" onchange="onFakultasChange()">
+                                <option value="">Semua Fakultas</option>
+                                <?php foreach ($fakultasList as $fak): ?>
+                                    <option value="<?= $fak['id'] ?>"><?= htmlspecialchars($fak['nama_fakultas']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
 
-                    <!-- Filter Program Studi (Dynamic) -->
-                    <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm filter-hub-select" id="prodiFilter" onchange="filterHubTable()">
-                            <option value="">Semua Program Studi</option>
-                            <?php foreach ($prodiList as $prd): ?>
-                                <option value="<?= $prd['id'] ?>" data-fakultas-id="<?= $prd['fakultas_id'] ?>">
-                                    <?= htmlspecialchars($prd['nama_prodi']) ?> (<?= $prd['jenjang'] ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                        <!-- Filter Program Studi (Dynamic) -->
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <select class="form-select form-select-sm filter-hub-select" id="prodiFilter" onchange="filterHubTable()">
+                                <option value="">Semua Program Studi</option>
+                                <?php foreach ($prodiList as $prd): ?>
+                                    <option value="<?= $prd['id'] ?>" data-fakultas-id="<?= $prd['fakultas_id'] ?>">
+                                        <?= htmlspecialchars($prd['nama_prodi']) ?> (<?= $prd['jenjang'] ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
 
-                    <!-- Filter Siklus PPEPP -->
-                    <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm filter-hub-select" id="siklusFilter" onchange="filterHubTable()">
-                            <option value="">Semua Siklus PPEPP</option>
-                            <option value="penetapan">Penetapan (P1)</option>
-                            <option value="pelaksanaan">Pelaksanaan (P2)</option>
-                            <option value="evaluasi">Evaluasi (E)</option>
-                            <option value="pengendalian">Pengendalian (P3)</option>
-                            <option value="peningkatan">Peningkatan (P4)</option>
-                        </select>
-                    </div>
+                        <!-- Filter Siklus PPEPP -->
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <select class="form-select form-select-sm filter-hub-select" id="siklusFilter" onchange="filterHubTable()">
+                                <option value="">Semua Siklus PPEPP</option>
+                                <option value="penetapan">Penetapan (P1)</option>
+                                <option value="pelaksanaan">Pelaksanaan (P2)</option>
+                                <option value="evaluasi">Evaluasi (E)</option>
+                                <option value="pengendalian">Pengendalian (P3)</option>
+                                <option value="peningkatan">Peningkatan (P4)</option>
+                            </select>
+                        </div>
 
-                    <!-- Filter Bidang -->
-                    <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm filter-hub-select" id="bidangFilter" onchange="filterHubTable()">
-                            <option value="">Semua Bidang</option>
-                            <?php foreach ($bidangList as $b): ?>
-                                <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                        <!-- Filter Bidang -->
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <select class="form-select form-select-sm filter-hub-select" id="bidangFilter" onchange="filterHubTable()">
+                                <option value="">Semua Bidang</option>
+                                <?php foreach ($bidangList as $b): ?>
+                                    <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
 
-                    <!-- Filter Tahun Akademik -->
-                    <div class="col-lg-2 col-md-6">
-                        <select class="form-select form-select-sm filter-hub-select" id="tahunFilter" onchange="filterHubTable()">
-                            <option value="">Semua Tahun Akademik</option>
-                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
-                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <!-- Reset Filter Button -->
-                    <div class="col-lg-1 col-md-12 text-lg-end text-center">
-                        <button type="button" class="btn btn-outline-secondary btn-sm w-100 rounded-pill" onclick="resetHubFilters()" title="Reset semua filter ke default">
-                            <i class="fas fa-arrow-rotate-left me-1"></i> Reset
-                        </button>
+                        <!-- Filter Tahun Akademik -->
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <select class="form-select form-select-sm filter-hub-select" id="tahunFilter" onchange="filterHubTable()">
+                                <option value="">Semua Tahun Akademik</option>
+                                <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                                    <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -339,7 +342,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                     </span>
                                                 <?php endif; ?>
                                                 <?php if (!empty($doc['tahun_akademik'])): ?>
-                                                    <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size: 0.65rem;">TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
+                                                    <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size: 0.65rem;"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
                                                 <?php endif; ?>
                                             </div>
                                             <div class="text-muted" style="font-size: 0.68rem;">
@@ -405,7 +408,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                                 data-bs-toggle="modal" data-bs-target="#hubPdfPreviewModal"
                                                                                 data-pdf-url="<?= base_url($fItem['file_path']) ?>"
                                                                                 data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
-                                                                                data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>">
+                                                                                data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
+                                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
                                                                             <div class="d-flex align-items-center justify-content-between gap-2">
                                                                                 <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate">
                                                                                     <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
@@ -426,6 +430,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                 data-pdf-url="<?= base_url($singleFile['file_path']) ?>"
                                                                 data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
                                                                 data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
+                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                 style="font-size: 0.7rem; height: 24px; line-height: 1;"
                                                                 title="Buka Berkas PDF">
                                                             <i class="fas fa-file-pdf text-danger"></i> PDF
@@ -1459,6 +1464,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <div class="d-flex align-items-center gap-2 text-truncate me-3">
                     <i class="fas fa-file-pdf text-danger fs-5"></i>
                     <h6 class="modal-title fw-bold text-truncate mb-0" id="hubPdfPreviewModalLabel">Pratinjau Dokumen</h6>
+                    <span id="hubPdfTaBadge" class="badge bg-white bg-opacity-20 text-white border border-white border-opacity-25 rounded-pill fw-medium px-2 py-0.5" style="font-size:0.68rem; display:none;"></span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <a href="#" id="hubPdfDownloadBtn" class="btn btn-sm btn-outline-light rounded-pill px-3" target="_blank" download>
@@ -1789,6 +1795,17 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('hubPdfPreviewModalLabel').textContent = docTitle;
             document.getElementById('hubPdfViewerIframe').src = pdfUrl;
             document.getElementById('hubPdfDownloadBtn').href = pdfUrl;
+
+            const docTa = btn.getAttribute('data-doc-ta') || '';
+            const taBadge = document.getElementById('hubPdfTaBadge');
+            if (taBadge) {
+                if (docTa) {
+                    taBadge.innerHTML = `<i class="far fa-calendar-alt me-1"></i>TA ${docTa}`;
+                    taBadge.style.display = 'inline-flex';
+                } else {
+                    taBadge.style.display = 'none';
+                }
+            }
 
             const footer = document.getElementById('hubPdfNarasiFooter');
             const narasiText = document.getElementById('hubPdfNarasiText');

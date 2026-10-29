@@ -172,45 +172,49 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
             <div class="card-body p-4">
 
 
-                <div class="row g-2.5 align-items-center mb-4">
-                    <!-- Search Input -->
-                    <div class="col-xl-4 col-lg-3 col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                            <input type="text" id="tableSearchInput" class="form-control bg-light border-start-0 ps-0" placeholder="Cari nama dokumen, nomor SK, kata kunci...">
+                <!-- Toolbar: Pencarian (Baris 1) & Filter Dropdown (Baris 2) -->
+                <div class="mb-4">
+                    <!-- Baris 1: Pencarian Cepat & Pengaturan Jumlah Data -->
+                    <div class="row g-2.5 mb-2.5 align-items-center">
+                        <div class="col">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
+                                <input type="text" id="tableSearchInput" class="form-control bg-light border-start-0 ps-1" placeholder="Cari nama dokumen, nomor SK, kata kunci...">
+                            </div>
+                        </div>
+                        <div class="col-auto d-flex align-items-center gap-2">
+                            <label for="tablePerPageSelect" class="form-label small text-muted text-nowrap mb-0 d-none d-sm-inline">Tampilkan:</label>
+                            <select id="tablePerPageSelect" class="form-select bg-light" style="min-width: 95px; width: auto;">
+                                <option value="10" selected>10 data</option>
+                                <option value="20">20 data</option>
+                                <option value="50">50 data</option>
+                                <option value="100">100 data</option>
+                            </select>
                         </div>
                     </div>
 
-                    <!-- Bidang Filter -->
-                    <div class="col-xl-3 col-lg-3 col-md-6">
-                        <select id="tableBidangFilter" class="form-select bg-light">
-                            <option value="">Semua Bidang</option>
-                            <?php foreach ($bidangList as $b): ?>
-                                <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <!-- Baris 2: Filter Bidang & Tahun Akademik -->
+                    <div class="row g-2.5 align-items-center">
+                        <!-- Bidang Filter -->
+                        <div class="col-md-6 col-sm-6">
+                            <select id="tableBidangFilter" class="form-select bg-light">
+                                <option value="">Semua Bidang</option>
+                                <?php foreach ($bidangList as $b): ?>
+                                    <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
 
-                    <!-- Filter Tahun Akademik -->
-                    <div class="col-xl-3 col-lg-3 col-md-6">
-                        <?php $distinctTahunList = get_distinct_tahun_akademik(); ?>
-                        <select id="tableTahunFilter" class="form-select bg-light">
-                            <option value="">Semua Tahun Akademik</option>
-                            <?php foreach ($distinctTahunList as $ta): ?>
-                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <!-- Per Page Pagination Selector -->
-                    <div class="col-xl-2 col-lg-3 col-md-6 ms-auto d-flex justify-content-md-end align-items-center gap-1.5">
-                        <label for="tablePerPageSelect" class="form-label small text-muted text-nowrap mb-0">Tampilkan:</label>
-                        <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 90px; width: auto;">
-                            <option value="10" selected>10 data</option>
-                            <option value="20">20 data</option>
-                            <option value="50">50 data</option>
-                            <option value="100">100 data</option>
-                        </select>
+                        <!-- Filter Tahun Akademik -->
+                        <div class="col-md-6 col-sm-6">
+                            <?php $distinctTahunList = get_distinct_tahun_akademik(); ?>
+                            <select id="tableTahunFilter" class="form-select bg-light">
+                                <option value="">Semua Tahun Akademik</option>
+                                <?php foreach ($distinctTahunList as $ta): ?>
+                                    <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -301,12 +305,17 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                             <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
                             <td>
                                 <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen']) ?></div>
-                                <?php if ($doc['nomor_dokumen']): ?>
-                                    <div class="small text-muted mb-1"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
-                                <?php endif; ?>
-                                <?php if ($doc['tahun_akademik']): ?>
-                                    <span class="badge bg-light text-secondary border me-1" style="font-size: 0.7rem;">Tahun Akademik <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
-                                <?php endif; ?>
+                                <div class="d-flex flex-wrap align-items-center gap-1.5 mb-1">
+                                    <?php if ($doc['nomor_dokumen']): ?>
+                                        <span class="small text-muted" style="font-size: 0.72rem;"><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
+                                        <span class="text-muted small">•</span>
+                                    <?php endif; ?>
+                                    <?php if ($doc['tahun_akademik']): ?>
+                                        <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.7rem;">
+                                            <i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
                                 <?php if (!empty($adaptive['standards_html'])): ?>
                                     <div class="mt-1">
                                         <?= $adaptive['standards_html'] ?>
@@ -375,7 +384,8 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                                                     data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
                                                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
                                                                     data-public-limit="<?= $fLimit ?>"
-                                                                    data-can-download="<?= $fCanDl ?>">
+                                                                    data-can-download="<?= $fCanDl ?>"
+                                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
                                                                 <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                                                     <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($fItem['file_name']) ?>">
                                                                         <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
@@ -396,7 +406,7 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                             </div>
                                         <?php else: ?>
                                             <?php 
-                                            $singleFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => '']; 
+                                             $singleFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => '']; 
                                             $sLimit = isset($singleFile['is_page_limited']) && (int)$singleFile['is_page_limited'] === 0 ? 0 : (int)($singleFile['public_page_limit'] ?? $doc['public_page_limit'] ?? 1);
                                             $sCanDl = (int)($singleFile['can_download_public'] ?? $doc['can_download_public'] ?? 0);
                                             ?>
@@ -408,7 +418,8 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                                     data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
                                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
                                                     data-public-limit="<?= $sLimit ?>"
-                                                    data-can-download="<?= $sCanDl ?>">
+                                                    data-can-download="<?= $sCanDl ?>"
+                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
                                                 <i class="fas fa-eye me-1"></i> <?= $isKombinasi ? 'File PDF' : 'Lihat' ?>
                                             </button>
                                         <?php endif; ?>
@@ -441,7 +452,8 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                                                     data-doc-narasi="<?= htmlspecialchars($gNarasi) ?>"
                                                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null)) ?>"
                                                                     data-can-access="<?= $canAccessLink ? 1 : 0 ?>"
-                                                                    data-can-download="<?= $gCanDl ?>">
+                                                                    data-can-download="<?= $gCanDl ?>"
+                                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
                                                                 <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                                                     <span class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
                                                                         <i class="fab fa-google-drive flex-shrink-0"></i>
@@ -479,6 +491,7 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null)) ?>"
                                                     data-can-access="<?= $canAccessSingle ? 1 : 0 ?>"
                                                     data-can-download="<?= $sLinkCanDl ?>"
+                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                     title="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>">
                                                 <i class="fab fa-google-drive me-1"></i> <?= $isKombinasi ? 'GDrive' : 'Lihat' ?>
                                             </button>

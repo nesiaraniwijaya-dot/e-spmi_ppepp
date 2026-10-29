@@ -23,21 +23,23 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
     <!-- Table Card -->
     <div class="card border-0 shadow-sm rounded-4 p-4">
-        <!-- Filter Toolbar -->
-        <div class="row g-2 mb-3 align-items-center">
-            <div class="col-md-5">
+        <!-- Filter Toolbar: Pencarian (Baris 1) & Filter Dropdown (Baris 2) -->
+        <div class="mb-3">
+            <div class="mb-2">
                 <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                    <input type="text" id="arsipFakSearch" class="form-control border-start-0" placeholder="Cari dokumen terhapus..." oninput="filterArsipFakTable()">
+                    <span class="input-group-text bg-light border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
+                    <input type="text" id="arsipFakSearch" class="form-control border-start-0 ps-1" placeholder="Cari dokumen terhapus..." oninput="filterArsipFakTable()">
                 </div>
             </div>
-            <div class="col-md-3">
-                <select id="arsipFakTahun" class="form-select form-select-sm" onchange="filterArsipFakTable()">
-                    <option value="">Semua Tahun Akademik</option>
-                    <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
-                        <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4 col-sm-6">
+                    <select id="arsipFakTahun" class="form-select form-select-sm" onchange="filterArsipFakTable()">
+                        <option value="">Semua Tahun Akademik</option>
+                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
         </div>
 

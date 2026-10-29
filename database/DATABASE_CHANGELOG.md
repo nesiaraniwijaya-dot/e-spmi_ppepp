@@ -118,7 +118,18 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
       - Mengizinkan pengelompokan berkas dokumen ke dalam folder-folder terstruktur saat diunggah.
     - **Kolom `file_category` pada `ppepp_document_files` (ENUM('file', 'link', 'photo') DEFAULT 'file')**:
       - Menandai tipe berkas (file fisik dokumen, tautan Google Drive, atau foto pendukung).
-    - Skrip migrasi terpasang: `database/migration_lpm_traffic_and_academic_year.php`.
+13. **Pembersihan Seluruh Dokumen Dummy untuk Pengisian Data Asli (29 Oktober 2026)**:
+    - **Backup Otomatis Sebelum Pembersihan**:
+      - Seluruh data tabel dummy tersimpan di: `database/backups/backup_dummy_20261029_015709/`.
+      - Berkas dump SQL sebelumnya tersimpan di: `database/backups/spmi_ppepp_with_dummy_backup.sql`.
+    - **Pembersihan Data Terkait Dokumen**:
+      - Menghapus seluruh data dari tabel: `ppepp_documents`, `ppepp_document_files`, `ppepp_document_sub_bidang`, `ppepp_document_file_sub_bidang`, `ppepp_document_reviews`, `ppepp_document_revisions`, `ppepp_cycles`, dan `upload_access_requests`.
+      - Menghapus seluruh berkas fisik unggahan dummy dari direktori `uploads/documents/`.
+      - Menghapus log audit trail uji coba yang terkait dengan dokumen dummy.
+      - Mereset counter `AUTO_INCREMENT = 1` pada seluruh tabel dokumen agar penginputan data asli dimulai dari ID 1.
+    - **Master Database Terupdate**:
+      - Berkas master `database/spmi_ppepp.sql` telah diperbarui dengan data bersih siap pakai (master fakultas, prodi, standar akreditasi, user, dan setelan tetap utuh).
+    - Skrip pembersih mandiri: `database/cleanup_dummy_documents.php`.
 
 ---
 
@@ -135,6 +146,7 @@ mysql -u root spmi_ppepp < database/spmi_ppepp.sql
 atau melalui phpMyAdmin:
 1. Buat/pilih database `spmi_ppepp`.
 2. Klik tab **Import**, pilih berkas `database/spmi_ppepp.sql`, lalu klik **Import**.
+
 
 
 

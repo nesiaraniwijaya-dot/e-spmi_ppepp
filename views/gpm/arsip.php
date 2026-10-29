@@ -30,14 +30,17 @@ $fakultas  = $fakultas ?? [];
     <!-- Table Card -->
     <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="border: 1px solid #E2E8F0 !important;">
         <!-- Filter Toolbar -->
-        <div class="row g-2 mb-3 align-items-center">
-            <div class="col-md-5">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                    <input type="text" id="arsipGpmSearch" class="form-control border-start-0" placeholder="Cari dokumen terhapus..." oninput="filterArsipGpmTable()">
-                </div>
+        <!-- Row 1: Search Bar (Full Width) -->
+        <div class="mb-2.5">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                <input type="text" id="arsipGpmSearch" class="form-control border-start-0" placeholder="Cari dokumen terhapus..." oninput="filterArsipGpmTable()">
             </div>
-            <div class="col-md-3">
+        </div>
+
+        <!-- Row 2: Dropdown Filter -->
+        <div class="row g-2 mb-3 align-items-center">
+            <div class="col-md-4 col-sm-6">
                 <select id="arsipGpmTahun" class="form-select form-select-sm" onchange="filterArsipGpmTable()">
                     <option value="">Semua Tahun Akademik</option>
                     <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
