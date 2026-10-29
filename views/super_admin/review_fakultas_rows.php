@@ -28,7 +28,7 @@ if (!empty($documents)):
                         <span class="text-muted small" style="font-size: 0.72rem;"><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
                     <?php endif; ?>
                     <?php if ($doc['tahun_akademik']): ?>
-                        <span class="badge bg-light text-secondary border" style="font-size: 0.68rem;"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
+                        <span class="badge bg-light text-secondary border" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="text-muted" style="font-size: 0.7rem;">
@@ -66,7 +66,7 @@ if (!empty($documents)):
                                     <i class="fas fa-folder-open text-danger"></i> <?= $isKombinasi ? 'File (' . $filesCount . ')' : $filesCount . ' Berkas' ?>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 320px; max-width: 440px; width: max-content; font-size: 0.78rem;">
-                                    <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS DOKUMEN:</li>
+                                    <li class="dropdown-header text-muted fw-bold px-2 py-1" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">PILIH BERKAS DOKUMEN:</li>
                                     <?php foreach ($files as $fItem): ?>
                                         <li class="mb-1.5">
                                             <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
@@ -84,11 +84,11 @@ if (!empty($documents)):
                                                     </span>
                                                     <div class="d-flex align-items-center gap-1 flex-shrink-0">
                                                         <?php if (!empty($fItem['folder_name'])): ?>
-                                                            <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.62rem;" title="Folder: <?= htmlspecialchars($fItem['folder_name']) ?>">
+                                                            <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;" title="Folder: <?= htmlspecialchars($fItem['folder_name']) ?>">
                                                                 <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($fItem['folder_name']) ?>
                                                             </span>
                                                         <?php endif; ?>
-                                                        <span class="badge bg-light text-muted border" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
+                                                        <span class="badge bg-light text-muted border" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
                                                     </div>
                                                 </div>
                                                 <?= render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null) ?>
@@ -118,7 +118,7 @@ if (!empty($documents)):
                                         <i class="fas fa-file-pdf"></i> PDF
                                     </button>
                                     <?php if (!empty($singleFile['folder_name'])): ?>
-                                        <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.63rem;">
+                                        <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
                                             <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleFile['folder_name']) ?>
                                         </span>
                                     <?php endif; ?>
@@ -142,7 +142,7 @@ if (!empty($documents)):
                                     <i class="fab fa-google-drive text-primary"></i> <?= $isKombinasi ? 'Drive (' . $linkCount . ')' : $linkCount . ' Link GDrive' ?>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 320px; max-width: 440px; width: max-content; font-size: 0.78rem;">
-                                    <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH TAUTAN GDRIVE:</li>
+                                    <li class="dropdown-header text-muted fw-bold px-2 py-1" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">PILIH TAUTAN GDRIVE:</li>
                                     <?php foreach ($gdriveLinks as $lIdx => $linkObj): 
                                         $gUrl = $linkObj['url'];
                                         $gNarasi = $linkObj['narasi'];
@@ -156,11 +156,11 @@ if (!empty($documents)):
                                                     </span>
                                                     <div class="d-flex align-items-center gap-1 flex-shrink-0">
                                                         <?php if (!empty($linkObj['folder_name'])): ?>
-                                                            <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.62rem;">
+                                                            <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
                                                                 <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($linkObj['folder_name']) ?>
                                                             </span>
                                                         <?php endif; ?>
-                                                        <i class="fas fa-arrow-up-right-from-square text-muted" style="font-size: 0.68rem;"></i>
+                                                        <i class="fas fa-arrow-up-right-from-square text-muted" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;"></i>
                                                     </div>
                                                 </div>
                                                 <?= render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null) ?>
@@ -185,7 +185,7 @@ if (!empty($documents)):
                                         <i class="fab fa-google-drive"></i> GDrive
                                     </a>
                                     <?php if (!empty($singleLink['folder_name'])): ?>
-                                        <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.63rem;">
+                                        <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
                                             <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleLink['folder_name']) ?>
                                         </span>
                                     <?php endif; ?>
@@ -476,3 +476,4 @@ if (!empty($documents)):
         </div>
     <?php endforeach; ?>
 <?php endif; ?>
+

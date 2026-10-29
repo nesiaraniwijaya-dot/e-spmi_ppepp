@@ -529,7 +529,7 @@ class AdminFakultasController extends Controller {
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $isEdit = !empty($id);
         $isDraft = (isset($_POST['action_submit']) && $_POST['action_submit'] === 'draft');
-        $allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'webp'];
+        $allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'webp', 'txt', 'csv', 'zip'];
 
         // =======================================================
         // 1. BATCH MULTI-UPLOAD TINGKAT FAKULTAS (CREATE UP TO 10)

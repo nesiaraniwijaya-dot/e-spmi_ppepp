@@ -34,8 +34,8 @@ if (!function_exists('get_portal_file_meta')) {
                     'icon' => 'fas fa-file-excel',
                     'color_class' => 'text-success',
                     'badge_style' => 'background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0;',
-                    'can_preview' => false,
-                    'btn_text' => 'Download'
+                    'can_preview' => true,
+                    'btn_text' => 'View'
                 ];
             case 'pptx':
             case 'ppt':
@@ -47,8 +47,8 @@ if (!function_exists('get_portal_file_meta')) {
                     'icon' => 'fas fa-file-powerpoint',
                     'color_class' => 'text-warning',
                     'badge_style' => 'background: #FFF7ED; color: #EA580C; border: 1px solid #FED7AA;',
-                    'can_preview' => false,
-                    'btn_text' => 'Download'
+                    'can_preview' => true,
+                    'btn_text' => 'View'
                 ];
             case 'jpg':
             case 'jpeg':

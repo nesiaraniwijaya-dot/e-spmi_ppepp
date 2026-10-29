@@ -67,7 +67,7 @@ if (!empty($documents)):
                                                         <i class="<?= ($singleF['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf' ?>"></i> <?= ($singleF['file_category'] ?? '') === 'photo' ? 'Foto' : 'PDF' ?>
                                                     </button>
                                                     <?php if (!empty($singleF['folder_name'])): ?>
-                                                        <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.62rem;" title="Folder: <?= htmlspecialchars($singleF['folder_name']) ?>">
+                                                        <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;" title="Folder: <?= htmlspecialchars($singleF['folder_name']) ?>">
                                                             <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleF['folder_name']) ?>
                                                         </span>
                                                     <?php endif; ?>
@@ -99,7 +99,7 @@ if (!empty($documents)):
                                                                             <span class="text-truncate" style="max-width: 180px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
                                                                         </div>
                                                                         <?php if (!empty($fItem['folder_name'])): ?>
-                                                                            <span class="badge bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0" style="font-size: 0.60rem;">
+                                                                            <span class="badge rounded-pill shadow-2xs flex-shrink-0" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
                                                                                 <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($fItem['folder_name']) ?>
                                                                             </span>
                                                                         <?php endif; ?>
@@ -122,7 +122,7 @@ if (!empty($documents)):
                                                             data-bs-target="#pdfPreviewModal" 
                                                             data-is-link="1" 
                                                             data-link-url="<?= htmlspecialchars($singleL['url']) ?>" 
-                                                            data-doc-title="<?= htmlspecialchars($singleL['label'] ?: ($singleL['narasi'] ?: $doc['nama_dokumen'])) ?>" 
+                                                            data-doc-title="<?= htmlspecialchars(!empty($singleL['label']) ? $singleL['label'] : (!empty($singleL['narasi']) ? $singleL['narasi'] : ($doc['nama_dokumen'] ?? 'Dokumen'))) ?>" 
                                                             data-doc-narasi="<?= htmlspecialchars($singleL['narasi'] ?? '') ?>" 
                                                             data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleL['sub_bidang_ids'] ?? null)) ?>" 
                                                             data-can-access="1" 
@@ -132,7 +132,7 @@ if (!empty($documents)):
                                                         <i class="fab fa-google-drive"></i> GDrive
                                                     </button>
                                                     <?php if (!empty($singleL['folder_name'])): ?>
-                                                        <span class="badge bg-amber-50 text-amber-700 border border-amber-200" style="font-size: 0.62rem;" title="Folder: <?= htmlspecialchars($singleL['folder_name']) ?>">
+                                                        <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;" title="Folder: <?= htmlspecialchars($singleL['folder_name']) ?>">
                                                             <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleL['folder_name']) ?>
                                                         </span>
                                                     <?php endif; ?>
@@ -152,7 +152,7 @@ if (!empty($documents)):
                                                                         data-bs-target="#pdfPreviewModal" 
                                                                         data-is-link="1" 
                                                                         data-link-url="<?= htmlspecialchars($lItem['url']) ?>" 
-                                                                        data-doc-title="<?= htmlspecialchars($lItem['label'] ?: ($lItem['narasi'] ?: ('Tautan GDrive #' . ($lIdx + 1)))) ?>" 
+                                                                        data-doc-title="<?= htmlspecialchars(!empty($lItem['label']) ? $lItem['label'] : (!empty($lItem['narasi']) ? $lItem['narasi'] : ('Tautan GDrive #' . ($lIdx + 1)))) ?>" 
                                                                         data-doc-narasi="<?= htmlspecialchars($lItem['narasi'] ?? '') ?>" 
                                                                         data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($lItem['sub_bidang_ids'] ?? null)) ?>" 
                                                                         data-can-access="1" 
@@ -161,10 +161,10 @@ if (!empty($documents)):
                                                                     <div class="d-flex align-items-center justify-content-between gap-1.5 mb-0.5">
                                                                         <div class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
                                                                             <i class="fab fa-google-drive flex-shrink-0"></i>
-                                                                            <span class="text-truncate" style="max-width: 180px;"><?= htmlspecialchars($lItem['label'] ?: ($lItem['narasi'] ?: ('Tautan GDrive #' . ($lIdx + 1)))) ?></span>
+                                                                            <span class="text-truncate" style="max-width: 180px;"><?= htmlspecialchars(!empty($lItem['label']) ? $lItem['label'] : (!empty($lItem['narasi']) ? $lItem['narasi'] : ('Tautan GDrive #' . ($lIdx + 1)))) ?></span>
                                                                         </div>
                                                                         <?php if (!empty($lItem['folder_name'])): ?>
-                                                                            <span class="badge bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0" style="font-size: 0.60rem;">
+                                                                            <span class="badge rounded-pill shadow-2xs flex-shrink-0" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
                                                                                 <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($lItem['folder_name']) ?>
                                                                             </span>
                                                                         <?php endif; ?>

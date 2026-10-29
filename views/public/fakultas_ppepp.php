@@ -411,18 +411,37 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                             $sLimit = isset($singleFile['is_page_limited']) && (int)$singleFile['is_page_limited'] === 0 ? 0 : (int)($singleFile['public_page_limit'] ?? $doc['public_page_limit'] ?? 1);
                                             $sCanDl = (int)($singleFile['can_download_public'] ?? $doc['can_download_public'] ?? 0);
                                             ?>
-                                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#pdfPreviewModal" 
-                                                    data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
-                                                    data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
-                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
-                                                    data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
-                                                    data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
-                                                    data-public-limit="<?= $sLimit ?>"
-                                                    data-can-download="<?= $sCanDl ?>">
-                                                <i class="fas fa-eye me-1"></i> <?= $isKombinasi ? 'File PDF' : 'Lihat' ?>
-                                            </button>
+                                            <div class="d-inline-flex align-items-center gap-1.5">
+                                                <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm px-3" 
+                                                        style="height: 32px; font-size: 0.8rem; font-weight: 600;"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#pdfPreviewModal" 
+                                                        data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
+                                                        data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
+                                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
+                                                        data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
+                                                        data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
+                                                        data-public-limit="<?= is_unika_user_logged_in() ? 0 : 1 ?>"
+                                                        data-can-download="<?= is_unika_user_logged_in() ? 1 : 0 ?>"
+                                                        title="Lihat Pratinjau Dokumen">
+                                                    <i class="fas fa-eye me-1"></i> View
+                                                </button>
+                                                <?php if (is_unika_user_logged_in()): ?>
+                                                    <a href="<?= base_url($singleFile['file_path']) ?>" download 
+                                                       class="btn btn-sm btn-outline-primary rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center" 
+                                                       style="width: 34px; height: 32px; padding: 0;" 
+                                                       title="Unduh Berkas Asli">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <a href="<?= base_url('login?return_url=' . urlencode($_SERVER['REQUEST_URI'] ?? '/')) ?>" 
+                                                       class="btn btn-sm btn-outline-secondary rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center" 
+                                                       style="width: 34px; height: 32px; padding: 0;" 
+                                                       title="Masuk dengan akun institusi untuk mengunduh">
+                                                        <i class="fas fa-lock"></i>
+                                                    </a>
+                                                <?php endif; ?>
+                                            </div>
                                         <?php endif; ?>
                                     <?php endif; ?>
 

@@ -433,6 +433,8 @@
     <!-- JSZip & docx-preview for Word Documents (.docx) -->
     <script src="<?= asset('js/jszip.min.js') ?>"></script>
     <script src="<?= asset('js/docx-preview.min.js') ?>"></script>
+    <!-- SheetJS for Excel Spreadsheets (.xlsx, .xls, .csv) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         /* ========================================================
            Custom styling for DOCX Preview with Landscape & Table Support
@@ -456,7 +458,7 @@
             border-radius: 4px !important;
             box-sizing: border-box !important;
             position: relative !important;
-            overflow: visible !important;
+            overflow-x: auto !important; overflow-y: hidden !important; max-width: 100% !important;
         }
 
         /* Landscape sheet styling */
@@ -495,6 +497,37 @@
             max-width: 100% !important;
             height: auto !important;
         }
+    
+        /* Excel Sheet Preview Styling */
+        .excel-sheet-table-wrap {
+            max-width: 100%;
+            overflow-x: auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            padding: 16px;
+            margin: 20px auto;
+        }
+        .excel-sheet-table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            color: #1e293b;
+        }
+        .excel-sheet-table-wrap table th, .excel-sheet-table-wrap table td {
+            border: 1px solid #cbd5e1;
+            padding: 6px 10px;
+            white-space: nowrap;
+        }
+        .excel-sheet-table-wrap table tr:first-child, .excel-sheet-table-wrap table th {
+            background: #f1f5f9;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .excel-sheet-table-wrap table tr:hover td {
+            background: #f8fafc;
+        }
+
     </style>
     <script src="<?= asset('js/app.js') ?>"></script>
     <script src="<?= asset('js/ppepp_form.js') ?>"></script>

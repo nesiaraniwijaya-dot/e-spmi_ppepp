@@ -1,6 +1,6 @@
 <?php
 /**
- * Login View
+ * Login View: Google Single Sign-On (SSO) Exclusive
  * SPMI PPEPP UNIKA Soegijapranata
  */
 $pageTitle = 'Masuk Portal MITRA';
@@ -10,42 +10,42 @@ require_once ROOT_PATH . '/views/layouts/header.php';
 <div class="container py-5 my-auto">
     <div class="row justify-content-center align-items-center">
         <div class="col-lg-10 col-xl-9">
-            <div class="card border-0 shadow-2-strong overflow-hidden" style="border-radius: 20px; box-shadow: 0 20px 40px rgba(11, 25, 44, 0.15);">
+            <div class="card border-0 shadow-2-strong overflow-hidden" style="border-radius: 24px; box-shadow: 0 20px 45px rgba(11, 25, 44, 0.16);">
                 <div class="row g-0">
                     
                     <!-- Left Column: SCU Brand & PPEPP Identity (Dark Blue Theme) -->
-                    <div class="col-lg-6 bg-scu-gradient text-white p-4 p-md-5 d-flex flex-column justify-content-between">
+                    <div class="col-lg-6 bg-scu-gradient text-white p-4 p-md-5 d-flex flex-column justify-content-between position-relative" style="min-height: 480px;">
                         <div>
                             <div class="d-flex align-items-center gap-3 mb-4">
-                                <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35)); flex-shrink: 0;">
+                                <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width: 62px; height: 62px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35)); flex-shrink: 0;">
                                 <div>
                                     <h3 class="fw-bold mb-0 text-white" style="letter-spacing: 0.5px; line-height: 1.2;">MITRA</h3>
                                     <div class="small text-light opacity-90" style="font-size: 0.82rem; font-weight: 500;">Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
                                 </div>
                             </div>
 
-                            <h3 class="fw-extrabold mb-3 text-white" style="font-weight: 800; line-height: 1.3;">
+                            <h3 class="fw-extrabold mb-3 text-white" style="font-weight: 800; line-height: 1.35;">
                                 MITRA &bull; Pengawal Mutu
                             </h3>
                             <p class="text-light opacity-75 small mb-4" style="line-height: 1.7;">
-                                MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan di <?= INSTITUTION_NAME ?>.
+                                MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan di <?= INSTITUTION_NAME ?> melalui siklus PPEPP terintegrasi.
                             </p>
 
-                            <div class="d-flex flex-column gap-2 mb-4">
-                                <div class="d-flex align-items-center gap-2 small text-light">
-                                    <i class="fas fa-check-circle text-info"></i> Kontrol Hak Akses Berbasis Peran (RBAC)
+                            <div class="d-flex flex-column gap-2.5 mb-4">
+                                <div class="d-flex align-items-center gap-2.5 small text-light">
+                                    <i class="fas fa-shield-halved text-info"></i> Otentikasi Tunggal Resmi Google Workspace Unika
                                 </div>
-                                <div class="d-flex align-items-center gap-2 small text-light">
-                                    <i class="fas fa-check-circle text-info"></i> Rekam Jejak Audit Trail Terperinci
+                                <div class="d-flex align-items-center gap-2.5 small text-light">
+                                    <i class="fas fa-check-circle text-info"></i> Kontrol Hak Akses Berbasis Peran Terintegrasi (RBAC)
                                 </div>
-                                <div class="d-flex align-items-center gap-2 small text-light">
-                                    <i class="fas fa-check-circle text-info"></i> Repositori &amp; Verifikasi Dokumen 5 Siklus
+                                <div class="d-flex align-items-center gap-2.5 small text-light">
+                                    <i class="fas fa-award text-info"></i> Verifikasi &amp; Pratinjau Dokumen 5 Siklus Mutu
                                 </div>
                             </div>
                         </div>
 
                         <!-- Institutional Quality Badge Card -->
-                        <div class="p-3 bg-white bg-opacity-10 rounded-3 border border-white border-opacity-15 d-flex align-items-center gap-3 mt-4">
+                        <div class="p-3 bg-white bg-opacity-10 rounded-4 border border-white border-opacity-15 d-flex align-items-center gap-3 mt-4">
                             <div class="rounded-circle bg-white bg-opacity-15 text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
                                 <i class="fas fa-award fa-lg text-info"></i>
                             </div>
@@ -56,77 +56,61 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                         </div>
                     </div>
 
-                    <!-- Right Column: Login Form -->
+                    <!-- Right Column: Google SSO Action -->
                     <div class="col-lg-6 bg-white p-4 p-md-5 d-flex flex-column justify-content-center">
                         <div class="text-center mb-4">
-                            <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width: 64px; height: 64px; object-fit: contain; margin-bottom: 0.65rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12));">
-                            <h4 class="fw-bold text-dark-blue mb-0" style="letter-spacing: 0.5px;">MITRA</h4>
-                            <div class="text-muted small fw-medium mb-3" style="font-size: 0.82rem;">Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
+                            <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width: 68px; height: 68px; object-fit: contain; margin-bottom: 0.75rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12));">
+                            <h4 class="fw-bold text-dark-blue mb-0" style="letter-spacing: 0.5px;">Portal Akses MITRA</h4>
+                            <div class="text-muted small fw-medium mt-1 mb-2" style="font-size: 0.85rem;">Universitas Katolik Soegijapranata (SCU)</div>
                             <div class="border-top pt-2" style="border-color: #E2E8F0 !important;">
-                                <span class="text-secondary small">Masuk ke Akun Anda untuk Mengakses Portal</span>
+                                <span class="text-secondary small">Autentikasi Terpusat Civitas Akademika</span>
                             </div>
                         </div>
 
-                        <form action="<?= base_url('login') ?>" method="POST">
-                            <?php if (!empty($returnUrl)): ?>
-                                <input type="hidden" name="return_url" value="<?= htmlspecialchars($returnUrl) ?>">
-                                <div class="alert alert-info border-info border-opacity-25 py-2 px-3 rounded-3 small mb-3 d-flex align-items-center gap-2">
-                                    <i class="fas fa-unlock-keyhole text-info fa-lg"></i>
-                                    <div><strong>Akses Dokumen Penuh:</strong> Masuk untuk membuka seluruh halaman dokumen tanpa batasan pratinjau.</div>
+                        <?php if (!empty($returnUrl)): ?>
+                            <div class="alert alert-info border-info border-opacity-25 py-2.5 px-3 rounded-3 small mb-4 d-flex align-items-center gap-2.5 shadow-2xs">
+                                <i class="fas fa-unlock-keyhole text-info fa-lg flex-shrink-0"></i>
+                                <div><strong>Akses Dokumen Lengkap:</strong> Masuk untuk membuka seluruh halaman dokumen tanpa batasan dan mengunduh berkas resmi.</div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Google SSO Primary Button -->
+                        <div class="d-grid mb-3">
+                            <?php 
+                            $googleAuthUrl = base_url('auth/google' . (!empty($returnUrl) ? '?return_url=' . urlencode($returnUrl) : ''));
+                            ?>
+                            <a href="<?= $googleAuthUrl ?>" 
+                               class="btn btn-outline-dark py-3 px-4 fw-bold rounded-4 shadow-sm d-flex align-items-center justify-content-center gap-3 transition-all" 
+                               style="border-color: #CBD5E1; background: #FFFFFF; color: #1E293B; font-size: 0.95rem; border-width: 1.5px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                                <svg width="22" height="22" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0">
+                                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z" fill="#4285F4"/>
+                                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                                    <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                                </svg>
+                                <span>Masuk dengan Google Institusi SSO</span>
+                            </a>
+                        </div>
+
+                        <!-- Info Card: Single Sign-On Unika Policy -->
+                        <div class="card border-0 rounded-4 p-3 mb-4" style="background: #F8FAFC; border: 1px solid #E2E8F0 !important;">
+                            <div class="d-flex align-items-start gap-2.5">
+                                <i class="fas fa-info-circle text-primary mt-0.5 flex-shrink-0"></i>
+                                <div class="text-muted small" style="font-size: 0.8rem; line-height: 1.55;">
+                                    Gunakan akun email resmi institusi Anda (<strong>@unika.ac.id</strong> atau <strong>@student.unika.ac.id</strong>) yang telah terdaftar di sistem MITRA.
                                 </div>
-                            <?php endif; ?>
-                            <div class="mb-3">
-                                <label for="email" class="form-label fw-semibold small text-secondary">Alamat Email Institusi</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-envelope"></i></span>
-                                    <input type="email" class="form-control bg-light border-start-0 ps-0" id="email" name="email" placeholder="nama@unika.ac.id" required autofocus>
-                                </div>
                             </div>
+                        </div>
 
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label for="password" class="form-label fw-semibold small text-secondary mb-0">Kata Sandi</label>
-                                    <a href="#" class="text-decoration-none small text-primary" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Lupa kata sandi?</a>
-                                </div>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-lock"></i></span>
-                                    <input type="password" class="form-control bg-light border-start-0 border-end-0 ps-0" id="password" name="password" placeholder="Masukkan kata sandi..." required>
-                                    <button class="btn btn-light border border-start-0 text-muted" type="button" id="togglePasswordBtn">
-                                        <i class="fas fa-eye" id="eyeIcon"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="d-grid mb-3 pt-2">
-                                <button type="submit" class="btn btn-primary py-2.5 fw-bold rounded-3 shadow-sm bg-scu-blue border-0">
-                                    <i class="fas fa-sign-in-alt me-2"></i> Masuk Sekarang
-                                </button>
-                            </div>
-
-                            <div class="d-flex align-items-center my-3">
-                                <div class="border-bottom flex-grow-1"></div>
-                                <span class="px-3 text-muted small fw-semibold">atau masuk dengan</span>
-                                <div class="border-bottom flex-grow-1"></div>
-                            </div>
-
-                            <div class="d-grid mb-4">
-                                <a href="<?= base_url('auth/google') ?>" class="btn btn-outline-dark py-2.5 fw-bold rounded-3 d-flex align-items-center justify-content-center gap-2" style="border-color: #CBD5E1; background: #FFFFFF; color: #1E293B;">
-                                    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z" fill="#4285F4"/>
-                                        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-                                        <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-                                        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-                                    </svg>
-                                    <span>Akun Google Institusi SSO</span>
-                                </a>
-                            </div>
-
-                            <div class="text-center">
-                                <a href="<?= base_url() ?>" class="text-decoration-none small text-muted">
-                                    <i class="fas fa-arrow-left me-1"></i> Kembali ke Beranda Publik
-                                </a>
-                            </div>
-                        </form>
+                        <!-- Footer Navigation -->
+                        <div class="d-flex flex-column align-items-center gap-2 text-center pt-2 border-top" style="border-color: #F1F5F9 !important;">
+                            <a href="<?= base_url() ?>" class="text-decoration-none small text-secondary hover-primary">
+                                <i class="fas fa-arrow-left me-1"></i> Kembali ke Beranda Publik
+                            </a>
+                            <a href="#" class="text-decoration-none small text-muted" data-bs-toggle="modal" data-bs-target="#helpLoginModal" style="font-size: 0.78rem;">
+                                <i class="fas fa-circle-question me-1"></i> Butuh bantuan akses akun?
+                            </a>
+                        </div>
                     </div>
 
                 </div>
@@ -135,58 +119,47 @@ require_once ROOT_PATH . '/views/layouts/header.php';
     </div>
 </div>
 
-<!-- Modal: Lupa Password (Hubungi Admin LPM) -->
-<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+<!-- Modal: Bantuan Akses Akun LPM -->
+<div class="modal fade" id="helpLoginModal" tabindex="-1" aria-labelledby="helpLoginModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-dark-blue text-white">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-navy text-white px-4 py-3 border-0">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="fas fa-key text-info fa-lg"></i>
-                    <h5 class="modal-title fs-6 fw-bold mb-0 text-white" id="forgotPasswordModalLabel">Bantuan Reset Kata Sandi</h5>
+                    <i class="fas fa-headset text-info fa-lg"></i>
+                    <h5 class="modal-title fs-6 fw-bold mb-0 text-white" id="helpLoginModalLabel">Bantuan Akun &amp; Akses Sistem</h5>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 text-center">
                 <div class="mb-3">
-                    <div class="scu-brand-icon mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
-                        <i class="fas fa-user-shield"></i>
+                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary" style="width: 60px; height: 60px;">
+                        <i class="fas fa-envelope-circle-check fa-2x"></i>
+                    </span>
+                </div>
+                <h6 class="fw-bold text-dark mb-2">Akun Belum Terdaftar atau Mengalami Kendala?</h6>
+                <p class="text-muted small mb-4" style="line-height: 1.6;">
+                    Pendaftaran akun dosen, tenaga kependidikan, Gugus Penjaminan Mutu (GPM), dan auditor dikelola langsung oleh Lembaga Penjaminan Mutu (LPM) SCU. Silakan hubungi tim LPM:
+                </p>
+                <div class="card border rounded-3 p-3 bg-light text-start mb-3">
+                    <div class="d-flex align-items-center gap-2.5 mb-2 small text-dark">
+                        <i class="fas fa-building text-primary"></i>
+                        <span>Lembaga Penjaminan Mutu (LPM) SCU</span>
                     </div>
-                    <h5 class="fw-bold text-dark-blue">Bantuan Sandi &amp; Akses Pengguna</h5>
-                    <p class="text-muted small">
-                        Jika Anda masuk menggunakan <strong>Akun Google SSO</strong>, pemulihan dan pengubahan kata sandi dilakukan secara mandiri melalui <a href="https://myaccount.google.com" target="_blank" class="fw-bold text-primary">Akun Google Anda <i class="fas fa-external-link-alt ms-0.5"></i></a>.
-                    </p>
-                    <p class="text-muted small mb-0">
-                        Untuk akun lokal standar, perubahan dan reset kata sandi dikelola secara terpusat oleh <strong>Super Admin / Admin LPM UNIKA Soegijapranata</strong>.
-                    </p>
+                    <div class="d-flex align-items-center gap-2.5 mb-2 small text-dark">
+                        <i class="fas fa-envelope text-primary"></i>
+                        <a href="mailto:lpm@unika.ac.id" class="text-decoration-none text-dark fw-semibold">lpm@unika.ac.id</a>
+                    </div>
+                    <div class="d-flex align-items-center gap-2.5 small text-dark">
+                        <i class="fas fa-phone text-primary"></i>
+                        <span>024-8441555 Ext 1473</span>
+                    </div>
                 </div>
-                <div class="card bg-light border-0 p-3 text-start small">
-                    <div class="fw-bold text-dark mb-2">Silakan hubungi kontak resmi LPM:</div>
-                    <div class="mb-1"><i class="fas fa-envelope text-primary me-2"></i> Email: <strong>lpm@unika.ac.id</strong></div>
-                    <div class="mb-1"><i class="fas fa-phone text-success me-2"></i> Telepon: <strong>024-8441555 Ext 1473</strong></div>
-                    <div><i class="fas fa-building text-primary me-2"></i> Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Bendan Duwur</div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm px-4 rounded-pill" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 py-2 small fw-semibold w-100" data-bs-dismiss="modal">
+                    Mengerti
+                </button>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-document.getElementById('togglePasswordBtn').addEventListener('click', function() {
-    const passwordField = document.getElementById('password');
-    const eyeIcon = document.getElementById('eyeIcon');
-    if (passwordField.type === 'password') {
-        passwordField.type = 'text';
-        eyeIcon.classList.remove('fa-eye');
-        eyeIcon.classList.add('fa-eye-slash');
-    } else {
-        passwordField.type = 'password';
-        eyeIcon.classList.remove('fa-eye-slash');
-        eyeIcon.classList.add('fa-eye');
-    }
-});
-</script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

@@ -427,11 +427,28 @@ document.addEventListener('DOMContentLoaded', function () {
                                     const sections = docxContainer.querySelectorAll('section.docx');
                                     let isLandscapeDoc = false;
                                     sections.forEach(sec => {
+                                        sec.style.overflowX = 'auto';
+                                        sec.style.maxWidth = '100%';
+                                        sec.style.boxSizing = 'border-box';
                                         const w = sec.offsetWidth || sec.clientWidth;
                                         const h = sec.offsetHeight || sec.clientHeight;
                                         if (w > h || (sec.style.width && sec.style.width.includes('297mm'))) {
                                             isLandscapeDoc = true;
                                             sec.classList.add('is-landscape');
+                                        }
+                                    });
+
+                                    // Auto-wrap wide docx tables so they never overflow paper margins
+                                    const allTables = docxContainer.querySelectorAll('table');
+                                    allTables.forEach(tbl => {
+                                        tbl.style.maxWidth = '100%';
+                                        tbl.style.boxSizing = 'border-box';
+                                        if (tbl.parentElement && !tbl.parentElement.classList.contains('docx-table-wrap')) {
+                                            const wrap = document.createElement('div');
+                                            wrap.className = 'docx-table-wrap';
+                                            wrap.style.cssText = 'max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 12px;';
+                                            tbl.parentNode.insertBefore(wrap, tbl);
+                                            wrap.appendChild(tbl);
                                         }
                                     });
 
@@ -505,39 +522,154 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isExcelFile) {
                 if (headerIcon) headerIcon.className = 'fas fa-file-excel fa-lg text-success';
                 if (toolbar) toolbar.style.display = 'none';
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
                 if (totalInfo) totalInfo.textContent = 'Lembar Kerja Microsoft Excel (' + fileExtMatch.toUpperCase() + ')';
                 const pageCounter = document.getElementById('pdfPageCounterBadge');
-                if (pageCounter) pageCounter.textContent = 'Excel Spreadsheet';
+                if (pageCounter) pageCounter.textContent = 'Spreadsheet (.xlsx)';
 
                 if (accessBadge) {
-                    accessBadge.className = 'badge bg-success bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
-                    accessBadge.innerHTML = '<i class="fas fa-file-excel me-1"></i> Berkas Excel (.xlsx)';
+                    if (isUserLoggedIn) {
+                        accessBadge.className = 'badge bg-success bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
+                        accessBadge.innerHTML = '<i class="fas fa-unlock me-1"></i> Akses Penuh (Akun Terdaftar)';
+                    } else {
+                        accessBadge.className = 'badge bg-light text-success border rounded-pill px-2.5 py-1 fw-bold';
+                        accessBadge.innerHTML = '<i class="fas fa-lock me-1"></i> Pratinjau Terbatas';
+                    }
                 }
 
                 if (downloadContainer) {
-                    downloadContainer.innerHTML = `
-                        <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-success rounded-pill px-3 shadow-sm">
-                            <i class="fas fa-download me-1"></i> Unduh Berkas Excel
-                        </a>
-                    `;
+                    const curPath = window.location.pathname + window.location.search;
+                    const loginUrlWithReturn = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
+                    if (isUserLoggedIn) {
+                        downloadContainer.innerHTML = `
+                            <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-success rounded-pill px-3 shadow-sm">
+                                <i class="fas fa-download me-1"></i> Unduh Berkas Excel
+                            </a>
+                        `;
+                    } else {
+                        downloadContainer.innerHTML = `
+                            <a href="${loginUrlWithReturn}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-white bg-scu-blue border-0" title="Masuk dengan akun institusi untuk mengunduh">
+                                <i class="fas fa-lock me-1"></i> Login untuk Unduh
+                            </a>
+                        `;
+                    }
                 }
 
-                if (pagesContainer) {
-                    pagesContainer.style.display = 'block';
-                    pagesContainer.innerHTML = `
+                function renderExcelFallback(container) {
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    if (!container) return;
+                    container.style.display = 'block';
+                    container.innerHTML = `
                         <div class="card border-0 shadow-sm rounded-4 p-4 text-center my-5 mx-auto" style="max-width: 520px; background: #ffffff;">
                             <div class="rounded-circle bg-success bg-opacity-10 text-success mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
                                 <i class="fas fa-file-excel fa-2x"></i>
                             </div>
                             <h5 class="fw-bold text-dark mb-1">${docTitle}</h5>
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1 my-2" style="font-size:0.75rem;">Berkas Microsoft Excel (.${fileExtMatch.toUpperCase()})</span>
-                            <p class="text-muted small mb-4" style="line-height:1.6;">Dokumen mutu ini berupa lembar kerja/tabel data. Silakan unduh berkas untuk membuka dan mengolahnya di Microsoft Excel atau Google Spreadsheet.</p>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1 my-2" style="font-size:0.75rem;">Berkas Spreadsheet (.${fileExtMatch.toUpperCase()})</span>
+                            <p class="text-muted small mb-4" style="line-height:1.6;">Dokumen mutu ini berformat Microsoft Excel. Anda dapat langsung mengunduhnya untuk dibuka menggunakan Microsoft Excel, Google Sheets, atau WPS Office.</p>
                             <a href="${pdfUrl}" download class="btn btn-success rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2 justify-content-center mx-auto">
                                 <i class="fas fa-download"></i> Unduh Berkas Excel
                             </a>
                         </div>
                     `;
+                }
+
+                if (typeof XLSX !== 'undefined') {
+                    fetch(pdfUrl)
+                        .then(res => {
+                            if (!res.ok) throw new Error('HTTP ' + res.status);
+                            return res.arrayBuffer();
+                        })
+                        .then(data => {
+                            if (loadingIndicator) loadingIndicator.style.display = 'none';
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const sheetNames = workbook.SheetNames || [];
+                            if (sheetNames.length === 0) {
+                                renderExcelFallback(pagesContainer);
+                                return;
+                            }
+
+                            if (pagesContainer) {
+                                pagesContainer.style.display = 'block';
+                                pagesContainer.style.background = '#525659';
+                                pagesContainer.style.padding = '20px';
+
+                                let tabsHtml = '';
+                                if (sheetNames.length > 1) {
+                                    tabsHtml = '<div class="d-flex align-items-center gap-1.5 mb-3 flex-wrap bg-dark p-2 rounded-3">';
+                                    sheetNames.forEach((sName, idx) => {
+                                        tabsHtml += `<button type="button" class="btn btn-xs rounded-pill px-3 py-1.5 fw-semibold sheet-tab-btn ${idx === 0 ? 'btn-success text-white' : 'btn-outline-light text-white'}" onclick="switchExcelSheet('${sName.replace(/'/g, "\\'")}', this)">${sName}</button>`;
+                                    });
+                                    tabsHtml += '</div>';
+                                }
+
+                                pagesContainer.innerHTML = `
+                                    <div class="mx-auto" style="max-width: 96%; width: 1200px;">
+                                        ${tabsHtml}
+                                        <div id="excelSheetContentContainer" class="excel-sheet-table-wrap"></div>
+                                        <div id="excelLockedNoticeContainer"></div>
+                                    </div>
+                                `;
+
+                                window._currentXlsxWorkbook = workbook;
+                                window.switchExcelSheet = function(sName, btnEl) {
+                                    if (btnEl) {
+                                        document.querySelectorAll('.sheet-tab-btn').forEach(b => {
+                                            b.className = 'btn btn-xs rounded-pill px-3 py-1.5 fw-semibold sheet-tab-btn btn-outline-light text-white';
+                                        });
+                                        btnEl.className = 'btn btn-xs rounded-pill px-3 py-1.5 fw-semibold sheet-tab-btn btn-success text-white';
+                                    }
+
+                                    const ws = workbook.Sheets[sName];
+                                    if (!ws) return;
+
+                                    let htmlTable = XLSX.utils.sheet_to_html(ws, { editable: false });
+                                    const contentEl = document.getElementById('excelSheetContentContainer');
+                                    const noticeEl = document.getElementById('excelLockedNoticeContainer');
+
+                                    if (!isUserLoggedIn) {
+                                        // Restrict rows for public/unauthenticated guests
+                                        const tempDiv = document.createElement('div');
+                                        tempDiv.innerHTML = htmlTable;
+                                        const trs = tempDiv.querySelectorAll('tr');
+                                        const maxRows = 15;
+                                        if (trs.length > maxRows) {
+                                            for (let r = maxRows; r < trs.length; r++) {
+                                                trs[r].remove();
+                                            }
+                                        }
+                                        contentEl.innerHTML = tempDiv.innerHTML;
+
+                                        const curPath = window.location.pathname + window.location.search;
+                                        const loginUrl = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
+                                        noticeEl.innerHTML = `
+                                            <div class="p-4 text-center rounded-4 shadow-lg my-3" style="background: linear-gradient(135deg, #0A192F 0%, #1E3E62 50%, #1E293B 100%); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;">
+                                                <div class="lock-icon-circle mx-auto mb-2.5 d-inline-flex align-items-center justify-content-center bg-white bg-opacity-10 text-info rounded-circle" style="width: 52px; height: 52px;">
+                                                    <i class="fas fa-shield-halved fa-lg"></i>
+                                                </div>
+                                                <h5 class="fw-bold text-white mb-2">Pratinjau Spreadsheet Dibatasi (${maxRows} Baris Pertama)</h5>
+                                                <p class="text-white text-opacity-75 mx-auto mb-3" style="max-width: 480px; font-size: 0.85rem; line-height: 1.6;">
+                                                    Dokumen spreadsheet ini memiliki data lengkap. Masuk menggunakan akun terdaftar atau civitas akademika untuk membuka seluruh baris dan mengunduh berkas lengkap.
+                                                </p>
+                                                <a href="${loginUrl}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-white shadow-sm bg-scu-blue border-0">
+                                                    <i class="fas fa-right-to-bracket me-1.5"></i> Masuk Sekarang
+                                                </a>
+                                            </div>
+                                        `;
+                                    } else {
+                                        contentEl.innerHTML = htmlTable;
+                                        noticeEl.innerHTML = '';
+                                    }
+                                };
+
+                                window.switchExcelSheet(sheetNames[0], null);
+                            }
+                        })
+                        .catch(err => {
+                            console.warn('Excel parse error:', err);
+                            renderExcelFallback(pagesContainer);
+                        });
+                } else {
+                    renderExcelFallback(pagesContainer);
                 }
                 return;
             }
