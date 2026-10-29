@@ -347,9 +347,20 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                     </div>
                                 <?php elseif ($hasFiles): ?>
                                     <?php if ($filesCount > 1): ?>
-                                        <span class="badge badge-file"><i class="fas fa-folder-open me-1"></i> <?= $filesCount ?> File PDF</span>
-                                    <?php else: ?>
-                                        <span class="badge badge-file"><i class="fas fa-file-pdf me-1"></i> File PDF</span>
+                                        <span class="badge badge-file"><i class="fas fa-folder-open me-1"></i> <?= $filesCount ?> Berkas</span>
+                                    <?php else: 
+                                        $firstFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_extension' => $doc['file_extension'] ?? ''];
+                                        $fMeta = get_portal_file_meta($firstFile['file_path'] ?? '', $firstFile['file_extension'] ?? '');
+                                    ?>
+                                        <?php if (!empty($fMeta['badge_style'])): ?>
+                                            <span class="badge" style="<?= $fMeta['badge_style'] ?> font-size: 0.72rem;">
+                                                <i class="<?= $fMeta['icon'] ?> me-1"></i> <?= $fMeta['label'] ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge badge-file" style="font-size: 0.72rem;">
+                                                <i class="<?= $fMeta['icon'] ?> me-1"></i> <?= $fMeta['label'] ?>
+                                            </span>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 <?php elseif ($hasLinks): ?>
                                     <?php if ($linkCount > 1): ?>
@@ -377,12 +388,10 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                                     ?>
                                                         <li class="mb-1.5">
                                                             <?php
-                                                            $fExt = strtolower($fItem['file_extension'] ?? pathinfo($fItem['file_path'], PATHINFO_EXTENSION));
-                                                            $fIsImg = in_array($fExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
-                                                            $fIsWord = in_array($fExt, ['doc', 'docx']);
-                                                            $fType = $fIsImg ? 'image' : ($fIsWord ? 'word' : 'pdf');
-                                                            $fIcon = $fIsImg ? 'fas fa-file-image text-warning' : ($fIsWord ? 'fas fa-file-word text-primary' : 'fas fa-file-pdf text-danger');
-                                                            $fTag = strtoupper($fExt ?: 'FILE');
+                                                            $fMeta = get_portal_file_meta($fItem['file_path'] ?? '', $fItem['file_extension'] ?? '');
+                                                            $fType = $fMeta['type'];
+                                                            $fIcon = $fMeta['icon'] . ' ' . $fMeta['color_class'];
+                                                            $fTag = $fMeta['tag'];
                                                             ?>
                                                             <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
                                                                     data-bs-toggle="modal" 
@@ -421,16 +430,8 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                             ?>
                                             <div class="d-inline-flex align-items-center gap-1.5">
                                                 <?php
-                                                $sExt = strtolower($singleFile['file_extension'] ?? pathinfo($singleFile['file_path'] ?? '', PATHINFO_EXTENSION));
-                                                $sIsImg = in_array($sExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
-                                                $sIsWord = in_array($sExt, ['doc', 'docx']);
-                                                $sType = $sIsImg ? 'image' : ($sIsWord ? 'word' : 'pdf');
-                                                ?>
-                                                <?php
-                                                $sExt = strtolower($singleFile['file_extension'] ?? pathinfo($singleFile['file_path'] ?? '', PATHINFO_EXTENSION));
-                                                $sIsImg = in_array($sExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
-                                                $sIsWord = in_array($sExt, ['doc', 'docx']);
-                                                $sType = $sIsImg ? 'image' : ($sIsWord ? 'word' : 'pdf');
+                                                $sMeta = get_portal_file_meta($singleFile['file_path'] ?? '', $singleFile['file_extension'] ?? '');
+                                                $sType = $sMeta['type'];
                                                 ?>
                                                 <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm px-3" 
                                                         style="height: 32px; font-size: 0.8rem; font-weight: 600;"

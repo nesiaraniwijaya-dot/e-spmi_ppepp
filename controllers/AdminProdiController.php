@@ -569,7 +569,7 @@ class AdminProdiController extends Controller {
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $isEdit = !empty($id);
         $isDraft = (isset($_POST['action_submit']) && $_POST['action_submit'] === 'draft');
-        $allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'webp', 'txt', 'csv', 'zip'];
+        $allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'webp', 'mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a', 'txt', 'csv', 'zip'];
 
         // ==========================================
         // 1. BATCH MULTI-UPLOAD (CREATE UP TO 10 DOCS)
@@ -707,7 +707,7 @@ class AdminProdiController extends Controller {
                                     $fileName = 'DOC_' . $this->prodiId . '_' . time() . '_' . uniqid() . '.' . $ext;
                                     $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                                     $fFolder = trim($batchFileFolders[$fIdx] ?? 'Utama') ?: 'Utama';
-                                    $fCat = !empty($batchFileCats[$fIdx]) ? $batchFileCats[$fIdx] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : 'file');
+                                    $fCat = !empty($batchFileCats[$fIdx]) ? $batchFileCats[$fIdx] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : (in_array($ext, ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a']) ? 'video' : 'file'));
 
                                     if (move_uploaded_file($tmpName, $targetFile)) {
                                         $uploadedFilesList[] = [
@@ -753,7 +753,7 @@ class AdminProdiController extends Controller {
                                     $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                                     if (file_put_contents($targetFile, $bin) !== false) {
                                         $fFolder = trim($b64Item['folder_name'] ?? ($batchFileFolders[$fIdx] ?? 'Utama')) ?: 'Utama';
-                                        $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : 'file');
+                                        $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : (in_array($ext, ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a']) ? 'video' : 'file'));
                                         $uploadedFilesList[] = [
                                             'file_name' => $origName,
                                             'file_path' => 'uploads/documents/' . $fileName,
@@ -1408,7 +1408,7 @@ class AdminProdiController extends Controller {
                             : ($subBidangId ? [(int)$subBidangId] : []);
                         $fSubsJson = json_encode($fSubArray);
                         $fFolder = trim($b64Item['folder_name'] ?? ($newFolders[$idx] ?? 'Utama')) ?: 'Utama';
-                        $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : 'file');
+                        $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : (in_array($ext, ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a']) ? 'video' : 'file'));
 
                         if (preg_match('/^data:.*?;base64,/', $rawB64, $m)) {
                             $rawB64 = substr($rawB64, strlen($m[0]));

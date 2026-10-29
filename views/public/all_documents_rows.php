@@ -58,11 +58,28 @@ if (!function_exists('get_portal_file_meta')) {
                 return [
                     'ext' => $ext,
                     'type' => 'image',
-                    'label' => 'Gambar',
+                    'label' => 'Foto ' . strtoupper($ext === 'jpeg' ? 'JPG' : $ext),
                     'tag' => 'FOTO',
                     'icon' => 'fas fa-file-image',
                     'color_class' => 'text-warning',
                     'badge_style' => 'background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A;',
+                    'can_preview' => true,
+                    'btn_text' => 'View'
+                ];
+                        case 'mp4':
+            case 'mkv':
+            case 'mov':
+            case 'webm':
+            case 'avi':
+            case 'm4a':
+                return [
+                    'ext' => $ext,
+                    'type' => 'video',
+                    'label' => 'Video ' . strtoupper($ext === 'm4a' ? 'Audio' : $ext),
+                    'tag' => strtoupper($ext),
+                    'icon' => 'fas fa-file-video',
+                    'color_class' => 'text-purple',
+                    'badge_style' => 'background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE;',
                     'can_preview' => true,
                     'btn_text' => 'View'
                 ];

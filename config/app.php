@@ -972,3 +972,101 @@ function check_academic_year_upload_access(
     }
 }
 
+
+
+/**
+ * Metadata format berkas untuk tampilan portal & admin
+ */
+if (!function_exists('get_portal_file_meta')) {
+    function get_portal_file_meta(string $path = '', string $extFallback = ''): array {
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION) ?: $extFallback);
+        switch ($ext) {
+            case 'docx':
+            case 'doc':
+                return [
+                    'ext' => $ext,
+                    'type' => 'word',
+                    'label' => 'File Word',
+                    'tag' => strtoupper($ext),
+                    'icon' => 'fas fa-file-word',
+                    'color_class' => 'text-primary',
+                    'badge_style' => 'background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE;',
+                    'can_preview' => true,
+                    'btn_text' => 'View'
+                ];
+            case 'xlsx':
+            case 'xls':
+            case 'csv':
+                return [
+                    'ext' => $ext,
+                    'type' => 'excel',
+                    'label' => 'File Excel',
+                    'tag' => strtoupper($ext),
+                    'icon' => 'fas fa-file-excel',
+                    'color_class' => 'text-success',
+                    'badge_style' => 'background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0;',
+                    'can_preview' => true,
+                    'btn_text' => 'View'
+                ];
+            case 'pptx':
+            case 'ppt':
+                return [
+                    'ext' => $ext,
+                    'type' => 'ppt',
+                    'label' => 'File PPT',
+                    'tag' => strtoupper($ext),
+                    'icon' => 'fas fa-file-powerpoint',
+                    'color_class' => 'text-warning',
+                    'badge_style' => 'background: #FFF7ED; color: #EA580C; border: 1px solid #FED7AA;',
+                    'can_preview' => true,
+                    'btn_text' => 'View'
+                ];
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'webp':
+            case 'gif':
+                return [
+                    'ext' => $ext,
+                    'type' => 'image',
+                    'label' => 'Foto ' . strtoupper($ext === 'jpeg' ? 'JPG' : $ext),
+                    'tag' => 'FOTO',
+                    'icon' => 'fas fa-file-image',
+                    'color_class' => 'text-warning',
+                    'badge_style' => 'background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A;',
+                    'can_preview' => true,
+                    'btn_text' => 'View'
+                ];
+            case 'mp4':
+            case 'mkv':
+            case 'mov':
+            case 'webm':
+            case 'avi':
+            case 'm4a':
+                return [
+                    'ext' => $ext,
+                    'type' => 'video',
+                    'label' => 'Video ' . strtoupper($ext === 'm4a' ? 'Audio' : $ext),
+                    'tag' => strtoupper($ext),
+                    'icon' => 'fas fa-file-video',
+                    'color_class' => 'text-purple',
+                    'badge_style' => 'background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE;',
+                    'can_preview' => true,
+                    'btn_text' => 'View'
+                ];
+            case 'pdf':
+            default:
+                return [
+                    'ext' => $ext ?: 'pdf',
+                    'type' => 'pdf',
+                    'label' => 'File PDF',
+                    'tag' => 'PDF',
+                    'icon' => 'fas fa-file-pdf',
+                    'color_class' => 'text-danger',
+                    'badge_style' => '',
+                    'can_preview' => true,
+                    'btn_text' => 'View'
+                ];
+        }
+    }
+}

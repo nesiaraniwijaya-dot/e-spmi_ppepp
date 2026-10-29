@@ -319,6 +319,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const isImageExt = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg'].includes(fileExtMatch);
             const hasImageInName = /\.(jpe?g|png|webp|gif|bmp)(\s|$|\?|#|\.)/i.test(pdfUrl) || /\.(jpe?g|png|webp|gif|bmp)(\s|$)/i.test(docTitle);
             const isImageFile = isImageExt || fileTypeAttr === 'image' || fileTypeAttr === 'photo' || hasImageInName;
+            const isVideoExt = ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a'].includes(fileExtMatch);
+            const hasVideoInName = /\.(mp4|mkv|mov|webm|avi|m4a)(\s|$|\?|#|\.)/i.test(pdfUrl) || /\.(mp4|mkv|mov|webm|avi|m4a)(\s|$)/i.test(docTitle);
+            const isVideoFile = isVideoExt || fileTypeAttr === 'video' || hasVideoInName;
             const isWordFile = ['docx', 'doc'].includes(fileExtMatch) || fileTypeAttr === 'word' || fileTypeAttr === 'docx';
             const isExcelFile = ['xlsx', 'xls', 'csv'].includes(fileExtMatch) || fileTypeAttr === 'excel';
             const isPptFile = ['pptx', 'ppt'].includes(fileExtMatch) || fileTypeAttr === 'ppt' || fileTypeAttr === 'powerpoint';
@@ -372,6 +375,70 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     `;
                 }
+            }
+
+            function renderVideoDirectPreview(url, title) {
+                if (headerIcon) headerIcon.className = 'fas fa-file-video fa-lg text-purple';
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+                if (totalInfo) totalInfo.textContent = 'Pemutar Video (' + (fileExtMatch.toUpperCase() || 'MP4') + ')';
+                const pageCounter = document.getElementById('pdfPageCounterBadge');
+                if (pageCounter) pageCounter.textContent = 'Video Playback';
+                if (toolbar) toolbar.style.display = 'none';
+
+                if (accessBadge) {
+                    if (isUserLoggedIn) {
+                        accessBadge.className = 'badge bg-success bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
+                        accessBadge.innerHTML = '<i class="fas fa-unlock me-1"></i> Akses Penuh (Akun UNIKA)';
+                    } else {
+                        accessBadge.className = 'badge rounded-pill px-2.5 py-1 fw-bold';
+                        accessBadge.style.background = '#EDE9FE';
+                        accessBadge.style.color = '#7C3AED';
+                        accessBadge.style.border = '1px solid #DDD6FE';
+                        accessBadge.innerHTML = '<i class="fas fa-video me-1"></i> Pemutaran Video';
+                    }
+                }
+
+                if (downloadContainer) {
+                    const curPath = window.location.pathname + window.location.search;
+                    const loginUrlWithReturn = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
+                    if (isUserLoggedIn) {
+                        downloadContainer.innerHTML = `
+                            <a href="${url}" target="_blank" download class="btn btn-sm btn-outline-light rounded-pill px-3">
+                                <i class="fas fa-download me-1"></i> Unduh Video Asli
+                            </a>
+                        `;
+                    } else {
+                        downloadContainer.innerHTML = `
+                            <a href="${loginUrlWithReturn}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-white bg-scu-blue border-0" title="Masuk dengan akun @unika.ac.id untuk mengunduh dokumen resmi">
+                                <i class="fas fa-lock me-1"></i> Login untuk Unduh
+                            </a>
+                        `;
+                    }
+                }
+
+                if (pagesContainer) {
+                    pagesContainer.style.display = 'flex';
+                    pagesContainer.style.background = '#0F172A';
+                    pagesContainer.style.padding = '1.5rem';
+                    pagesContainer.style.justifyContent = 'center';
+                    pagesContainer.style.alignItems = 'center';
+                    pagesContainer.innerHTML = `
+                        <div class="d-flex flex-column justify-content-center align-items-center w-100" style="min-height: 65vh;">
+                            <video id="pdfViewerVideo" controls autoplay playsinline class="rounded-3 shadow-lg" style="max-width: 95%; max-height: 80vh; outline: none; border: 1px solid rgba(255,255,255,0.15); background: #000;">
+                                <source src="${url}">
+                                Browser Anda tidak mendukung pemutar video HTML5. Silakan unduh berkas untuk menonton.
+                            </video>
+                            <div class="mt-2 text-white-50 small d-flex align-items-center gap-2">
+                                <i class="fas fa-info-circle"></i> Kontrol pemutar video aktif. Anda dapat memutar, menjeda, atau beralih ke layar penuh (fullscreen).
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            if (isVideoFile) {
+                renderVideoDirectPreview(pdfUrl, docTitle);
+                return;
             }
 
             if (isImageFile) {
@@ -793,7 +860,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }).catch(function (error) {
                 console.error('Error loading PDF:', error);
                 
-                // Fallback auto-recovery: check if the file is actually an image before showing error
+                // Fallback auto-recovery: check if the file is actually video or image before showing error
+                if (isVideoFile || /\.(mp4|mkv|mov|webm|avi|m4a)/i.test(pdfUrl)) {
+                    renderVideoDirectPreview(pdfUrl, docTitle);
+                    return;
+                }
+                // Check if the file is actually an image before showing error
                 const testImg = new Image();
                 testImg.onload = function() {
                     renderImageDirectPreview(pdfUrl, docTitle);
@@ -820,6 +892,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 pdfModal.addEventListener('hidden.bs.modal', function () {
             currentRenderTaskId++; // Cancel any running page renders
+            const activeVideo = pagesContainer ? pagesContainer.querySelector('video') : null;
+            if (activeVideo) {
+                try {
+                    activeVideo.pause();
+                    activeVideo.removeAttribute('src');
+                    activeVideo.load();
+                } catch(e) {}
+            }
             const pagesContainer = document.getElementById('pdfPagesContainer');
             if (pagesContainer) {
                 pagesContainer.innerHTML = '';

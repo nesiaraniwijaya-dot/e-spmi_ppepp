@@ -446,7 +446,7 @@ $siklusDefinitions = [
                                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;"><i class="fas fa-file-excel me-0.5"></i> XLSX</span>
                                             <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-0.5" style="font-size: 0.7rem;">Maks 25 MB</span>
                                         </div>
-                                        <input type="file" id="single_files" name="files[]" multiple class="d-none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.zip" onchange="handleSingleFileInput(this)">
+                                        <input type="file" id="single_files" name="files[]" multiple class="d-none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.mp4,.mkv,.mov,.webm,.avi,.m4a,.zip" onchange="handleSingleFileInput(this)">
                                         <button type="button" class="btn btn-sm btn-primary rounded-pill px-4 py-2 fw-semibold shadow-xs my-1" style="font-size: 0.8rem;" onclick="event.stopPropagation(); triggerAddMoreSingleFiles()">
                                             <i class="fas fa-plus me-1"></i> Telusuri &amp; Tambah Berkas
                                         </button>
@@ -898,7 +898,7 @@ function triggerAddMoreSingleFiles() {
     const tempInput = document.createElement('input');
     tempInput.type = 'file';
     tempInput.multiple = true;
-    tempInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.zip';
+    tempInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.mp4,.mkv,.mov,.webm,.avi,.m4a,.zip';
     tempInput.onchange = function() {
         if (tempInput.files && tempInput.files.length > 0) {
             const savedState = saveSingleStagedState();
@@ -1719,7 +1719,7 @@ function triggerAddFolderFiles(idx, folderId, category) {
     if (category === 'photo') {
         tempInput.accept = 'image/*,.jpg,.jpeg,.png,.webp';
     } else {
-        tempInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.zip';
+        tempInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.mp4,.mkv,.mov,.webm,.avi,.m4a,.zip';
     }
     tempInput.onchange = function() {
         if (tempInput.files && tempInput.files.length > 0) {
