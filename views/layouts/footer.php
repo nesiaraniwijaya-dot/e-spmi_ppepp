@@ -105,13 +105,13 @@
                         <div class="lock-icon-circle mx-auto mb-3 d-inline-flex align-items-center justify-content-center bg-white bg-opacity-10 text-info rounded-circle" style="width:68px; height:68px;">
                             <i class="fas fa-shield-halved fa-2x"></i>
                         </div>
-                        <h4 class="fw-bold text-white mb-2" style="font-family:var(--font-heading);">Akses Dokumen Terbatas</h4>
+                        <h4 class="fw-bold text-white mb-2" style="font-family:var(--font-heading);">Pratinjau Dibatasi (Halaman Pertama)</h4>
                         <p class="text-white text-opacity-75 mx-auto mb-3" style="max-width: 520px; font-size: 0.9rem; line-height:1.6;" id="pdfLockedMessage">
-                            Dokumen mutu ini memiliki pembatasan akses untuk publik. Silakan masuk sebagai pengguna terdaftar untuk membuka isi dokumen dan mengakses tautan resmi secara penuh.
+                            Dokumen mutu ini dibatasi untuk pratinjau publik (hanya halaman pertama). Silakan masuk menggunakan akun resmi <strong>@unika.ac.id</strong> untuk membuka seluruh halaman secara lengkap dan mengunduh berkas resmi.
                         </p>
                         <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
                             <a href="<?= base_url('login') ?>" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-white shadow-sm bg-scu-blue border-0">
-                                <i class="fas fa-right-to-bracket me-1.5"></i> Masuk / Login ke Sistem
+                                <i class="fas fa-right-to-bracket me-1.5"></i> Masuk dengan Akun Unika
                             </a>
                             <button type="button" class="btn btn-outline-light rounded-pill px-3 py-2 fw-semibold" data-bs-dismiss="modal">
                                 Tutup Pratinjau

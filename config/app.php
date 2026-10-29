@@ -235,8 +235,26 @@ function validate_document_external_url(?string $url): ?string {
     return null;
 }
 
+function is_unika_user_logged_in(): bool {
+    if (!class_exists('Auth') || !Auth::check()) {
+        return false;
+    }
+    $email = strtolower(trim($_SESSION['user_email'] ?? ''));
+    if (!empty($email)) {
+        if (str_ends_with($email, '@unika.ac.id') || str_ends_with($email, '@unica.ac.id') || str_ends_with($email, '.unika.ac.id') || str_ends_with($email, '.unica.ac.id')) {
+            return true;
+        }
+    }
+    // Also allow testing / campus admin roles
+    $role = $_SESSION['user_role'] ?? '';
+    if (!empty($_SESSION['is_multi_role_testing']) || in_array($role, ['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu', 'admin_fakultas', 'admin_prodi', 'gpm', 'auditor', 'civitas_unika', 'testing'])) {
+        return true;
+    }
+    return false;
+}
+
 function is_user_logged_in(): bool {
-    return class_exists('Auth') && Auth::check();
+    return is_unika_user_logged_in();
 }
 
 /**

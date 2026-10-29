@@ -186,9 +186,32 @@ class AuthController extends Controller {
                 redirect('auth/select-role');
             }
             Auth::setFlash('success', 'Selamat datang kembali, ' . htmlspecialchars($_SESSION['user_name']) . '! (Login via Google SSO)');
+            $returnUrl = $_SESSION['return_url'] ?? '';
+            if (!empty($returnUrl) && !preg_match('#^https?://#i', $returnUrl) && !str_starts_with($returnUrl, '//')) {
+                unset($_SESSION['return_url']);
+                redirect(ltrim($returnUrl, '/'));
+            }
             redirect(Auth::getDashboardRoute());
+        } elseif (str_ends_with($googleEmail, '@unika.ac.id') || str_ends_with($googleEmail, '@unica.ac.id') || str_ends_with($googleEmail, '.unika.ac.id') || str_ends_with($googleEmail, '.unica.ac.id')) {
+            $_SESSION['user_id'] = 'civitas_' . substr(md5($googleEmail), 0, 10);
+            $_SESSION['user_name'] = $userInfo['name'] ?? explode('@', $googleEmail)[0];
+            $_SESSION['user_real_name'] = $_SESSION['user_name'];
+            $_SESSION['user_email'] = $googleEmail;
+            $_SESSION['user_role'] = 'civitas_unika';
+            $_SESSION['user_real_role'] = 'civitas_unika';
+            $_SESSION['user_avatar'] = $userInfo['picture'] ?? null;
+            $_SESSION['is_unika_civitas'] = true;
+            $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
+
+            Auth::setFlash('success', 'Selamat datang, ' . htmlspecialchars($_SESSION['user_name']) . '! Anda berhasil masuk dengan akun resmi UNIKA. Akses dokumen penuh dan unduhan telah diaktifkan.');
+            $returnUrl = $_SESSION['return_url'] ?? '';
+            if (!empty($returnUrl) && !preg_match('#^https?://#i', $returnUrl) && !str_starts_with($returnUrl, '//')) {
+                unset($_SESSION['return_url']);
+                redirect(ltrim($returnUrl, '/'));
+            }
+            redirect('dokumen');
         } else {
-            Auth::setFlash('danger', 'Email Google <strong>' . htmlspecialchars($googleEmail) . '</strong> belum terdaftar di sistem E-SPMI atau akun Anda sedang dinonaktifkan. Silakan hubungi Admin LPM.');
+            Auth::setFlash('danger', 'Email Google <strong>' . htmlspecialchars($googleEmail) . '</strong> bukan akun resmi civitas @unika.ac.id atau belum terdaftar di sistem E-SPMI.');
             redirect('login');
         }
     }

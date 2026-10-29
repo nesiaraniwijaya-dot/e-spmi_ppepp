@@ -283,11 +283,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (iframeEl) iframeEl.src = 'about:blank';
             }
 
-            // Configure Download Button for PDF
+            // Configure Download Button for PDF (Only accessible for logged in Unika users)
             if (downloadContainer) {
                 const curPath = window.location.pathname + window.location.search;
                 const loginUrlWithReturn = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
-                if (isUserLoggedIn || canDownload === 1) {
+                if (isUserLoggedIn) {
                     downloadContainer.innerHTML = `
                         <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-outline-light rounded-pill px-3">
                             <i class="fas fa-download me-1"></i> Unduh Asli
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                 } else {
                     downloadContainer.innerHTML = `
-                        <a href="${loginUrlWithReturn}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-white bg-scu-blue border-0" title="Masuk ke sistem untuk mengunduh dokumen resmi">
+                        <a href="${loginUrlWithReturn}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-white bg-scu-blue border-0" title="Masuk dengan akun @unika.ac.id untuk mengunduh dokumen resmi">
                             <i class="fas fa-lock me-1"></i> Login untuk Unduh
                         </a>
                     `;
@@ -306,13 +306,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (accessBadge) {
                 if (isUserLoggedIn) {
                     accessBadge.className = 'badge bg-success bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
-                    accessBadge.innerHTML = '<i class="fas fa-unlock me-1"></i> Akses Penuh (Terverifikasi)';
-                } else if (publicLimit === 0) {
-                    accessBadge.className = 'badge bg-success bg-opacity-75 text-white rounded-pill px-2.5 py-1';
-                    accessBadge.innerHTML = '<i class="fas fa-eye me-1"></i> Semua Halaman';
+                    accessBadge.innerHTML = '<i class="fas fa-unlock me-1"></i> Akses Penuh (Akun UNIKA)';
                 } else {
                     accessBadge.className = 'badge bg-light text-primary border rounded-pill px-2.5 py-1 fw-bold';
-                    accessBadge.innerHTML = `<i class="fas fa-lock me-1"></i> Pratinjau Terbatas (${publicLimit} Hlm)`;
+                    accessBadge.innerHTML = '<i class="fas fa-lock me-1"></i> Pratinjau Terbatas (1 Hlm)';
                 }
             }
 
@@ -351,16 +348,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (pageCounter) pageCounter.textContent = 'Word (.docx)';
 
                 if (accessBadge) {
-                    accessBadge.className = 'badge bg-primary bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
-                    accessBadge.innerHTML = '<i class="fas fa-file-word me-1"></i> Berkas Word (.docx)';
+                    if (isUserLoggedIn) {
+                        accessBadge.className = 'badge bg-success bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
+                        accessBadge.innerHTML = '<i class="fas fa-unlock me-1"></i> Akses Penuh (Akun UNIKA)';
+                    } else {
+                        accessBadge.className = 'badge bg-light text-primary border rounded-pill px-2.5 py-1 fw-bold';
+                        accessBadge.innerHTML = '<i class="fas fa-lock me-1"></i> Pratinjau Terbatas (1 Hlm)';
+                    }
                 }
 
                 if (downloadContainer) {
-                    downloadContainer.innerHTML = `
-                        <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
-                            <i class="fas fa-download me-1"></i> Unduh Berkas Word
-                        </a>
-                    `;
+                    const curPath = window.location.pathname + window.location.search;
+                    const loginUrlWithReturn = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
+                    if (isUserLoggedIn) {
+                        downloadContainer.innerHTML = `
+                            <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
+                                <i class="fas fa-download me-1"></i> Unduh Berkas Word
+                            </a>
+                        `;
+                    } else {
+                        downloadContainer.innerHTML = `
+                            <a href="${loginUrlWithReturn}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-white bg-scu-blue border-0" title="Masuk dengan akun @unika.ac.id untuk mengunduh dokumen resmi">
+                                <i class="fas fa-lock me-1"></i> Login untuk Unduh
+                            </a>
+                        `;
+                    }
                 }
 
                 function renderWordFallback(container) {
@@ -423,17 +435,56 @@ document.addEventListener('DOMContentLoaded', function () {
                                         }
                                     });
 
-                                    const pageCounter = document.getElementById('pdfPageCounterBadge');
-                                    if (pageCounter) {
-                                        pageCounter.textContent = isLandscapeDoc 
-                                            ? `Word (${sections.length} Hlm - Landscape)` 
-                                            : `Word (${sections.length} Hlm - Portrait)`;
-                                    }
+                                    // If not logged in as Unika account, restrict to page 1 only!
+                                    if (!isUserLoggedIn && sections.length > 1) {
+                                        for (let i = 1; i < sections.length; i++) {
+                                            sections[i].style.display = 'none';
+                                        }
 
-                                    if (totalInfo) {
-                                        totalInfo.textContent = isLandscapeDoc
-                                            ? 'Dokumen Microsoft Word (Kertas Landscape / Mendatar)'
-                                            : 'Dokumen Microsoft Word (Kertas Portrait / Tegak)';
+                                        const lockedNotice = document.createElement('div');
+                                        lockedNotice.className = 'p-4 mx-auto my-4 text-center rounded-4 shadow-lg';
+                                        lockedNotice.style.cssText = 'max-width: 680px; width: 92%; background: linear-gradient(135deg, #0A192F 0%, #1E3E62 50%, #1E293B 100%); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
+                                        const curPath = window.location.pathname + window.location.search;
+                                        const loginUrl = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
+                                        lockedNotice.innerHTML = `
+                                            <div class="lock-icon-circle mx-auto mb-3 d-inline-flex align-items-center justify-content-center bg-white bg-opacity-10 text-info rounded-circle" style="width: 58px; height: 58px;">
+                                                <i class="fas fa-shield-halved fa-2x"></i>
+                                            </div>
+                                            <h5 class="fw-bold text-white mb-2">Pratinjau Dibatasi (Halaman 1 dari ${sections.length})</h5>
+                                            <p class="text-white text-opacity-75 mx-auto mb-3" style="max-width: 480px; font-size: 0.85rem; line-height: 1.6;">
+                                                Anda hanya dapat melihat halaman pertama sebagai pratinjau publik. Silakan masuk menggunakan akun resmi <strong>@unika.ac.id</strong> untuk membaca seluruh halaman secara lengkap dan mengunduh berkas asli.
+                                            </p>
+                                            <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
+                                                <a href="${loginUrl}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-white shadow-sm bg-scu-blue border-0">
+                                                    <i class="fas fa-right-to-bracket me-1.5"></i> Masuk dengan Akun Unika
+                                                </a>
+                                            </div>
+                                        `;
+                                        docxContainer.appendChild(lockedNotice);
+
+                                        const pageCounter = document.getElementById('pdfPageCounterBadge');
+                                        if (pageCounter) {
+                                            pageCounter.textContent = `1 / ${sections.length} Hlm (Dibatasi)`;
+                                        }
+
+                                        if (totalInfo) {
+                                            totalInfo.textContent = isLandscapeDoc
+                                                ? 'Dokumen Word (Kertas Landscape / Mendatar) - Halaman 1 Saja'
+                                                : 'Dokumen Word (Kertas Portrait / Tegak) - Halaman 1 Saja';
+                                        }
+                                    } else {
+                                        const pageCounter = document.getElementById('pdfPageCounterBadge');
+                                        if (pageCounter) {
+                                            pageCounter.textContent = isLandscapeDoc 
+                                                ? `Word (${sections.length} Hlm - Landscape)` 
+                                                : `Word (${sections.length} Hlm - Portrait)`;
+                                        }
+
+                                        if (totalInfo) {
+                                            totalInfo.textContent = isLandscapeDoc
+                                                ? 'Dokumen Microsoft Word (Kertas Landscape / Mendatar)'
+                                                : 'Dokumen Microsoft Word (Kertas Portrait / Tegak)';
+                                        }
                                     }
                                 }).catch(err => {
                                     console.warn('docx preview render error:', err);
@@ -549,8 +600,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 currentPdfDoc = pdfDoc;
                 const totalPages = pdfDoc.numPages;
 
-                if (!isUserLoggedIn && publicLimit > 0) {
-                    currentRenderLimit = Math.min(totalPages, publicLimit);
+                if (!isUserLoggedIn) {
+                    currentRenderLimit = Math.min(totalPages, 1);
                 } else {
                     currentRenderLimit = totalPages;
                 }

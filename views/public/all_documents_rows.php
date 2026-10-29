@@ -82,6 +82,9 @@ if (!function_exists('get_portal_file_meta')) {
         }
     }
 }
+
+$isUnikaUser = is_unika_user_logged_in();
+$loginUrlForDoc = base_url('login?return_url=' . urlencode($_SERVER['REQUEST_URI'] ?? '/dokumen'));
 ?>
 <?php if (empty($documents)): ?>
     <tr class="no-matching-docs">
@@ -108,9 +111,17 @@ if (!function_exists('get_portal_file_meta')) {
             <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
             <td>
                 <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen'] ?? '') ?></div>
-                <?php if (!empty($doc['nomor_dokumen'])): ?>
-                    <div class="small text-muted mb-1"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
-                <?php endif; ?>
+                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                    <?php if (!empty($doc['nomor_dokumen'])): ?>
+                        <span class="small text-muted" style="font-size: 0.72rem;"><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
+                        <span class="text-muted small">•</span>
+                    <?php endif; ?>
+                    <?php if (!empty($doc['tahun_akademik'])): ?>
+                        <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.7rem;">
+                            <i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
             </td>
             <td>
                 <?php if (!empty($doc['jenjang'])): ?>
@@ -191,27 +202,40 @@ if (!function_exists('get_portal_file_meta')) {
                                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 320px; max-width: min(92vw, 450px); width: max-content; font-size: 0.78rem;">
                                     <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS DOKUMEN:</li>
                                     <?php foreach ($files as $fItem): 
-                                        $fLimit = isset($fItem['is_page_limited']) && (int)$fItem['is_page_limited'] === 0 ? 0 : (int)($fItem['public_page_limit'] ?? 1);
-                                        $fCanDl = (int)($fItem['can_download_public'] ?? 0);
+                                        $fLimit = $isUnikaUser ? 0 : 1;
+                                        $fCanDl = $isUnikaUser ? 1 : 0;
                                         $itemMeta = get_portal_file_meta($fItem['file_path'] ?? '', $fItem['file_extension'] ?? '');
                                     ?>
                                         <li class="mb-1.5">
                                             <?php if (!$itemMeta['can_preview']): ?>
-                                                <a href="<?= base_url($fItem['file_path']) ?>" download class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light d-flex align-items-center justify-content-between gap-2">
-                                                    <div class="d-flex align-items-center gap-1.5 text-dark text-truncate" style="max-width: 230px;">
-                                                        <i class="<?= $itemMeta['icon'] ?> <?= $itemMeta['color_class'] ?> flex-shrink-0"></i>
-                                                        <span class="text-truncate fw-semibold"><?= htmlspecialchars($fItem['file_name']) ?></span>
-                                                    </div>
-                                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 flex-shrink-0" style="font-size: 0.65rem;">
-                                                        <i class="fas fa-download me-0.5"></i> Unduh
-                                                    </span>
-                                                </a>
+                                                <?php if ($isUnikaUser): ?>
+                                                    <a href="<?= base_url($fItem['file_path']) ?>" download class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light d-flex align-items-center justify-content-between gap-2">
+                                                        <div class="d-flex align-items-center gap-1.5 text-dark text-truncate" style="max-width: 230px;">
+                                                            <i class="<?= $itemMeta['icon'] ?> <?= $itemMeta['color_class'] ?> flex-shrink-0"></i>
+                                                            <span class="text-truncate fw-semibold"><?= htmlspecialchars($fItem['file_name']) ?></span>
+                                                        </div>
+                                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 flex-shrink-0" style="font-size: 0.65rem;">
+                                                            <i class="fas fa-download me-0.5"></i> Unduh
+                                                        </span>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <a href="<?= $loginUrlForDoc ?>" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light d-flex align-items-center justify-content-between gap-2" title="Masuk dengan akun @unika.ac.id untuk mengunduh">
+                                                        <div class="d-flex align-items-center gap-1.5 text-dark text-truncate" style="max-width: 230px;">
+                                                            <i class="<?= $itemMeta['icon'] ?> <?= $itemMeta['color_class'] ?> flex-shrink-0"></i>
+                                                            <span class="text-truncate fw-semibold"><?= htmlspecialchars($fItem['file_name']) ?></span>
+                                                        </div>
+                                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border flex-shrink-0" style="font-size: 0.65rem;">
+                                                            <i class="fas fa-lock me-0.5"></i> Login Unduh
+                                                        </span>
+                                                    </a>
+                                                <?php endif; ?>
                                             <?php else: ?>
                                                 <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#pdfPreviewModal" 
                                                         data-pdf-url="<?= base_url($fItem['file_path']) ?>" 
                                                         data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
+                                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                         data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
                                                         data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
                                                         data-public-limit="<?= $fLimit ?>"
@@ -239,19 +263,28 @@ if (!function_exists('get_portal_file_meta')) {
                         <?php else: ?>
                             <?php 
                             $singleFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => '']; 
-                            $sLimit = isset($singleFile['is_page_limited']) && (int)$singleFile['is_page_limited'] === 0 ? 0 : (int)($singleFile['public_page_limit'] ?? $doc['public_page_limit'] ?? 1);
-                            $sCanDl = (int)($singleFile['can_download_public'] ?? $doc['can_download_public'] ?? 0);
+                            $sLimit = $isUnikaUser ? 0 : 1;
+                            $sCanDl = $isUnikaUser ? 1 : 0;
                             $singleMeta = get_portal_file_meta($singleFile['file_path'] ?? '', $singleFile['file_extension'] ?? '');
                             ?>
                             
                             <?php if (!$singleMeta['can_preview']): ?>
                                 <!-- Hanya Ada Tombol Unduh: Lebar 132px persis menyamai 2 tombol View + Download -->
-                                <a href="<?= base_url($singleFile['file_path']) ?>" download 
-                                   class="btn btn-sm btn-success rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center text-nowrap w-100" 
-                                   style="height: 32px; font-size: 0.8rem; font-weight: 600;" 
-                                   title="Unduh Berkas <?= htmlspecialchars($singleMeta['tag']) ?>">
-                                    <i class="fas fa-download me-1.5"></i> Download
-                                </a>
+                                <?php if ($isUnikaUser): ?>
+                                    <a href="<?= base_url($singleFile['file_path']) ?>" download 
+                                       class="btn btn-sm btn-success rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center text-nowrap w-100" 
+                                       style="height: 32px; font-size: 0.8rem; font-weight: 600;" 
+                                       title="Unduh Berkas <?= htmlspecialchars($singleMeta['tag']) ?>">
+                                        <i class="fas fa-download me-1.5"></i> Download
+                                    </a>
+                                <?php else: ?>
+                                    <a href="<?= $loginUrlForDoc ?>" 
+                                       class="btn btn-sm btn-outline-secondary rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center text-nowrap w-100" 
+                                       style="height: 32px; font-size: 0.8rem; font-weight: 600;" 
+                                       title="Masuk dengan akun @unika.ac.id untuk mengunduh">
+                                        <i class="fas fa-lock me-1.5"></i> Login Unduh
+                                    </a>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <!-- Berkas yang bisa di-preview (PDF, Word, Gambar): Tombol View (88px) + Tombol Download (36px) = Total 132px -->
                                 <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center text-nowrap" 
@@ -260,6 +293,7 @@ if (!function_exists('get_portal_file_meta')) {
                                         data-bs-target="#pdfPreviewModal" 
                                         data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
                                         data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
+                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                         data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
                                         data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
                                         data-public-limit="<?= $sLimit ?>"
@@ -268,20 +302,26 @@ if (!function_exists('get_portal_file_meta')) {
                                         title="Lihat Pratinjau Dokumen">
                                     <i class="fas fa-eye me-1.5"></i> View
                                 </button>
-                                <a href="<?= base_url($singleFile['file_path']) ?>" download 
-                                   class="btn btn-sm btn-outline-primary rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center" 
-                                   style="width: 36px; height: 32px; padding: 0; font-size: 0.8rem;" 
-                                   title="Unduh Berkas Langsung">
-                                    <i class="fas fa-download"></i>
-                                </a>
+                                <?php if ($isUnikaUser): ?>
+                                    <a href="<?= base_url($singleFile['file_path']) ?>" download 
+                                       class="btn btn-sm btn-outline-primary rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center" 
+                                       style="width: 36px; height: 32px; padding: 0; font-size: 0.8rem;" 
+                                       title="Unduh Berkas Asli">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <a href="<?= $loginUrlForDoc ?>" 
+                                       class="btn btn-sm btn-outline-secondary rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center" 
+                                       style="width: 36px; height: 32px; padding: 0; font-size: 0.8rem;" 
+                                       title="Masuk dengan akun @unika.ac.id untuk mengunduh dokumen resmi">
+                                        <i class="fas fa-lock"></i>
+                                    </a>
+                                <?php endif; ?>
                             <?php endif; ?>
                         <?php endif; ?>
                     <?php endif; ?>
 
                     <?php if ($hasLinks): ?>
-                        <?php 
-                        $isLoggedIn = is_user_logged_in();
-                        ?>
                         <?php if ($linkCount > 1): ?>
                             <!-- Dropdown Tautan Banyak: Lebar 132px -->
                             <div class="dropdown d-inline-block w-100">
@@ -295,8 +335,8 @@ if (!function_exists('get_portal_file_meta')) {
                                     <?php foreach ($gdriveLinks as $lIdx => $linkObj): 
                                         $gUrl = $linkObj['url'];
                                         $gNarasi = $linkObj['narasi'];
-                                        $gCanDl = (int)($linkObj['can_download_public'] ?? 0);
-                                        $canAccessLink = $isLoggedIn || $gCanDl === 1;
+                                        $canAccessLink = $isUnikaUser;
+                                        $gCanDl = $isUnikaUser ? 1 : 0;
                                     ?>
                                         <li class="mb-1.5">
                                             <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
@@ -305,6 +345,7 @@ if (!function_exists('get_portal_file_meta')) {
                                                     data-is-link="1"
                                                     data-link-url="<?= htmlspecialchars($gUrl) ?>"
                                                     data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) . ' (Tautan #' . ($lIdx + 1) . ')' ?>"
+                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                     data-doc-narasi="<?= htmlspecialchars($gNarasi) ?>"
                                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null)) ?>"
                                                     data-can-access="<?= $canAccessLink ? 1 : 0 ?>"
@@ -333,8 +374,8 @@ if (!function_exists('get_portal_file_meta')) {
                             </div>
                         <?php else: 
                             $singleLink = $gdriveLinks[0];
-                            $sLinkCanDl = (int)($singleLink['can_download_public'] ?? 0);
-                            $canAccessSingle = $isLoggedIn || $sLinkCanDl === 1;
+                            $canAccessSingle = $isUnikaUser;
+                            $sLinkCanDl = $isUnikaUser ? 1 : 0;
                         ?>
                             <!-- Tautan Tunggal GDrive: Lebar 132px -->
                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center text-nowrap w-100" 
@@ -344,6 +385,7 @@ if (!function_exists('get_portal_file_meta')) {
                                     data-is-link="1"
                                     data-link-url="<?= htmlspecialchars($singleLink['url']) ?>" 
                                     data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
+                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                     data-doc-narasi="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>"
                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null)) ?>"
                                     data-can-access="<?= $canAccessSingle ? 1 : 0 ?>"
