@@ -271,17 +271,178 @@ $avgProgress = $totalCycles > 0 ? round($sumProgress / $totalCycles) : 0;
                 </div>
             <?php endforeach; ?>
         </div>
+
+        <!-- Alert jika pencarian tidak ditemukan -->
+        <div id="noCycleMatchAlert" class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center mt-3" style="display: none; border: 1px solid #E2E8F0 !important;">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-secondary mb-3 mx-auto" style="width: 56px; height: 56px;">
+                <i class="fas fa-magnifying-glass fa-lg"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-1">Tidak Ada Judul Siklus yang Sesuai</h6>
+            <p class="text-muted small mb-0">Coba periksa kembali kata kunci pencarian Anda.</p>
+        </div>
+
+        <!-- Navigasi Paginasi 5 Judul per Halaman -->
+        <div class="card border-0 shadow-2xs rounded-4 p-3 bg-white mt-4" id="cyclePaginationWrap" style="border: 1px solid #E2E8F0 !important;">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2.5">
+                <div class="small text-muted" id="cyclePaginationInfo">
+                    Menampilkan <strong id="cycleRangeInfo" class="text-dark">0 - 0</strong> dari <strong id="cycleTotalInfo" class="text-dark">0</strong> Judul Siklus
+                </div>
+                <nav aria-label="Navigasi Halaman Siklus">
+                    <ul class="pagination pagination-sm mb-0 gap-1" id="cyclePaginationList">
+                        <!-- Tombol Halaman Di-generate JS -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
     <?php endif; ?>
 </div>
 
 <script>
-function filterCycleList(query) {
-    const q = (query || '').toLowerCase().trim();
-    document.querySelectorAll('.cycle-item-card').forEach(card => {
-        const title = card.getAttribute('data-cycle-title') || '';
-        card.style.display = (!q || title.includes(q)) ? 'block' : 'none';
+const ITEMS_PER_PAGE = 5;
+let currentCyclePage = 1;
+let currentSearchQuery = '';
+
+function paginateCycleList() {
+    const allCards = Array.from(document.querySelectorAll('.cycle-item-card'));
+    const noMatchAlert = document.getElementById('noCycleMatchAlert');
+    const paginationWrap = document.getElementById('cyclePaginationWrap');
+    const rangeInfo = document.getElementById('cycleRangeInfo');
+    const totalInfo = document.getElementById('cycleTotalInfo');
+    const paginationList = document.getElementById('cyclePaginationList');
+
+    if (!allCards.length) return;
+
+    // Filter yang cocok dengan pencarian
+    const q = currentSearchQuery.toLowerCase().trim();
+    const matchingCards = allCards.filter(card => {
+        const title = (card.getAttribute('data-cycle-title') || '').toLowerCase();
+        return !q || title.includes(q);
     });
+
+    const totalMatches = matchingCards.length;
+    const totalPages = Math.max(1, Math.ceil(totalMatches / ITEMS_PER_PAGE));
+
+    if (currentCyclePage > totalPages) {
+        currentCyclePage = totalPages;
+    }
+    if (currentCyclePage < 1) {
+        currentCyclePage = 1;
+    }
+
+    // Sembunyikan semua kartu
+    allCards.forEach(c => c.style.display = 'none');
+
+    if (totalMatches === 0) {
+        if (noMatchAlert) noMatchAlert.style.display = 'block';
+        if (paginationWrap) paginationWrap.style.display = 'none';
+        return;
+    }
+
+    if (noMatchAlert) noMatchAlert.style.display = 'none';
+    if (paginationWrap) paginationWrap.style.display = 'block';
+
+    const startIdx = (currentCyclePage - 1) * ITEMS_PER_PAGE;
+    const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, totalMatches);
+
+    // Tampilkan 5 kartu untuk halaman aktif
+    for (let i = startIdx; i < endIdx; i++) {
+        matchingCards[i].style.display = 'block';
+    }
+
+    // Update info teks
+    if (rangeInfo) rangeInfo.textContent = `${startIdx + 1} - ${endIdx}`;
+    if (totalInfo) totalInfo.textContent = totalMatches;
+
+    // Render pagination buttons
+    if (paginationList) {
+        paginationList.innerHTML = '';
+
+        if (totalPages <= 1) {
+            paginationWrap.style.display = 'none';
+            return;
+        }
+
+        // Prev Button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentCyclePage <= 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<button type="button" class="page-link rounded-pill px-2.5 py-1" aria-label="Sebelumnya"><i class="fas fa-chevron-left" style="font-size:0.7rem;"></i></button>`;
+        if (currentCyclePage > 1) {
+            prevLi.querySelector('button').onclick = () => goToCyclePage(currentCyclePage - 1);
+        }
+        paginationList.appendChild(prevLi);
+
+        // Page Number Buttons (maksimal rentang tombol)
+        let startPage = Math.max(1, currentCyclePage - 2);
+        let endPage = Math.min(totalPages, currentCyclePage + 2);
+
+        if (startPage > 1) {
+            const firstLi = document.createElement('li');
+            firstLi.className = 'page-item';
+            firstLi.innerHTML = `<button type="button" class="page-link rounded-pill px-2.5 py-1">1</button>`;
+            firstLi.querySelector('button').onclick = () => goToCyclePage(1);
+            paginationList.appendChild(firstLi);
+
+            if (startPage > 2) {
+                const dotsLi = document.createElement('li');
+                dotsLi.className = 'page-item disabled';
+                dotsLi.innerHTML = `<span class="page-link rounded-pill border-0 px-2 py-1">&hellip;</span>`;
+                paginationList.appendChild(dotsLi);
+            }
+        }
+
+        for (let p = startPage; p <= endPage; p++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${p === currentCyclePage ? 'active' : ''}`;
+            li.innerHTML = `<button type="button" class="page-link rounded-pill px-2.5 py-1 ${p === currentCyclePage ? 'fw-bold' : ''}">${p}</button>`;
+            if (p !== currentCyclePage) {
+                li.querySelector('button').onclick = () => goToCyclePage(p);
+            }
+            paginationList.appendChild(li);
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const dotsLi = document.createElement('li');
+                dotsLi.className = 'page-item disabled';
+                dotsLi.innerHTML = `<span class="page-link rounded-pill border-0 px-2 py-1">&hellip;</span>`;
+                paginationList.appendChild(dotsLi);
+            }
+            const lastLi = document.createElement('li');
+            lastLi.className = 'page-item';
+            lastLi.innerHTML = `<button type="button" class="page-link rounded-pill px-2.5 py-1">${totalPages}</button>`;
+            lastLi.querySelector('button').onclick = () => goToCyclePage(totalPages);
+            paginationList.appendChild(lastLi);
+        }
+
+        // Next Button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentCyclePage >= totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<button type="button" class="page-link rounded-pill px-2.5 py-1" aria-label="Selanjutnya"><i class="fas fa-chevron-right" style="font-size:0.7rem;"></i></button>`;
+        if (currentCyclePage < totalPages) {
+            nextLi.querySelector('button').onclick = () => goToCyclePage(currentCyclePage + 1);
+        }
+        paginationList.appendChild(nextLi);
+    }
 }
+
+function goToCyclePage(page) {
+    currentCyclePage = page;
+    paginateCycleList();
+    const container = document.getElementById('cycleListContainer');
+    if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function filterCycleList(query) {
+    currentSearchQuery = query || '';
+    currentCyclePage = 1;
+    paginateCycleList();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    paginateCycleList();
+});
 </script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>
