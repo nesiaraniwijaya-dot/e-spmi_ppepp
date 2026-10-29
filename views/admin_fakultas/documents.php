@@ -193,20 +193,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
 
             <!-- Baris 2: Filter Bidang & Tahun Akademik -->
             <div class="row g-2.5 align-items-center">
-                <div class="col-md-4 col-sm-6">
-                    <select class="form-select form-select-sm" id="tableUnitFilter" onchange="onFakultasFilterChange()">
-                        <option value="">Semua Unit (Fakultas &amp; Seluruh Prodi)</option>
-                        <option value="fakultas" <?= ($unitFilter ?? '') === 'fakultas' ? 'selected' : '' ?>>Tingkat Fakultas Saja</option>
-                        <?php if (!empty($prodiUnderFakultas)): ?>
-                            <optgroup label="Program Studi:">
-                                <?php foreach ($prodiUnderFakultas as $pu): ?>
-                                    <option value="<?= $pu['id'] ?>" <?= ($unitFilter ?? '') == $pu['id'] ? 'selected' : '' ?>><?= htmlspecialchars($pu['nama_prodi']) ?> (<?= htmlspecialchars($pu['jenjang']) ?>)</option>
-                                <?php endforeach; ?>
-                            </optgroup>
-                        <?php endif; ?>
-                    </select>
-                </div>
-                <div class="col-md-4 col-sm-6">
+                <div class="col-md-6 col-sm-6">
                     <select class="form-select form-select-sm" id="tableBidangFilter" onchange="onFakultasFilterChange()">
                         <option value="">Semua Bidang</option>
                         <?php foreach ($bidangList as $b): ?>
@@ -214,7 +201,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-4 col-sm-6">
+                <div class="col-md-6 col-sm-6">
                     <select class="form-select form-select-sm" id="tableTahunFilter" onchange="onFakultasFilterChange()">
                         <option value="">Semua Tahun Akademik</option>
                         <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
@@ -366,7 +353,6 @@ function onFakultasFilterChange() {
 function fetchFakultasData(page) {
     currentFakultasPage = page || 1;
     const searchVal = document.getElementById('tableSearchInput') ? document.getElementById('tableSearchInput').value.trim() : '';
-    const unitVal = document.getElementById('tableUnitFilter') ? document.getElementById('tableUnitFilter').value : '';
     const bidangVal = document.getElementById('tableBidangFilter') ? document.getElementById('tableBidangFilter').value : '';
     const tahunVal = document.getElementById('tableTahunFilter') ? document.getElementById('tableTahunFilter').value.trim() : '';
 
@@ -378,7 +364,6 @@ function fetchFakultasData(page) {
         page: currentFakultasPage,
         per_page: currentFakultasPerPage,
         siklus: activeSiklus,
-        unit_scope: unitVal,
         bidang_id: bidangVal,
         tahun_akademik: tahunVal,
         status_review: filterReviewStatusVal,

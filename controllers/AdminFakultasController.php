@@ -124,31 +124,24 @@ class AdminFakultasController extends Controller {
         $prodiUnderFakultas = $this->db->query("SELECT id, nama_prodi, jenjang FROM prodis WHERE fakultas_id = {$this->fakultasId} ORDER BY nama_prodi ASC, jenjang ASC")->fetchAll();
         $unitFilter = trim($_GET['unit_scope'] ?? $_GET['prodi_id'] ?? '');
 
-        // Per-cycle counts (mencakup dokumen fakultas + seluruh prodi di bawah fakultas)
+        // Per-cycle counts khusus tingkat dekanat / fakultas
         $cycleCounts = [
-            'semua'        => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id={$this->fakultasId} OR p.fakultas_id={$this->fakultasId}) AND d.status_review != 'draft' AND d.deleted_at IS NULL")->fetchColumn(),
-            'penetapan'    => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id={$this->fakultasId} OR p.fakultas_id={$this->fakultasId}) AND d.status_review != 'draft' AND LOWER(TRIM(d.siklus))='penetapan' AND d.deleted_at IS NULL")->fetchColumn(),
-            'pelaksanaan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id={$this->fakultasId} OR p.fakultas_id={$this->fakultasId}) AND d.status_review != 'draft' AND LOWER(TRIM(d.siklus))='pelaksanaan' AND d.deleted_at IS NULL")->fetchColumn(),
-            'evaluasi'     => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id={$this->fakultasId} OR p.fakultas_id={$this->fakultasId}) AND d.status_review != 'draft' AND LOWER(TRIM(d.siklus))='evaluasi' AND d.deleted_at IS NULL")->fetchColumn(),
-            'pengendalian' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id={$this->fakultasId} OR p.fakultas_id={$this->fakultasId}) AND d.status_review != 'draft' AND LOWER(TRIM(d.siklus))='pengendalian' AND d.deleted_at IS NULL")->fetchColumn(),
-            'peningkatan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id={$this->fakultasId} OR p.fakultas_id={$this->fakultasId}) AND d.status_review != 'draft' AND LOWER(TRIM(d.siklus))='peningkatan' AND d.deleted_at IS NULL")->fetchColumn(),
+            'semua'        => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND deleted_at IS NULL")->fetchColumn(),
+            'penetapan'    => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='penetapan' AND deleted_at IS NULL")->fetchColumn(),
+            'pelaksanaan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='pelaksanaan' AND deleted_at IS NULL")->fetchColumn(),
+            'evaluasi'     => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='evaluasi' AND deleted_at IS NULL")->fetchColumn(),
+            'pengendalian' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='pengendalian' AND deleted_at IS NULL")->fetchColumn(),
+            'peningkatan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='peningkatan' AND deleted_at IS NULL")->fetchColumn(),
         ];
 
-        // Hitung total banner revisi, antrean & draf
-        $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id = {$this->fakultasId} OR p.fakultas_id = {$this->fakultasId}) AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND d.deleted_at IS NULL")->fetchColumn();
-        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id = {$this->fakultasId} OR p.fakultas_id = {$this->fakultasId}) AND d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm') AND d.deleted_at IS NULL")->fetchColumn();
-        $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE (d.fakultas_id = {$this->fakultasId} OR p.fakultas_id = {$this->fakultasId}) AND d.status_review = 'draft' AND d.deleted_at IS NULL")->fetchColumn();
+        // Hitung total banner revisi, antrean & draf tingkat fakultas
+        $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
+        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm') AND deleted_at IS NULL")->fetchColumn();
+        $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
 
-        // Base WHERE: Mencakup seluruh unit di bawah naungan fakultas
-        $where = ["(d.fakultas_id = ? OR p.fakultas_id = ?)", "d.deleted_at IS NULL", "d.status_review != 'draft'"];
-        $params = [$this->fakultasId, $this->fakultasId];
-
-        if ($unitFilter === 'fakultas') {
-            $where[] = "d.level = 'fakultas'";
-        } elseif (is_numeric($unitFilter) && (int)$unitFilter > 0) {
-            $where[] = "d.prodi_id = ?";
-            $params[] = (int)$unitFilter;
-        }
+        // Base WHERE: Murni dokumen tingkat dekanat / fakultas
+        $where = ["d.fakultas_id = ?", "d.level = 'fakultas'", "d.deleted_at IS NULL", "d.status_review != 'draft'"];
+        $params = [$this->fakultasId];
 
         if (!empty($siklus) && in_array(strtolower($siklus), ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
             $where[] = "LOWER(TRIM(d.siklus)) = ?";
@@ -183,7 +176,7 @@ class AdminFakultasController extends Controller {
         $whereClause = implode(" AND ", $where);
 
         // Count total
-        $stmtCount = $this->db->prepare("SELECT COUNT(*) FROM ppepp_documents d LEFT JOIN prodis p ON d.prodi_id = p.id WHERE {$whereClause}");
+        $stmtCount = $this->db->prepare("SELECT COUNT(*) FROM ppepp_documents d WHERE {$whereClause}");
         $stmtCount->execute($params);
         $totalFiltered = (int)$stmtCount->fetchColumn();
 
@@ -196,10 +189,8 @@ class AdminFakultasController extends Controller {
         // Fetch paginated
         $sql = "
             SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang,
-                   u.name as creator_name, rev.name as reviewer_name,
-                   p.nama_prodi, p.jenjang
+                   u.name as creator_name, rev.name as reviewer_name
             FROM ppepp_documents d 
-            LEFT JOIN prodis p ON d.prodi_id = p.id
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id 
@@ -368,24 +359,23 @@ class AdminFakultasController extends Controller {
      */
     private function getExistingCyclesWithStages(): array {
         $stmtCycles = $this->db->prepare("
-            SELECT c.*, b.nama_bidang, sb.nama_sub_bidang, p.nama_prodi, p.jenjang
+            SELECT c.*, b.nama_bidang, sb.nama_sub_bidang
             FROM ppepp_cycles c
             LEFT JOIN bidang_standar b ON c.bidang_id = b.id
             LEFT JOIN sub_bidang_standar sb ON c.sub_bidang_id = sb.id
-            LEFT JOIN prodis p ON c.prodi_id = p.id
-            WHERE (c.fakultas_id = ? OR c.prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?)) AND c.deleted_at IS NULL
+            WHERE c.fakultas_id = ? AND c.level = 'fakultas' AND c.deleted_at IS NULL
             ORDER BY c.updated_at DESC, c.id DESC
         ");
-        $stmtCycles->execute([$this->fakultasId, $this->fakultasId]);
+        $stmtCycles->execute([$this->fakultasId]);
         $cycles = $stmtCycles->fetchAll() ?: [];
 
         $stmtDocs = $this->db->prepare("
             SELECT d.id, d.cycle_id, d.nama_dokumen, d.nomor_dokumen, d.siklus, d.status_review, d.tahap_review, d.file_path, d.external_link, d.updated_at
             FROM ppepp_documents d
-            WHERE (d.fakultas_id = ? OR d.prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?)) AND d.cycle_id IS NOT NULL AND d.deleted_at IS NULL
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.cycle_id IS NOT NULL AND d.deleted_at IS NULL
             ORDER BY d.id ASC
         ");
-        $stmtDocs->execute([$this->fakultasId, $this->fakultasId]);
+        $stmtDocs->execute([$this->fakultasId]);
         $cycleDocs = $stmtDocs->fetchAll() ?: [];
 
         $docsByCycle = [];
