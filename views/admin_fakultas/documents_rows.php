@@ -123,6 +123,7 @@ if (!empty($documents)):
                                                             data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
                                                             data-public-limit="<?= $fLimit ?>"
                                                             data-can-download="<?= $fCanDl ?>"
+                                                            data-file-type="<?= in_array(strtolower($fItem['file_extension'] ?? pathinfo($fItem['file_path'], PATHINFO_EXTENSION)), ['jpg','jpeg','png','webp','gif']) ? 'image' : (in_array(strtolower($fItem['file_extension'] ?? pathinfo($fItem['file_path'], PATHINFO_EXTENSION)), ['doc','docx']) ? 'word' : 'pdf') ?>"
                                                             style="font-size: 0.7rem;">
                                                         <i class="fas fa-eye me-1"></i> Lihat
                                                     </button>
@@ -143,6 +144,12 @@ if (!empty($documents)):
                             $fCanDl = (int)($singleFile['can_download_public'] ?? 0);
                             ?>
                             <div class="d-inline-flex align-items-center gap-1">
+                                <?php
+                                $sIsImg = in_array($fExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                                $sIsWord = in_array($fExt, ['doc', 'docx']);
+                                $sType = $sIsImg ? 'image' : ($sIsWord ? 'word' : 'pdf');
+                                $sIcon = $sIsImg ? 'fas fa-file-image' : ($sIsWord ? 'fas fa-file-word' : ($fExt === 'pdf' ? 'fas fa-file-pdf' : 'fas fa-file-lines'));
+                                ?>
                                 <button type="button" class="btn btn-xs btn-primary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
                                         data-bs-toggle="modal" 
                                         data-bs-target="#pdfPreviewModal" 
@@ -150,8 +157,9 @@ if (!empty($documents)):
                                         data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
                                         data-public-limit="<?= $fLimit ?>"
                                         data-can-download="<?= $fCanDl ?>"
+                                        data-file-type="<?= $sType ?>"
                                         style="font-size: 0.72rem;">
-                                    <i class="fas fa-file-<?= ($fExt==='pdf')?'pdf':(($fExt==='doc'||$fExt==='docx')?'word':'excel') ?>"></i> Lihat
+                                    <i class="<?= $sIcon ?>"></i> Lihat
                                 </button>
                                 <a href="<?= base_url($singleFile['file_path']) ?>" download class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 shadow-2xs" style="font-size: 0.72rem;" title="Unduh Berkas">
                                     <i class="fas fa-download"></i>

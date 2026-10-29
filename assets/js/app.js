@@ -316,28 +316,66 @@ document.addEventListener('DOMContentLoaded', function () {
             // Check file format & extension
             const fileExtMatch = (pdfUrl || '').split('?')[0].split('#')[0].split('.').pop().toLowerCase();
             const fileTypeAttr = (button.getAttribute('data-file-type') || '').toLowerCase();
-            const isImageFile = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(fileExtMatch) || fileTypeAttr === 'image';
+            const isImageExt = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg'].includes(fileExtMatch);
+            const hasImageInName = /\.(jpe?g|png|webp|gif|bmp)(\s|$|\?|#|\.)/i.test(pdfUrl) || /\.(jpe?g|png|webp|gif|bmp)(\s|$)/i.test(docTitle);
+            const isImageFile = isImageExt || fileTypeAttr === 'image' || fileTypeAttr === 'photo' || hasImageInName;
             const isWordFile = ['docx', 'doc'].includes(fileExtMatch) || fileTypeAttr === 'word' || fileTypeAttr === 'docx';
             const isExcelFile = ['xlsx', 'xls', 'csv'].includes(fileExtMatch) || fileTypeAttr === 'excel';
             const isPptFile = ['pptx', 'ppt'].includes(fileExtMatch) || fileTypeAttr === 'ppt' || fileTypeAttr === 'powerpoint';
 
-            if (isImageFile) {
+            function renderImageDirectPreview(url, title) {
                 if (headerIcon) headerIcon.className = 'fas fa-file-image fa-lg text-warning';
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
                 if (totalInfo) totalInfo.textContent = 'Berkas Foto / Gambar Digital';
                 const pageCounter = document.getElementById('pdfPageCounterBadge');
                 if (pageCounter) pageCounter.textContent = '1 / 1 (Foto)';
+                if (toolbar) toolbar.style.display = 'flex';
+                if (zoomDisplay) zoomDisplay.textContent = '100%';
+                currentScale = 1.0;
+
+                if (accessBadge) {
+                    if (isUserLoggedIn) {
+                        accessBadge.className = 'badge bg-success bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
+                        accessBadge.innerHTML = '<i class="fas fa-unlock me-1"></i> Akses Penuh (Akun UNIKA)';
+                    } else {
+                        accessBadge.className = 'badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25 rounded-pill px-2.5 py-1 fw-bold';
+                        accessBadge.innerHTML = '<i class="fas fa-image me-1"></i> Foto / Gambar Digital';
+                    }
+                }
+
+                if (downloadContainer) {
+                    const curPath = window.location.pathname + window.location.search;
+                    const loginUrlWithReturn = `${window.LOGIN_URL || '/login'}?return_url=${encodeURIComponent(curPath)}`;
+                    if (isUserLoggedIn) {
+                        downloadContainer.innerHTML = `
+                            <a href="${url}" target="_blank" download class="btn btn-sm btn-outline-light rounded-pill px-3">
+                                <i class="fas fa-download me-1"></i> Unduh Asli
+                            </a>
+                        `;
+                    } else {
+                        downloadContainer.innerHTML = `
+                            <a href="${loginUrlWithReturn}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-white bg-scu-blue border-0" title="Masuk dengan akun @unika.ac.id untuk mengunduh dokumen resmi">
+                                <i class="fas fa-lock me-1"></i> Login untuk Unduh
+                            </a>
+                        `;
+                    }
+                }
 
                 if (pagesContainer) {
                     pagesContainer.style.display = 'flex';
+                    pagesContainer.style.background = '#0F172A';
                     pagesContainer.innerHTML = `
-                        <div class="d-flex justify-content-center align-items-center w-100 p-3" style="min-height: 60vh;">
-                            <img id="pdfViewerImage" src="${pdfUrl}" alt="${docTitle}" 
+                        <div class="d-flex justify-content-center align-items-center w-100 p-3" style="min-height: 65vh;">
+                            <img id="pdfViewerImage" src="${url}" alt="${title}" 
                                  class="img-fluid rounded-3 shadow-lg" 
-                                 style="max-width: 95%; max-height: 80vh; object-fit: contain; transition: transform 0.2s ease; border: 1px solid rgba(255,255,255,0.15);" />
+                                 style="max-width: 95%; max-height: 82vh; object-fit: contain; transition: transform 0.2s ease; border: 1px solid rgba(255,255,255,0.2);" />
                         </div>
                     `;
                 }
+            }
+
+            if (isImageFile) {
+                renderImageDirectPreview(pdfUrl, docTitle);
                 return;
             }
 
@@ -754,21 +792,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
             }).catch(function (error) {
                 console.error('Error loading PDF:', error);
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
-                if (pagesContainer) {
-                    pagesContainer.innerHTML = `
-                        <div class="card border-0 shadow-sm rounded-4 p-4 text-center my-5 mx-auto" style="max-width: 520px; background: #ffffff;">
-                            <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
-                                <i class="fas fa-file-arrow-down fa-2x"></i>
+                
+                // Fallback auto-recovery: check if the file is actually an image before showing error
+                const testImg = new Image();
+                testImg.onload = function() {
+                    renderImageDirectPreview(pdfUrl, docTitle);
+                };
+                testImg.onerror = function() {
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    if (pagesContainer) {
+                        pagesContainer.innerHTML = `
+                            <div class="card border-0 shadow-sm rounded-4 p-4 text-center my-5 mx-auto" style="max-width: 520px; background: #ffffff;">
+                                <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                                    <i class="fas fa-file-arrow-down fa-2x"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-1">${docTitle}</h5>
+                                <p class="text-muted small mb-3" style="line-height:1.6;">Berkas ini tidak dapat dipratinjau langsung di peramban (format non-PDF atau berkas unduhan langsung). Silakan unduh berkas untuk melihat isinya.</p>
+                                <a href="${pdfUrl}" download class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2 justify-content-center mx-auto">
+                                    <i class="fas fa-download"></i> Unduh Berkas Dokumen
+                                </a>
                             </div>
-                            <h5 class="fw-bold text-dark mb-1">${docTitle}</h5>
-                            <p class="text-muted small mb-3" style="line-height:1.6;">Berkas ini tidak dapat dipratinjau langsung di peramban (format non-PDF atau berkas unduhan langsung). Silakan unduh berkas untuk melihat isinya.</p>
-                            <a href="${pdfUrl}" download class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2 justify-content-center mx-auto">
-                                <i class="fas fa-download"></i> Unduh Berkas Dokumen
-                            </a>
-                        </div>
-                    `;
-                }
+                        `;
+                    }
+                };
+                testImg.src = pdfUrl;
             });
         });
 pdfModal.addEventListener('hidden.bs.modal', function () {

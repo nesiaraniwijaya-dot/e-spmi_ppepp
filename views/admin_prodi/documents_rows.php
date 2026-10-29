@@ -88,7 +88,8 @@ if (!empty($documents)):
                                                     data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
                                                     data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                     data-public-limit="<?= $fLimit ?>"
-                                                    data-can-download="<?= $fCanDl ?>">
+                                                    data-can-download="<?= $fCanDl ?>"
+                                                    data-file-type="<?= in_array(strtolower($fItem['file_extension'] ?? pathinfo($fItem['file_path'], PATHINFO_EXTENSION)), ['jpg','jpeg','png','webp','gif']) || ($fItem['file_category'] ?? '') === 'photo' ? 'image' : (in_array(strtolower($fItem['file_extension'] ?? pathinfo($fItem['file_path'], PATHINFO_EXTENSION)), ['doc','docx']) ? 'word' : 'pdf') ?> ">
                                                 <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                                     <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($fItem['file_name']) ?>">
                                                         <i class="<?= ($fItem['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf text-danger' ?> flex-shrink-0"></i>
@@ -122,7 +123,16 @@ if (!empty($documents)):
                             ?>
                             <div class="d-inline-flex flex-column align-items-start gap-1">
                                 <div class="d-flex align-items-center gap-1 flex-wrap">
-                                    <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold"
+                                    <?php
+                                    $sExt = strtolower($singleFile['file_extension'] ?? pathinfo($singleFile['file_path'], PATHINFO_EXTENSION));
+                                    $sIsImg = in_array($sExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']) || ($singleFile['file_category'] ?? '') === 'photo';
+                                    $sIsWord = in_array($sExt, ['doc', 'docx']);
+                                    $sType = $sIsImg ? 'image' : ($sIsWord ? 'word' : 'pdf');
+                                    $sBtnClass = $sIsImg ? 'btn-outline-warning' : ($sIsWord ? 'btn-outline-primary' : 'btn-outline-danger');
+                                    $sIcon = $sIsImg ? 'fas fa-file-image' : ($sIsWord ? 'fas fa-file-word' : 'fas fa-file-pdf');
+                                    $sLabel = $sIsImg ? 'Foto' : ($sIsWord ? 'Word' : 'PDF');
+                                    ?>
+                                    <button type="button" class="btn btn-xs <?= $sBtnClass ?> rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs fw-semibold"
                                             data-bs-toggle="modal" 
                                             data-bs-target="#pdfPreviewModal"
                                             data-pdf-url="<?= base_url($singleFile['file_path']) ?>"
@@ -131,8 +141,9 @@ if (!empty($documents)):
                                             data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                             data-public-limit="<?= $fLimit ?>"
                                             data-can-download="<?= $fCanDl ?>"
+                                            data-file-type="<?= $sType ?>"
                                             style="font-size: 0.72rem;">
-                                        <i class="fas fa-file-pdf"></i> PDF
+                                        <i class="<?= $sIcon ?>"></i> <?= $sLabel ?>
                                     </button>
                                     <?php if (!empty($singleFile['folder_name'])): ?>
                                         <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">

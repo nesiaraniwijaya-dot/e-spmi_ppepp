@@ -376,22 +376,31 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                                         $fCanDl = (int)($fItem['can_download_public'] ?? 0);
                                                     ?>
                                                         <li class="mb-1.5">
+                                                            <?php
+                                                            $fExt = strtolower($fItem['file_extension'] ?? pathinfo($fItem['file_path'], PATHINFO_EXTENSION));
+                                                            $fIsImg = in_array($fExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                                                            $fIsWord = in_array($fExt, ['doc', 'docx']);
+                                                            $fType = $fIsImg ? 'image' : ($fIsWord ? 'word' : 'pdf');
+                                                            $fIcon = $fIsImg ? 'fas fa-file-image text-warning' : ($fIsWord ? 'fas fa-file-word text-primary' : 'fas fa-file-pdf text-danger');
+                                                            $fTag = strtoupper($fExt ?: 'FILE');
+                                                            ?>
                                                             <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
                                                                     data-bs-toggle="modal" 
                                                                     data-bs-target="#pdfPreviewModal" 
                                                                     data-pdf-url="<?= base_url($fItem['file_path']) ?>" 
                                                                     data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
+                                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                     data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
                                                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
                                                                     data-public-limit="<?= $fLimit ?>"
                                                                     data-can-download="<?= $fCanDl ?>"
-                                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
+                                                                    data-file-type="<?= $fType ?>">
                                                                 <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                                                     <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($fItem['file_name']) ?>">
-                                                                        <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
+                                                                        <i class="<?= $fIcon ?> flex-shrink-0"></i>
                                                                         <span class="text-truncate" style="max-width: 220px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
                                                                     </span>
-                                                                    <span class="badge bg-light text-muted border flex-shrink-0" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
+                                                                    <span class="badge bg-light text-muted border flex-shrink-0" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: $fTag) ?></span>
                                                                 </div>
                                                                 <?= render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null) ?>
                                                                 <?php if (!empty($fItem['narasi'])): ?>
@@ -411,17 +420,30 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                             $sCanDl = (int)($singleFile['can_download_public'] ?? $doc['can_download_public'] ?? 0);
                                             ?>
                                             <div class="d-inline-flex align-items-center gap-1.5">
+                                                <?php
+                                                $sExt = strtolower($singleFile['file_extension'] ?? pathinfo($singleFile['file_path'] ?? '', PATHINFO_EXTENSION));
+                                                $sIsImg = in_array($sExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                                                $sIsWord = in_array($sExt, ['doc', 'docx']);
+                                                $sType = $sIsImg ? 'image' : ($sIsWord ? 'word' : 'pdf');
+                                                ?>
+                                                <?php
+                                                $sExt = strtolower($singleFile['file_extension'] ?? pathinfo($singleFile['file_path'] ?? '', PATHINFO_EXTENSION));
+                                                $sIsImg = in_array($sExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                                                $sIsWord = in_array($sExt, ['doc', 'docx']);
+                                                $sType = $sIsImg ? 'image' : ($sIsWord ? 'word' : 'pdf');
+                                                ?>
                                                 <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm px-3" 
                                                         style="height: 32px; font-size: 0.8rem; font-weight: 600;"
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#pdfPreviewModal" 
                                                         data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
                                                         data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
+                                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                         data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
                                                         data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
                                                         data-public-limit="<?= is_unika_user_logged_in() ? 0 : 1 ?>"
                                                         data-can-download="<?= is_unika_user_logged_in() ? 1 : 0 ?>"
-                                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
+                                                        data-file-type="<?= $sType ?>"
                                                         title="Lihat Pratinjau Dokumen">
                                                     <i class="fas fa-eye me-1"></i> View
                                                 </button>
