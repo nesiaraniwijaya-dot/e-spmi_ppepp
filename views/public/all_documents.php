@@ -109,69 +109,75 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 </span>
             </div>
 
-            <!-- Toolbar: Pencarian, Filter Fakultas, Filter Prodi, Filter Bidang, Filter Tahun Akademik, Tampilkan -->
-            <div class="row g-2.5 align-items-center mb-4">
-                <div class="col-lg-3 col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                        <input type="text" id="tableSearchInput" class="form-control bg-light border-start-0 ps-0" 
-                               placeholder="Cari nama dokumen, nomor SK, prodi..." 
-                               value="<?= $initialSearch ?>">
+            <!-- Toolbar: Pencarian (Baris 1) & Filter Dropdown (Baris 2) -->
+            <div class="mb-4">
+                <!-- Baris 1: Pencarian Cepat (Full Width & Nyaman) -->
+                <!-- Baris 1: Pencarian Cepat & Pengaturan Jumlah Data -->
+                <div class="row g-2.5 mb-2.5 align-items-center">
+                    <div class="col">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
+                            <input type="text" id="tableSearchInput" class="form-control bg-light border-start-0 ps-1" 
+                                   placeholder="Cari nama dokumen, nomor SK, prodi..." 
+                                   value="<?= $initialSearch ?>">
+                        </div>
+                    </div>
+                    <div class="col-auto d-flex align-items-center gap-2">
+                        <label for="tablePerPageSelect" class="text-muted small fw-medium text-nowrap mb-0 d-none d-sm-inline">Tampilkan:</label>
+                        <select id="tablePerPageSelect" class="form-select bg-light" style="width: auto; min-width: 105px;">
+                            <option value="10">10 data</option>
+                            <option value="20">20 data</option>
+                            <option value="50">50 data</option>
+                            <option value="100" selected>100 data</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Filter Fakultas -->
-                <div class="col-lg-2 col-md-6">
-                    <select id="tableFakultasFilter" class="form-select bg-light">
-                        <option value="">Semua Fakultas</option>
-                        <option value="tingkat_fakultas">🏢 Tingkat Fakultas (Dekanat)</option>
-                        <?php foreach (($fakultasList ?? []) as $f): ?>
-                            <option value="<?= $f['id'] ?>"><?= htmlspecialchars($f['nama_fakultas']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                <!-- Baris 2: Filter Dropdown (Fakultas, Prodi, Bidang, Tahun Akademik) -->
+                <div class="row g-2.5 align-items-center">
+                    <!-- Filter Fakultas -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <select id="tableFakultasFilter" class="form-select bg-light">
+                            <option value="">Semua Fakultas</option>
+                            <option value="tingkat_fakultas">🏢 Tingkat Fakultas (Dekanat)</option>
+                            <?php foreach (($fakultasList ?? []) as $f): ?>
+                                <option value="<?= $f['id'] ?>"><?= htmlspecialchars($f['nama_fakultas']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
-                <!-- Filter Program Studi -->
-                <div class="col-lg-2 col-md-4">
-                    <select id="tableProdiFilter" class="form-select bg-light">
-                        <option value="">Semua Prodi</option>
-                        <?php foreach (($prodiList ?? []) as $p): ?>
-                            <option value="<?= $p['id'] ?>" data-fakultas-id="<?= $p['fakultas_id'] ?? '' ?>">
-                                <?= htmlspecialchars($p['nama_prodi']) ?> (<?= htmlspecialchars($p['jenjang']) ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                    <!-- Filter Program Studi -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <select id="tableProdiFilter" class="form-select bg-light">
+                            <option value="">Semua Prodi</option>
+                            <?php foreach (($prodiList ?? []) as $p): ?>
+                                <option value="<?= $p['id'] ?>" data-fakultas-id="<?= $p['fakultas_id'] ?? '' ?>">
+                                    <?= htmlspecialchars($p['nama_prodi']) ?> (<?= htmlspecialchars($p['jenjang']) ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
-                <!-- Filter Bidang Standar -->
-                <div class="col-lg-2 col-md-4">
-                    <select id="tableBidangFilter" class="form-select bg-light">
-                        <option value="">Semua Bidang</option>
-                        <?php foreach (($bidangList ?? []) as $b): ?>
-                            <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                    <!-- Filter Bidang Standar -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <select id="tableBidangFilter" class="form-select bg-light">
+                            <option value="">Semua Bidang</option>
+                            <?php foreach (($bidangList ?? []) as $b): ?>
+                                <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
-                <!-- Filter Tahun Akademik -->
-                <div class="col-lg-2 col-md-4">
-                    <?php $distinctTahunList = get_distinct_tahun_akademik(); ?>
-                    <select id="tableTahunFilter" class="form-select bg-light">
-                        <option value="">Semua Tahun Akademik</option>
-                        <?php foreach ($distinctTahunList as $ta): ?>
-                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <!-- Per Page Selector -->
-                <div class="col-lg-1 col-md-4 d-flex justify-content-md-end align-items-center gap-1">
-                    <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 90px; width: 100%;">
-                        <option value="10">10 data</option>
-                        <option value="20">20 data</option>
-                        <option value="50">50 data</option>
-                        <option value="100" selected>100 data</option>
-                    </select>
+                    <!-- Filter Tahun Akademik -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <?php $distinctTahunList = get_distinct_tahun_akademik(); ?>
+                        <select id="tableTahunFilter" class="form-select bg-light">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach ($distinctTahunList as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -213,10 +219,18 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                     data-siklus="<?= htmlspecialchars(strtolower($doc['siklus'] ?? '')) ?>">
                                     <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
                                     <td>
-                                        <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen'] ?? '') ?></div>
-                                        <?php if (!empty($doc['nomor_dokumen'])): ?>
-                                            <div class="small text-muted mb-1"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
-                                        <?php endif; ?>
+                                        <div class="fw-bold text-dark-blue mb-1"><?= htmlspecialchars($doc['nama_dokumen'] ?? '') ?></div>
+                                        <div class="d-flex flex-wrap align-items-center gap-1.5 mb-1">
+                                            <?php if (!empty($doc['nomor_dokumen'])): ?>
+                                                <span class="small text-muted" style="font-size: 0.72rem;"><i class="fas fa-hashtag me-0.5"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
+                                                <span class="text-muted small">•</span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($doc['tahun_akademik'])): ?>
+                                                <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.7rem;">
+                                                    <i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                     <td>
                                         <?php if (!empty($doc['jenjang'])): ?>
@@ -290,6 +304,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                                                             data-bs-target="#pdfPreviewModal" 
                                                                             data-pdf-url="<?= base_url($fItem['file_path']) ?>" 
                                                                             data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
+                                                                            data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                             data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
                                                                             data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
                                                                             data-public-limit="<?= $fLimit ?>"
@@ -323,6 +338,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                                             data-bs-target="#pdfPreviewModal" 
                                                             data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
                                                             data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
+                                                            data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                             data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
                                                             data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
                                                             data-public-limit="<?= $sLimit ?>"
@@ -356,6 +372,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                                                             data-is-link="1"
                                                                             data-link-url="<?= htmlspecialchars($gUrl) ?>"
                                                                             data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) . ' (Tautan #' . ($lIdx + 1) . ')' ?>"
+                                                                            data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                             data-doc-narasi="<?= htmlspecialchars($gNarasi) ?>"
                                                                             data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null)) ?>"
                                                                             data-can-access="<?= $canAccessLink ? 1 : 0 ?>"
@@ -393,6 +410,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                                                             data-is-link="1"
                                                             data-link-url="<?= htmlspecialchars($singleLink['url']) ?>" 
                                                             data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
+                                                            data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                             data-doc-narasi="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>"
                                                             data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null)) ?>"
                                                             data-can-access="<?= $canAccessSingle ? 1 : 0 ?>"

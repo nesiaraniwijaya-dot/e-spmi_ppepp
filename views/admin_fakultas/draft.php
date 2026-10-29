@@ -138,15 +138,32 @@ $totalDraft = $totalDraft ?? count($documents);
 
         <!-- Card Table Draf Bersekat Tegas & Berstandar Web SaaS -->
         <div class="modern-table-card mb-4">
-            <div class="p-3.5 px-4 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
-                <div class="d-flex align-items-center gap-2.5">
-                    <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #002B49; color: #FFFFFF; font-size: 0.8rem;">
-                        <i class="fas fa-file-pen text-warning"></i> Total: <strong><?= $totalDraft ?> Draf Dokumen</strong>
-                    </span>
-                    <span class="text-muted small d-none d-md-inline">Tersimpan di sistem & siap diajukan</span>
+            <div class="p-3.5 px-4 border-bottom" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                <!-- Baris 1: Status & Pencarian -->
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2.5 mb-2.5">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #002B49; color: #FFFFFF; font-size: 0.8rem;">
+                            <i class="fas fa-file-pen text-warning"></i> Total: <strong><?= $totalDraft ?> Draf Dokumen</strong>
+                        </span>
+                        <span class="text-muted small d-none d-md-inline">Tersimpan di sistem & siap diajukan</span>
+                    </div>
+                    <div class="input-group input-group-sm" style="max-width: 320px; width: 100%;">
+                        <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-1" style="border-color: #CBD5E1;" id="searchDraftInput" placeholder="Cari draf dokumen..." oninput="filterDraftTable()">
+                    </div>
                 </div>
-                <div class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end flex-wrap">
-                    <div class="d-flex align-items-center gap-1.5">
+
+                <!-- Baris 2: Filter Dropdown & Pilihan Jumlah Tampilan -->
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap pt-2 border-top" style="border-color: #EEF2F6 !important;">
+                    <div class="flex-grow-1" style="max-width: 260px;">
+                        <select id="filterTahunDraft" class="form-select form-select-sm shadow-none w-100" style="font-size: 0.8rem; border-color: #CBD5E1;" onchange="currentDraftFakultasPage = 1; filterDraftTable();">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-1.5 ms-auto">
                         <label for="perPageDraftFakultas" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
                         <select id="perPageDraftFakultas" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 108px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeDraftFakultasPageSize(this.value)">
                             <option value="10" selected>10 data</option>
@@ -155,18 +172,6 @@ $totalDraft = $totalDraft ?? count($documents);
                             <option value="100">100 data</option>
                             <option value="all">Semua</option>
                         </select>
-                    </div>
-                    <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
-                        <select id="filterTahunDraft" class="form-select form-select-sm shadow-none" style="min-width: 200px; font-size: 0.8rem; border-color: #CBD5E1;" onchange="currentDraftFakultasPage = 1; filterDraftTable();">
-                            <option value="">Semua Tahun Akademik</option>
-                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
-                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="input-group input-group-sm" style="max-width: 260px;">
-                        <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control border-start-0 ps-1" style="border-color: #CBD5E1;" id="searchDraftInput" placeholder="Cari draf dokumen..." oninput="filterDraftTable()">
                     </div>
                 </div>
             </div>

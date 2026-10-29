@@ -114,10 +114,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const publicLimit = parseInt(button.getAttribute('data-public-limit') || '1', 10);
             const canDownload = parseInt(button.getAttribute('data-can-download') || '0', 10);
             const canAccess = parseInt(button.getAttribute('data-can-access') || '1', 10);
+            const docTa = button.getAttribute('data-doc-ta') || '';
 
             const modalTitle = pdfModal.querySelector('.modal-title');
             const downloadContainer = document.getElementById('pdfDownloadBtnContainer');
             const accessBadge = document.getElementById('pdfAccessBadge');
+            const taBadge = document.getElementById('pdfTaBadge');
             const totalInfo = document.getElementById('pdfTotalInfo');
             const loadingIndicator = document.getElementById('pdfLoadingIndicator');
             const pagesContainer = document.getElementById('pdfPagesContainer');
@@ -149,6 +151,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (modalTitle) modalTitle.textContent = docTitle;
+            if (taBadge) {
+                if (docTa) {
+                    taBadge.innerHTML = `<i class="far fa-calendar-alt me-1"></i>TA ${docTa}`;
+                    taBadge.style.display = 'inline-flex';
+                } else {
+                    taBadge.style.display = 'none';
+                }
+            }
             if (pagesContainer) pagesContainer.innerHTML = '';
             if (lockedBanner) lockedBanner.style.display = 'none';
             if (loadingIndicator) loadingIndicator.style.display = 'block';

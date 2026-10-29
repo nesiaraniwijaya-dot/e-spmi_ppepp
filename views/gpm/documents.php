@@ -250,74 +250,77 @@ foreach ($documents as $d) {
             </li>
         </ul>
 
-        <!-- Filter Form Toolbar -->
-        <form method="GET" action="<?= base_url('gpm/dokumen') ?>" class="row g-2.5 mb-4 align-items-center">
+        <!-- Filter Form Toolbar: Pencarian (Baris 1) & Filter Dropdown (Baris 2) -->
+        <form method="GET" action="<?= base_url('gpm/dokumen') ?>" class="mb-4">
             <input type="hidden" name="unit" value="<?= htmlspecialchars($unitFilter) ?>">
             <input type="hidden" name="siklus" value="<?= htmlspecialchars($siklusFilter) ?>">
 
-            <!-- Filter Bidang -->
-            <div class="col-xl-2 col-lg-3 col-md-6">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-bookmark"></i></span>
-                    <select name="bidang_id" class="form-select border-start-0" onchange="this.form.submit()">
-                        <option value="">Semua Bidang</option>
-                        <?php foreach ($bidangList as $b): ?>
-                            <option value="<?= $b['id'] ?>" <?= $bidangFilter == $b['id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($b['nama_bidang']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+            <!-- Baris 1: Keyword Search (Full Width) -->
+            <div class="mb-2.5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted px-3"><i class="fas fa-magnifying-glass"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0 ps-1" placeholder="Cari nama dokumen, kode, prodi..." value="<?= htmlspecialchars($search) ?>">
+                    <button type="submit" class="btn btn-primary bg-scu-blue border-0 px-4">Cari</button>
                 </div>
             </div>
 
-            <!-- Filter Status Review -->
-            <div class="col-xl-3 col-lg-3 col-md-6">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-shield"></i></span>
-                    <select name="status_review" class="form-select border-start-0" onchange="this.form.submit()">
-                        <option value="">Semua Status Review</option>
-                        <option value="menunggu_review_gpm" <?= in_array($statusFilter, ['menunggu_review_gpm', 'belum_direview']) ? 'selected' : '' ?>>Menunggu Telaah GPM</option>
-                        <option value="revisi_gpm" <?= $statusFilter === 'revisi_gpm' ? 'selected' : '' ?>>Perlu Revisi (GPM)</option>
-                        <option value="menunggu_review_lpm" <?= $statusFilter === 'menunggu_review_lpm' ? 'selected' : '' ?>>Diteruskan ke LPM</option>
-                        <option value="revisi_lpm" <?= in_array($statusFilter, ['revisi_lpm', 'perlu_perbaikan']) ? 'selected' : '' ?>>Perlu Revisi (LPM)</option>
-                        <option value="sesuai" <?= $statusFilter === 'sesuai' ? 'selected' : '' ?>>Sesuai Standar Mutu</option>
-                        <option value="sudah_diperbaiki" <?= $statusFilter === 'sudah_diperbaiki' ? 'selected' : '' ?>>Sudah Diperbaiki</option>
-                        <option value="draft" <?= $statusFilter === 'draft' ? 'selected' : '' ?>>Draf Dokumen</option>
-                    </select>
+            <!-- Baris 2: Dropdown Filter & Reset -->
+            <div class="row g-2.5 align-items-center">
+                <!-- Filter Bidang -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-bookmark"></i></span>
+                        <select name="bidang_id" class="form-select border-start-0" onchange="this.form.submit()">
+                            <option value="">Semua Bidang</option>
+                            <?php foreach ($bidangList as $b): ?>
+                                <option value="<?= $b['id'] ?>" <?= $bidangFilter == $b['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($b['nama_bidang']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Filter Tahun Akademik -->
-            <div class="col-xl-3 col-lg-3 col-md-6">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-calendar-alt"></i></span>
-                    <select name="tahun_akademik" class="form-select border-start-0" onchange="this.form.submit()">
-                        <option value="">Semua Tahun Akademik</option>
-                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
-                            <option value="<?= htmlspecialchars($ta) ?>" <?= ($tahunFilter ?? '') === $ta ? 'selected' : '' ?>>
-                                Tahun Akademik <?= htmlspecialchars($ta) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                <!-- Filter Status Review -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-shield"></i></span>
+                        <select name="status_review" class="form-select border-start-0" onchange="this.form.submit()">
+                            <option value="">Semua Status Review</option>
+                            <option value="menunggu_review_gpm" <?= in_array($statusFilter, ['menunggu_review_gpm', 'belum_direview']) ? 'selected' : '' ?>>Menunggu Telaah GPM</option>
+                            <option value="revisi_gpm" <?= $statusFilter === 'revisi_gpm' ? 'selected' : '' ?>>Perlu Revisi (GPM)</option>
+                            <option value="menunggu_review_lpm" <?= $statusFilter === 'menunggu_review_lpm' ? 'selected' : '' ?>>Diteruskan ke LPM</option>
+                            <option value="revisi_lpm" <?= in_array($statusFilter, ['revisi_lpm', 'perlu_perbaikan']) ? 'selected' : '' ?>>Perlu Revisi (LPM)</option>
+                            <option value="sesuai" <?= $statusFilter === 'sesuai' ? 'selected' : '' ?>>Sesuai Standar Mutu</option>
+                            <option value="sudah_diperbaiki" <?= $statusFilter === 'sudah_diperbaiki' ? 'selected' : '' ?>>Sudah Diperbaiki</option>
+                            <option value="draft" <?= $statusFilter === 'draft' ? 'selected' : '' ?>>Draf Dokumen</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Keyword Search -->
-            <div class="col-xl-3 col-lg-3 col-md-6">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-magnifying-glass"></i></span>
-                    <input type="text" name="search" class="form-control border-start-0" placeholder="Cari nama, kode, prodi..." value="<?= htmlspecialchars($search) ?>">
-                    <button type="submit" class="btn btn-primary bg-scu-blue border-0 px-3">Cari</button>
+                <!-- Filter Tahun Akademik -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-calendar-alt"></i></span>
+                        <select name="tahun_akademik" class="form-select border-start-0" onchange="this.form.submit()">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>" <?= ($tahunFilter ?? '') === $ta ? 'selected' : '' ?>>
+                                    Tahun Akademik <?= htmlspecialchars($ta) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Reset Button -->
-            <div class="col-xl-1 col-lg-12 col-md-12 text-md-end">
-                <?php if (!empty($unitFilter !== 'all') || !empty($siklusFilter) || !empty($bidangFilter) || !empty($statusFilter) || !empty($tahunFilter) || !empty($search)): ?>
-                    <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-outline-secondary btn-sm rounded-pill w-100 fw-semibold" style="font-size: 0.78rem;" title="Reset Filter">
-                        <i class="fas fa-rotate-left me-1"></i> Reset
-                    </a>
-                <?php endif; ?>
+                <!-- Reset Button -->
+                <div class="col-lg-2 col-md-6 ms-auto text-end">
+                    <?php if (!empty($unitFilter !== 'all') || !empty($siklusFilter) || !empty($bidangFilter) || !empty($statusFilter) || !empty($tahunFilter) || !empty($search)): ?>
+                        <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-outline-secondary btn-sm rounded-pill w-100 fw-semibold" style="font-size: 0.78rem;" title="Reset Filter">
+                            <i class="fas fa-rotate-left me-1"></i> Reset Filter
+                        </a>
+                    <?php endif; ?>
+                </div>
             </div>
         </form>
 
@@ -418,6 +421,7 @@ foreach ($documents as $d) {
                                                             data-public-limit="0" 
                                                             data-can-download="1"
                                                             data-can-access="1"
+                                                            data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                             style="font-size: 0.72rem;" title="Pratinjau Berkas">
                                                         <i class="<?= ($singleF['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf' ?>"></i> <?= ($singleF['file_category'] ?? '') === 'photo' ? 'Foto' : 'PDF' ?>
                                                     </button>
@@ -446,7 +450,8 @@ foreach ($documents as $d) {
                                                                         data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
                                                                         data-public-limit="0"
                                                                         data-can-download="1"
-                                                                        data-can-access="1">
+                                                                        data-can-access="1"
+                                                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
                                                                     <div class="d-flex align-items-center justify-content-between gap-1.5 mb-0.5">
                                                                         <div class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate">
                                                                             <i class="<?= ($fItem['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf text-danger' ?> flex-shrink-0"></i>
@@ -481,6 +486,7 @@ foreach ($documents as $d) {
                                                             data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleL['sub_bidang_ids'] ?? null)) ?>" 
                                                             data-can-access="1" 
                                                             data-can-download="1"
+                                                            data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                             style="font-size: 0.72rem;" title="Pratinjau Link GDrive">
                                                         <i class="fab fa-google-drive"></i> GDrive
                                                     </button>
@@ -509,7 +515,8 @@ foreach ($documents as $d) {
                                                                         data-doc-narasi="<?= htmlspecialchars($lItem['narasi'] ?? '') ?>" 
                                                                         data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($lItem['sub_bidang_ids'] ?? null)) ?>" 
                                                                         data-can-access="1" 
-                                                                        data-can-download="1">
+                                                                        data-can-download="1"
+                                                                        data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
                                                                     <div class="d-flex align-items-center justify-content-between gap-1.5 mb-0.5">
                                                                         <div class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
                                                                             <i class="fab fa-google-drive flex-shrink-0"></i>
@@ -757,6 +764,7 @@ foreach ($documents as $d) {
                                                                     data-public-limit="0" 
                                                                     data-can-download="1"
                                                                     data-can-access="1"
+                                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                     style="font-size: 0.78rem;">
                                                                 <i class="fas fa-eye"></i> Pratinjau
                                                             </button>
@@ -823,6 +831,7 @@ foreach ($documents as $d) {
                                                                     data-doc-standar="<?= htmlspecialchars($subBadgesHtml) ?>" 
                                                                     data-can-access="1" 
                                                                     data-can-download="1"
+                                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                     style="font-size: 0.78rem;">
                                                                 <i class="fas fa-eye"></i> Pratinjau
                                                             </button>

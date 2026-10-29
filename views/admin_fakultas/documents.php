@@ -170,39 +170,46 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
             </li>
         </ul>
 
-        <!-- Search Bar and Bidang Filter -->
-        <div class="row g-2.5 align-items-center mb-4">
-            <div class="col-xl-4 col-lg-3 col-md-6">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-1" id="filterSearch" placeholder="Cari nama dokumen, nomor SK, deskripsi..." oninput="handleTableFilter()">
+        <!-- Filter Toolbar: Pencarian (Baris 1) & Filter Dropdown (Baris 2) -->
+        <div class="mb-4">
+            <!-- Baris 1: Pencarian Cepat & Pengaturan Jumlah Data -->
+            <div class="row g-2.5 mb-2.5 align-items-center">
+                <div class="col">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-1" id="filterSearch" placeholder="Cari nama dokumen, nomor SK, deskripsi..." oninput="handleTableFilter()">
+                    </div>
+                </div>
+                <div class="col-auto d-flex align-items-center gap-2">
+                    <label for="pageSizeSelect" class="small text-muted text-nowrap mb-0 d-none d-sm-inline" style="font-size: 0.78rem;">Tampilkan:</label>
+                    <select class="form-select form-select-sm" id="pageSizeSelect" style="min-width: 95px; width: auto;" onchange="changePageSize(this.value)">
+                        <option value="10" selected>10 data</option>
+                        <option value="25">25 data</option>
+                        <option value="50">50 data</option>
+                        <option value="100">100 data</option>
+                        <option value="all">Semua</option>
+                    </select>
                 </div>
             </div>
-            <div class="col-xl-3 col-lg-3 col-md-6">
-                <select class="form-select form-select-sm" id="filterBidang" onchange="handleTableFilter()">
-                    <option value="">Semua Bidang</option>
-                    <?php foreach ($bidangList as $b): ?>
-                        <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-xl-3 col-lg-3 col-md-6">
-                <select class="form-select form-select-sm" id="filterTahun" onchange="handleTableFilter()">
-                    <option value="">Semua Tahun Akademik</option>
-                    <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
-                        <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-xl-2 col-lg-3 col-md-6 text-md-end d-flex justify-content-md-end align-items-center gap-2">
-                <label for="pageSizeSelect" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
-                <select class="form-select form-select-sm form-select-perpage" id="pageSizeSelect" style="min-width: 95px; width: auto;" onchange="changePageSize(this.value)">
-                    <option value="10" selected>10 data</option>
-                    <option value="25">25 data</option>
-                    <option value="50">50 data</option>
-                    <option value="100">100 data</option>
-                    <option value="all">Semua</option>
-                </select>
+
+            <!-- Baris 2: Filter Bidang & Tahun Akademik -->
+            <div class="row g-2.5 align-items-center">
+                <div class="col-md-6 col-sm-6">
+                    <select class="form-select form-select-sm" id="filterBidang" onchange="handleTableFilter()">
+                        <option value="">Semua Bidang</option>
+                        <?php foreach ($bidangList as $b): ?>
+                            <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-6 col-sm-6">
+                    <select class="form-select form-select-sm" id="filterTahun" onchange="handleTableFilter()">
+                        <option value="">Semua Tahun Akademik</option>
+                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -264,7 +271,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                             <span><i class="fas fa-hashtag text-secondary me-0.5"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
                                             <span>•</span>
                                         <?php endif; ?>
-                                        <span class="badge bg-light text-secondary border px-1.5 py-0.5">TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
+                                        <span class="badge bg-light text-secondary border px-1.5 py-0.5"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
                                     </div>
                                 </td>
 
@@ -344,6 +351,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                                                                     data-can-download="<?= $fCanDl ?>"
                                                                                     data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
                                                                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
+                                                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                                     style="font-size: 0.7rem;">
                                                                                 <i class="fas fa-eye me-1"></i> Pratinjau
                                                                             </button>
@@ -375,6 +383,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                                                     data-can-download="<?= $sCanDl ?>"
                                                                     data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
                                                                     data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
+                                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                     style="font-size: 0.72rem;">
                                                                 <i class="fas fa-file-pdf"></i> PDF
                                                             </button>
@@ -633,6 +642,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                                                                 data-public-limit="0" 
                                                                                 data-can-download="1"
                                                                                 data-can-access="1"
+                                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                                 style="font-size: 0.78rem;">
                                                                             <i class="fas fa-eye"></i> Pratinjau
                                                                         </button>
@@ -699,6 +709,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                                                                 data-doc-standar="<?= htmlspecialchars($subBadgesHtml) ?>" 
                                                                                 data-can-access="1" 
                                                                                 data-can-download="1"
+                                                                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                                                                 style="font-size: 0.78rem;">
                                                                             <i class="fas fa-eye"></i> Pratinjau
                                                                         </button>

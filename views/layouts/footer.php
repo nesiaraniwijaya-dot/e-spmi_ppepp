@@ -32,6 +32,7 @@
                             </h5>
                             <div class="d-flex align-items-center gap-2 mt-0.5">
                                 <span id="pdfAccessBadge" class="badge rounded-pill fw-medium" style="font-size:0.68rem;"></span>
+                                <span id="pdfTaBadge" class="badge bg-white bg-opacity-20 text-white border border-white border-opacity-25 rounded-pill fw-medium px-2 py-0.5" style="font-size:0.68rem; display:none;"></span>
                                 <span id="pdfTotalInfo" class="text-white-50 small" style="font-size:0.7rem;"></span>
                             </div>
                         </div>

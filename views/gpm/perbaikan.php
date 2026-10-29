@@ -205,32 +205,37 @@ $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review
                 </div>
             </div>
 
-            <!-- Baris 2: Controls Toolbar (Search + Filter Tahun Akademik + Per Page) -->
-            <div class="row g-2.5 align-items-center justify-content-between">
-                <div class="col-lg-5 col-md-12">
+            <!-- Controls Toolbar: Pencarian & Pengaturan Data (Baris 1) & Filter Tahun (Baris 2) -->
+            <!-- Baris 1: Pencarian & Pilihan Jumlah Tampilan -->
+            <div class="row g-2.5 mb-2.5 align-items-center">
+                <div class="col">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light border-end-0 text-muted ps-3">
+                        <span class="input-group-text bg-light border-end-0 text-muted px-3">
                             <i class="fas fa-magnifying-glass"></i>
                         </span>
-                        <input type="text" id="liveSearchPerbaikan" class="form-control bg-light border-start-0 py-2 small" placeholder="Cari nama/nomor dokumen..." style="font-size: 0.82rem;">
+                        <input type="text" id="liveSearchPerbaikan" class="form-control bg-light border-start-0 py-2 small ps-1" placeholder="Cari nama/nomor dokumen..." style="font-size: 0.82rem;">
                     </div>
                 </div>
-                <div class="col-lg-4 col-md-7 col-sm-8">
-                    <select id="filterTahunPerbaikanGpm" class="form-select form-select-sm shadow-none w-100" style="font-size: 0.82rem; border-color: #CBD5E1;" onchange="filterPerbaikanList()">
-                        <option value="">Semua Tahun Akademik</option>
-                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
-                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-lg-3 col-md-5 col-sm-4 text-sm-end d-flex justify-content-sm-end align-items-center gap-1.5">
-                    <label for="perPagePerbaikan" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
+                <div class="col-auto d-flex align-items-center gap-1.5">
+                    <label for="perPagePerbaikan" class="small text-muted text-nowrap mb-0 d-none d-sm-inline" style="font-size: 0.78rem;">Tampilkan:</label>
                     <select id="perPagePerbaikan" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 95px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;">
                         <option value="10" selected>10 data</option>
                         <option value="25">25 data</option>
                         <option value="50">50 data</option>
                         <option value="100">100 data</option>
                         <option value="all">Semua</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Baris 2: Filter Tahun Akademik -->
+            <div class="row g-2.5 align-items-center">
+                <div class="col-md-5 col-sm-8">
+                    <select id="filterTahunPerbaikanGpm" class="form-select form-select-sm shadow-none w-100" style="font-size: 0.82rem; border-color: #CBD5E1;" onchange="filterPerbaikanList()">
+                        <option value="">Semua Tahun Akademik</option>
+                        <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
             </div>

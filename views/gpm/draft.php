@@ -204,15 +204,32 @@ foreach ($draftDocs as $d) {
     <?php else: ?>
         <div class="card rounded-4 shadow-sm bg-white overflow-hidden" style="border: 1px solid #E2E8F0 !important;">
             <!-- Sub-Toolbar Draf: Jumlah Tampilan & Search -->
-            <div class="p-3.5 px-4 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
-                <div class="d-flex align-items-center gap-2.5">
-                    <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #002B49; color: #FFFFFF; font-size: 0.8rem;">
-                        <i class="fas fa-file-pen text-warning"></i> Total: <strong><?= $totalDraft ?> Draf Dokumen</strong>
-                    </span>
-                    <span class="text-muted small d-none d-md-inline">Tersimpan secara privat & siap diajukan ke LPM</span>
+            <div class="p-3.5 px-4 border-bottom" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                <!-- Baris 1: Status & Pencarian -->
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2.5 mb-2.5">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #002B49; color: #FFFFFF; font-size: 0.8rem;">
+                            <i class="fas fa-file-pen text-warning"></i> Total: <strong><?= $totalDraft ?> Draf Dokumen</strong>
+                        </span>
+                        <span class="text-muted small d-none d-md-inline">Tersimpan secara privat & siap diajukan ke LPM</span>
+                    </div>
+                    <div class="input-group input-group-sm" style="max-width: 320px; width: 100%;">
+                        <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-1" id="searchDraftGpmInput" placeholder="Cari draf dokumen..." oninput="filterDraftGpmTable()" style="border-color: #CBD5E1;">
+                    </div>
                 </div>
-                <div class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end flex-wrap">
-                    <div class="d-flex align-items-center gap-1.5">
+
+                <!-- Baris 2: Filter Dropdown & Pilihan Jumlah Tampilan -->
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap pt-2 border-top" style="border-color: #EEF2F6 !important;">
+                    <div class="flex-grow-1" style="max-width: 260px;">
+                        <select id="filterTahunDraftGpm" class="form-select form-select-sm shadow-none w-100" style="min-width: 200px; font-size: 0.8rem; border-color: #CBD5E1;" onchange="currentDraftGpmPage = 1; filterDraftGpmTable();">
+                            <option value="">Semua Tahun Akademik</option>
+                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
+                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-1.5 ms-auto">
                         <label for="perPageDraftGpm" class="small text-muted text-nowrap mb-0" style="font-size: 0.78rem;">Tampilkan:</label>
                         <select id="perPageDraftGpm" class="form-select form-select-sm form-select-perpage shadow-none" style="min-width: 108px; width: auto; font-size: 0.8rem; border-color: #CBD5E1;" onchange="changeDraftGpmPageSize(this.value)">
                             <option value="10" selected>10 data</option>
@@ -221,18 +238,6 @@ foreach ($draftDocs as $d) {
                             <option value="100">100 data</option>
                             <option value="all">Semua</option>
                         </select>
-                    </div>
-                    <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
-                        <select id="filterTahunDraftGpm" class="form-select form-select-sm shadow-none" style="min-width: 200px; font-size: 0.8rem; border-color: #CBD5E1;" onchange="currentDraftGpmPage = 1; filterDraftGpmTable();">
-                            <option value="">Semua Tahun Akademik</option>
-                            <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
-                                <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="input-group input-group-sm" style="max-width: 250px;">
-                        <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #CBD5E1;"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control border-start-0 ps-1" id="searchDraftGpmInput" placeholder="Cari draf dokumen..." oninput="filterDraftGpmTable()" style="border-color: #CBD5E1;">
                     </div>
                 </div>
             </div>
