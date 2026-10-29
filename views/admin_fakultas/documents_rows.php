@@ -35,12 +35,23 @@ if (!empty($documents)):
                 <div class="fw-bold text-dark-blue mb-1">
                     <?= htmlspecialchars($doc['nama_dokumen']) ?>
                 </div>
-                <div class="d-flex flex-wrap align-items-center gap-1.5 text-muted small" style="font-size: 0.72rem;">
+                <div class="d-flex flex-wrap align-items-center gap-1.5 text-muted small mb-1" style="font-size: 0.72rem;">
                     <?php if (!empty($doc['nomor_dokumen'])): ?>
                         <span><i class="fas fa-hashtag text-secondary me-0.5"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
                         <span>•</span>
                     <?php endif; ?>
                     <span class="badge bg-light text-secondary border px-1.5 py-0.5"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <?php if (!empty($doc['nama_prodi'])): ?>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.68rem;">
+                            <i class="fas fa-graduation-cap me-1"></i><?= htmlspecialchars($doc['nama_prodi']) ?> (<?= htmlspecialchars($doc['jenjang'] ?? 'S1') ?>)
+                        </span>
+                    <?php else: ?>
+                        <span class="badge rounded-pill shadow-2xs px-2 py-0.5" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.68rem; font-weight: 600;">
+                            <i class="fas fa-building me-1"></i>Tingkat Dekanat / Fakultas
+                        </span>
+                    <?php endif; ?>
                 </div>
             </td>
 

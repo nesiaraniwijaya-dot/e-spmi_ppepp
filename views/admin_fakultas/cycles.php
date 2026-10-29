@@ -156,6 +156,15 @@ $avgProgress = $totalCycles > 0 ? round($sumProgress / $totalCycles) : 0;
                             <div>
                                 <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                     <h5 class="fw-bold text-dark-blue mb-0" style="font-size: 1.05rem;"><?= $cJudul ?></h5>
+                                    <?php if (!empty($cyc['nama_prodi'])): ?>
+                                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 fw-semibold" style="font-size: 0.74rem;">
+                                            <i class="fas fa-graduation-cap me-1"></i><?= htmlspecialchars($cyc['nama_prodi']) ?> (<?= htmlspecialchars($cyc['jenjang'] ?? 'S1') ?>)
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-25 fw-semibold" style="font-size: 0.74rem;">
+                                            <i class="fas fa-landmark me-1"></i>Tingkat Fakultas
+                                        </span>
+                                    <?php endif; ?>
                                     <span class="badge rounded-pill bg-light text-secondary border fw-normal" style="font-size: 0.74rem;">
                                         <i class="far fa-calendar-alt me-1"></i> TA <?= $cTahun ?>
                                     </span>
