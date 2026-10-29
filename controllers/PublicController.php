@@ -349,14 +349,125 @@ class PublicController extends Controller {
     }
 
     /**
-     * 4. Halaman Repositori Dokumen Mutu Keseluruhan
+     * 4. Halaman Repositori Dokumen Mutu Keseluruhan (Paginated per 50 dokumen)
      */
     public function allDocuments(): void {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
         $fakultasList = $this->db->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas ORDER BY nama_fakultas ASC")->fetchAll();
         $prodiList = $this->db->query("SELECT id, nama_prodi, jenjang, fakultas_id FROM prodis ORDER BY nama_prodi ASC")->fetchAll();
 
-        $stmtDocs = $this->db->query("
+        // Hitung statistik per siklus untuk tab dan banner secara efisien via SQL
+        $cycleCounts = [
+            'penetapan' => 0,
+            'pelaksanaan' => 0,
+            'evaluasi' => 0,
+            'pengendalian' => 0,
+            'peningkatan' => 0
+        ];
+        $stmtCycles = $this->db->query("
+            SELECT LOWER(TRIM(siklus)) as s, COUNT(*) as cnt 
+            FROM ppepp_documents 
+            WHERE deleted_at IS NULL AND status_review != 'draft' 
+            GROUP BY LOWER(TRIM(siklus))
+        ");
+        while ($row = $stmtCycles->fetch()) {
+            $s = strtolower(trim($row['s'] ?? ''));
+            if (isset($cycleCounts[$s])) {
+                $cycleCounts[$s] = (int)$row['cnt'];
+            }
+        }
+        $totalDokumen = array_sum($cycleCounts);
+        $maxDocs = max(1, ...array_values($cycleCounts));
+
+        // Filter parameters
+        $initialSiklus = isset($_GET['siklus']) ? strtolower(trim($_GET['siklus'])) : '';
+        if (!in_array($initialSiklus, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $initialSiklus = '';
+        }
+
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $fakultas = isset($_GET['fakultas']) ? trim($_GET['fakultas']) : '';
+        $prodi = isset($_GET['prodi']) ? (int)$_GET['prodi'] : 0;
+        $bidang = isset($_GET['bidang']) ? (int)$_GET['bidang'] : 0;
+        $tahun = isset($_GET['tahun']) ? trim($_GET['tahun']) : '';
+
+        // Default pagination: 50 dokumen per page (sesuai request user)
+        $perPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
+        if (!in_array($perPage, [10, 20, 50, 100])) {
+            $perPage = 50;
+        }
+        $page = max(1, (int)($_GET['page'] ?? 1));
+
+        // Query Builder
+        $where = ["d.deleted_at IS NULL", "d.status_review != 'draft'"];
+        $params = [];
+
+        // STRICT SIKLUS PROTECTION: Ketika memilih siklus tertentu (contoh: penetapan),
+        // query hanya mengizinkan dokumen siklus tersebut sehingga siklus lain tidak bocor
+        if (!empty($initialSiklus)) {
+            $where[] = "LOWER(TRIM(d.siklus)) = :siklus";
+            $params[':siklus'] = $initialSiklus;
+        }
+
+        // Pencarian teks pada nama dokumen, nomor dokumen, nama prodi, nama bidang
+        if (!empty($search)) {
+            $where[] = "(d.nama_dokumen LIKE :search1 OR d.nomor_dokumen LIKE :search2 OR p.nama_prodi LIKE :search3 OR b.nama_bidang LIKE :search4)";
+            $searchVal = '%' . $search . '%';
+            $params[':search1'] = $searchVal;
+            $params[':search2'] = $searchVal;
+            $params[':search3'] = $searchVal;
+            $params[':search4'] = $searchVal;
+        }
+
+        // Filter Fakultas
+        if ($fakultas === 'tingkat_fakultas') {
+            $where[] = "(d.level = 'fakultas' OR d.prodi_id IS NULL OR d.prodi_id = 0)";
+        } elseif (!empty($fakultas) && is_numeric($fakultas)) {
+            $where[] = "(p.fakultas_id = :fakultas1 OR (d.prodi_id IS NULL AND d.fakultas_id = :fakultas2))";
+            $params[':fakultas1'] = (int)$fakultas;
+            $params[':fakultas2'] = (int)$fakultas;
+        }
+
+        // Filter Prodi
+        if (!empty($prodi)) {
+            $where[] = "d.prodi_id = :prodi";
+            $params[':prodi'] = $prodi;
+        }
+
+        // Filter Bidang
+        if (!empty($bidang)) {
+            $where[] = "d.bidang_id = :bidang";
+            $params[':bidang'] = $bidang;
+        }
+
+        // Filter Tahun Akademik
+        if (!empty($tahun)) {
+            $where[] = "d.tahun_akademik = :tahun";
+            $params[':tahun'] = $tahun;
+        }
+
+        $whereClause = implode(" AND ", $where);
+
+        // Hitung total data yang cocok dengan filter
+        $countSql = "
+            SELECT COUNT(*) 
+            FROM ppepp_documents d
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+            WHERE $whereClause
+        ";
+        $stmtCount = $this->db->prepare($countSql);
+        $stmtCount->execute($params);
+        $filteredTotal = (int)$stmtCount->fetchColumn();
+
+        $totalPages = max(1, (int)ceil($filteredTotal / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        // Ambil data hanya sejumlah $perPage (50 data)
+        $sql = "
             SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, 
                    COALESCE(p.nama_prodi, 'Dekanat / Tingkat Fakultas') as nama_prodi, 
                    p.jenjang, 
@@ -368,29 +479,41 @@ class PublicController extends Controller {
             LEFT JOIN fakultas f_doc ON d.fakultas_id = f_doc.id
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
-            WHERE d.deleted_at IS NULL AND d.status_review != 'draft'
+            WHERE $whereClause
             ORDER BY d.created_at DESC
-        ");
-        $allDocuments = $stmtDocs->fetchAll();
+            LIMIT $perPage OFFSET $offset
+        ";
+        $stmtDocs = $this->db->prepare($sql);
+        $stmtDocs->execute($params);
+        $documents = $stmtDocs->fetchAll();
 
-        $this->attachFilesToDocs($allDocuments);
+        // Lampirkan berkas HANYA untuk 50 dokumen pada halaman ini (super cepat & hemat memori)
+        $this->attachFilesToDocs($documents);
 
-        // Calculate statistics per cycle for Capaian Mutu Universitas card
-        $cycleCounts = [
-            'penetapan' => 0,
-            'pelaksanaan' => 0,
-            'evaluasi' => 0,
-            'pengendalian' => 0,
-            'peningkatan' => 0
-        ];
-        foreach ($allDocuments as $doc) {
-            $s = strtolower(trim($doc['siklus']));
-            if (isset($cycleCounts[$s])) {
-                $cycleCounts[$s]++;
-            }
+        $startNum = $filteredTotal > 0 ? $offset + 1 : 0;
+        $endNum = min($offset + $perPage, $filteredTotal);
+
+        // Jika request melalui AJAX, kembalikan respons JSON langsung
+        if (!empty($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')) {
+            header('Content-Type: application/json; charset=utf-8');
+            ob_start();
+            require ROOT_PATH . '/views/public/all_documents_rows.php';
+            $rowsHtml = ob_get_clean();
+
+            echo json_encode([
+                'success' => true,
+                'html' => $rowsHtml,
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $filteredTotal,
+                'total_pages' => $totalPages,
+                'start_num' => $startNum,
+                'end_num' => $endNum,
+                'siklus' => $initialSiklus,
+                'cycle_counts' => $cycleCounts
+            ]);
+            exit;
         }
-        $totalDokumen = count($allDocuments);
-        $maxDocs = max(1, ...array_values($cycleCounts));
 
         $this->render('public/all_documents', [
             'pageTitle' => 'Portal Repositori Dokumen Mutu',
@@ -398,13 +521,25 @@ class PublicController extends Controller {
             'bidangList' => $bidangList,
             'fakultasList' => $fakultasList,
             'prodiList' => $prodiList,
-            'allDocuments' => $allDocuments,
+            'documents' => $documents,
             'cycleCounts' => $cycleCounts,
             'totalDokumen' => $totalDokumen,
-            'maxDocs' => $maxDocs
+            'maxDocs' => $maxDocs,
+            'filteredTotal' => $filteredTotal,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'perPage' => $perPage,
+            'offset' => $offset,
+            'startNum' => $startNum,
+            'endNum' => $endNum,
+            'initialSiklus' => $initialSiklus,
+            'search' => $search,
+            'fakultas' => $fakultas,
+            'prodi' => $prodi,
+            'bidang' => $bidang,
+            'tahun' => $tahun
         ]);
     }
-
     /**
      * 5. Halaman Tentang PPEPP
      */

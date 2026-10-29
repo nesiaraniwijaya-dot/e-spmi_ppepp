@@ -17,7 +17,7 @@
     ============================================================ -->
     <div class="modal fade" id="pdfPreviewModal" tabindex="-1"
          aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" style="height:92vh;">
+        <div class="modal-dialog modal-xl modal-dialog-centered" id="pdfPreviewModalDialog" style="max-width: min(96vw, 1380px); height:92vh; transition: max-width 0.2s ease;">
             <div class="modal-content h-100 border-0 shadow-lg" style="border-radius:16px; overflow:hidden;">
                 
                 <!-- Modal Header -->
@@ -81,7 +81,7 @@
                 </div>
 
                 <!-- PDF Viewer Canvas Container -->
-                <div class="modal-body p-0 position-relative" id="pdfViewerScrollArea" style="background:#525659; overflow-y:auto; height:calc(100% - 110px);">
+                <div class="modal-body p-0 position-relative" id="pdfViewerScrollArea" style="background:#525659; overflow:auto; height:calc(100% - 110px);">
                     <!-- Loading Spinner -->
                     <div id="pdfLoadingIndicator" class="position-absolute top-50 start-50 translate-middle text-center text-white py-5" style="z-index: 10;">
                         <div class="spinner-border text-info mb-3" role="status" style="width:3rem; height:3rem;"></div>
@@ -429,6 +429,72 @@
         }
     </script>
     <!-- Core Application JS -->
+    <!-- JSZip & docx-preview for Word Documents (.docx) -->
+    <script src="<?= asset('js/jszip.min.js') ?>"></script>
+    <script src="<?= asset('js/docx-preview.min.js') ?>"></script>
+    <style>
+        /* ========================================================
+           Custom styling for DOCX Preview with Landscape & Table Support
+           ======================================================== */
+        .docx-wrapper {
+            background: #525659 !important;
+            padding: 24px 16px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            min-height: 100% !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .docx-wrapper > section.docx {
+            background: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 22px rgba(0, 0, 0, 0.35) !important;
+            margin-bottom: 24px !important;
+            border-radius: 4px !important;
+            box-sizing: border-box !important;
+            position: relative !important;
+            overflow: visible !important;
+        }
+
+        /* Landscape sheet styling */
+        .docx-wrapper > section.docx[style*="width: 297mm"],
+        .docx-wrapper > section.docx[style*="width:297mm"],
+        .docx-wrapper > section.docx.is-landscape {
+            max-width: none !important;
+        }
+
+        /* Ensure tables stay properly contained and columns wrap cleanly */
+        .docx table {
+            border-collapse: collapse !important;
+            max-width: 100% !important;
+            table-layout: auto !important;
+            word-break: normal !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        .docx table td, .docx table th {
+            vertical-align: top !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            box-sizing: border-box !important;
+            line-height: 1.45 !important;
+        }
+
+        .docx p {
+            margin: 0pt 0pt 4pt 0pt !important;
+            min-height: 1em !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+
+        .docx img {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+    </style>
     <script src="<?= asset('js/app.js') ?>"></script>
     <script src="<?= asset('js/ppepp_form.js') ?>"></script>
     <script src="<?= asset('js/sub_standar_picker.js') ?>"></script>

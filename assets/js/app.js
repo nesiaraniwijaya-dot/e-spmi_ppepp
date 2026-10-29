@@ -306,9 +306,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Check if file is an image (JPG, PNG, WebP)
+            // Check file format & extension
             const fileExtMatch = (pdfUrl || '').split('?')[0].split('#')[0].split('.').pop().toLowerCase();
-            const isImageFile = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(fileExtMatch) || (button.getAttribute('data-file-type') === 'image');
+            const fileTypeAttr = (button.getAttribute('data-file-type') || '').toLowerCase();
+            const isImageFile = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(fileExtMatch) || fileTypeAttr === 'image';
+            const isWordFile = ['docx', 'doc'].includes(fileExtMatch) || fileTypeAttr === 'word' || fileTypeAttr === 'docx';
+            const isExcelFile = ['xlsx', 'xls', 'csv'].includes(fileExtMatch) || fileTypeAttr === 'excel';
+            const isPptFile = ['pptx', 'ppt'].includes(fileExtMatch) || fileTypeAttr === 'ppt' || fileTypeAttr === 'powerpoint';
 
             if (isImageFile) {
                 if (headerIcon) headerIcon.className = 'fas fa-file-image fa-lg text-warning';
@@ -324,6 +328,193 @@ document.addEventListener('DOMContentLoaded', function () {
                             <img id="pdfViewerImage" src="${pdfUrl}" alt="${docTitle}" 
                                  class="img-fluid rounded-3 shadow-lg" 
                                  style="max-width: 95%; max-height: 80vh; object-fit: contain; transition: transform 0.2s ease; border: 1px solid rgba(255,255,255,0.15);" />
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            if (isWordFile) {
+                if (headerIcon) headerIcon.className = 'fas fa-file-word fa-lg text-primary';
+                if (totalInfo) totalInfo.textContent = 'Dokumen Microsoft Word (' + fileExtMatch.toUpperCase() + ')';
+                const pageCounter = document.getElementById('pdfPageCounterBadge');
+                if (pageCounter) pageCounter.textContent = 'Word (.docx)';
+
+                if (accessBadge) {
+                    accessBadge.className = 'badge bg-primary bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
+                    accessBadge.innerHTML = '<i class="fas fa-file-word me-1"></i> Berkas Word (.docx)';
+                }
+
+                if (downloadContainer) {
+                    downloadContainer.innerHTML = `
+                        <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
+                            <i class="fas fa-download me-1"></i> Unduh Berkas Word
+                        </a>
+                    `;
+                }
+
+                function renderWordFallback(container) {
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    if (!container) return;
+                    container.style.display = 'block';
+                    container.innerHTML = `
+                        <div class="card border-0 shadow-sm rounded-4 p-4 text-center my-5 mx-auto" style="max-width: 520px; background: #ffffff;">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                                <i class="fas fa-file-word fa-2x"></i>
+                            </div>
+                            <h5 class="fw-bold text-dark mb-1">${docTitle}</h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1 my-2" style="font-size:0.75rem;">Berkas Microsoft Word (.${fileExtMatch.toUpperCase()})</span>
+                            <p class="text-muted small mb-4" style="line-height:1.6;">Dokumen mutu ini berformat Microsoft Word. Anda dapat langsung mengunduhnya untuk dibuka dan diedit menggunakan Microsoft Word, Google Docs, atau WPS Office.</p>
+                            <a href="${pdfUrl}" download class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2 justify-content-center mx-auto">
+                                <i class="fas fa-download"></i> Unduh Berkas Word
+                            </a>
+                        </div>
+                    `;
+                }
+
+                // Render via docx-preview if file is docx and library loaded
+                if (fileExtMatch === 'docx' && typeof docx !== 'undefined' && docx.renderAsync) {
+                    if (toolbar) toolbar.style.display = 'flex';
+                    if (zoomDisplay) zoomDisplay.textContent = '100%';
+                    currentScale = 1.0;
+
+                    fetch(pdfUrl)
+                        .then(res => {
+                            if (!res.ok) throw new Error('HTTP ' + res.status);
+                            return res.blob();
+                        })
+                        .then(blob => {
+                            if (loadingIndicator) loadingIndicator.style.display = 'none';
+                            if (pagesContainer) {
+                                pagesContainer.style.display = 'block';
+                                pagesContainer.style.background = '#525659';
+                                pagesContainer.style.padding = '0';
+                                pagesContainer.innerHTML = '<div id="docxRenderWrapper" style="width:100%; min-height:100%; display:flex; flex-direction:column; align-items:center; transition:transform 0.15s ease-out; transform-origin: top center;"></div>';
+                                const docxContainer = document.getElementById('docxRenderWrapper');
+                                docx.renderAsync(blob, docxContainer, null, {
+                                    className: 'docx',
+                                    inWrapper: true,
+                                    ignoreWidth: false,
+                                    ignoreHeight: false,
+                                    breakPages: true,
+                                    renderHeaders: true,
+                                    renderFooters: true,
+                                    renderComments: false
+                                }).then(() => {
+                                    // Detect page orientation from rendered sections
+                                    const sections = docxContainer.querySelectorAll('section.docx');
+                                    let isLandscapeDoc = false;
+                                    sections.forEach(sec => {
+                                        const w = sec.offsetWidth || sec.clientWidth;
+                                        const h = sec.offsetHeight || sec.clientHeight;
+                                        if (w > h || (sec.style.width && sec.style.width.includes('297mm'))) {
+                                            isLandscapeDoc = true;
+                                            sec.classList.add('is-landscape');
+                                        }
+                                    });
+
+                                    const pageCounter = document.getElementById('pdfPageCounterBadge');
+                                    if (pageCounter) {
+                                        pageCounter.textContent = isLandscapeDoc 
+                                            ? `Word (${sections.length} Hlm - Landscape)` 
+                                            : `Word (${sections.length} Hlm - Portrait)`;
+                                    }
+
+                                    if (totalInfo) {
+                                        totalInfo.textContent = isLandscapeDoc
+                                            ? 'Dokumen Microsoft Word (Kertas Landscape / Mendatar)'
+                                            : 'Dokumen Microsoft Word (Kertas Portrait / Tegak)';
+                                    }
+                                }).catch(err => {
+                                    console.warn('docx preview render error:', err);
+                                    renderWordFallback(pagesContainer);
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.warn('docx fetch error:', err);
+                            renderWordFallback(pagesContainer);
+                        });
+                } else {
+                    renderWordFallback(pagesContainer);
+                }
+                return;
+            }
+
+            if (isExcelFile) {
+                if (headerIcon) headerIcon.className = 'fas fa-file-excel fa-lg text-success';
+                if (toolbar) toolbar.style.display = 'none';
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+                if (totalInfo) totalInfo.textContent = 'Lembar Kerja Microsoft Excel (' + fileExtMatch.toUpperCase() + ')';
+                const pageCounter = document.getElementById('pdfPageCounterBadge');
+                if (pageCounter) pageCounter.textContent = 'Excel Spreadsheet';
+
+                if (accessBadge) {
+                    accessBadge.className = 'badge bg-success bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
+                    accessBadge.innerHTML = '<i class="fas fa-file-excel me-1"></i> Berkas Excel (.xlsx)';
+                }
+
+                if (downloadContainer) {
+                    downloadContainer.innerHTML = `
+                        <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-success rounded-pill px-3 shadow-sm">
+                            <i class="fas fa-download me-1"></i> Unduh Berkas Excel
+                        </a>
+                    `;
+                }
+
+                if (pagesContainer) {
+                    pagesContainer.style.display = 'block';
+                    pagesContainer.innerHTML = `
+                        <div class="card border-0 shadow-sm rounded-4 p-4 text-center my-5 mx-auto" style="max-width: 520px; background: #ffffff;">
+                            <div class="rounded-circle bg-success bg-opacity-10 text-success mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                                <i class="fas fa-file-excel fa-2x"></i>
+                            </div>
+                            <h5 class="fw-bold text-dark mb-1">${docTitle}</h5>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1 my-2" style="font-size:0.75rem;">Berkas Microsoft Excel (.${fileExtMatch.toUpperCase()})</span>
+                            <p class="text-muted small mb-4" style="line-height:1.6;">Dokumen mutu ini berupa lembar kerja/tabel data. Silakan unduh berkas untuk membuka dan mengolahnya di Microsoft Excel atau Google Spreadsheet.</p>
+                            <a href="${pdfUrl}" download class="btn btn-success rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2 justify-content-center mx-auto">
+                                <i class="fas fa-download"></i> Unduh Berkas Excel
+                            </a>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            if (isPptFile) {
+                if (headerIcon) headerIcon.className = 'fas fa-file-powerpoint fa-lg text-warning';
+                if (toolbar) toolbar.style.display = 'none';
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+                if (totalInfo) totalInfo.textContent = 'Presentasi Microsoft PowerPoint (' + fileExtMatch.toUpperCase() + ')';
+                const pageCounter = document.getElementById('pdfPageCounterBadge');
+                if (pageCounter) pageCounter.textContent = 'PowerPoint (.pptx)';
+
+                if (accessBadge) {
+                    accessBadge.className = 'badge bg-warning bg-opacity-90 text-white rounded-pill px-2.5 py-1 fw-bold';
+                    accessBadge.innerHTML = '<i class="fas fa-file-powerpoint me-1"></i> Berkas PPT';
+                }
+
+                if (downloadContainer) {
+                    downloadContainer.innerHTML = `
+                        <a href="${pdfUrl}" target="_blank" download class="btn btn-sm btn-warning rounded-pill px-3 shadow-sm text-white">
+                            <i class="fas fa-download me-1"></i> Unduh Berkas PPT
+                        </a>
+                    `;
+                }
+
+                if (pagesContainer) {
+                    pagesContainer.style.display = 'block';
+                    pagesContainer.innerHTML = `
+                        <div class="card border-0 shadow-sm rounded-4 p-4 text-center my-5 mx-auto" style="max-width: 520px; background: #ffffff;">
+                            <div class="rounded-circle bg-warning bg-opacity-10 text-warning mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                                <i class="fas fa-file-powerpoint fa-2x"></i>
+                            </div>
+                            <h5 class="fw-bold text-dark mb-1">${docTitle}</h5>
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-1 my-2" style="font-size:0.75rem;">Berkas Microsoft PowerPoint (.${fileExtMatch.toUpperCase()})</span>
+                            <p class="text-muted small mb-4" style="line-height:1.6;">Dokumen mutu ini berupa slide presentasi. Silakan unduh berkas untuk membukanya di Microsoft PowerPoint atau Google Slides.</p>
+                            <a href="${pdfUrl}" download class="btn btn-warning text-white rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2 justify-content-center mx-auto">
+                                <i class="fas fa-download"></i> Unduh Berkas PPT
+                            </a>
                         </div>
                     `;
                 }
@@ -373,20 +564,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
                 if (pagesContainer) {
                     pagesContainer.innerHTML = `
-                        <div class="alert alert-light border m-4 text-center">
-                            <i class="fas fa-circle-exclamation fa-2x mb-2 d-block text-secondary"></i>
-                            <strong>Tidak dapat menampilkan pratinjau dokumen.</strong><br>
-                            <span class="small text-muted">${error.message || 'Format berkas tidak didukung atau berkas tidak ditemukan.'}</span>
+                        <div class="card border-0 shadow-sm rounded-4 p-4 text-center my-5 mx-auto" style="max-width: 520px; background: #ffffff;">
+                            <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                                <i class="fas fa-file-arrow-down fa-2x"></i>
+                            </div>
+                            <h5 class="fw-bold text-dark mb-1">${docTitle}</h5>
+                            <p class="text-muted small mb-3" style="line-height:1.6;">Berkas ini tidak dapat dipratinjau langsung di peramban (format non-PDF atau berkas unduhan langsung). Silakan unduh berkas untuk melihat isinya.</p>
+                            <a href="${pdfUrl}" download class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2 justify-content-center mx-auto">
+                                <i class="fas fa-download"></i> Unduh Berkas Dokumen
+                            </a>
                         </div>
                     `;
                 }
             });
         });
-
-        pdfModal.addEventListener('hidden.bs.modal', function () {
+pdfModal.addEventListener('hidden.bs.modal', function () {
             currentRenderTaskId++; // Cancel any running page renders
             const pagesContainer = document.getElementById('pdfPagesContainer');
-            if (pagesContainer) pagesContainer.innerHTML = '';
+            if (pagesContainer) {
+                pagesContainer.innerHTML = '';
+                pagesContainer.style.background = '';
+                pagesContainer.style.padding = '';
+            }
             const iframeWrap = document.getElementById('pdfIframeWrap');
             const iframeEl = document.getElementById('pdfModalIframe');
             if (iframeEl) iframeEl.src = 'about:blank';
@@ -422,6 +621,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     imgEl.style.transform = `scale(${currentScale})`;
                     return;
                 }
+                const docxEl = document.getElementById('docxRenderWrapper');
+                if (docxEl) {
+                    if (currentScale >= 2.5) return;
+                    currentScale += 0.25;
+                    if (zoomDisplay) zoomDisplay.textContent = Math.round(currentScale * 100) + '%';
+                    docxEl.style.transform = `scale(${currentScale})`;
+                    docxEl.style.transformOrigin = 'top center';
+                    return;
+                }
                 if (!currentPdfDoc || currentScale >= 2.5) return;
                 currentScale += 0.25;
                 if (zoomDisplay) zoomDisplay.textContent = Math.round(currentScale * 100) + '%';
@@ -439,6 +647,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     imgEl.style.transform = `scale(${currentScale})`;
                     return;
                 }
+                const docxEl = document.getElementById('docxRenderWrapper');
+                if (docxEl) {
+                    if (currentScale <= 0.5) return;
+                    currentScale -= 0.25;
+                    if (zoomDisplay) zoomDisplay.textContent = Math.round(currentScale * 100) + '%';
+                    docxEl.style.transform = `scale(${currentScale})`;
+                    docxEl.style.transformOrigin = 'top center';
+                    return;
+                }
                 if (!currentPdfDoc || currentScale <= 0.75) return;
                 currentScale -= 0.25;
                 if (zoomDisplay) zoomDisplay.textContent = Math.round(currentScale * 100) + '%';
@@ -453,6 +670,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     currentScale = 1.0;
                     if (zoomDisplay) zoomDisplay.textContent = '100%';
                     imgEl.style.transform = 'scale(1)';
+                    return;
+                }
+                const docxEl = document.getElementById('docxRenderWrapper');
+                if (docxEl) {
+                    currentScale = 1.0;
+                    if (zoomDisplay) zoomDisplay.textContent = '100%';
+                    docxEl.style.transform = 'scale(1)';
+                    docxEl.style.transformOrigin = 'top center';
                     return;
                 }
                 if (!currentPdfDoc) return;

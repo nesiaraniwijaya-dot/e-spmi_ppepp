@@ -179,7 +179,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 data-title="<?= htmlspecialchars(strtolower($doc['nama_dokumen'])) ?>"
                                 data-nomor="<?= htmlspecialchars(strtolower($doc['nomor_dokumen'] ?? '')) ?>"
                                 data-uploader="<?= htmlspecialchars(strtolower($doc['uploader_name'] ?? '')) ?>"
-                                data-siklus="<?= $doc['siklus'] ?>"
+                                data-siklus="<?= htmlspecialchars(strtolower(trim($doc['siklus'] ?? ''))) ?>"
                                 data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
                                 data-status="<?= $status ?>">
                                 <td class="text-center text-muted fw-semibold"><?= $no++ ?></td>
@@ -826,12 +826,12 @@ function filterReviewTable() {
         const title = row.getAttribute('data-title') || '';
         const nomor = row.getAttribute('data-nomor') || '';
         const uploader = row.getAttribute('data-uploader') || '';
-        const siklus = row.getAttribute('data-siklus') || '';
+        const siklus = (row.getAttribute('data-siklus') || '').toLowerCase().trim();
         const status = row.getAttribute('data-status') || '';
         const tahun = row.getAttribute('data-tahun') || '';
 
         const matchSearch = (!searchVal || title.includes(searchVal) || nomor.includes(searchVal) || uploader.includes(searchVal));
-        const matchSiklus = (!currentReviewSiklus || siklus === currentReviewSiklus);
+        const matchSiklus = (!currentReviewSiklus || siklus === currentReviewSiklus.toLowerCase().trim());
         const matchStatus = (!statusVal || status === statusVal);
         const matchTahun = (!tahunVal || tahun === tahunVal);
 

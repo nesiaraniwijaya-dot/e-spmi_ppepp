@@ -5,9 +5,54 @@
  */
 require_once ROOT_PATH . '/views/layouts/header.php';
 
-$initialSearch = isset($_GET['search']) ? htmlspecialchars(trim($_GET['search'])) : '';
-$initialSiklus = isset($_GET['siklus']) ? strtolower(htmlspecialchars(trim($_GET['siklus']))) : '';
-$maxDocsSafe = max(1, $maxDocs ?? 1);
+$initialSearch = htmlspecialchars($search ?? '');
+$initialSiklus = strtolower(trim($initialSiklus ?? ''));
+$currentPage = (int)($currentPage ?? 1);
+$totalPages = (int)($totalPages ?? 1);
+$perPage = (int)($perPage ?? 50);
+$filteredTotal = (int)($filteredTotal ?? 0);
+$startNum = (int)($startNum ?? 1);
+$endNum = (int)($endNum ?? 0);
+
+$siklusMetaList = [
+    '' => [
+        'icon' => 'fa-layer-group',
+        'bg' => '#0A192F',
+        'title' => 'Semua Siklus Dokumen Mutu (PPEPP)',
+        'desc' => 'Menampilkan seluruh repositori dokumen mutu terverifikasi dari semua tahapan siklus PPEPP.'
+    ],
+    'penetapan' => [
+        'icon' => 'fa-file-signature',
+        'bg' => '#2563EB',
+        'title' => 'Tahap Penetapan (P1) - Standar & Kebijakan SPMI',
+        'desc' => 'Dokumen kebijakan mutu, standar SPMI, manual standar, dan capaian pembelajaran lulusan (CPL).'
+    ],
+    'pelaksanaan' => [
+        'icon' => 'fa-person-chalkboard',
+        'bg' => '#059669',
+        'title' => 'Tahap Pelaksanaan (P2) - Pelaksanaan & Pemenuhan Standar',
+        'desc' => 'Dokumen keterlaksanaan standar tridharma, instruksi kerja, SOP, dan pedoman operasional prodi.'
+    ],
+    'evaluasi' => [
+        'icon' => 'fa-magnifying-glass-chart',
+        'bg' => '#D97706',
+        'title' => 'Tahap Evaluasi (E) - Evaluasi Pelaksanaan Standar & AMI',
+        'desc' => 'Dokumen evaluasi berkala, laporan Audit Mutu Internal (AMI), asesmen capaian, dan evaluasi diri prodi.'
+    ],
+    'pengendalian' => [
+        'icon' => 'fa-sliders',
+        'bg' => '#7C3AED',
+        'title' => 'Tahap Pengendalian (P3) - Pengendalian Standar & Tindakan Koreksi',
+        'desc' => 'Dokumen Rapat Tinjauan Manajemen (RTM), perumusan rekomendasi perbaikan, dan tindakan korektif.'
+    ],
+    'peningkatan' => [
+        'icon' => 'fa-arrow-trend-up',
+        'bg' => '#0891B2',
+        'title' => 'Tahap Peningkatan (P4) - Peningkatan Mutu Berkelanjutan',
+        'desc' => 'Dokumen Continuous Quality Improvement (Kaizen) dan pembaharuan standar mutu melampaui SN-Dikti.'
+    ]
+];
+$currentMeta = $siklusMetaList[$initialSiklus] ?? $siklusMetaList[''];
 ?>
 
 <!-- ============================================================
@@ -53,7 +98,7 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 </div>
                 <div>
                     <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-3 py-1.5 rounded-pill" style="font-size: 0.8rem;">
-                        <i class="fas fa-folder-open me-1"></i> <?= $totalDokumen ?? count($allDocuments) ?> Total Dokumen
+                        <i class="fas fa-folder-open me-1"></i> <?= number_format($totalDokumen, 0, ',', '.') ?> Total Dokumen
                     </span>
                 </div>
             </div>
@@ -61,51 +106,49 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
             <ul class="nav ppepp-nav-tabs mb-4" id="publicPpeppTabs" role="tablist">
                 <li class="nav-item">
                     <button class="nav-link <?= empty($initialSiklus) ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, '')">
-                        <i class="fas fa-layer-group"></i> Semua (<?= $totalDokumen ?? count($allDocuments) ?>)
+                        <i class="fas fa-layer-group"></i> Semua (<?= number_format($totalDokumen, 0, ',', '.') ?>)
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link tab-penetapan <?= $initialSiklus === 'penetapan' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'penetapan')">
-                        <i class="fas fa-file-signature"></i> Penetapan (<?= $cycleCounts['penetapan'] ?? 0 ?>)
+                        <i class="fas fa-file-signature"></i> Penetapan (<?= number_format($cycleCounts['penetapan'] ?? 0, 0, ',', '.') ?>)
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link tab-pelaksanaan <?= $initialSiklus === 'pelaksanaan' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'pelaksanaan')">
-                        <i class="fas fa-person-chalkboard"></i> Pelaksanaan (<?= $cycleCounts['pelaksanaan'] ?? 0 ?>)
+                        <i class="fas fa-person-chalkboard"></i> Pelaksanaan (<?= number_format($cycleCounts['pelaksanaan'] ?? 0, 0, ',', '.') ?>)
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link tab-evaluasi <?= $initialSiklus === 'evaluasi' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'evaluasi')">
-                        <i class="fas fa-magnifying-glass-chart"></i> Evaluasi (<?= $cycleCounts['evaluasi'] ?? 0 ?>)
+                        <i class="fas fa-magnifying-glass-chart"></i> Evaluasi (<?= number_format($cycleCounts['evaluasi'] ?? 0, 0, ',', '.') ?>)
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link tab-pengendalian <?= $initialSiklus === 'pengendalian' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'pengendalian')">
-                        <i class="fas fa-sliders"></i> Pengendalian (<?= $cycleCounts['pengendalian'] ?? 0 ?>)
+                        <i class="fas fa-sliders"></i> Pengendalian (<?= number_format($cycleCounts['pengendalian'] ?? 0, 0, ',', '.') ?>)
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link tab-peningkatan <?= $initialSiklus === 'peningkatan' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'peningkatan')">
-                        <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= $cycleCounts['peningkatan'] ?? 0 ?>)
+                        <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= number_format($cycleCounts['peningkatan'] ?? 0, 0, ',', '.') ?>)
                     </button>
                 </li>
             </ul>
 
-
-
             <!-- Cycle Category Context Banner -->
             <div id="cycleCategoryHeader" class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-4" style="background: #F8FAFC; border: 1px solid #E2E8F0;">
                 <div class="d-flex align-items-center gap-2.5">
-                    <span id="cycleCategoryIcon" class="rounded-circle p-2 d-inline-flex align-items-center justify-content-center text-white" style="width: 36px; height: 36px; background: #0A192F;">
-                        <i class="fas fa-layer-group"></i>
+                    <span id="cycleCategoryIcon" class="rounded-circle p-2 d-inline-flex align-items-center justify-content-center text-white" style="width: 36px; height: 36px; background: <?= $currentMeta['bg'] ?>;">
+                        <i class="fas <?= $currentMeta['icon'] ?>"></i>
                     </span>
                     <div>
-                        <div class="fw-bold text-dark-blue small" id="cycleCategoryTitle">Semua Siklus Dokumen Mutu (PPEPP)</div>
-                        <div class="text-muted" style="font-size: 0.73rem;" id="cycleCategoryDesc">Menampilkan seluruh repositori dokumen mutu terverifikasi dari semua tahapan siklus PPEPP.</div>
+                        <div class="fw-bold text-dark-blue small" id="cycleCategoryTitle"><?= htmlspecialchars($currentMeta['title']) ?></div>
+                        <div class="text-muted" style="font-size: 0.73rem;" id="cycleCategoryDesc"><?= htmlspecialchars($currentMeta['desc']) ?></div>
                     </div>
                 </div>
                 <span class="badge bg-white text-dark border px-3 py-1.5 rounded-pill shadow-2xs fw-semibold" id="cycleCategoryCountBadge">
-                    <?= $totalDokumen ?? count($allDocuments) ?> Dokumen
+                    <?= number_format($filteredTotal, 0, ',', '.') ?> Dokumen
                 </span>
             </div>
 
@@ -124,9 +167,11 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                 <div class="col-lg-2 col-md-6">
                     <select id="tableFakultasFilter" class="form-select bg-light">
                         <option value="">Semua Fakultas</option>
-                        <option value="tingkat_fakultas">🏢 Tingkat Fakultas (Dekanat)</option>
+                        <option value="tingkat_fakultas" <?= ($fakultas ?? '') === 'tingkat_fakultas' ? 'selected' : '' ?>>🏢 Tingkat Fakultas (Dekanat)</option>
                         <?php foreach (($fakultasList ?? []) as $f): ?>
-                            <option value="<?= $f['id'] ?>"><?= htmlspecialchars($f['nama_fakultas']) ?></option>
+                            <option value="<?= $f['id'] ?>" <?= ((string)($fakultas ?? '') === (string)$f['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($f['nama_fakultas']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -136,7 +181,9 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                     <select id="tableProdiFilter" class="form-select bg-light">
                         <option value="">Semua Prodi</option>
                         <?php foreach (($prodiList ?? []) as $p): ?>
-                            <option value="<?= $p['id'] ?>" data-fakultas-id="<?= $p['fakultas_id'] ?? '' ?>">
+                            <option value="<?= $p['id'] ?>" 
+                                    data-fakultas-id="<?= $p['fakultas_id'] ?? '' ?>"
+                                    <?= ((int)($prodi ?? 0) === (int)$p['id']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($p['nama_prodi']) ?> (<?= htmlspecialchars($p['jenjang']) ?>)
                             </option>
                         <?php endforeach; ?>
@@ -148,7 +195,9 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                     <select id="tableBidangFilter" class="form-select bg-light">
                         <option value="">Semua Bidang</option>
                         <?php foreach (($bidangList ?? []) as $b): ?>
-                            <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
+                            <option value="<?= $b['id'] ?>" <?= ((int)($bidang ?? 0) === (int)$b['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($b['nama_bidang']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -159,24 +208,26 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                     <select id="tableTahunFilter" class="form-select bg-light">
                         <option value="">Semua Tahun Akademik</option>
                         <?php foreach ($distinctTahunList as $ta): ?>
-                            <option value="<?= htmlspecialchars($ta) ?>">Tahun Akademik <?= htmlspecialchars($ta) ?></option>
+                            <option value="<?= htmlspecialchars($ta) ?>" <?= (($tahun ?? '') === $ta) ? 'selected' : '' ?>>
+                                Tahun Akademik <?= htmlspecialchars($ta) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
-                <!-- Per Page Selector -->
+                <!-- Per Page Selector (Default 50 data) -->
                 <div class="col-lg-1 col-md-4 d-flex justify-content-md-end align-items-center gap-1">
                     <select id="tablePerPageSelect" class="form-select form-select-sm form-select-perpage bg-light" style="min-width: 90px; width: 100%;">
-                        <option value="10">10 data</option>
-                        <option value="20">20 data</option>
-                        <option value="50">50 data</option>
-                        <option value="100" selected>100 data</option>
+                        <option value="10" <?= $perPage === 10 ? 'selected' : '' ?>>10 data</option>
+                        <option value="20" <?= $perPage === 20 ? 'selected' : '' ?>>20 data</option>
+                        <option value="50" <?= $perPage === 50 ? 'selected' : '' ?>>50 data</option>
+                        <option value="100" <?= $perPage === 100 ? 'selected' : '' ?>>100 data</option>
                     </select>
                 </div>
             </div>
 
             <!-- Table -->
-            <div class="table-responsive">
+            <div class="table-responsive position-relative">
                 <table class="table table-custom table-hover align-middle mb-0" id="ppeppDocumentTable">
                     <thead>
                         <tr>
@@ -189,245 +240,38 @@ $maxDocsSafe = max(1, $maxDocs ?? 1);
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php if (empty($allDocuments)): ?>
-                            <tr class="no-matching-docs">
-                                <td colspan="7" class="text-center py-5 text-muted">
-                                    <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
-                                    <h6 class="fw-bold">Belum ada dokumen</h6>
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php $no = 1; foreach ($allDocuments as $doc): 
-                                $adaptive = get_doc_adaptive_standards_and_bidang($doc);
-                            ?>
-                                <tr class="doc-row" 
-                                    data-title="<?= htmlspecialchars(strtolower($doc['nama_dokumen'] . ' ' . $adaptive['standards_text'])) ?>" 
-                                    data-nomor="<?= htmlspecialchars(strtolower($doc['nomor_dokumen'] ?? '')) ?>" 
-                                    data-prodi="<?= htmlspecialchars(strtolower($doc['nama_prodi'] ?? '')) ?>"
-                                    data-prodi-id="<?= $doc['prodi_id'] ?? '' ?>"
-                                    data-fakultas-id="<?= $doc['computed_fakultas_id'] ?? $doc['fakultas_id'] ?? '' ?>"
-                                    data-level="<?= $doc['level'] ?? '' ?>"
-                                    data-bidang-id="<?= htmlspecialchars(implode(',', $adaptive['bidang_ids'])) ?>"
-                                    data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
-                                    data-siklus="<?= htmlspecialchars(strtolower($doc['siklus'] ?? '')) ?>">
-                                    <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
-                                    <td>
-                                        <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen'] ?? '') ?></div>
-                                        <?php if (!empty($doc['nomor_dokumen'])): ?>
-                                            <div class="small text-muted mb-1"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if (!empty($doc['jenjang'])): ?>
-                                            <span class="badge bg-light text-primary border" style="font-size: 0.72rem;"><?= htmlspecialchars($doc['jenjang']) ?></span>
-                                        <?php endif; ?>
-                                        <div class="small fw-semibold text-dark"><?= htmlspecialchars($doc['nama_prodi'] ?? 'Tingkat Fakultas') ?></div>
-                                        <div class="text-muted" style="font-size: 0.72rem;"><?= htmlspecialchars($doc['nama_fakultas'] ?? '') ?></div>
-                                    </td>
-                                    <td><?= siklus_badge($doc['siklus']) ?></td>
-                                    <td>
-                                        <?= $adaptive['bidang_html'] ?>
-                                        <?php if (!empty($adaptive['standards_html'])): ?>
-                                            <div class="mt-1">
-                                                <?= $adaptive['standards_html'] ?>
-                                            </div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php 
-                                        $files = $doc['files'] ?? [];
-                                        $filesCount = count($files);
-                                        $gdriveLinks = parse_external_links($doc['external_link'] ?? '');
-                                        $linkCount = count($gdriveLinks);
-                                        $hasFiles = ($filesCount > 0 || (!empty($doc['file_path']) && $doc['jenis_upload'] !== 'link'));
-                                        $hasLinks = ($linkCount > 0);
-                                        $isKombinasi = ($doc['jenis_upload'] === 'kombinasi') || ($hasFiles && $hasLinks);
-
-                                        if ($isKombinasi): 
-                                        ?>
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <span class="badge" style="background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE; font-size: 0.72rem;">
-                                                    <i class="fas fa-folder-open me-1"></i><?= $filesCount ?: 1 ?> File
-                                                </span>
-                                                <span class="badge badge-link" style="font-size: 0.72rem;">
-                                                    <i class="fab fa-google-drive me-1"></i><?= $linkCount ?> Drive
-                                                </span>
-                                            </div>
-                                        <?php elseif ($hasFiles): ?>
-                                            <?php if ($filesCount > 1): ?>
-                                                <span class="badge badge-file"><i class="fas fa-folder-open me-1"></i> <?= $filesCount ?> File PDF</span>
-                                            <?php else: ?>
-                                                <span class="badge badge-file"><i class="fas fa-file-pdf me-1"></i> File PDF</span>
-                                            <?php endif; ?>
-                                        <?php elseif ($hasLinks): ?>
-                                            <?php if ($linkCount > 1): ?>
-                                                <span class="badge badge-link"><i class="fab fa-google-drive me-1"></i> <?= $linkCount ?> Link GDrive</span>
-                                            <?php else: ?>
-                                                <span class="badge badge-link"><i class="fab fa-google-drive me-1"></i> Link GDrive</span>
-                                            <?php endif; ?>
-                                        <?php else: ?>
-                                            <span class="text-muted small">-</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5 flex-wrap">
-                                            <?php if ($hasFiles): ?>
-                                                <?php if ($filesCount > 1): ?>
-                                                    <div class="dropdown d-inline-block">
-                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="fas fa-eye me-1"></i> <?= $isKombinasi ? 'File (' . $filesCount . ')' : 'Lihat (' . $filesCount . ')' ?>
-                                                        </button>
-                                                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 300px; max-width: min(92vw, 440px); width: max-content; font-size: 0.78rem;">
-                                                            <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH BERKAS DOKUMEN:</li>
-                                                            <?php foreach ($files as $fItem): 
-                                                                $fLimit = isset($fItem['is_page_limited']) && (int)$fItem['is_page_limited'] === 0 ? 0 : (int)($fItem['public_page_limit'] ?? 1);
-                                                                $fCanDl = (int)($fItem['can_download_public'] ?? 0);
-                                                            ?>
-                                                                <li class="mb-1.5">
-                                                                    <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
-                                                                            data-bs-toggle="modal" 
-                                                                            data-bs-target="#pdfPreviewModal" 
-                                                                            data-pdf-url="<?= base_url($fItem['file_path']) ?>" 
-                                                                            data-doc-title="<?= htmlspecialchars($fItem['file_name']) ?>"
-                                                                            data-doc-narasi="<?= htmlspecialchars($fItem['narasi'] ?? '') ?>"
-                                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null)) ?>"
-                                                                            data-public-limit="<?= $fLimit ?>"
-                                                                            data-can-download="<?= $fCanDl ?>">
-                                                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                                                                            <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($fItem['file_name']) ?>">
-                                                                                <i class="fas fa-file-pdf text-danger flex-shrink-0"></i>
-                                                                                <span class="text-truncate" style="max-width: 220px;"><?= htmlspecialchars($fItem['file_name']) ?></span>
-                                                                            </span>
-                                                                            <span class="badge bg-light text-muted border flex-shrink-0" style="font-size: 0.65rem;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
-                                                                        </div>
-                                                                        <?= render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null) ?>
-                                                                        <?php if (!empty($fItem['narasi'])): ?>
-                                                                            <div class="small text-muted bg-light p-1.5 rounded border border-light-subtle" style="font-size: 0.72rem; line-height: 1.45; white-space: pre-line; word-break: break-word;">
-                                                                                <i class="fas fa-quote-left text-primary opacity-50 me-1"></i><?= htmlspecialchars($fItem['narasi']) ?>
-                                                                            </div>
-                                                                        <?php endif; ?>
-                                                                    </button>
-                                                                </li>
-                                                            <?php endforeach; ?>
-                                                        </ul>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <?php 
-                                                    $singleFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => '']; 
-                                                    $sLimit = isset($singleFile['is_page_limited']) && (int)$singleFile['is_page_limited'] === 0 ? 0 : (int)($singleFile['public_page_limit'] ?? $doc['public_page_limit'] ?? 1);
-                                                    $sCanDl = (int)($singleFile['can_download_public'] ?? $doc['can_download_public'] ?? 0);
-                                                    ?>
-                                                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#pdfPreviewModal" 
-                                                            data-pdf-url="<?= base_url($singleFile['file_path']) ?>" 
-                                                            data-doc-title="<?= htmlspecialchars($singleFile['file_name']) ?>"
-                                                            data-doc-narasi="<?= htmlspecialchars($singleFile['narasi'] ?? '') ?>"
-                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null)) ?>"
-                                                            data-public-limit="<?= $sLimit ?>"
-                                                            data-can-download="<?= $sCanDl ?>">
-                                                        <i class="fas fa-eye me-1"></i> <?= $isKombinasi ? 'File PDF' : 'Lihat' ?>
-                                                    </button>
-                                                <?php endif; ?>
-                                            <?php endif; ?>
-
-                                            <?php if ($hasLinks): ?>
-                                                <?php 
-                                                $isLoggedIn = is_user_logged_in();
-                                                ?>
-                                                <?php if ($linkCount > 1): ?>
-                                                    <div class="dropdown d-inline-block">
-                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 dropdown-toggle shadow-sm" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="fab fa-google-drive me-1"></i> <?= $isKombinasi ? 'Drive (' . $linkCount . ')' : 'Tautan (' . $linkCount . ')' ?>
-                                                        </button>
-                                                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 300px; max-width: min(92vw, 440px); width: max-content; font-size: 0.78rem;">
-                                                            <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.68rem;">PILIH TAUTAN DOKUMEN:</li>
-                                                            <?php foreach ($gdriveLinks as $lIdx => $linkObj): 
-                                                                $gUrl = $linkObj['url'];
-                                                                $gNarasi = $linkObj['narasi'];
-                                                                $gCanDl = (int)($linkObj['can_download_public'] ?? 0);
-                                                                $canAccessLink = $isLoggedIn || $gCanDl === 1;
-                                                            ?>
-                                                                <li class="mb-1.5">
-                                                                    <button type="button" class="dropdown-item p-2 rounded-2 text-wrap text-start border-bottom border-light"
-                                                                            data-bs-toggle="modal" 
-                                                                            data-bs-target="#pdfPreviewModal" 
-                                                                            data-is-link="1"
-                                                                            data-link-url="<?= htmlspecialchars($gUrl) ?>"
-                                                                            data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) . ' (Tautan #' . ($lIdx + 1) . ')' ?>"
-                                                                            data-doc-narasi="<?= htmlspecialchars($gNarasi) ?>"
-                                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null)) ?>"
-                                                                            data-can-access="<?= $canAccessLink ? 1 : 0 ?>"
-                                                                            data-can-download="<?= $gCanDl ?>">
-                                                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                                                                            <span class="d-flex align-items-center gap-1.5 fw-semibold text-primary text-truncate">
-                                                                                <i class="fab fa-google-drive flex-shrink-0"></i>
-                                                                                <span>Tautan GDrive #<?= $lIdx + 1 ?></span>
-                                                                            </span>
-                                                                            <?php if ($canAccessLink): ?>
-                                                                                <span class="badge bg-light text-primary border flex-shrink-0" style="font-size: 0.65rem;">Lihat</span>
-                                                                            <?php else: ?>
-                                                                                <span class="badge bg-secondary bg-opacity-10 text-secondary flex-shrink-0" style="font-size: 0.65rem;"><i class="fas fa-lock me-0.5"></i> Terbatas</span>
-                                                                            <?php endif; ?>
-                                                                        </div>
-                                                                        <?= render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null) ?>
-                                                                        <?php if (!empty($gNarasi)): ?>
-                                                                            <div class="small text-muted bg-light p-1.5 rounded border border-light-subtle" style="font-size: 0.72rem; line-height: 1.45; white-space: pre-line; word-break: break-word;">
-                                                                                <i class="fas fa-quote-left text-primary opacity-50 me-1"></i><?= htmlspecialchars($gNarasi) ?>
-                                                                            </div>
-                                                                        <?php endif; ?>
-                                                                    </button>
-                                                                </li>
-                                                            <?php endforeach; ?>
-                                                        </ul>
-                                                    </div>
-                                                <?php else: 
-                                                    $singleLink = $gdriveLinks[0];
-                                                    $sLinkCanDl = (int)($singleLink['can_download_public'] ?? 0);
-                                                    $canAccessSingle = $isLoggedIn || $sLinkCanDl === 1;
-                                                ?>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#pdfPreviewModal" 
-                                                            data-is-link="1"
-                                                            data-link-url="<?= htmlspecialchars($singleLink['url']) ?>" 
-                                                            data-doc-title="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
-                                                            data-doc-narasi="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>"
-                                                            data-doc-standar="<?= htmlspecialchars(render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null)) ?>"
-                                                            data-can-access="<?= $canAccessSingle ? 1 : 0 ?>"
-                                                            data-can-download="<?= $sLinkCanDl ?>"
-                                                            title="<?= htmlspecialchars($singleLink['narasi'] ?? '') ?>">
-                                                        <i class="fab fa-google-drive me-1"></i> <?= $isKombinasi ? 'GDrive' : 'Lihat' ?>
-                                                    </button>
-                                                <?php endif; ?>
-                                            <?php endif; ?>
-
-                                            <?php if (!$hasFiles && !$hasLinks): ?>
-                                                <span class="text-muted small">-</span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                    <tbody id="ppeppDocumentTableBody" style="transition: opacity 0.2s ease;">
+                        <?php require ROOT_PATH . '/views/public/all_documents_rows.php'; ?>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Footer Pagination -->
+            <!-- Footer Pagination (Next / Prev & Numbered Pages) -->
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 pt-3 border-top mt-3">
-                <div id="tableInfo" class="small text-muted"></div>
-                <div id="tablePagination"></div>
+                <div id="tableInfo" class="small text-muted">
+                    <?php if ($filteredTotal > 0): ?>
+                        Menampilkan <?= $startNum ?> - <?= $endNum ?> dari total <?= number_format($filteredTotal, 0, ',', '.') ?> dokumen
+                    <?php else: ?>
+                        Tidak ada dokumen yang sesuai kriteria.
+                    <?php endif; ?>
+                </div>
+                <div id="tablePagination">
+                    <!-- Pagination links injected by JavaScript -->
+                </div>
             </div>
 
         </div>
     </div>
 </section>
 
-<!-- Categorized PPEPP Tab Filter & Search Script -->
+<!-- Categorized PPEPP Tab Filter & Pagination Script -->
 <script>
 let currentPublicSiklus = <?= json_encode($initialSiklus) ?>;
+let currentPage = <?= $currentPage ?>;
+let totalPages = <?= $totalPages ?>;
+let isTableLoading = false;
+let searchDebounceTimer = null;
+let currentFetchController = null;
 
 const siklusMeta = {
     '': {
@@ -474,7 +318,7 @@ function selectPublicSiklusTab(btn, siklus) {
     btn.classList.add('active');
     currentPublicSiklus = siklus;
 
-    // Update Category Banner Header
+    // Update Context Banner Header
     const meta = siklusMeta[siklus] || siklusMeta[''];
     const catIcon = document.getElementById('cycleCategoryIcon');
     const catTitle = document.getElementById('cycleCategoryTitle');
@@ -487,20 +331,161 @@ function selectPublicSiklusTab(btn, siklus) {
     if (catTitle) catTitle.textContent = meta.title;
     if (catDesc) catDesc.textContent = meta.desc;
 
-    // Optional update URL parameter cleanly without reloading
-    if (window.history.replaceState) {
-        const url = new URL(window.location);
-        if (siklus) {
-            url.searchParams.set('siklus', siklus);
-        } else {
-            url.searchParams.delete('siklus');
-        }
-        window.history.replaceState({}, '', url);
+    // Reset ke halaman 1 dan muat data
+    fetchTableData(1);
+}
+
+function fetchTableData(targetPage = 1) {
+    if (currentFetchController) {
+        currentFetchController.abort();
+    }
+    currentFetchController = new AbortController();
+
+    const tbody = document.getElementById('ppeppDocumentTableBody');
+    const infoEl = document.getElementById('tableInfo');
+    const badgeEl = document.getElementById('cycleCategoryCountBadge');
+
+    const searchInput = document.getElementById('tableSearchInput');
+    const fakFilter = document.getElementById('tableFakultasFilter');
+    const prodiFilter = document.getElementById('tableProdiFilter');
+    const bidangFilter = document.getElementById('tableBidangFilter');
+    const tahunFilter = document.getElementById('tableTahunFilter');
+    const perPageSelect = document.getElementById('tablePerPageSelect');
+
+    const params = new URLSearchParams();
+    params.set('ajax', '1');
+    if (currentPublicSiklus) params.set('siklus', currentPublicSiklus);
+    if (searchInput && searchInput.value.trim()) params.set('search', searchInput.value.trim());
+    if (fakFilter && fakFilter.value.trim()) params.set('fakultas', fakFilter.value.trim());
+    if (prodiFilter && prodiFilter.value.trim()) params.set('prodi', prodiFilter.value.trim());
+    if (bidangFilter && bidangFilter.value.trim()) params.set('bidang', bidangFilter.value.trim());
+    if (tahunFilter && tahunFilter.value.trim()) params.set('tahun', tahunFilter.value.trim());
+    
+    const perPageVal = perPageSelect ? perPageSelect.value : '50';
+    params.set('per_page', perPageVal);
+    params.set('page', targetPage.toString());
+
+    if (tbody) {
+        tbody.style.opacity = '0.4';
     }
 
-    if (typeof window.triggerPublicFilter === 'function') {
-        window.triggerPublicFilter();
+    const fetchUrl = '<?= base_url('dokumen') ?>?' + params.toString();
+
+    fetch(fetchUrl, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        signal: currentFetchController.signal
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('HTTP error ' + res.status);
+        return res.json();
+    })
+    .then(data => {
+        if (!data.success) return;
+
+        currentPage = data.page;
+        totalPages = data.total_pages;
+
+        if (tbody) {
+            tbody.innerHTML = data.html;
+            tbody.style.opacity = '1';
+        }
+
+        if (infoEl) {
+            if (data.total === 0) {
+                infoEl.textContent = 'Tidak ada dokumen yang sesuai kriteria.';
+            } else {
+                infoEl.textContent = `Menampilkan ${data.start_num} - ${data.end_num} dari total ${Number(data.total).toLocaleString('id-ID')} dokumen`;
+            }
+        }
+
+        if (badgeEl) {
+            badgeEl.textContent = `${Number(data.total).toLocaleString('id-ID')} Dokumen`;
+        }
+
+        renderPaginationUI(data.page, data.total_pages);
+
+        // Update clean URL in browser bar without reload
+        const urlParams = new URLSearchParams();
+        if (currentPublicSiklus) urlParams.set('siklus', currentPublicSiklus);
+        if (searchInput && searchInput.value.trim()) urlParams.set('search', searchInput.value.trim());
+        if (fakFilter && fakFilter.value.trim()) urlParams.set('fakultas', fakFilter.value.trim());
+        if (prodiFilter && prodiFilter.value.trim()) urlParams.set('prodi', prodiFilter.value.trim());
+        if (bidangFilter && bidangFilter.value.trim()) urlParams.set('bidang', bidangFilter.value.trim());
+        if (tahunFilter && tahunFilter.value.trim()) urlParams.set('tahun', tahunFilter.value.trim());
+        if (perPageVal !== '50') urlParams.set('per_page', perPageVal);
+        if (data.page > 1) urlParams.set('page', data.page.toString());
+
+        const newUrl = '<?= base_url('dokumen') ?>' + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        if (window.history.pushState) {
+            window.history.pushState({ siklus: currentPublicSiklus, page: data.page }, '', newUrl);
+        }
+    })
+    .catch(err => {
+        if (err.name === 'AbortError') return;
+        console.error('Error fetching documents:', err);
+        if (tbody) tbody.style.opacity = '1';
+    });
+}
+
+function renderPaginationUI(curPage, maxPages) {
+    const paginationEl = document.getElementById('tablePagination');
+    if (!paginationEl) return;
+
+    if (maxPages <= 1) {
+        paginationEl.innerHTML = '';
+        return;
     }
+
+    let html = '<ul class="pagination pagination-sm mb-0 flex-wrap gap-1">';
+    
+    // Previous Button
+    const prevDisabled = curPage <= 1 ? 'disabled' : '';
+    html += `<li class="page-item ${prevDisabled}">
+        <button class="page-link rounded-2 px-2.5" data-page="${curPage - 1}" ${prevDisabled ? 'disabled' : ''} title="Halaman Sebelumnya">
+            <i class="fas fa-chevron-left me-1"></i> Prev
+        </button>
+    </li>`;
+
+    // Numbered Pages
+    for (let p = 1; p <= maxPages; p++) {
+        if (p === 1 || p === maxPages || (p >= curPage - 2 && p <= curPage + 2)) {
+            const isActive = (p === curPage) ? 'active' : '';
+            html += `<li class="page-item ${isActive}">
+                <button class="page-link rounded-2" data-page="${p}">${p}</button>
+            </li>`;
+        } else if (p === curPage - 3 || p === curPage + 3) {
+            html += '<li class="page-item disabled"><span class="page-link border-0">...</span></li>';
+        }
+    }
+
+    // Next Button
+    const nextDisabled = curPage >= maxPages ? 'disabled' : '';
+    html += `<li class="page-item ${nextDisabled}">
+        <button class="page-link rounded-2 px-2.5" data-page="${curPage + 1}" ${nextDisabled ? 'disabled' : ''} title="Halaman Selanjutnya">
+            Next <i class="fas fa-chevron-right ms-1"></i>
+        </button>
+    </li>`;
+
+    html += '</ul>';
+    paginationEl.innerHTML = html;
+
+    // Attach click events
+    paginationEl.querySelectorAll('button.page-link').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = parseInt(this.getAttribute('data-page'), 10);
+            if (target >= 1 && target <= maxPages && target !== currentPage) {
+                fetchTableData(target);
+                // Smooth scroll to table
+                const tableCard = document.getElementById('ppeppDocumentTable');
+                if (tableCard) {
+                    tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -510,50 +495,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const bidangFilter = document.getElementById('tableBidangFilter');
     const tahunFilter = document.getElementById('tableTahunFilter');
     const perPageSelect = document.getElementById('tablePerPageSelect');
-    const rows = Array.from(document.querySelectorAll('#ppeppDocumentTable tbody tr.doc-row'));
-    const infoEl = document.getElementById('tableInfo');
-    const paginationEl = document.getElementById('tablePagination');
-    const countBadgeEl = document.getElementById('cycleCategoryCountBadge');
 
-    let currentPage = 1;
-    let perPage = parseInt(perPageSelect.value, 10);
+    // Initial render of pagination
+    renderPaginationUI(currentPage, totalPages);
 
-    function getFilteredRows() {
-        const query = searchInput.value.trim().toLowerCase();
-        const selectedFakultas = fakultasFilter ? fakultasFilter.value.trim() : '';
-        const selectedProdi = prodiFilter ? prodiFilter.value.trim() : '';
-        const selectedBidang = bidangFilter ? bidangFilter.value.trim() : '';
-        const selectedTahun = tahunFilter ? tahunFilter.value.trim() : '';
-
-        return rows.filter(row => {
-            const title = row.getAttribute('data-title') || '';
-            const nomor = row.getAttribute('data-nomor') || '';
-            const prodi = row.getAttribute('data-prodi') || '';
-            const rowProdiId = row.getAttribute('data-prodi-id') || '';
-            const rowFakultasId = row.getAttribute('data-fakultas-id') || '';
-            const rowLevel = row.getAttribute('data-level') || '';
-            const rowSiklus = row.getAttribute('data-siklus') || '';
-            const rowBidangIds = (row.getAttribute('data-bidang-id') || '').split(',').map(s => s.trim());
-            const rowTahun = row.getAttribute('data-tahun-akademik') || '';
-
-            const matchQuery = !query || title.includes(query) || nomor.includes(query) || prodi.includes(query);
-            const matchSiklus = !currentPublicSiklus || rowSiklus === currentPublicSiklus;
-            
-            let matchFakultas = true;
-            if (selectedFakultas === 'tingkat_fakultas') {
-                matchFakultas = (rowLevel === 'fakultas' || !rowProdiId);
-            } else if (selectedFakultas) {
-                matchFakultas = (rowFakultasId === selectedFakultas);
-            }
-
-            const matchProdi = !selectedProdi || rowProdiId === selectedProdi;
-            const matchBidang = !selectedBidang || rowBidangIds.includes(selectedBidang);
-            const matchTahun = !selectedTahun || rowTahun === selectedTahun;
-
-            return matchQuery && matchSiklus && matchFakultas && matchProdi && matchBidang && matchTahun;
-        });
-    }
-
+    // Filter Prodi dropdown when Fakultas changes
     if (fakultasFilter && prodiFilter) {
         fakultasFilter.addEventListener('change', function() {
             const selectedFak = this.value;
@@ -572,118 +518,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            currentPage = 1;
-            renderTable();
+            fetchTableData(1);
         });
     }
 
-    function renderTable() {
-        const filtered = getFilteredRows();
-        const total = filtered.length;
-        const totalPages = Math.max(1, Math.ceil(total / perPage));
-
-        if (currentPage > totalPages) currentPage = totalPages;
-        const startIndex = (currentPage - 1) * perPage;
-        const endIndex = startIndex + perPage;
-
-        rows.forEach(r => r.style.display = 'none');
-
-        filtered.slice(startIndex, endIndex).forEach(r => {
-            r.style.display = '';
+    // Search Input with 300ms Debounce
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                fetchTableData(1);
+            }, 300);
         });
-
-        // Update Counter in Context Banner
-        if (countBadgeEl) {
-            countBadgeEl.textContent = `${total} Dokumen`;
-        }
-
-        // Update Info
-        if (total === 0) {
-            infoEl.textContent = 'Tidak ada dokumen yang sesuai kriteria.';
-        } else {
-            const startNum = startIndex + 1;
-            const endNum = Math.min(endIndex, total);
-            infoEl.textContent = `Menampilkan ${startNum} - ${endNum} dari total ${total} dokumen`;
-        }
-
-        // Render Pagination
-        renderPagination(totalPages);
     }
 
-    function renderPagination(totalPages) {
-        if (totalPages <= 1) {
-            paginationEl.innerHTML = '';
-            return;
-        }
+    // Select Filters
+    if (prodiFilter) prodiFilter.addEventListener('change', () => fetchTableData(1));
+    if (bidangFilter) bidangFilter.addEventListener('change', () => fetchTableData(1));
+    if (tahunFilter) tahunFilter.addEventListener('change', () => fetchTableData(1));
+    if (perPageSelect) perPageSelect.addEventListener('change', () => fetchTableData(1));
 
-        let html = '<ul class="pagination pagination-sm mb-0">';
-        
-        // Prev
-        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-            <button class="page-link" data-page="${currentPage - 1}">&laquo;</button>
-        </li>`;
+    // Handle Browser Back / Forward navigation
+    window.addEventListener('popstate', function(e) {
+        const url = new URL(window.location);
+        const siklusParam = (url.searchParams.get('siklus') || '').toLowerCase();
+        currentPublicSiklus = siklusParam;
 
-        for (let p = 1; p <= totalPages; p++) {
-            if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
-                html += `<li class="page-item ${p === currentPage ? 'active' : ''}">
-                    <button class="page-link" data-page="${p}">${p}</button>
-                </li>`;
-            } else if (p === currentPage - 3 || p === currentPage + 3) {
-                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        // Sync tab buttons
+        const tabButtons = document.querySelectorAll('#publicPpeppTabs .nav-link');
+        tabButtons.forEach(b => {
+            b.classList.remove('active');
+            if (!siklusParam && b.textContent.includes('Semua')) {
+                b.classList.add('active');
+            } else if (siklusParam && b.classList.contains('tab-' + siklusParam)) {
+                b.classList.add('active');
             }
-        }
-
-        // Next
-        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-            <button class="page-link" data-page="${currentPage + 1}">&raquo;</button>
-        </li>`;
-        html += '</ul>';
-
-        paginationEl.innerHTML = html;
-
-        paginationEl.querySelectorAll('button.page-link').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const targetPage = parseInt(this.getAttribute('data-page'), 10);
-                if (targetPage >= 1 && targetPage <= totalPages && targetPage !== currentPage) {
-                    currentPage = targetPage;
-                    renderTable();
-                }
-            });
         });
-    }
 
-    window.triggerPublicFilter = function() {
-        currentPage = 1;
-        renderTable();
-    };
+        // Sync inputs
+        if (searchInput) searchInput.value = url.searchParams.get('search') || '';
+        if (fakultasFilter) fakultasFilter.value = url.searchParams.get('fakultas') || '';
+        if (prodiFilter) prodiFilter.value = url.searchParams.get('prodi') || '';
+        if (bidangFilter) bidangFilter.value = url.searchParams.get('bidang') || '';
+        if (tahunFilter) tahunFilter.value = url.searchParams.get('tahun') || '';
+        if (perPageSelect) perPageSelect.value = url.searchParams.get('per_page') || '50';
 
-    // Event listeners
-    searchInput.addEventListener('input', () => { currentPage = 1; renderTable(); });
-    if (prodiFilter) prodiFilter.addEventListener('change', () => { currentPage = 1; renderTable(); });
-    if (bidangFilter) bidangFilter.addEventListener('change', () => { currentPage = 1; renderTable(); });
-    if (tahunFilter) tahunFilter.addEventListener('change', () => { currentPage = 1; renderTable(); });
-    perPageSelect.addEventListener('change', () => {
-        perPage = parseInt(perPageSelect.value, 10);
-        currentPage = 1;
-        renderTable();
+        const pageParam = parseInt(url.searchParams.get('page') || '1', 10);
+        fetchTableData(pageParam);
     });
-
-    // If initial siklus is set, reflect metadata
-    if (currentPublicSiklus && siklusMeta[currentPublicSiklus]) {
-        const meta = siklusMeta[currentPublicSiklus];
-        const catIcon = document.getElementById('cycleCategoryIcon');
-        const catTitle = document.getElementById('cycleCategoryTitle');
-        const catDesc = document.getElementById('cycleCategoryDesc');
-        if (catIcon) {
-            catIcon.style.background = meta.bg;
-            catIcon.innerHTML = `<i class="fas ${meta.icon}"></i>`;
-        }
-        if (catTitle) catTitle.textContent = meta.title;
-        if (catDesc) catDesc.textContent = meta.desc;
-    }
-
-    // Initial table render
-    renderTable();
 });
 </script>
 

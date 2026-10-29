@@ -46,8 +46,10 @@ class Database {
                 PDO::ATTR_EMULATE_PREPARES => false,
             ];
             // Ensure MySQL timezone is synchronized to Asia/Jakarta (WIB / UTC+7)
-            if (defined('PDO::MYSQL_ATTR_INIT_COMMAND')) {
-                $options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET time_zone = '+07:00'";
+            if (defined('\Pdo\Mysql::ATTR_INIT_COMMAND')) {
+                $options[\Pdo\Mysql::ATTR_INIT_COMMAND] = "SET time_zone = '+07:00'";
+            } elseif (defined('PDO::MYSQL_ATTR_INIT_COMMAND')) {
+                $options[@constant('PDO::MYSQL_ATTR_INIT_COMMAND')] = "SET time_zone = '+07:00'";
             }
             $this->pdo = new PDO($dsn, $this->username, $this->password, $options);
             try {
