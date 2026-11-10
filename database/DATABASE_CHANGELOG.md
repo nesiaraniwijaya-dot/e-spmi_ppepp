@@ -131,6 +131,20 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
       - Berkas master `database/spmi_ppepp.sql` telah diperbarui dengan data bersih siap pakai (master fakultas, prodi, standar akreditasi, user, dan setelan tetap utuh).
     - Skrip pembersih mandiri: `database/cleanup_dummy_documents.php`.
 
+14. **Optimasi Indeks Performa Database, Reset Antrean ke GPM, & Pemisahan Privasi Catatan Alur Berjenjang (02 - 10 November 2026)**:
+    - **Penambahan 11 Indeks Komposit Performa Query (`database/migration_performance_indexes.sql`)**:
+      - Tabel `ppepp_documents`: `idx_docs_filter_status`, `idx_docs_prodi_filter`, `idx_docs_fakultas_filter`, `idx_docs_siklus_filter`, `idx_docs_tahun`, `idx_docs_created_at`.
+      - Tabel `ppepp_document_files`: `idx_docfiles_doc_sort`, `idx_docfiles_cat`.
+      - Tabel `ppepp_cycles`: `idx_cycles_prodi`, `idx_cycles_fakultas`, `idx_cycles_bidang`.
+      - Aman dijalankan (hanya menambah indeks pencarian tanpa mengubah/menghapus data). Tersedia pula skrip PHP idempoten: `database/apply_performance_indexes.php` (melewati indeks yang sudah terpasang).
+    - **Semantik Privasi Alur Berjenjang (*Masked Review Flow*: LPM -> GPM -> Prodi/Dekanat)**:
+      - Tidak ada perubahan skema kolom baru (memanfaatkan kolom eksisting `status_review = 'revisi_lpm'`, `lpm_catatan`, `gpm_catatan`, `catatan_review`, `ppepp_document_reviews`, dan `ppepp_document_revisions`).
+      - Saat LPM mengembalikan dokumen (`status_review = 'revisi_lpm'`, `tahap_review = 'gpm'`), catatan perbaikan internal LPM hanya disimpan ke `lpm_catatan` & `ppepp_document_reviews` (tahap `lpm`) tanpa menimpa `catatan_review` dan tanpa membuat entri di `ppepp_document_revisions`.
+      - Setelah GPM menelaah & meneruskan arahan ke unit pengunggah (`gpm/review/forward-lpm`), status berubah ke `'revisi_gpm'` dengan catatan resmi di `gpm_catatan`, `catatan_review`, dan `ppepp_document_revisions` atas nama `GPM Fakultas`.
+    - **Skrip Seeder Dummy Uji Coba Alur Berjenjang**:
+      - `database/seed_dummy_review_flow.php` menyediakan 7 dokumen dummy (`DUMMY-FLOW/2026/A1..A3, B1..B4`) untuk uji coba skenario disetujui LPM maupun ditolak LPM -> diteruskan GPM -> Prodi/Dekanat.
+      - Jalankan `php database/seed_dummy_review_flow.php --clean` untuk menghapus seluruh data dummy uji coba.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
@@ -138,8 +152,9 @@ Cukup jalankan skrip migrasi PHP:
 ```bash
 php database/migration_fitur_akademik_dan_gpm.php
 php database/migration_lpm_traffic_and_academic_year.php
+php database/apply_performance_indexes.php
 ```
-atau impor berkas master terpusat:
+atau jalankan kueri SQL `database/migration_performance_indexes.sql` di phpMyAdmin / MySQL CLI, serta impor berkas master bila mulai dari awal:
 ```bash
 mysql -u root spmi_ppepp < database/spmi_ppepp.sql
 ```
