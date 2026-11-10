@@ -104,8 +104,6 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- ApexCharts -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <!-- LPM Design System Stylesheet -->
     <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
     <!-- Sub Standar Mutu Picker Helper -->
@@ -376,7 +374,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                         onmouseover="this.style.background='rgba(10,25,47,0.06)'"
                         onmouseout="this.style.background='transparent'">
                     <?php if (!empty($currentUser['avatar']) && file_exists(ROOT_PATH . '/' . $currentUser['avatar'])): ?>
-                        <img src="<?= base_url($currentUser['avatar']) ?>" alt="Avatar" class="rounded-circle shadow-xs border" style="width:36px;height:36px;object-fit:cover;flex-shrink:0;">
+                        <img src="<?= base_url($currentUser['avatar']) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle shadow-xs border" style="width:36px;height:36px;object-fit:cover;flex-shrink:0;">
                     <?php else: ?>
                         <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--purple-dark),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.85rem;">
                             <?= strtoupper(substr($currentUser['name'] ?? 'U', 0, 1)) ?>

@@ -107,9 +107,9 @@ function formatDurationHours(?int $hours): string {
                 <select name="kategori_traffic" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">Semua Status</option>
                     <option value="menunggu_gpm" <?= $trafficFilter === 'menunggu_gpm' ? 'selected' : '' ?>>⏳ Tertahan di GPM</option>
-                    <option value="revisi_unit" <?= $trafficFilter === 'revisi_unit' ? 'selected' : '' ?>>🔄 Perlu Revisi di Unit</option>
-                    <option value="menunggu_lpm" <?= $trafficFilter === 'menunggu_lpm' ? 'selected' : '' ?>>📥 Menunggu Telaah LPM</option>
-                    <option value="sesuai" <?= $trafficFilter === 'sesuai' ? 'selected' : '' ?>>✅ Sah / Selesai</option>
+                    <option value="revisi_unit" <?= $trafficFilter === 'revisi_unit' ? 'selected' : '' ?>>Perlu Revisi di Unit</option>
+                    <option value="menunggu_lpm" <?= $trafficFilter === 'menunggu_lpm' ? 'selected' : '' ?>>Menunggu Telaah LPM</option>
+                    <option value="sesuai" <?= $trafficFilter === 'sesuai' ? 'selected' : '' ?>>Sah / Selesai</option>
                 </select>
             </div>
 

@@ -138,15 +138,15 @@ foreach ($draftDocs as $d) {
                         <span class="input-group-text bg-light text-muted border-end-0" style="border-color: #CBD5E1;"><i class="fas fa-filter text-scu-gold"></i></span>
                         <select id="filterUnitKerjaDraft" class="form-select border-start-0 fw-semibold" style="border-color: #CBD5E1; font-size: 0.84rem;" onchange="window.location.href = this.value">
                             <option value="<?= base_url('gpm/draft?unit=all') ?>" <?= $unitFilter === 'all' ? 'selected' : '' ?>>
-                                📁 Semua Unit Kerja (Fakultas & Seluruh Program Studi)
+                                Semua Unit Kerja (Fakultas & Seluruh Program Studi)
                             </option>
                             <option value="<?= base_url('gpm/draft?unit=fakultas') ?>" <?= $unitFilter === 'fakultas' ? 'selected' : '' ?>>
-                                🏢 Tingkat Fakultas (<?= htmlspecialchars($fakultas['nama_fakultas'] ?? 'Dekanat') ?>)
+                                Tingkat Fakultas (<?= htmlspecialchars($fakultas['nama_fakultas'] ?? 'Dekanat') ?>)
                             </option>
                             <optgroup label="── Program Studi di Bawah Fakultas ──">
                                 <?php foreach ($prodisList as $p): ?>
                                     <option value="<?= base_url('gpm/draft?unit=' . $p['id']) ?>" <?= ((string)$unitFilter === (string)$p['id']) ? 'selected' : '' ?>>
-                                        🎓 <?= htmlspecialchars($p['jenjang'] . ' ' . $p['nama_prodi']) ?>
+                                        <?= htmlspecialchars($p['jenjang'] . ' ' . $p['nama_prodi']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </optgroup>

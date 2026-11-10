@@ -37,7 +37,7 @@ $unitName = Auth::isProdi()
             <div class="card border-0 shadow-sm rounded-4 text-center p-4">
                 <div class="position-relative d-inline-block mx-auto mb-3">
                     <?php if (!empty($user['avatar']) && file_exists(ROOT_PATH . '/' . $user['avatar'])): ?>
-                        <img src="<?= base_url($user['avatar']) ?>" id="avatarPreviewSidebar" alt="Avatar" class="rounded-circle shadow-sm border border-3 border-white" style="width: 120px; height: 120px; object-fit: cover;">
+                        <img src="<?= base_url($user['avatar']) ?>" loading="lazy" decoding="async" id="avatarPreviewSidebar" alt="Avatar" class="rounded-circle shadow-sm border border-3 border-white" style="width: 120px; height: 120px; object-fit: cover;">
                     <?php else: ?>
                         <div id="avatarFallbackSidebar" class="rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto text-white fw-bold" style="width: 120px; height: 120px; font-size: 2.5rem; background: linear-gradient(135deg, var(--purple-dark), var(--purple));">
                             <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
@@ -90,7 +90,7 @@ $unitName = Auth::isProdi()
                         <div class="d-flex align-items-center gap-3">
                             <div class="position-relative">
                                 <?php if (!empty($user['avatar']) && file_exists(ROOT_PATH . '/' . $user['avatar'])): ?>
-                                    <img src="<?= base_url($user['avatar']) ?>" id="avatarPreviewForm" alt="Preview" class="rounded-circle shadow-xs border" style="width: 70px; height: 70px; object-fit: cover;">
+                                    <img src="<?= base_url($user['avatar']) ?>" loading="lazy" decoding="async" id="avatarPreviewForm" alt="Preview" class="rounded-circle shadow-xs border" style="width: 70px; height: 70px; object-fit: cover;">
                                 <?php else: ?>
                                     <div id="avatarFallbackForm" class="rounded-circle shadow-xs d-flex align-items-center justify-content-center text-white fw-bold" style="width: 70px; height: 70px; font-size: 1.5rem; background: linear-gradient(135deg, var(--purple-dark), var(--purple));">
                                         <?= strtoupper(substr($user['name'] ?? 'U', 0, 1)) ?>
@@ -194,7 +194,7 @@ function previewAvatar(input) {
                 formPreview.style.display = 'block';
             } else {
                 const fb = document.getElementById('avatarFallbackForm');
-                if (fb) fb.outerHTML = `<img src="${e.target.result}" id="avatarPreviewForm" class="rounded-circle shadow-xs border" style="width: 70px; height: 70px; object-fit: cover;">`;
+                if (fb) fb.outerHTML = `<img src="${e.target.result}" id="avatarPreviewForm" class="rounded-circle shadow-xs border" style="width: 70px; height: 70px; object-fit: cover;" loading="lazy" decoding="async">`;
             }
 
             if (sidebarPreview) {
@@ -202,7 +202,7 @@ function previewAvatar(input) {
                 sidebarPreview.style.display = 'block';
             } else {
                 const fb2 = document.getElementById('avatarFallbackSidebar');
-                if (fb2) fb2.outerHTML = `<img src="${e.target.result}" id="avatarPreviewSidebar" class="rounded-circle shadow-sm border border-3 border-white" style="width: 120px; height: 120px; object-fit: cover;">`;
+                if (fb2) fb2.outerHTML = `<img src="${e.target.result}" id="avatarPreviewSidebar" class="rounded-circle shadow-sm border border-3 border-white" style="width: 120px; height: 120px; object-fit: cover;" loading="lazy" decoding="async">`;
             }
         };
         reader.readAsDataURL(input.files[0]);

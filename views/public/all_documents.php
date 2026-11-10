@@ -182,7 +182,7 @@ $currentMeta = $siklusMetaList[$initialSiklus] ?? $siklusMetaList[''];
                     <div class="col-12 col-sm-6 col-lg-3">
                         <select id="tableFakultasFilter" class="form-select bg-light">
                             <option value="">Semua Fakultas</option>
-                            <option value="tingkat_fakultas" <?= ($fakultas ?? '') === 'tingkat_fakultas' ? 'selected' : '' ?>>🏢 Tingkat Fakultas (Dekanat)</option>
+                            <option value="tingkat_fakultas" <?= ($fakultas ?? '') === 'tingkat_fakultas' ? 'selected' : '' ?>>Tingkat Fakultas (Dekanat)</option>
                             <?php foreach (($fakultasList ?? []) as $f): ?>
                                 <option value="<?= $f['id'] ?>" <?= ((string)($fakultas ?? '') === (string)$f['id']) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($f['nama_fakultas']) ?>

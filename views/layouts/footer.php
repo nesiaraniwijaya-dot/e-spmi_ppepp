@@ -191,7 +191,7 @@
                 <div class="col-lg-5 col-md-12">
                     <div class="footer-brand d-flex align-items-center gap-3 mb-3">
                         <div class="footer-logo-wrap">
-                            <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;">
+                            <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;">
                         </div>
                         <div>
                             <div class="footer-brand-title"><?= htmlspecialchars(get_landing_setting('footer_brand_title', 'MITRA')) ?></div>

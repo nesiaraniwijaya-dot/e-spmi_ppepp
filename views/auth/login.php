@@ -17,7 +17,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     <div class="col-lg-6 bg-scu-gradient text-white p-4 p-md-5 d-flex flex-column justify-content-between position-relative" style="min-height: 480px;">
                         <div>
                             <div class="d-flex align-items-center gap-3 mb-4">
-                                <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width: 62px; height: 62px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35)); flex-shrink: 0;">
+                                <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" style="width: 62px; height: 62px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35)); flex-shrink: 0;">
                                 <div>
                                     <h3 class="fw-bold mb-0 text-white" style="letter-spacing: 0.5px; line-height: 1.2;">MITRA</h3>
                                     <div class="small text-light opacity-90" style="font-size: 0.82rem; font-weight: 500;">Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
@@ -59,7 +59,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     <!-- Right Column: Google SSO Action -->
                     <div class="col-lg-6 bg-white p-4 p-md-5 d-flex flex-column justify-content-center">
                         <div class="text-center mb-4">
-                            <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width: 68px; height: 68px; object-fit: contain; margin-bottom: 0.75rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12));">
+                            <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" style="width: 68px; height: 68px; object-fit: contain; margin-bottom: 0.75rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12));">
                             <h4 class="fw-bold text-dark-blue mb-0" style="letter-spacing: 0.5px;">Portal Akses MITRA</h4>
                             <div class="text-muted small fw-medium mt-1 mb-2" style="font-size: 0.85rem;">Universitas Katolik Soegijapranata (SCU)</div>
                             <div class="border-top pt-2" style="border-color: #E2E8F0 !important;">
