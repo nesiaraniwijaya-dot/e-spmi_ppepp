@@ -136,33 +136,33 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
 
                 <ul class="nav ppepp-nav-tabs" id="ppeppTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="tab-all-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('', this)">
-                            <i class="fas fa-layer-group"></i> Semua (<?= $cycleStats['total'] ?>)
+                        <button class="nav-link active" id="tab-all-btn" type="button" role="tab" data-siklus-tab="" onclick="changeProdiPpeppCycleTab('', this)">
+                            <i class="fas fa-layer-group"></i> Semua <span class="tab-cycle-count">(<?= $cycleStats['total'] ?>)</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-penetapan" id="tab-p1-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('penetapan', this)">
-                            <i class="fas fa-file-signature"></i> Penetapan (<?= $cycleStats['penetapan'] ?>)
+                        <button class="nav-link tab-penetapan" id="tab-p1-btn" type="button" role="tab" data-siklus-tab="penetapan" onclick="changeProdiPpeppCycleTab('penetapan', this)">
+                            <i class="fas fa-file-signature"></i> Penetapan <span class="tab-cycle-count">(<?= $cycleStats['penetapan'] ?>)</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-pelaksanaan" id="tab-p2-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('pelaksanaan', this)">
-                            <i class="fas fa-person-chalkboard"></i> Pelaksanaan (<?= $cycleStats['pelaksanaan'] ?>)
+                        <button class="nav-link tab-pelaksanaan" id="tab-p2-btn" type="button" role="tab" data-siklus-tab="pelaksanaan" onclick="changeProdiPpeppCycleTab('pelaksanaan', this)">
+                            <i class="fas fa-person-chalkboard"></i> Pelaksanaan <span class="tab-cycle-count">(<?= $cycleStats['pelaksanaan'] ?>)</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-evaluasi" id="tab-e-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('evaluasi', this)">
-                            <i class="fas fa-magnifying-glass-chart"></i> Evaluasi (<?= $cycleStats['evaluasi'] ?>)
+                        <button class="nav-link tab-evaluasi" id="tab-e-btn" type="button" role="tab" data-siklus-tab="evaluasi" onclick="changeProdiPpeppCycleTab('evaluasi', this)">
+                            <i class="fas fa-magnifying-glass-chart"></i> Evaluasi <span class="tab-cycle-count">(<?= $cycleStats['evaluasi'] ?>)</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-pengendalian" id="tab-p3-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('pengendalian', this)">
-                            <i class="fas fa-sliders"></i> Pengendalian (<?= $cycleStats['pengendalian'] ?>)
+                        <button class="nav-link tab-pengendalian" id="tab-p3-btn" type="button" role="tab" data-siklus-tab="pengendalian" onclick="changeProdiPpeppCycleTab('pengendalian', this)">
+                            <i class="fas fa-sliders"></i> Pengendalian <span class="tab-cycle-count">(<?= $cycleStats['pengendalian'] ?>)</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-peningkatan" id="tab-p4-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('peningkatan', this)">
-                            <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= $cycleStats['peningkatan'] ?>)
+                        <button class="nav-link tab-peningkatan" id="tab-p4-btn" type="button" role="tab" data-siklus-tab="peningkatan" onclick="changeProdiPpeppCycleTab('peningkatan', this)">
+                            <i class="fas fa-arrow-trend-up"></i> Peningkatan <span class="tab-cycle-count">(<?= $cycleStats['peningkatan'] ?>)</span>
                         </button>
                     </li>
                 </ul>
@@ -258,7 +258,8 @@ function renderDocTable(array $docs, string $tableId = ''): void {
             <thead>
                 <tr>
                     <th style="width: 50px;">No</th>
-                    <th>Nama & Nomor Dokumen</th>
+                    <th>Nama &amp; Nomor Dokumen</th>
+                    <th class="col-siklus-ppepp" style="width: 135px;">Siklus PPEPP</th>
                     <th>Bidang</th>
                     <th>Jenis</th>
                     <th class="text-center" style="width: 140px;">Aksi</th>
@@ -267,7 +268,7 @@ function renderDocTable(array $docs, string $tableId = ''): void {
             <tbody>
                 <?php if (empty($docs)): ?>
                     <tr class="no-matching-docs">
-                        <td colspan="5" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                             <h6 class="fw-bold">Belum ada dokumen dalam kategori ini</h6>
                             <p class="small mb-0">Dokumen mutu akan ditampilkan setelah diunggah oleh Admin Prodi.</p>
@@ -302,6 +303,9 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                                         <?= $adaptive['standards_html'] ?>
                                     </div>
                                 <?php endif; ?>
+                            </td>
+                            <td class="col-siklus-ppepp">
+                                <?= siklus_badge($doc['siklus'] ?? '') ?>
                             </td>
                             <td>
                                 <?= $adaptive['bidang_html'] ?>

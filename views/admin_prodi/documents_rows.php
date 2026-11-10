@@ -14,6 +14,7 @@ if (!empty($documents)):
         $isPerluPerbaikan = in_array($status, ['revisi_gpm', 'perlu_perbaikan']);
         $isGpmRev = true;
         $noteText = $doc['gpm_catatan'] ?? $doc['catatan_review'] ?? '';
+        $hasNotes = !empty(trim((string)$noteText));
         $reviewerName = ($doc['status_review'] === 'sesuai') ? 'Pusat Penjaminan Mutu LPM' : 'Gugus Penjaminan Mutu (GPM) Fakultas';
         $revDate = !empty($doc['gpm_reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['gpm_reviewed_at'])) : (!empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : '-');
     ?>

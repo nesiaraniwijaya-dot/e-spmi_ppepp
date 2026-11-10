@@ -224,9 +224,43 @@ class AuthController extends Controller {
         // Konsumsi flash sebelumnya jika ada, agar halaman pemilihan peran tetap bersih
         Auth::getFlash();
 
+        $pdo = Database::getInstance()->getConnection();
+        $fakultasList = $pdo->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas ORDER BY nama_fakultas ASC")->fetchAll();
+        $prodiList = $pdo->query("SELECT id, fakultas_id, nama_prodi, jenjang, kode_prodi FROM prodis ORDER BY nama_prodi ASC, jenjang ASC")->fetchAll();
+
+        $defaultFakultasId = (int)($_SESSION['user_fakultas_id'] ?? 0);
+        if (!$defaultFakultasId) {
+            foreach ($fakultasList as $f) {
+                if (in_array(strtoupper(trim($f['kode_fakultas'] ?? '')), ['FIK', 'FIKOM'])) {
+                    $defaultFakultasId = (int)$f['id'];
+                    break;
+                }
+            }
+            if (!$defaultFakultasId && !empty($fakultasList)) {
+                $defaultFakultasId = (int)$fakultasList[0]['id'];
+            }
+        }
+
+        $defaultProdiId = (int)($_SESSION['user_prodi_id'] ?? 0);
+        if (!$defaultProdiId) {
+            foreach ($prodiList as $p) {
+                if (($p['kode_prodi'] ?? '') === '55201') {
+                    $defaultProdiId = (int)$p['id'];
+                    break;
+                }
+            }
+            if (!$defaultProdiId && !empty($prodiList)) {
+                $defaultProdiId = (int)$prodiList[0]['id'];
+            }
+        }
+
         $this->render('auth/select_role', [
-            'pageTitle' => 'Pilih Peran Akses Sistem - MITRA',
-            'flash'     => null
+            'pageTitle'         => 'Pilih Peran Akses Sistem - MITRA',
+            'flash'             => null,
+            'fakultasList'      => $fakultasList,
+            'prodiList'         => $prodiList,
+            'defaultFakultasId' => $defaultFakultasId,
+            'defaultProdiId'    => $defaultProdiId,
         ]);
     }
 
@@ -236,13 +270,40 @@ class AuthController extends Controller {
         }
 
         $selectedRole = trim($_POST['role'] ?? 'super_admin');
+        $reqFakId     = !empty($_POST['fakultas_id']) ? (int)$_POST['fakultas_id'] : 0;
+        $reqProdiId   = !empty($_POST['prodi_id']) ? (int)$_POST['prodi_id'] : 0;
         $pdo = Database::getInstance()->getConnection();
 
-        $resFak = $pdo->query("SELECT id FROM fakultas WHERE kode_fakultas IN ('FIK', 'FIKOM') LIMIT 1")->fetch();
-        $fikomId = $resFak['id'] ?? 2;
+        $selectedFak = null;
+        if ($reqFakId > 0) {
+            $stmtFak = $pdo->prepare("SELECT id, nama_fakultas, kode_fakultas FROM fakultas WHERE id = ? LIMIT 1");
+            $stmtFak->execute([$reqFakId]);
+            $selectedFak = $stmtFak->fetch();
+        }
+        if (!$selectedFak) {
+            $selectedFak = $pdo->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas WHERE kode_fakultas IN ('FIK', 'FIKOM') LIMIT 1")->fetch()
+                ?: $pdo->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas ORDER BY id ASC LIMIT 1")->fetch();
+        }
+        $targetFakId    = (int)($selectedFak['id'] ?? 2);
+        $targetFakName  = $selectedFak['nama_fakultas'] ?? 'Fakultas Ilmu Komputer';
+        $targetFakShort = trim($selectedFak['kode_fakultas'] ?? '') ?: $targetFakName;
 
-        $resProdi = $pdo->query("SELECT id FROM prodis WHERE kode_prodi = '55201' LIMIT 1")->fetch();
-        $tiId = $resProdi['id'] ?? 1;
+        $selectedProdi = null;
+        if ($reqProdiId > 0) {
+            $stmtPr = $pdo->prepare("SELECT p.id, p.nama_prodi, p.jenjang, p.fakultas_id, f.nama_fakultas FROM prodis p JOIN fakultas f ON p.fakultas_id = f.id WHERE p.id = ? LIMIT 1");
+            $stmtPr->execute([$reqProdiId]);
+            $selectedProdi = $stmtPr->fetch();
+        }
+        if (!$selectedProdi) {
+            $stmtPr = $pdo->prepare("SELECT p.id, p.nama_prodi, p.jenjang, p.fakultas_id, f.nama_fakultas FROM prodis p JOIN fakultas f ON p.fakultas_id = f.id WHERE p.fakultas_id = ? ORDER BY p.id ASC LIMIT 1");
+            $stmtPr->execute([$targetFakId]);
+            $selectedProdi = $stmtPr->fetch()
+                ?: $pdo->query("SELECT p.id, p.nama_prodi, p.jenjang, p.fakultas_id, f.nama_fakultas FROM prodis p JOIN fakultas f ON p.fakultas_id = f.id WHERE p.kode_prodi = '55201' LIMIT 1")->fetch();
+        }
+        $targetProdiId      = (int)($selectedProdi['id'] ?? 1);
+        $targetProdiName    = $selectedProdi['nama_prodi'] ?? 'Teknik Informatika';
+        $targetProdiFakId   = (int)($selectedProdi['fakultas_id'] ?? $targetFakId);
+        $targetProdiFakName = $selectedProdi['nama_fakultas'] ?? $targetFakName;
 
         $rawName = $_SESSION['user_real_name'] ?? $_SESSION['user_name'] ?? 'Pengguna Testing';
         $cleanName = preg_replace('/\s*\(.*?\)$/', '', $rawName);
@@ -273,44 +334,44 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = null;
                 break;
             case 'gpm':
-                $_SESSION['user_name'] = $cleanName . ' (GPM FIKOM)';
+                $_SESSION['user_name'] = $cleanName . " (GPM {$targetFakShort})";
                 $_SESSION['user_role'] = 'gpm';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = $fikomId;
-                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                $_SESSION['user_fakultas_id'] = $targetFakId;
+                $_SESSION['user_fakultas_name'] = $targetFakName;
                 break;
             case 'dekan':
-                $_SESSION['user_name'] = $cleanName . ' (Dekan FIKOM)';
+                $_SESSION['user_name'] = $cleanName . " (Dekan {$targetFakShort})";
                 $_SESSION['user_role'] = 'dekan';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = $fikomId;
-                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                $_SESSION['user_fakultas_id'] = $targetFakId;
+                $_SESSION['user_fakultas_name'] = $targetFakName;
                 break;
             case 'wadek':
-                $_SESSION['user_name'] = $cleanName . ' (Wakil Dekan FIKOM)';
+                $_SESSION['user_name'] = $cleanName . " (Wakil Dekan {$targetFakShort})";
                 $_SESSION['user_role'] = 'wadek';
                 $_SESSION['user_prodi_id'] = null;
                 $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = $fikomId;
-                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                $_SESSION['user_fakultas_id'] = $targetFakId;
+                $_SESSION['user_fakultas_name'] = $targetFakName;
                 break;
             case 'kaprodi':
-                $_SESSION['user_name'] = $cleanName . ' (Kaprodi TI)';
+                $_SESSION['user_name'] = $cleanName . " (Kaprodi {$targetProdiName})";
                 $_SESSION['user_role'] = 'kaprodi';
-                $_SESSION['user_prodi_id'] = $tiId;
-                $_SESSION['user_prodi_name'] = 'Teknik Informatika';
-                $_SESSION['user_fakultas_id'] = $fikomId;
-                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                $_SESSION['user_prodi_id'] = $targetProdiId;
+                $_SESSION['user_prodi_name'] = $targetProdiName;
+                $_SESSION['user_fakultas_id'] = $targetProdiFakId;
+                $_SESSION['user_fakultas_name'] = $targetProdiFakName;
                 break;
             case 'sekprodi':
-                $_SESSION['user_name'] = $cleanName . ' (Sekprodi TI)';
+                $_SESSION['user_name'] = $cleanName . " (Sekprodi {$targetProdiName})";
                 $_SESSION['user_role'] = 'sekprodi';
-                $_SESSION['user_prodi_id'] = $tiId;
-                $_SESSION['user_prodi_name'] = 'Teknik Informatika';
-                $_SESSION['user_fakultas_id'] = $fikomId;
-                $_SESSION['user_fakultas_name'] = 'Fakultas Ilmu Komputer';
+                $_SESSION['user_prodi_id'] = $targetProdiId;
+                $_SESSION['user_prodi_name'] = $targetProdiName;
+                $_SESSION['user_fakultas_id'] = $targetProdiFakId;
+                $_SESSION['user_fakultas_name'] = $targetProdiFakName;
                 break;
             case 'pengguna':
                 $_SESSION['user_name'] = $cleanName . ' (Civitas / Pengguna)';

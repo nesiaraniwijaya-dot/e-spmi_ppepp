@@ -792,6 +792,7 @@ function paginateFakultasTab(tabId, page) {
     html += '</ul>';
 
     pagEl.innerHTML = html;
+}
 
 function filterPerbaikanList() {
     currentPerbaikanFakPages = { 'tab-perlu': 1, 'tab-sudah': 1, 'tab-all': 1 };
@@ -803,9 +804,9 @@ function filterPerbaikanList() {
 function changePerbaikanPageSize(val) {
     document.querySelectorAll('[id^="perPagePerbaikan"]').forEach(s => s.value = val);
     document.querySelectorAll('.table-perpage-select').forEach(s => s.value = val);
-    if (typeof paginateProdiTab !== 'undefined') { paginateProdiTab('tab-perlu', 1); paginateProdiTab('tab-sudah', 1); }
-    if (typeof paginateFakultasTab !== 'undefined') { paginateFakultasTab('tab-perlu', 1); paginateFakultasTab('tab-sudah', 1); }
-    if (typeof paginateGpmTab !== 'undefined') { paginateGpmTab('tab-perlu', 1); paginateGpmTab('tab-sudah', 1); }
+    if (typeof paginateProdiTab !== 'undefined') { paginateProdiTab('tab-perlu', 1); paginateProdiTab('tab-sudah', 1); paginateProdiTab('tab-all', 1); }
+    if (typeof paginateFakultasTab !== 'undefined') { paginateFakultasTab('tab-perlu', 1); paginateFakultasTab('tab-sudah', 1); paginateFakultasTab('tab-all', 1); }
+    if (typeof paginateGpmTab !== 'undefined') { paginateGpmTab('tab-perlu', 1); paginateGpmTab('tab-sudah', 1); paginateGpmTab('tab-all', 1); }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

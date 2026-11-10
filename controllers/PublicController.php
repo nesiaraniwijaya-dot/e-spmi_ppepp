@@ -331,29 +331,6 @@ class PublicController extends Controller {
         $fakultasList = $this->db->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas ORDER BY nama_fakultas ASC")->fetchAll();
         $prodiList = $this->db->query("SELECT id, nama_prodi, jenjang, fakultas_id FROM prodis ORDER BY nama_prodi ASC")->fetchAll();
 
-        // Hitung statistik per siklus untuk tab dan banner secara efisien via SQL
-        $cycleCounts = [
-            'penetapan' => 0,
-            'pelaksanaan' => 0,
-            'evaluasi' => 0,
-            'pengendalian' => 0,
-            'peningkatan' => 0
-        ];
-        $stmtCycles = $this->db->query("
-            SELECT LOWER(TRIM(siklus)) as s, COUNT(*) as cnt 
-            FROM ppepp_documents 
-            WHERE deleted_at IS NULL AND status_review != 'draft' 
-            GROUP BY LOWER(TRIM(siklus))
-        ");
-        while ($row = $stmtCycles->fetch()) {
-            $s = strtolower(trim($row['s'] ?? ''));
-            if (isset($cycleCounts[$s])) {
-                $cycleCounts[$s] = (int)$row['cnt'];
-            }
-        }
-        $totalDokumen = array_sum($cycleCounts);
-        $maxDocs = max(1, ...array_values($cycleCounts));
-
         // Filter parameters
         $initialSiklus = isset($_GET['siklus']) ? strtolower(trim($_GET['siklus'])) : '';
         if (!in_array($initialSiklus, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
@@ -373,52 +350,84 @@ class PublicController extends Controller {
         }
         $page = max(1, (int)($_GET['page'] ?? 1));
 
-        // Query Builder
-        $where = ["d.deleted_at IS NULL", "d.status_review != 'draft'"];
-        $params = [];
+        // Base Query Builder (semua filter KECUALI siklus) agar jumlah tab per siklus real-time sesuai periode/filter aktif
+        $baseWhere = ["d.deleted_at IS NULL", "d.status_review != 'draft'"];
+        $baseParams = [];
+
+        // Pencarian teks pada nama dokumen, nomor dokumen, nama prodi, nama bidang
+        if (!empty($search)) {
+            $baseWhere[] = "(d.nama_dokumen LIKE :search1 OR d.nomor_dokumen LIKE :search2 OR p.nama_prodi LIKE :search3 OR b.nama_bidang LIKE :search4)";
+            $searchVal = '%' . $search . '%';
+            $baseParams[':search1'] = $searchVal;
+            $baseParams[':search2'] = $searchVal;
+            $baseParams[':search3'] = $searchVal;
+            $baseParams[':search4'] = $searchVal;
+        }
+
+        // Filter Fakultas
+        if ($fakultas === 'tingkat_fakultas') {
+            $baseWhere[] = "(d.level = 'fakultas' OR d.prodi_id IS NULL OR d.prodi_id = 0)";
+        } elseif (!empty($fakultas) && is_numeric($fakultas)) {
+            $baseWhere[] = "(p.fakultas_id = :fakultas1 OR (d.prodi_id IS NULL AND d.fakultas_id = :fakultas2))";
+            $baseParams[':fakultas1'] = (int)$fakultas;
+            $baseParams[':fakultas2'] = (int)$fakultas;
+        }
+
+        // Filter Prodi
+        if (!empty($prodi)) {
+            $baseWhere[] = "d.prodi_id = :prodi";
+            $baseParams[':prodi'] = $prodi;
+        }
+
+        // Filter Bidang
+        if (!empty($bidang)) {
+            $baseWhere[] = "d.bidang_id = :bidang";
+            $baseParams[':bidang'] = $bidang;
+        }
+
+        // Filter Tahun Akademik (Periode)
+        if (!empty($tahun)) {
+            $baseWhere[] = "d.tahun_akademik = :tahun";
+            $baseParams[':tahun'] = $tahun;
+        }
+
+        $baseWhereClause = implode(" AND ", $baseWhere);
+
+        // Hitung statistik per siklus real-time sesuai periode & filter aktif
+        $cycleCounts = [
+            'penetapan' => 0,
+            'pelaksanaan' => 0,
+            'evaluasi' => 0,
+            'pengendalian' => 0,
+            'peningkatan' => 0
+        ];
+        $stmtCycles = $this->db->prepare("
+            SELECT LOWER(TRIM(d.siklus)) as s, COUNT(*) as cnt
+            FROM ppepp_documents d
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+            WHERE $baseWhereClause
+            GROUP BY LOWER(TRIM(d.siklus))
+        ");
+        $stmtCycles->execute($baseParams);
+        while ($row = $stmtCycles->fetch()) {
+            $s = strtolower(trim($row['s'] ?? ''));
+            if (isset($cycleCounts[$s])) {
+                $cycleCounts[$s] = (int)$row['cnt'];
+            }
+        }
+        $totalDokumen = array_sum($cycleCounts);
+        $maxDocs = max(1, ...array_values($cycleCounts));
+
+        // Terapkan filter siklus untuk daftar tabel utama
+        $where = $baseWhere;
+        $params = $baseParams;
 
         // STRICT SIKLUS PROTECTION: Ketika memilih siklus tertentu (contoh: penetapan),
         // query hanya mengizinkan dokumen siklus tersebut sehingga siklus lain tidak bocor
         if (!empty($initialSiklus)) {
             $where[] = "LOWER(TRIM(d.siklus)) = :siklus";
             $params[':siklus'] = $initialSiklus;
-        }
-
-        // Pencarian teks pada nama dokumen, nomor dokumen, nama prodi, nama bidang
-        if (!empty($search)) {
-            $where[] = "(d.nama_dokumen LIKE :search1 OR d.nomor_dokumen LIKE :search2 OR p.nama_prodi LIKE :search3 OR b.nama_bidang LIKE :search4)";
-            $searchVal = '%' . $search . '%';
-            $params[':search1'] = $searchVal;
-            $params[':search2'] = $searchVal;
-            $params[':search3'] = $searchVal;
-            $params[':search4'] = $searchVal;
-        }
-
-        // Filter Fakultas
-        if ($fakultas === 'tingkat_fakultas') {
-            $where[] = "(d.level = 'fakultas' OR d.prodi_id IS NULL OR d.prodi_id = 0)";
-        } elseif (!empty($fakultas) && is_numeric($fakultas)) {
-            $where[] = "(p.fakultas_id = :fakultas1 OR (d.prodi_id IS NULL AND d.fakultas_id = :fakultas2))";
-            $params[':fakultas1'] = (int)$fakultas;
-            $params[':fakultas2'] = (int)$fakultas;
-        }
-
-        // Filter Prodi
-        if (!empty($prodi)) {
-            $where[] = "d.prodi_id = :prodi";
-            $params[':prodi'] = $prodi;
-        }
-
-        // Filter Bidang
-        if (!empty($bidang)) {
-            $where[] = "d.bidang_id = :bidang";
-            $params[':bidang'] = $bidang;
-        }
-
-        // Filter Tahun Akademik
-        if (!empty($tahun)) {
-            $where[] = "d.tahun_akademik = :tahun";
-            $params[':tahun'] = $tahun;
         }
 
         $whereClause = implode(" AND ", $where);
@@ -485,7 +494,8 @@ class PublicController extends Controller {
                 'start_num' => $startNum,
                 'end_num' => $endNum,
                 'siklus' => $initialSiklus,
-                'cycle_counts' => $cycleCounts
+                'cycle_counts' => $cycleCounts,
+                'total_all_cycles' => $totalDokumen
             ]);
             exit;
         }

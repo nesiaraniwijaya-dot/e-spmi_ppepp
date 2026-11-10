@@ -61,7 +61,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                     <?= $fakultasPerluCount ?> Dokumen Revisi
                                 </div>
                                 <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                                    Catatan evaluasi Fakultas dari LPM
+                                    Catatan evaluasi Fakultas dari GPM
                                 </div>
                             </div>
                         </div>

@@ -241,7 +241,9 @@ class AdminProdiController extends Controller {
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
             WHERE {$whereClause}
-            ORDER BY d.created_at DESC
+            ORDER BY CASE WHEN d.status_review IN ('revisi_gpm', 'perlu_perbaikan') THEN 0 ELSE 1 END ASC,
+                     COALESCE(d.gpm_reviewed_at, d.created_at) DESC,
+                     d.created_at DESC
             LIMIT {$perPage} OFFSET {$offset}
         ");
         $stmt->execute($params);

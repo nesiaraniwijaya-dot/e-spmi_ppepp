@@ -97,7 +97,7 @@ $currentMeta = $siklusMetaList[$initialSiklus] ?? $siklusMetaList[''];
                     <p class="text-muted small mb-0">Pilih salah satu tab tahapan siklus PPEPP di bawah ini untuk melihat dokumen sesuai kategorinya.</p>
                 </div>
                 <div>
-                    <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-3 py-1.5 rounded-pill" style="font-size: 0.8rem;">
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-3 py-1.5 rounded-pill" id="publicTotalDocsPill" style="font-size: 0.8rem;">
                         <i class="fas fa-folder-open me-1"></i> <?= number_format($totalDokumen, 0, ',', '.') ?> Total Dokumen
                     </span>
                 </div>
@@ -105,33 +105,33 @@ $currentMeta = $siklusMetaList[$initialSiklus] ?? $siklusMetaList[''];
 
             <ul class="nav ppepp-nav-tabs mb-4" id="publicPpeppTabs" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link <?= empty($initialSiklus) ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, '')">
-                        <i class="fas fa-layer-group"></i> Semua (<?= number_format($totalDokumen, 0, ',', '.') ?>)
+                    <button class="nav-link <?= empty($initialSiklus) ? 'active' : '' ?>" type="button" data-siklus-tab="" onclick="selectPublicSiklusTab(this, '')">
+                        <i class="fas fa-layer-group"></i> Semua <span class="tab-cycle-count">(<?= number_format($totalDokumen, 0, ',', '.') ?>)</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link tab-penetapan <?= $initialSiklus === 'penetapan' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'penetapan')">
-                        <i class="fas fa-file-signature"></i> Penetapan (<?= number_format($cycleCounts['penetapan'] ?? 0, 0, ',', '.') ?>)
+                    <button class="nav-link tab-penetapan <?= $initialSiklus === 'penetapan' ? 'active' : '' ?>" type="button" data-siklus-tab="penetapan" onclick="selectPublicSiklusTab(this, 'penetapan')">
+                        <i class="fas fa-file-signature"></i> Penetapan <span class="tab-cycle-count">(<?= number_format($cycleCounts['penetapan'] ?? 0, 0, ',', '.') ?>)</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link tab-pelaksanaan <?= $initialSiklus === 'pelaksanaan' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'pelaksanaan')">
-                        <i class="fas fa-person-chalkboard"></i> Pelaksanaan (<?= number_format($cycleCounts['pelaksanaan'] ?? 0, 0, ',', '.') ?>)
+                    <button class="nav-link tab-pelaksanaan <?= $initialSiklus === 'pelaksanaan' ? 'active' : '' ?>" type="button" data-siklus-tab="pelaksanaan" onclick="selectPublicSiklusTab(this, 'pelaksanaan')">
+                        <i class="fas fa-person-chalkboard"></i> Pelaksanaan <span class="tab-cycle-count">(<?= number_format($cycleCounts['pelaksanaan'] ?? 0, 0, ',', '.') ?>)</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link tab-evaluasi <?= $initialSiklus === 'evaluasi' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'evaluasi')">
-                        <i class="fas fa-magnifying-glass-chart"></i> Evaluasi (<?= number_format($cycleCounts['evaluasi'] ?? 0, 0, ',', '.') ?>)
+                    <button class="nav-link tab-evaluasi <?= $initialSiklus === 'evaluasi' ? 'active' : '' ?>" type="button" data-siklus-tab="evaluasi" onclick="selectPublicSiklusTab(this, 'evaluasi')">
+                        <i class="fas fa-magnifying-glass-chart"></i> Evaluasi <span class="tab-cycle-count">(<?= number_format($cycleCounts['evaluasi'] ?? 0, 0, ',', '.') ?>)</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link tab-pengendalian <?= $initialSiklus === 'pengendalian' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'pengendalian')">
-                        <i class="fas fa-sliders"></i> Pengendalian (<?= number_format($cycleCounts['pengendalian'] ?? 0, 0, ',', '.') ?>)
+                    <button class="nav-link tab-pengendalian <?= $initialSiklus === 'pengendalian' ? 'active' : '' ?>" type="button" data-siklus-tab="pengendalian" onclick="selectPublicSiklusTab(this, 'pengendalian')">
+                        <i class="fas fa-sliders"></i> Pengendalian <span class="tab-cycle-count">(<?= number_format($cycleCounts['pengendalian'] ?? 0, 0, ',', '.') ?>)</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link tab-peningkatan <?= $initialSiklus === 'peningkatan' ? 'active' : '' ?>" type="button" onclick="selectPublicSiklusTab(this, 'peningkatan')">
-                        <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= number_format($cycleCounts['peningkatan'] ?? 0, 0, ',', '.') ?>)
+                    <button class="nav-link tab-peningkatan <?= $initialSiklus === 'peningkatan' ? 'active' : '' ?>" type="button" data-siklus-tab="peningkatan" onclick="selectPublicSiklusTab(this, 'peningkatan')">
+                        <i class="fas fa-arrow-trend-up"></i> Peningkatan <span class="tab-cycle-count">(<?= number_format($cycleCounts['peningkatan'] ?? 0, 0, ',', '.') ?>)</span>
                     </button>
                 </li>
             </ul>
@@ -168,10 +168,10 @@ $currentMeta = $siklusMetaList[$initialSiklus] ?? $siklusMetaList[''];
                     <div class="col-auto d-flex align-items-center gap-2">
                         <label for="tablePerPageSelect" class="text-muted small fw-medium text-nowrap mb-0 d-none d-sm-inline">Tampilkan:</label>
                         <select id="tablePerPageSelect" class="form-select bg-light" style="width: auto; min-width: 105px;">
-                            <option value="10">10 data</option>
-                            <option value="20">20 data</option>
-                            <option value="50">50 data</option>
-                            <option value="100" selected>100 data</option>
+                            <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
+                            <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
+                            <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
+                            <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100 data</option>
                         </select>
                     </div>
                 </div>
@@ -234,13 +234,13 @@ $currentMeta = $siklusMetaList[$initialSiklus] ?? $siklusMetaList[''];
 
             <!-- Table -->
             <div class="table-responsive position-relative">
-                <table class="table table-custom table-hover align-middle mb-0" id="ppeppDocumentTable">
+                <table class="table table-custom table-hover align-middle mb-0" id="ppeppDocumentTable" data-ajax-pagination="1">
                     <thead>
                         <tr>
                             <th style="width: 50px;">No</th>
                             <th>Nama &amp; Nomor Dokumen</th>
                             <th>Program Studi</th>
-                            <th style="width: 130px;">Siklus PPEPP</th>
+                            <th class="col-siklus-ppepp" style="width: 130px;<?= !empty($initialSiklus) ? ' display:none;' : '' ?>">Siklus PPEPP</th>
                             <th>Bidang &amp; Standar</th>
                             <th>Jenis</th>
                             <th class="text-center">Aksi</th>
@@ -329,11 +329,43 @@ const siklusMeta = {
     }
 };
 
+function updatePublicCycleTabCounts(cycleCounts, totalAllCycles) {
+    if (!cycleCounts) return;
+    const totalVal = (totalAllCycles !== undefined && totalAllCycles !== null)
+        ? Number(totalAllCycles)
+        : Object.values(cycleCounts).reduce((acc, v) => acc + (Number(v) || 0), 0);
+
+    document.querySelectorAll('#publicPpeppTabs [data-siklus-tab]').forEach(btn => {
+        const key = (btn.getAttribute('data-siklus-tab') || '').toLowerCase().trim();
+        const countEl = btn.querySelector('.tab-cycle-count');
+        if (!countEl) return;
+        const countNum = (key === '') ? totalVal : (Number(cycleCounts[key]) || 0);
+        countEl.textContent = `(${countNum.toLocaleString('id-ID')})`;
+    });
+
+    const topPill = document.getElementById('publicTotalDocsPill');
+    if (topPill) {
+        topPill.innerHTML = `<i class="fas fa-folder-open me-1"></i> ${totalVal.toLocaleString('id-ID')} Total Dokumen`;
+    }
+}
+
+function syncPublicCycleColumnVisibility(siklus) {
+    const showCol = !siklus;
+    document.querySelectorAll('#ppeppDocumentTable .col-siklus-ppepp').forEach(el => {
+        el.style.display = showCol ? '' : 'none';
+    });
+    const emptyTd = document.querySelector('#ppeppDocumentTableBody .no-matching-docs td');
+    if (emptyTd) {
+        emptyTd.colSpan = showCol ? 7 : 6;
+    }
+}
+
 function selectPublicSiklusTab(btn, siklus) {
     const tabButtons = document.querySelectorAll('#publicPpeppTabs .nav-link');
     tabButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentPublicSiklus = siklus;
+    syncPublicCycleColumnVisibility(currentPublicSiklus);
 
     // Update Context Banner Header
     const meta = siklusMeta[siklus] || siklusMeta[''];
@@ -382,6 +414,9 @@ function fetchTableData(targetPage = 1) {
     params.set('per_page', perPageVal);
     params.set('page', targetPage.toString());
 
+    const botPerPageSel = document.getElementById('publicPerPageSelect');
+    if (botPerPageSel && botPerPageSel.value != perPageVal) botPerPageSel.value = perPageVal;
+
     if (tbody) {
         tbody.style.opacity = '0.4';
     }
@@ -407,6 +442,11 @@ function fetchTableData(targetPage = 1) {
         if (tbody) {
             tbody.innerHTML = data.html;
             tbody.style.opacity = '1';
+        }
+        syncPublicCycleColumnVisibility(currentPublicSiklus);
+
+        if (data.cycle_counts) {
+            updatePublicCycleTabCounts(data.cycle_counts, data.total_all_cycles);
         }
 
         if (infoEl) {
@@ -532,7 +572,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const tahunFilter = document.getElementById('tableTahunFilter');
     const perPageSelect = document.getElementById('tablePerPageSelect');
 
-    // Initial render of pagination
+    // Initial sync column visibility & pagination
+    syncPublicCycleColumnVisibility(currentPublicSiklus);
     renderPaginationUI(currentPage, totalPages);
 
     // Filter Prodi dropdown when Fakultas changes
@@ -579,14 +620,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const url = new URL(window.location);
         const siklusParam = (url.searchParams.get('siklus') || '').toLowerCase();
         currentPublicSiklus = siklusParam;
+        syncPublicCycleColumnVisibility(currentPublicSiklus);
+
+        const meta = siklusMeta[currentPublicSiklus] || siklusMeta[''];
+        const catIcon = document.getElementById('cycleCategoryIcon');
+        const catTitle = document.getElementById('cycleCategoryTitle');
+        const catDesc = document.getElementById('cycleCategoryDesc');
+        if (catIcon) {
+            catIcon.style.background = meta.bg;
+            catIcon.innerHTML = `<i class="fas ${meta.icon}"></i>`;
+        }
+        if (catTitle) catTitle.textContent = meta.title;
+        if (catDesc) catDesc.textContent = meta.desc;
 
         // Sync tab buttons
         const tabButtons = document.querySelectorAll('#publicPpeppTabs .nav-link');
         tabButtons.forEach(b => {
             b.classList.remove('active');
-            if (!siklusParam && b.textContent.includes('Semua')) {
-                b.classList.add('active');
-            } else if (siklusParam && b.classList.contains('tab-' + siklusParam)) {
+            const tabKey = (b.getAttribute('data-siklus-tab') || '').toLowerCase();
+            if (tabKey === siklusParam) {
                 b.classList.add('active');
             }
         });

@@ -1109,6 +1109,7 @@ pdfModal.addEventListener('hidden.bs.modal', function () {
  * Initialize Client-Side Fast Filtering, Search, and Pagination
  */
 function initDocumentTable(table) {
+    if (table.dataset.ajaxPagination === '1') return;
     const searchInput = document.getElementById('tableSearchInput');
     const bidangFilter = document.getElementById('tableBidangFilter');
     const tahunFilter = document.getElementById('tableTahunFilter');
@@ -1126,8 +1127,44 @@ function initDocumentTable(table) {
     let selectedCycle = '';
     let selectedReviewStatus = '';
 
+    function updateCycleTabCountsRealTime(baseRows) {
+        const counts = {
+            '': baseRows.length,
+            penetapan: 0,
+            pelaksanaan: 0,
+            evaluasi: 0,
+            pengendalian: 0,
+            peningkatan: 0
+        };
+        baseRows.forEach(row => {
+            const s = (row.getAttribute('data-siklus') || '').toLowerCase().trim();
+            if (Object.prototype.hasOwnProperty.call(counts, s)) {
+                counts[s]++;
+            }
+        });
+        document.querySelectorAll('#ppeppTabs [data-siklus-tab]').forEach(btn => {
+            const key = (btn.getAttribute('data-siklus-tab') || '').toLowerCase().trim();
+            const badgeEl = btn.querySelector('.tab-cycle-count');
+            if (badgeEl && Object.prototype.hasOwnProperty.call(counts, key)) {
+                badgeEl.textContent = `(${counts[key].toLocaleString('id-ID')})`;
+            }
+        });
+    }
+
+    function syncCycleColumnVisibility() {
+        const showCycleCol = (selectedCycle === '');
+        table.querySelectorAll('.col-siklus-ppepp').forEach(el => {
+            el.style.display = showCycleCol ? '' : 'none';
+        });
+        const emptyRow = tbody.querySelector('.no-matching-docs td');
+        if (emptyRow) {
+            const totalTh = table.querySelectorAll('thead th').length || 6;
+            emptyRow.colSpan = showCycleCol ? totalTh : Math.max(1, totalTh - 1);
+        }
+    }
+
     window.setProdiPpeppCycleFilter = function(cycle) {
-        selectedCycle = cycle || '';
+        selectedCycle = (cycle || '').toLowerCase().trim();
         applyFilters();
     };
 
@@ -1141,25 +1178,30 @@ function initDocumentTable(table) {
         const selectedBidang = bidangFilter ? bidangFilter.value : '';
         const selectedTahun = tahunFilter ? tahunFilter.value.trim() : '';
 
-        filteredRows = allRows.filter(row => {
+        const baseMatches = allRows.filter(row => {
             const title = (row.getAttribute('data-title') || '').toLowerCase();
             const nomor = (row.getAttribute('data-nomor') || '').toLowerCase();
             const bidangIds = (row.getAttribute('data-bidang-id') || '').split(',').map(s => s.trim());
-            const tahun = row.getAttribute('data-tahun-akademik') || '';
-            const siklus = row.getAttribute('data-siklus') || '';
+            const tahun = (row.getAttribute('data-tahun-akademik') || '').trim();
             const status = row.getAttribute('data-status-review') || '';
             const textContent = row.textContent.toLowerCase();
 
             const matchesSearch = !query || title.includes(query) || nomor.includes(query) || textContent.includes(query);
             const matchesBidang = !selectedBidang || bidangIds.includes(selectedBidang);
             const matchesTahun = !selectedTahun || tahun === selectedTahun;
-            const matchesSiklus = !selectedCycle || siklus === selectedCycle;
             const matchesStatus = !selectedReviewStatus || status === selectedReviewStatus;
 
-            return matchesSearch && matchesBidang && matchesTahun && matchesSiklus && matchesStatus;
+            return matchesSearch && matchesBidang && matchesTahun && matchesStatus;
         });
 
+        updateCycleTabCountsRealTime(baseMatches);
+
+        filteredRows = selectedCycle
+            ? baseMatches.filter(row => ((row.getAttribute('data-siklus') || '').toLowerCase().trim() === selectedCycle))
+            : baseMatches;
+
         currentPage = 1;
+        syncCycleColumnVisibility();
         render();
     }
 
@@ -1184,18 +1226,22 @@ function initDocumentTable(table) {
         }
 
         // Empty state
+        const totalCols = table.querySelectorAll('thead th').length || 6;
+        const activeColSpan = (selectedCycle === '') ? totalCols : Math.max(1, totalCols - 1);
         const emptyRow = tbody.querySelector('.no-matching-docs');
         if (totalRows === 0) {
             if (!emptyRow) {
                 const tr = document.createElement('tr');
                 tr.className = 'no-matching-docs';
-                tr.innerHTML = `<td colspan="7" class="text-center py-5 text-muted">
+                tr.innerHTML = `<td colspan="${activeColSpan}" class="text-center py-5 text-muted">
                     <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                     <h6 class="fw-bold">Tidak ada dokumen yang sesuai</h6>
                     <p class="small mb-0">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
                 </td>`;
                 tbody.appendChild(tr);
             } else {
+                const emptyTd = emptyRow.querySelector('td');
+                if (emptyTd) emptyTd.colSpan = activeColSpan;
                 emptyRow.style.display = '';
             }
         } else if (emptyRow) {

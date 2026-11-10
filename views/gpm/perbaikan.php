@@ -1093,7 +1093,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                 <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <form action="<?= base_url('gpm/review/forward-lpm') ?>" method="POST">
+            <form action="<?= base_url('gpm/review/forward-lpm') ?>" method="POST" onsubmit="const b=this.querySelector('button[type=submit]'); if(b){b.disabled=true; b.innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> <span>Mengirim...</span>';}">
                 <?= csrf_field() ?>
                 <input type="hidden" name="document_id" id="forwardModalDocId" value="">
                 <input type="hidden" name="redirect_to" value="gpm/perbaikan">

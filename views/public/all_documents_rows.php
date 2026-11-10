@@ -105,7 +105,7 @@ $loginUrlForDoc = base_url('login?return_url=' . urlencode($_SERVER['REQUEST_URI
 ?>
 <?php if (empty($documents)): ?>
     <tr class="no-matching-docs">
-        <td colspan="7" class="text-center py-5 text-muted">
+        <td colspan="<?= !empty($initialSiklus ?? '') ? 6 : 7 ?>" class="text-center py-5 text-muted">
             <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
             <h6 class="fw-bold">Tidak ada dokumen yang sesuai kriteria</h6>
             <p class="small text-muted mb-0">Coba ubah kata kunci pencarian atau sesuaikan filter Anda.</p>
@@ -147,7 +147,7 @@ $loginUrlForDoc = base_url('login?return_url=' . urlencode($_SERVER['REQUEST_URI
                 <div class="small fw-semibold text-dark"><?= htmlspecialchars($doc['nama_prodi'] ?? 'Tingkat Fakultas') ?></div>
                 <div class="text-muted" style="font-size: 0.72rem;"><?= htmlspecialchars($doc['nama_fakultas'] ?? '') ?></div>
             </td>
-            <td><?= siklus_badge($doc['siklus']) ?></td>
+            <td class="col-siklus-ppepp"<?= !empty($initialSiklus ?? '') ? ' style="display:none;"' : '' ?>><?= siklus_badge($doc['siklus']) ?></td>
             <td>
                 <?= $adaptive['bidang_html'] ?>
                 <?php if (!empty($adaptive['standards_html'])): ?>

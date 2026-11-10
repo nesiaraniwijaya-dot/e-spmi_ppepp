@@ -23,8 +23,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     <?php 
     $perluPerbaikanDocs = $perluPerbaikanDocs ?? array_values(array_filter($documents ?? [], fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
     $sudahDiperbaikiDocs = $sudahDiperbaikiDocs ?? array_values(array_filter($documents ?? [], fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm'])));
-    $perluCount = count($perluPerbaikanDocs);
-    $sudahCount = count($sudahDiperbaikiDocs);
+    $perluCount = isset($perluCount) ? (int)$perluCount : count($perluPerbaikanDocs);
+    $sudahCount = isset($sudahCount) ? (int)$sudahCount : count($sudahDiperbaikiDocs);
     $draftCount = $draftCount ?? 0;
     
     $activeNotifCount = ($perluCount > 0 ? 1 : 0) + ($sudahCount > 0 ? 1 : 0) + ($draftCount > 0 ? 1 : 0);
@@ -51,7 +51,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <?= $perluCount ?> Dokumen Revisi
                                 </div>
                                 <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                                    Catatan evaluasi mutu dari LPM
+                                    Catatan evaluasi dari GPM Fakultas
                                 </div>
                             </div>
                         </div>
@@ -80,7 +80,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <?= $sudahCount ?> Dokumen Antrean
                                 </div>
                                 <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                                    Verifikasi ulang Tim LPM
+                                    Verifikasi ulang GPM / LPM
                                 </div>
                             </div>
                         </div>
