@@ -145,6 +145,14 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
       - `database/seed_dummy_review_flow.php` menyediakan 7 dokumen dummy (`DUMMY-FLOW/2026/A1..A3, B1..B4`) untuk uji coba skenario disetujui LPM maupun ditolak LPM -> diteruskan GPM -> Prodi/Dekanat.
       - Jalankan `php database/seed_dummy_review_flow.php --clean` untuk menghapus seluruh data dummy uji coba.
 
+15. **Tabel Penilaian Kinerja GPM oleh LPM (`gpm_evaluations`) & Atribusi Multi-Role Per Fakultas (10 November 2026)**:
+    - **Tabel Baru `gpm_evaluations` (`database/migration_gpm_evaluations.php`)**:
+      - Kolom: `id`, `gpm_user_id`, `fakultas_id`, `evaluator_id`, `evaluator_name`, `evaluator_role`, `periode` (`varchar(50)`, default `'2025/2026'`), `skor_ketelitian` (`tinyint unsigned`, 0-100), `skor_kecepatan` (`tinyint unsigned`, 0-100), `skor_komunikasi` (`tinyint unsigned`, 0-100), `skor_manual_total` (`decimal(5,2)`), `catatan_evaluasi` (`text`), `created_at`, `updated_at`.
+      - Indeks: `idx_gpm_eval_user` (`gpm_user_id`, `created_at`), `idx_gpm_eval_fak` (`fakultas_id`, `periode`).
+      - **Visibilitas Eksklusif LPM**: Skor otomatis (Akurasi Lolos LPM, Ketuntasan Antrean & Relay LPM, Kecepatan Respon), skor gabungan (`60% Otomatis + 40% Manual LPM`), serta form/catatan evaluasi manual **hanya ditampilkan** pada halaman role LPM (`super_admin`, `admin_lpm`, `kepala_lpm`, `kepala_pusat_mutu` di `/admin/monitoring-gpm`), tidak ditampilkan di dashboard GPM, Prodi, maupun Dekanat.
+      - **Atribusi Akun Multi-Role**: Aktivitas telaah & relay dokumen menggunakan akun multi-role (`reviewer_role = 'gpm'`) otomatis dikaitkan ke fakultas sasaran dan digabung ke rekap kartu anggota GPM utama fakultas tersebut tanpa penghitungan ganda.
+    - Migrasi bersifat idempoten (`CREATE TABLE IF NOT EXISTS`) dan turut dibuat otomatis oleh `SuperAdminController::ensureGpmEvaluationsTable()`.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
@@ -153,6 +161,7 @@ Cukup jalankan skrip migrasi PHP:
 php database/migration_fitur_akademik_dan_gpm.php
 php database/migration_lpm_traffic_and_academic_year.php
 php database/apply_performance_indexes.php
+php database/migration_gpm_evaluations.php
 ```
 atau jalankan kueri SQL `database/migration_performance_indexes.sql` di phpMyAdmin / MySQL CLI, serta impor berkas master bila mulai dari awal:
 ```bash

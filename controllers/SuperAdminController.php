@@ -2417,67 +2417,380 @@ class SuperAdminController extends Controller {
     }
 
     /**
-     * Halaman Monitoring Kinerja Anggota GPM
+     * Memastikan tabel `gpm_evaluations` untuk penilaian kinerja GPM oleh LPM tersedia
+     */
+    private function ensureGpmEvaluationsTable(): void {
+        try {
+            $this->db->exec("
+                CREATE TABLE IF NOT EXISTS `gpm_evaluations` (
+                    `id` INT(11) NOT NULL AUTO_INCREMENT,
+                    `gpm_user_id` INT(11) NOT NULL,
+                    `fakultas_id` INT(11) NOT NULL,
+                    `evaluator_id` INT(11) NOT NULL,
+                    `evaluator_name` VARCHAR(255) NOT NULL,
+                    `evaluator_role` VARCHAR(50) NOT NULL,
+                    `periode` VARCHAR(50) NOT NULL DEFAULT '2025/2026',
+                    `skor_ketelitian` TINYINT(3) UNSIGNED NOT NULL DEFAULT 80,
+                    `skor_kecepatan` TINYINT(3) UNSIGNED NOT NULL DEFAULT 80,
+                    `skor_komunikasi` TINYINT(3) UNSIGNED NOT NULL DEFAULT 80,
+                    `skor_manual_total` DECIMAL(5,2) NOT NULL DEFAULT 80.00,
+                    `catatan_evaluasi` TEXT NULL,
+                    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    KEY `idx_gpm_eval_user` (`gpm_user_id`, `created_at`),
+                    KEY `idx_gpm_eval_fak` (`fakultas_id`, `periode`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+        } catch (\Throwable $e) {
+            // Abaikan bila DB read-only sementara
+        }
+    }
+
+    /**
+     * Halaman Monitoring Kinerja Anggota GPM (Kombinasi: Skor Otomatis LPM + Penilaian Manual LPM)
+     * Hanya dapat diakses oleh peran LPM (Super Admin, Admin LPM, Kepala LPM, Kepala Pusat Mutu).
      */
     public function monitoringGpm(): void {
-        $gpmMembers = $this->db->query("
+        $this->ensureGpmEvaluationsTable();
+
+        $gpmMembersRaw = $this->db->query("
             SELECT u.id, u.name, u.email, u.avatar, u.fakultas_id, u.created_at as member_since,
-                   f.nama_fakultas, f.kode_fakultas,
-                   -- Total dokumen dalam cakupan fakultas GPM ini
-                   (SELECT COUNT(*) FROM ppepp_documents d 
-                    WHERE (d.fakultas_id = u.fakultas_id OR d.prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = u.fakultas_id))
-                      AND d.deleted_at IS NULL AND d.status_review != 'draft'
-                   ) as total_dokumen_scope,
-                   -- Dokumen yang sudah ditelaah/direview oleh GPM ini
-                   (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.deleted_at IS NULL) as total_reviewed,
-                   -- Dokumen yang masih pending / antre di meja GPM
-                   (SELECT COUNT(*) FROM ppepp_documents d 
-                    WHERE (d.fakultas_id = u.fakultas_id OR d.prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = u.fakultas_id))
-                      AND d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND d.deleted_at IS NULL
-                   ) as pending_review,
-                   -- Dokumen yang dikembalikan revisi oleh GPM ini
-                   GREATEST(
-                       (SELECT COUNT(*) FROM ppepp_document_reviews r WHERE r.reviewer_id = u.id AND r.status_hasil = 'revisi_gpm'),
-                       (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.status_review = 'revisi_gpm' AND d.deleted_at IS NULL)
-                   ) as total_revisi,
-                   -- Dokumen yang disetujui & diteruskan ke LPM oleh GPM ini (Approve)
-                   GREATEST(
-                       (SELECT COUNT(*) FROM ppepp_document_reviews r WHERE r.reviewer_id = u.id AND r.status_hasil IN ('menunggu_review_lpm', 'sesuai')),
-                       (SELECT COUNT(*) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.status_review IN ('menunggu_review_lpm', 'sesuai') AND d.deleted_at IS NULL)
-                   ) as total_diteruskan,
-                   -- Tanggal review terakhir
-                   (SELECT MAX(d.gpm_reviewed_at) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.deleted_at IS NULL) as last_reviewed_at,
-                   -- Rata-rata durasi review dalam jam
-                   (SELECT AVG(TIMESTAMPDIFF(HOUR, d.created_at, d.gpm_reviewed_at)) FROM ppepp_documents d WHERE d.gpm_reviewed_by = u.id AND d.gpm_reviewed_at IS NOT NULL) as avg_review_hours
+                   f.nama_fakultas, f.kode_fakultas
             FROM users u
             LEFT JOIN fakultas f ON u.fakultas_id = f.id
             WHERE u.role = 'gpm'
-            ORDER BY f.id ASC, u.name ASC
+            ORDER BY f.id ASC, u.id ASC
         ")->fetchAll();
+
+        // Tentukan GPM utama per fakultas agar aksi Multi-Role dikaitkan ke fakultas yang dipilih tanpa double-count
+        $primaryGpmByFak = [];
+        foreach ($gpmMembersRaw as $m) {
+            $fid = (int)($m['fakultas_id'] ?? 0);
+            if ($fid > 0 && !isset($primaryGpmByFak[$fid])) {
+                $primaryGpmByFak[$fid] = (int)$m['id'];
+            }
+        }
+
+        // 1. Agregasi dokumen per fakultas (cakupan, antrean baru, antrean revisi LPM belum diteruskan, status akhir, durasi)
+        $docAggByFak = [];
+        $stmtDocAgg = $this->db->query("
+            SELECT 
+                COALESCE(d.fakultas_id, p.fakultas_id) as fak_id,
+                COUNT(*) as total_dokumen_scope,
+                SUM(CASE WHEN d.gpm_reviewed_at IS NOT NULL THEN 1 ELSE 0 END) as total_reviewed_fac,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') THEN 1 ELSE 0 END) as pending_telaah_baru,
+                SUM(CASE WHEN d.status_review = 'revisi_lpm' THEN 1 ELSE 0 END) as pending_relay_lpm,
+                SUM(CASE WHEN d.status_review = 'revisi_gpm' THEN 1 ELSE 0 END) as current_revisi_gpm,
+                SUM(CASE WHEN d.status_review IN ('menunggu_review_lpm', 'sesuai') THEN 1 ELSE 0 END) as current_diteruskan_lpm,
+                SUM(CASE WHEN d.status_review = 'sesuai' THEN 1 ELSE 0 END) as lpm_sesuai_docs,
+                MAX(d.gpm_reviewed_at) as last_reviewed_at,
+                AVG(CASE WHEN d.gpm_reviewed_at IS NOT NULL AND d.gpm_reviewed_at >= d.created_at 
+                         THEN TIMESTAMPDIFF(HOUR, d.created_at, d.gpm_reviewed_at) END) as avg_review_hours,
+                AVG(CASE WHEN d.status_review = 'revisi_gpm' AND d.lpm_reviewed_at IS NOT NULL AND d.gpm_reviewed_at >= d.lpm_reviewed_at 
+                         THEN TIMESTAMPDIFF(HOUR, d.lpm_reviewed_at, d.gpm_reviewed_at) END) as avg_relay_hours_doc
+            FROM ppepp_documents d
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            WHERE d.deleted_at IS NULL AND d.status_review != 'draft'
+            GROUP BY COALESCE(d.fakultas_id, p.fakultas_id)
+        ");
+        foreach ($stmtDocAgg->fetchAll() as $row) {
+            if (!empty($row['fak_id'])) {
+                $docAggByFak[(int)$row['fak_id']] = $row;
+            }
+        }
+
+        // 2. Hitung dokumen yang langsung disetujui LPM tanpa pernah ditolak LPM (First-Pass LPM Acceptance)
+        $firstPassByFak = [];
+        $stmtFirstPass = $this->db->query("
+            SELECT COALESCE(d.fakultas_id, p.fakultas_id) as fak_id,
+                   COUNT(*) as first_pass_sesuai
+            FROM ppepp_documents d
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            WHERE d.deleted_at IS NULL
+              AND d.status_review = 'sesuai'
+              AND NOT EXISTS (
+                  SELECT 1 FROM ppepp_document_reviews r
+                  WHERE r.document_id = d.id AND r.tahap = 'lpm' AND r.status_hasil IN ('revisi_lpm', 'perlu_perbaikan')
+              )
+            GROUP BY COALESCE(d.fakultas_id, p.fakultas_id)
+        ");
+        foreach ($stmtFirstPass->fetchAll() as $row) {
+            if (!empty($row['fak_id'])) {
+                $firstPassByFak[(int)$row['fak_id']] = (int)$row['first_pass_sesuai'];
+            }
+        }
+
+        // 3. Agregasi riwayat review dari ppepp_document_reviews (termasuk aktivitas Multi-Role per fakultas + tolakan LPM)
+        $lpmFeedbackByFak = [];
+        $gpmActivityByUser = [];
+        $relayDurationsByUser = [];
+
+        $stmtLogs = $this->db->query("
+            SELECT r.id, r.document_id, r.reviewer_id, r.reviewer_role, r.tahap,
+                   r.status_sebelumnya, r.status_hasil, r.created_at,
+                   COALESCE(d.fakultas_id, p.fakultas_id) as fak_id,
+                   u_rev.role as actual_user_role
+            FROM ppepp_document_reviews r
+            JOIN ppepp_documents d ON r.document_id = d.id
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN users u_rev ON r.reviewer_id = u_rev.id
+            WHERE d.deleted_at IS NULL
+            ORDER BY r.document_id ASC, r.created_at ASC, r.id ASC
+        ");
+
+        $lastLpmReturnAtByDoc = [];
+        foreach ($stmtLogs->fetchAll() as $log) {
+            $fakId = (int)($log['fak_id'] ?? 0);
+            if ($fakId <= 0) continue;
+
+            // Catat penolakan LPM per fakultas
+            if ($log['tahap'] === 'lpm' && in_array($log['status_hasil'], ['revisi_lpm', 'perlu_perbaikan'])) {
+                if (!isset($lpmFeedbackByFak[$fakId])) {
+                    $lpmFeedbackByFak[$fakId] = ['events' => 0, 'doc_ids' => []];
+                }
+                $lpmFeedbackByFak[$fakId]['events']++;
+                $lpmFeedbackByFak[$fakId]['doc_ids'][(int)$log['document_id']] = true;
+                $lastLpmReturnAtByDoc[(int)$log['document_id']] = strtotime($log['created_at']);
+            }
+
+            // Kaitkan aksi GPM (baik akun GPM asli maupun Multi-Role switcher pada fakultas tersebut)
+            if ($log['reviewer_role'] === 'gpm' || $log['tahap'] === 'gpm') {
+                $targetGpmId = ($log['actual_user_role'] === 'gpm')
+                    ? (int)$log['reviewer_id']
+                    : ($primaryGpmByFak[$fakId] ?? 0);
+
+                if ($targetGpmId <= 0) continue;
+
+                if (!isset($gpmActivityByUser[$targetGpmId])) {
+                    $gpmActivityByUser[$targetGpmId] = [
+                        'diteruskan' => 0,
+                        'revisi_murni' => 0,
+                        'relay_lpm' => 0,
+                        'reviewed_docs' => [],
+                        'last_at' => null,
+                        'multi_role_count' => 0,
+                    ];
+                }
+
+                $gpmActivityByUser[$targetGpmId]['reviewed_docs'][(int)$log['document_id']] = true;
+                if ($log['actual_user_role'] !== 'gpm') {
+                    $gpmActivityByUser[$targetGpmId]['multi_role_count']++;
+                }
+                if (!$gpmActivityByUser[$targetGpmId]['last_at'] || $log['created_at'] > $gpmActivityByUser[$targetGpmId]['last_at']) {
+                    $gpmActivityByUser[$targetGpmId]['last_at'] = $log['created_at'];
+                }
+
+                if (in_array($log['status_hasil'], ['menunggu_review_lpm', 'sesuai'])) {
+                    $gpmActivityByUser[$targetGpmId]['diteruskan']++;
+                } elseif ($log['status_hasil'] === 'revisi_gpm') {
+                    if ($log['status_sebelumnya'] === 'revisi_lpm') {
+                        $gpmActivityByUser[$targetGpmId]['relay_lpm']++;
+                        $docId = (int)$log['document_id'];
+                        if (isset($lastLpmReturnAtByDoc[$docId])) {
+                            $diffHours = max(0.1, (strtotime($log['created_at']) - $lastLpmReturnAtByDoc[$docId]) / 3600);
+                            $relayDurationsByUser[$targetGpmId][] = $diffHours;
+                        }
+                    } else {
+                        $gpmActivityByUser[$targetGpmId]['revisi_murni']++;
+                    }
+                }
+            }
+        }
+
+        // 4. Ambil penilaian manual LPM terbaru untuk setiap anggota GPM
+        $latestEvalByUser = [];
+        $evalCountByUser = [];
+        try {
+            $evalRows = $this->db->query("
+                SELECT e.*
+                FROM gpm_evaluations e
+                ORDER BY e.created_at DESC, e.id DESC
+            ")->fetchAll();
+            foreach ($evalRows as $ev) {
+                $gid = (int)$ev['gpm_user_id'];
+                $evalCountByUser[$gid] = ($evalCountByUser[$gid] ?? 0) + 1;
+                if (!isset($latestEvalByUser[$gid])) {
+                    $latestEvalByUser[$gid] = $ev;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Abaikan
+        }
+
+        // 5. Susun & hitung metrik gabungan + Skor Kinerja Otomatis & Kombinasi per anggota GPM
+        $gpmMembers = [];
+        foreach ($gpmMembersRaw as $m) {
+            $uid = (int)$m['id'];
+            $fakId = (int)($m['fakultas_id'] ?? 0);
+            $docAgg = $docAggByFak[$fakId] ?? [
+                'total_dokumen_scope' => 0, 'total_reviewed_fac' => 0,
+                'pending_telaah_baru' => 0, 'pending_relay_lpm' => 0,
+                'current_revisi_gpm' => 0, 'current_diteruskan_lpm' => 0,
+                'lpm_sesuai_docs' => 0, 'last_reviewed_at' => null,
+                'avg_review_hours' => null, 'avg_relay_hours_doc' => null
+            ];
+            $act = $gpmActivityByUser[$uid] ?? [
+                'diteruskan' => 0, 'revisi_murni' => 0, 'relay_lpm' => 0,
+                'reviewed_docs' => [], 'last_at' => null, 'multi_role_count' => 0
+            ];
+            $lpmFb = $lpmFeedbackByFak[$fakId] ?? ['events' => 0, 'doc_ids' => []];
+
+            $totalScope       = (int)$docAgg['total_dokumen_scope'];
+            $pendingBaru      = (int)$docAgg['pending_telaah_baru'];
+            $pendingRelayLpm  = (int)$docAgg['pending_relay_lpm'];
+            $pendingTotal     = $pendingBaru + $pendingRelayLpm;
+
+            $isPrimaryForFak  = ($primaryGpmByFak[$fakId] ?? 0) === $uid;
+            $totalDiteruskan  = max($act['diteruskan'], $isPrimaryForFak ? (int)$docAgg['current_diteruskan_lpm'] : 0);
+            $totalRevisiMurni = $act['revisi_murni'];
+            $totalRelayLpm    = $act['relay_lpm'];
+            $totalRevisi      = max($totalRevisiMurni + $totalRelayLpm, $isPrimaryForFak ? (int)$docAgg['current_revisi_gpm'] : 0);
+            $totalReviewed    = max(count($act['reviewed_docs']), $isPrimaryForFak ? (int)$docAgg['total_reviewed_fac'] : 0);
+
+            $lpmSesuaiDocs         = (int)$docAgg['lpm_sesuai_docs'];
+            $firstPassSesuai       = $firstPassByFak[$fakId] ?? 0;
+            $lpmReturnedEvents     = (int)$lpmFb['events'];
+            $lpmReturnedUniqueDocs = count($lpmFb['doc_ids']);
+
+            $evaluatedByLpm = $firstPassSesuai + $lpmReturnedUniqueDocs;
+            $accuracyLpm    = $evaluatedByLpm > 0 ? round(($firstPassSesuai / $evaluatedByLpm) * 100, 1) : null;
+
+            $avgReviewHours = isset($docAgg['avg_review_hours']) && $docAgg['avg_review_hours'] !== null ? (float)$docAgg['avg_review_hours'] : null;
+            $relayDurs = $relayDurationsByUser[$uid] ?? [];
+            $avgRelayHours = !empty($relayDurs)
+                ? (array_sum($relayDurs) / count($relayDurs))
+                : (isset($docAgg['avg_relay_hours_doc']) && $docAgg['avg_relay_hours_doc'] !== null ? (float)$docAgg['avg_relay_hours_doc'] : null);
+
+            // Pilar 1: Akurasi Lolos LPM (bobot 50%)
+            $scoreAkurasi = $accuracyLpm;
+
+            // Pilar 2: Ketuntasan Antrean & Relay Catatan LPM (bobot 30%)
+            $scoreAntrean = $totalScope > 0
+                ? max(0, min(100, round((1 - (($pendingBaru + ($pendingRelayLpm * 1.5)) / max(1, $totalScope))) * 100, 1)))
+                : null;
+            if ($lpmReturnedUniqueDocs > 0 && $scoreAntrean !== null) {
+                $relayCompletionPct = max(0, (($lpmReturnedUniqueDocs - $pendingRelayLpm) / max(1, $lpmReturnedUniqueDocs)) * 100);
+                $scoreAntrean = round(($scoreAntrean * 0.55) + ($relayCompletionPct * 0.45), 1);
+            }
+
+            // Pilar 3: Kecepatan Respon / Relay (bobot 20%)
+            $speedHours = $avgRelayHours ?? $avgReviewHours;
+            $scoreKecepatan = null;
+            if ($speedHours !== null && $speedHours > 0) {
+                if ($speedHours <= 24) $scoreKecepatan = 100.0;
+                elseif ($speedHours <= 48) $scoreKecepatan = 85.0;
+                elseif ($speedHours <= 72) $scoreKecepatan = 70.0;
+                elseif ($speedHours <= 168) $scoreKecepatan = 55.0;
+                else $scoreKecepatan = 40.0;
+            }
+
+            // Hitung Skor Otomatis Sistem (ternormalisasi sesuai pilar yang memiliki data)
+            $autoScore = null;
+            if ($totalScope > 0 || $evaluatedByLpm > 0 || $totalReviewed > 0) {
+                $wSum = 0.0;
+                $wTotal = 0.0;
+                if ($scoreAkurasi !== null)   { $wSum += $scoreAkurasi * 0.50;   $wTotal += 0.50; }
+                if ($scoreAntrean !== null)   { $wSum += $scoreAntrean * 0.30;   $wTotal += 0.30; }
+                if ($scoreKecepatan !== null) { $wSum += $scoreKecepatan * 0.20; $wTotal += 0.20; }
+                $autoScore = $wTotal > 0 ? round($wSum / $wTotal, 1) : null;
+            }
+
+            $latestEval = $latestEvalByUser[$uid] ?? null;
+            $manualScore = $latestEval ? round((float)$latestEval['skor_manual_total'], 1) : null;
+
+            if ($manualScore !== null && $autoScore !== null) {
+                $combinedScore = round(($autoScore * 0.60) + ($manualScore * 0.40), 1);
+            } elseif ($manualScore !== null) {
+                $combinedScore = $manualScore;
+            } else {
+                $combinedScore = $autoScore;
+            }
+
+            // Predikat Kinerja
+            $predikat = 'Belum Ada Data';
+            $predikatColor = 'secondary';
+            if ($combinedScore !== null) {
+                if ($combinedScore >= 85) {
+                    $predikat = 'Sangat Baik';
+                    $predikatColor = 'success';
+                } elseif ($combinedScore >= 70) {
+                    $predikat = 'Baik';
+                    $predikatColor = 'primary';
+                } elseif ($combinedScore >= 55) {
+                    $predikat = 'Cukup';
+                    $predikatColor = 'warning';
+                } else {
+                    $predikat = 'Perlu Pembinaan';
+                    $predikatColor = 'danger';
+                }
+            }
+
+            $m['total_dokumen_scope']      = $totalScope;
+            $m['total_reviewed']           = $totalReviewed;
+            $m['pending_telaah_baru']      = $pendingBaru;
+            $m['pending_relay_lpm']        = $pendingRelayLpm;
+            $m['pending_review']           = $pendingTotal;
+            $m['total_revisi_murni']       = $totalRevisiMurni;
+            $m['total_relay_lpm']          = $totalRelayLpm;
+            $m['total_revisi']             = $totalRevisi;
+            $m['total_diteruskan']         = $totalDiteruskan;
+            $m['lpm_sesuai_docs']          = $lpmSesuaiDocs;
+            $m['first_pass_sesuai']        = $firstPassSesuai;
+            $m['lpm_returned_events']      = $lpmReturnedEvents;
+            $m['lpm_returned_unique_docs'] = $lpmReturnedUniqueDocs;
+            $m['evaluated_by_lpm']         = $evaluatedByLpm;
+            $m['accuracy_lpm']             = $accuracyLpm;
+            $m['score_akurasi']            = $scoreAkurasi;
+            $m['score_antrean']            = $scoreAntrean;
+            $m['score_kecepatan']          = $scoreKecepatan;
+            $m['auto_score']               = $autoScore;
+            $m['manual_score']             = $manualScore;
+            $m['combined_score']           = $combinedScore;
+            $m['predikat']                 = $predikat;
+            $m['predikat_color']           = $predikatColor;
+            $m['latest_eval']              = $latestEval;
+            $m['eval_count']               = $evalCountByUser[$uid] ?? 0;
+            $m['last_reviewed_at']         = $act['last_at'] ?? $docAgg['last_reviewed_at'];
+            $m['avg_review_hours']         = $avgReviewHours;
+            $m['avg_relay_hours']          = $avgRelayHours;
+            $m['multi_role_count']         = $act['multi_role_count'];
+
+            $gpmMembers[] = $m;
+        }
 
         // Hitung rangkuman global
         $totalGpm = count($gpmMembers);
         $totalReviewedAll = array_sum(array_column($gpmMembers, 'total_reviewed'));
         $totalPendingAll = array_sum(array_column($gpmMembers, 'pending_review'));
+        $totalPendingRelayAll = array_sum(array_column($gpmMembers, 'pending_relay_lpm'));
+        $totalLpmReturnedAll = array_sum(array_column($gpmMembers, 'lpm_returned_events'));
+        $activeAy = get_active_tahun_akademik($this->db);
+        $defaultPeriode = $activeAy['tahun_akademik'] ?? '2025/2026';
 
         $this->render('super_admin/monitoring_gpm', [
-            'pageTitle' => 'Monitoring Kinerja Anggota GPM',
-            'gpmMembers' => $gpmMembers,
-            'totalGpm' => $totalGpm,
-            'totalReviewedAll' => $totalReviewedAll,
-            'totalPendingAll' => $totalPendingAll
+            'pageTitle'            => 'Monitoring Kinerja Anggota GPM',
+            'gpmMembers'           => $gpmMembers,
+            'totalGpm'             => $totalGpm,
+            'totalReviewedAll'     => $totalReviewedAll,
+            'totalPendingAll'      => $totalPendingAll,
+            'totalPendingRelayAll' => $totalPendingRelayAll,
+            'totalLpmReturnedAll'  => $totalLpmReturnedAll,
+            'defaultPeriode'       => $defaultPeriode,
+            'tahunList'            => get_distinct_tahun_akademik($this->db)
         ]);
     }
 
     /**
-     * API JSON: Riwayat Review Dokumen per Anggota GPM (More Detail)
+     * API JSON: Riwayat Telaah, Relay LPM, Pengembalian LPM & Penilaian Kinerja GPM (Khusus LPM)
      */
     public function gpmReviewHistory(string $id): void {
-        header('Content-Type: application/json');
+        header('Content-Type: application/json; charset=utf-8');
+        $this->ensureGpmEvaluationsTable();
         $gpmId = (int)$id;
 
         $stmtGpm = $this->db->prepare("
-            SELECT u.id, u.name, u.email, u.avatar, f.nama_fakultas 
+            SELECT u.id, u.name, u.email, u.avatar, u.fakultas_id, f.nama_fakultas 
             FROM users u 
             LEFT JOIN fakultas f ON u.fakultas_id = f.id 
             WHERE u.id = ? AND u.role = 'gpm'
@@ -2491,44 +2804,178 @@ class SuperAdminController extends Controller {
             exit;
         }
 
-        // Ambil riwayat dari ppepp_document_reviews
-        $stmtRev = $this->db->prepare("
-            SELECT r.id, r.document_id, r.status_hasil, r.catatan, r.created_at,
+        $fakId = (int)($gpm['fakultas_id'] ?? 0);
+
+        // Cek apakah GPM ini merupakan GPM utama fakultas untuk kaitkan aksi Multi-Role
+        $stmtPrim = $this->db->prepare("SELECT MIN(id) FROM users WHERE role = 'gpm' AND fakultas_id = ?");
+        $stmtPrim->execute([$fakId]);
+        $isPrimaryForFak = ((int)$stmtPrim->fetchColumn() === $gpmId);
+
+        // Ambil riwayat dari ppepp_document_reviews:
+        // 1. Aksi review langsung oleh GPM ini (r.reviewer_id = ?)
+        // 2. Aksi GPM via akun Multi-Role pada dokumen fakultas ini (jika GPM utama)
+        // 3. Pengembalian LPM (tahap = 'lpm', status_hasil IN ('revisi_lpm', 'perlu_perbaikan')) pada dokumen fakultas ini
+        $sqlHist = "
+            SELECT r.id, r.document_id, r.reviewer_id, r.reviewer_role, r.reviewer_name, r.tahap,
+                   r.status_sebelumnya, r.status_hasil, r.catatan, r.created_at,
                    d.nama_dokumen, d.nomor_dokumen, d.level, d.siklus, d.tahun_akademik,
-                   f.nama_fakultas, p.nama_prodi, p.jenjang
+                   d.status_review as current_doc_status,
+                   f.nama_fakultas, p.nama_prodi, p.jenjang,
+                   u_rev.name as actor_name, u_rev.role as actor_base_role
             FROM ppepp_document_reviews r
             JOIN ppepp_documents d ON r.document_id = d.id
-            LEFT JOIN fakultas f ON d.fakultas_id = f.id
+            LEFT JOIN fakultas f ON COALESCE(d.fakultas_id, (SELECT p2.fakultas_id FROM prodis p2 WHERE p2.id = d.prodi_id)) = f.id
             LEFT JOIN prodis p ON d.prodi_id = p.id
-            WHERE r.reviewer_id = ?
-            ORDER BY r.created_at DESC
-        ");
-        $stmtRev->execute([$gpmId]);
-        $history = $stmtRev->fetchAll() ?: [];
+            LEFT JOIN users u_rev ON r.reviewer_id = u_rev.id
+            WHERE d.deleted_at IS NULL
+              AND (
+                    r.reviewer_id = ?
+                    " . ($fakId > 0 ? "OR (COALESCE(d.fakultas_id, p.fakultas_id) = ? AND r.tahap = 'lpm' AND r.status_hasil IN ('revisi_lpm', 'perlu_perbaikan'))" : "") . "
+                    " . ($fakId > 0 && $isPrimaryForFak ? "OR (COALESCE(d.fakultas_id, p.fakultas_id) = ? AND (r.reviewer_role = 'gpm' OR r.tahap = 'gpm') AND COALESCE(u_rev.role, '') != 'gpm')" : "") . "
+              )
+            ORDER BY r.created_at DESC, r.id DESC
+        ";
+        $histParams = [$gpmId];
+        if ($fakId > 0) $histParams[] = $fakId;
+        if ($fakId > 0 && $isPrimaryForFak) $histParams[] = $fakId;
 
-        // Fallback: Jika di ppepp_document_reviews belum ada data, ambil dari ppepp_documents yang pernah direview
+        $stmtRev = $this->db->prepare($sqlHist);
+        $stmtRev->execute($histParams);
+        $rawHistory = $stmtRev->fetchAll() ?: [];
+
+        $history = [];
+        foreach ($rawHistory as $row) {
+            if ($row['tahap'] === 'lpm' && in_array($row['status_hasil'], ['revisi_lpm', 'perlu_perbaikan'])) {
+                $cat = 'returned_lpm';
+            } elseif (in_array($row['status_hasil'], ['menunggu_review_lpm', 'sesuai'])) {
+                $cat = 'approve';
+            } elseif ($row['status_hasil'] === 'revisi_gpm' && $row['status_sebelumnya'] === 'revisi_lpm') {
+                $cat = 'relay_lpm';
+            } else {
+                $cat = 'revisi_gpm';
+            }
+            $row['action_category'] = $cat;
+            $row['is_multi_role'] = (($row['reviewer_role'] === 'gpm' || $row['tahap'] === 'gpm') && ($row['actor_base_role'] ?? '') !== 'gpm');
+            $history[] = $row;
+        }
+
+        // Fallback untuk dokumen eksisting tanpa log ppepp_document_reviews
         if (empty($history)) {
             $stmtDoc = $this->db->prepare("
                 SELECT d.id as document_id, d.status_review as status_hasil, d.gpm_catatan as catatan, 
                        d.gpm_reviewed_at as created_at,
                        d.nama_dokumen, d.nomor_dokumen, d.level, d.siklus, d.tahun_akademik,
+                       d.status_review as current_doc_status,
                        f.nama_fakultas, p.nama_prodi, p.jenjang
                 FROM ppepp_documents d
-                LEFT JOIN fakultas f ON d.fakultas_id = f.id
                 LEFT JOIN prodis p ON d.prodi_id = p.id
-                WHERE d.gpm_reviewed_by = ? AND d.deleted_at IS NULL
+                LEFT JOIN fakultas f ON COALESCE(d.fakultas_id, p.fakultas_id) = f.id
+                WHERE (d.gpm_reviewed_by = ? " . ($fakId > 0 && $isPrimaryForFak ? "OR COALESCE(d.fakultas_id, p.fakultas_id) = ?" : "") . ")
+                  AND d.gpm_reviewed_at IS NOT NULL AND d.deleted_at IS NULL
                 ORDER BY d.gpm_reviewed_at DESC
             ");
-            $stmtDoc->execute([$gpmId]);
-            $history = $stmtDoc->fetchAll() ?: [];
+            $docParams = [$gpmId];
+            if ($fakId > 0 && $isPrimaryForFak) $docParams[] = $fakId;
+            $stmtDoc->execute($docParams);
+            foreach ($stmtDoc->fetchAll() ?: [] as $row) {
+                $row['action_category'] = in_array($row['status_hasil'], ['menunggu_review_lpm', 'sesuai']) ? 'approve' : 'revisi_gpm';
+                $row['is_multi_role'] = false;
+                $row['actor_name'] = $gpm['name'];
+                $history[] = $row;
+            }
+        }
+
+        // Ambil riwayat penilaian manual LPM terhadap GPM ini
+        $evaluations = [];
+        try {
+            $stmtEval = $this->db->prepare("
+                SELECT * FROM gpm_evaluations
+                WHERE gpm_user_id = ?
+                ORDER BY created_at DESC, id DESC
+            ");
+            $stmtEval->execute([$gpmId]);
+            $evaluations = $stmtEval->fetchAll() ?: [];
+        } catch (\Throwable $e) {
+            $evaluations = [];
         }
 
         echo json_encode([
-            'success' => true,
-            'gpm' => $gpm,
-            'history' => $history
+            'success'     => true,
+            'gpm'         => $gpm,
+            'history'     => $history,
+            'evaluations' => $evaluations
         ]);
         exit;
+    }
+
+    /**
+     * Simpan Penilaian & Catatan Evaluasi Manual Kinerja GPM oleh LPM
+     */
+    public function submitGpmEvaluation(): void {
+        $this->ensureGpmEvaluationsTable();
+
+        $gpmUserId   = !empty($_POST['gpm_user_id']) ? (int)$_POST['gpm_user_id'] : 0;
+        $periode     = trim($_POST['periode'] ?? '2025/2026');
+        $ketelitian  = max(0, min(100, (int)($_POST['skor_ketelitian'] ?? 80)));
+        $kecepatan   = max(0, min(100, (int)($_POST['skor_kecepatan'] ?? 80)));
+        $komunikasi  = max(0, min(100, (int)($_POST['skor_komunikasi'] ?? 80)));
+        $catatan     = trim($_POST['catatan_evaluasi'] ?? '');
+
+        if (!$gpmUserId) {
+            Auth::setFlash('danger', 'Anggota GPM sasaran evaluasi tidak valid.');
+            redirect('admin/monitoring-gpm');
+            return;
+        }
+
+        $stmtGpm = $this->db->prepare("SELECT u.id, u.name, u.fakultas_id, f.nama_fakultas FROM users u LEFT JOIN fakultas f ON u.fakultas_id = f.id WHERE u.id = ? AND u.role = 'gpm' LIMIT 1");
+        $stmtGpm->execute([$gpmUserId]);
+        $gpm = $stmtGpm->fetch();
+
+        if (!$gpm) {
+            Auth::setFlash('danger', 'Akun GPM tidak ditemukan.');
+            redirect('admin/monitoring-gpm');
+            return;
+        }
+
+        $manualTotal = round(($ketelitian + $kecepatan + $komunikasi) / 3, 2);
+        $evaluator = Auth::user();
+        $evaluatorId = Auth::id();
+        $evaluatorName = $evaluator['name'] ?? 'Tim LPM';
+        $evaluatorRole = Auth::role() ?? 'super_admin';
+
+        $stmtIns = $this->db->prepare("
+            INSERT INTO gpm_evaluations (
+                gpm_user_id, fakultas_id, evaluator_id, evaluator_name, evaluator_role,
+                periode, skor_ketelitian, skor_kecepatan, skor_komunikasi, skor_manual_total, catatan_evaluasi,
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        ");
+        $stmtIns->execute([
+            $gpmUserId,
+            (int)($gpm['fakultas_id'] ?? 0),
+            $evaluatorId,
+            $evaluatorName,
+            $evaluatorRole,
+            $periode,
+            $ketelitian,
+            $kecepatan,
+            $komunikasi,
+            $manualTotal,
+            $catatan ?: null
+        ]);
+
+        AuditLogger::log('CREATE', 'Evaluasi Kinerja GPM', (string)$gpmUserId, $gpm['name'], null, [
+            'periode'           => $periode,
+            'skor_ketelitian'   => $ketelitian,
+            'skor_kecepatan'    => $kecepatan,
+            'skor_komunikasi'   => $komunikasi,
+            'skor_manual_total' => $manualTotal,
+            'catatan_evaluasi'  => $catatan,
+            'evaluator'         => $evaluatorName
+        ], 0, $gpm['nama_fakultas'] ?? 'Fakultas');
+
+        Auth::setFlash('success', "Penilaian kinerja LPM untuk <strong>" . htmlspecialchars($gpm['name']) . "</strong> (Skor Manual: {$manualTotal}/100) berhasil disimpan.");
+        redirect('admin/monitoring-gpm');
     }
 
     /**
