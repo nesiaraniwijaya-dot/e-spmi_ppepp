@@ -253,16 +253,27 @@ $currentMeta = $siklusMetaList[$initialSiklus] ?? $siklusMetaList[''];
             </div>
 
             <!-- Footer Pagination (Next / Prev & Numbered Pages) -->
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 pt-3 border-top mt-3">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 pt-3 border-top mt-3" id="publicPaginationWrapper">
                 <div id="tableInfo" class="small text-muted">
                     <?php if ($filteredTotal > 0): ?>
-                        Menampilkan <?= $startNum ?> - <?= $endNum ?> dari total <?= number_format($filteredTotal, 0, ',', '.') ?> dokumen
+                        Menampilkan <span class="fw-bold text-dark"><?= $startNum ?></span> - <span class="fw-bold text-dark"><?= $endNum ?></span> dari total <span class="fw-bold text-dark"><?= number_format($filteredTotal, 0, ',', '.') ?></span> dokumen
                     <?php else: ?>
                         Tidak ada dokumen yang sesuai kriteria.
                     <?php endif; ?>
                 </div>
-                <div id="tablePagination">
-                    <!-- Pagination links injected by JavaScript -->
+                <div class="table-pagination-control">
+                    <div class="table-perpage-wrap">
+                        <label for="publicPerPageSelect" class="table-perpage-label">Ukuran Halaman:</label>
+                        <select class="form-select table-perpage-select shadow-none" id="publicPerPageSelect" onchange="changePublicPerPage(this.value)">
+                            <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
+                            <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
+                            <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
+                            <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100 data</option>
+                        </select>
+                    </div>
+                    <nav aria-label="Public Pagination" id="tablePagination">
+                        <!-- Pagination links injected by JavaScript -->
+                    </nav>
                 </div>
             </div>
 
@@ -435,6 +446,13 @@ function fetchTableData(targetPage = 1) {
     });
 }
 
+function changePublicPerPage(val) {
+    const sel = document.getElementById('publicPerPageSelect');
+    const topSel = document.getElementById('tablePerPageSelect');
+    if (topSel && topSel.value != val) topSel.value = val;
+    fetchTableData(1);
+}
+
 function renderPaginationUI(curPage, maxPages) {
     const paginationEl = document.getElementById('tablePagination');
     if (!paginationEl) return;
@@ -444,33 +462,46 @@ function renderPaginationUI(curPage, maxPages) {
         return;
     }
 
-    let html = '<ul class="pagination pagination-sm mb-0 flex-wrap gap-1">';
+    let html = '<ul class="pagination-segmented mb-0">';
     
-    // Previous Button
+    // Previous Button (<)
     const prevDisabled = curPage <= 1 ? 'disabled' : '';
     html += `<li class="page-item ${prevDisabled}">
-        <button class="page-link rounded-2 px-2.5" data-page="${curPage - 1}" ${prevDisabled ? 'disabled' : ''} title="Halaman Sebelumnya">
-            <i class="fas fa-chevron-left me-1"></i> Prev
+        <button type="button" class="page-link" data-page="${curPage - 1}" ${prevDisabled ? 'disabled' : ''} aria-label="Sebelumnya">
+            <i class="fas fa-chevron-left" style="font-size: 0.72rem;"></i>
         </button>
     </li>`;
 
     // Numbered Pages
-    for (let p = 1; p <= maxPages; p++) {
-        if (p === 1 || p === maxPages || (p >= curPage - 2 && p <= curPage + 2)) {
-            const isActive = (p === curPage) ? 'active' : '';
-            html += `<li class="page-item ${isActive}">
-                <button class="page-link rounded-2" data-page="${p}">${p}</button>
-            </li>`;
-        } else if (p === curPage - 3 || p === curPage + 3) {
-            html += '<li class="page-item disabled"><span class="page-link border-0">...</span></li>';
+    let startPage = Math.max(1, curPage - 2);
+    let endPage = Math.min(maxPages, curPage + 2);
+
+    if (startPage > 1) {
+        html += `<li class="page-item"><button type="button" class="page-link" data-page="1">1</button></li>`;
+        if (startPage > 2) {
+            html += `<li class="page-item ellipsis disabled"><span class="page-link dots">&hellip;</span></li>`;
         }
     }
 
-    // Next Button
+    for (let p = startPage; p <= endPage; p++) {
+        const isActive = (p === curPage) ? 'active' : '';
+        html += `<li class="page-item ${isActive}">
+            <button type="button" class="page-link" data-page="${p}">${p}</button>
+        </li>`;
+    }
+
+    if (endPage < maxPages) {
+        if (endPage < maxPages - 1) {
+            html += `<li class="page-item ellipsis disabled"><span class="page-link dots">&hellip;</span></li>`;
+        }
+        html += `<li class="page-item"><button type="button" class="page-link" data-page="${maxPages}">${maxPages}</button></li>`;
+    }
+
+    // Next Button (>)
     const nextDisabled = curPage >= maxPages ? 'disabled' : '';
     html += `<li class="page-item ${nextDisabled}">
-        <button class="page-link rounded-2 px-2.5" data-page="${curPage + 1}" ${nextDisabled ? 'disabled' : ''} title="Halaman Selanjutnya">
-            Next <i class="fas fa-chevron-right ms-1"></i>
+        <button type="button" class="page-link" data-page="${curPage + 1}" ${nextDisabled ? 'disabled' : ''} aria-label="Selanjutnya">
+            <i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i>
         </button>
     </li>`;
 
@@ -484,7 +515,6 @@ function renderPaginationUI(curPage, maxPages) {
             const target = parseInt(this.getAttribute('data-page'), 10);
             if (target >= 1 && target <= maxPages && target !== currentPage) {
                 fetchTableData(target);
-                // Smooth scroll to table
                 const tableCard = document.getElementById('ppeppDocumentTable');
                 if (tableCard) {
                     tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });

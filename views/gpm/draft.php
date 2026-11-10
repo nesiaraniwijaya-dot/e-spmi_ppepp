@@ -421,13 +421,24 @@ foreach ($draftDocs as $d) {
             <!-- Pagination Footer -->
             <div class="p-3.5 px-4 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 bg-white" id="draftGpmPaginationWrapper" style="border-color: #E2E8F0 !important;">
                 <div class="small text-muted" id="draftGpmPageInfo">
-                    Menampilkan <strong>1 - <?= min(10, $totalDraft) ?></strong> dari <strong><?= $totalDraft ?></strong> draf dokumen
+                    Menampilkan <strong>1 - <?= min(50, $totalDraft) ?></strong> dari <strong><?= $totalDraft ?></strong> draf dokumen
                 </div>
-                <nav aria-label="Navigasi Halaman Draf">
-                    <ul class="pagination pagination-sm mb-0 gap-1" id="draftGpmPaginationUl">
-                        <!-- Rendered by JS -->
-                    </ul>
-                </nav>
+                <div class="table-pagination-control">
+                    <div class="table-perpage-wrap">
+                        <label for="draftGpmPerPageBottom" class="table-perpage-label">Ukuran Halaman:</label>
+                        <select id="draftGpmPerPageBottom" class="form-select table-perpage-select shadow-none" onchange="changeDraftPageSize(this.value)">
+                            <option value="10">10 data</option>
+                            <option value="20">20 data</option>
+                            <option value="50" selected>50 data</option>
+                            <option value="100">100 data</option>
+                        </select>
+                    </div>
+                    <nav aria-label="Navigasi Halaman Draf">
+                        <ul class="pagination-segmented mb-0" id="draftGpmPaginationUl">
+                            <!-- Rendered by JS -->
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
     <?php endif; ?>

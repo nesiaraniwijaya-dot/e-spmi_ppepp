@@ -54,13 +54,14 @@ class AdminProdiController extends Controller {
         ];
         $cycleStats['total'] = $cycleStats['penetapan'] + $cycleStats['pelaksanaan'] + $cycleStats['evaluasi'] + $cycleStats['pengendalian'] + $cycleStats['peningkatan'];
 
-        // Documents in review/revision cycle with GPM/LPM (revisi_gpm, revisi_lpm, perlu_perbaikan & sudah_diperbaiki)
+        // Documents in review/revision cycle with GPM (revisi_gpm, perlu_perbaikan & sudah_diperbaiki)
+        // Masking privasi: revisi_lpm tetap tersembunyi dari Prodi sampai diteruskan resmi oleh GPM
         $stmtRevisi = $this->db->prepare("
             SELECT d.*, b.nama_bidang, u.name as reviewer_name 
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN users u ON d.reviewed_by = u.id
-            WHERE d.prodi_id = ? AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
+            WHERE d.prodi_id = ? AND d.status_review IN ('revisi_gpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
             ORDER BY 
                 GREATEST(
                     COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
@@ -140,19 +141,19 @@ class AdminProdiController extends Controller {
         $bidangFilter  = !empty($_GET['bidang_id']) ? (int)$_GET['bidang_id'] : 0;
         $tahunFilter   = trim($_GET['tahun_akademik'] ?? '');
         $statusFilter  = trim($_GET['status_review'] ?? '');
-        $search        = trim($_GET['search'] ?? '');
+        $search        = trim($_GET['search'] ?? $_GET['q'] ?? '');
         $perPage       = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
         if (!in_array($perPage, [10, 20, 50, 100])) {
             $perPage = 50;
         }
         $page = max(1, (int)($_GET['page'] ?? 1));
 
-        // Hitung count banner cepat
+        // Hitung count banner cepat (Masking: revisi_lpm masih ditelaah di GPM, belum masuk daftar revisi Prodi)
         $perluCount = (int)$this->db->query("
             SELECT COUNT(*) 
             FROM ppepp_documents 
             WHERE prodi_id = {$this->prodiId} 
-              AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') 
+              AND status_review IN ('revisi_gpm', 'perlu_perbaikan') 
               AND deleted_at IS NULL
         ")->fetchColumn();
 
@@ -160,7 +161,7 @@ class AdminProdiController extends Controller {
             SELECT COUNT(*) 
             FROM ppepp_documents 
             WHERE prodi_id = {$this->prodiId} 
-              AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm') 
+              AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm') 
               AND deleted_at IS NULL
         ")->fetchColumn();
 
@@ -193,9 +194,11 @@ class AdminProdiController extends Controller {
 
         if (!empty($statusFilter)) {
             if ($statusFilter === 'revisi') {
-                $where[] = "d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+                $where[] = "d.status_review IN ('revisi_gpm', 'perlu_perbaikan')";
             } elseif ($statusFilter === 'antrean') {
-                $where[] = "d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm')";
+                $where[] = "d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm')";
+            } elseif ($statusFilter === 'menunggu_review_gpm') {
+                $where[] = "d.status_review IN ('menunggu_review_gpm', 'revisi_lpm', 'belum_direview')";
             } else {
                 $where[] = "d.status_review = ?";
                 $params[] = $statusFilter;
@@ -303,10 +306,9 @@ class AdminProdiController extends Controller {
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
-            WHERE d.prodi_id = ? AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
+            WHERE d.prodi_id = ? AND d.status_review IN ('revisi_gpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
             ORDER BY 
                 GREATEST(
-                    COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
                     COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
                     COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
                     COALESCE(d.updated_at, '1970-01-01 00:00:00')
@@ -316,7 +318,18 @@ class AdminProdiController extends Controller {
         $documents = $stmt->fetchAll();
         $this->attachFilesToDocs($documents);
 
-        $perluDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
+        // Masking privasi alur berjenjang:
+        // Seluruh catatan evaluasi dan identitas reviewer untuk Program Studi diposisikan murni atas nama GPM Fakultas
+        foreach ($documents as &$d) {
+            $d['reviewer_name'] = 'Gugus Penjaminan Mutu (GPM) Fakultas';
+            $d['reviewer_role'] = 'gpm';
+            if (!empty($d['gpm_catatan'])) {
+                $d['catatan_review'] = $d['gpm_catatan'];
+            }
+        }
+        unset($d);
+
+        $perluDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'perlu_perbaikan'])));
         $sudahDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm'])));
 
         $this->render('admin_prodi/perbaikan', [

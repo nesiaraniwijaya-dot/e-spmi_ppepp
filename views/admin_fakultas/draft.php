@@ -302,13 +302,24 @@ $totalDraft = $totalDraft ?? count($documents);
             <!-- Pagination Footer -->
             <div class="p-3.5 px-4 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 bg-white" id="draftFakultasPaginationWrapper" style="border-color: #E2E8F0 !important;">
                 <div class="small text-muted" id="draftFakultasPageInfo">
-                    Menampilkan <strong>1 - <?= min(10, $totalDraft) ?></strong> dari <strong><?= $totalDraft ?></strong> draf dokumen
+                    Menampilkan <strong>1 - <?= min(50, $totalDraft) ?></strong> dari <strong><?= $totalDraft ?></strong> draf dokumen
                 </div>
-                <nav aria-label="Navigasi Halaman Draf">
-                    <ul class="pagination pagination-sm mb-0 gap-1" id="draftFakultasPaginationUl">
-                        <!-- Rendered by JS -->
-                    </ul>
-                </nav>
+                <div class="table-pagination-control">
+                    <div class="table-perpage-wrap">
+                        <label for="draftFakultasPerPageBottom" class="table-perpage-label">Ukuran Halaman:</label>
+                        <select id="draftFakultasPerPageBottom" class="form-select table-perpage-select shadow-none" onchange="changeDraftPageSize(this.value)">
+                            <option value="10">10 data</option>
+                            <option value="20">20 data</option>
+                            <option value="50" selected>50 data</option>
+                            <option value="100">100 data</option>
+                        </select>
+                    </div>
+                    <nav aria-label="Navigasi Halaman Draf">
+                        <ul class="pagination-segmented mb-0" id="draftFakultasPaginationUl">
+                            <!-- Rendered by JS -->
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
     <?php endif; ?>
@@ -321,6 +332,26 @@ let draftFakultasPerPage = 10;
 function changeDraftFakultasPageSize(val) {
     draftFakultasPerPage = (val === 'all') ? 999999 : parseInt(val, 10);
     currentDraftFakultasPage = 1;
+    filterDraftTable();
+}
+
+function changeDraftPageSize(val) {
+    const topSel = document.querySelector('[id^="perPageDraft"]');
+    if (topSel && topSel.value != val) topSel.value = val;
+    const btmSel = document.querySelector('[id$="PerPageBottom"]');
+    if (btmSel && btmSel.value != val) btmSel.value = val;
+    if (typeof draftPerPage !== 'undefined') draftPerPage = parseInt(val, 10) || 50;
+    if (typeof draftProdiPerPage !== 'undefined') draftProdiPerPage = parseInt(val, 10) || 50;
+    if (typeof draftFakultasPerPage !== 'undefined') draftFakultasPerPage = parseInt(val, 10) || 50;
+    if (typeof draftGpmPerPage !== 'undefined') draftGpmPerPage = parseInt(val, 10) || 50;
+    filterDraftTable();
+}
+
+function goToDraftPage(p) {
+    if (typeof currentDraftPage !== 'undefined') currentDraftPage = p;
+    if (typeof currentDraftProdiPage !== 'undefined') currentDraftProdiPage = p;
+    if (typeof currentDraftFakultasPage !== 'undefined') currentDraftFakultasPage = p;
+    if (typeof currentDraftGpmPage !== 'undefined') currentDraftGpmPage = p;
     filterDraftTable();
 }
 

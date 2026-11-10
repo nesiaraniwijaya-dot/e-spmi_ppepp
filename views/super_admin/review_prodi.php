@@ -118,7 +118,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <div class="mb-2.5">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
-                    <input type="text" id="reviewSearchInput" class="form-control bg-light border-start-0 ps-1" placeholder="Cari nama dokumen, nomor SK, pengunggah..." onkeyup="filterReviewTable()">
+                    <input type="text" id="reviewSearchInput" class="form-control bg-light border-start-0 ps-1" placeholder="Cari nama dokumen, nomor SK, pengunggah..." oninput="filterReviewTable()">
                 </div>
             </div>
 
@@ -183,10 +183,10 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <div class="small text-muted" id="reviewTableInfo">
                 Menampilkan <span class="fw-bold text-dark" id="reviewStartNum"><?= $startNum ?></span> - <span class="fw-bold text-dark" id="reviewEndNum"><?= $endNum ?></span> dari <span class="fw-bold text-dark" id="reviewTotalFiltered"><?= number_format($totalFiltered, 0, ',', '.') ?></span> Dokumen
             </div>
-            <div class="d-flex flex-wrap align-items-center gap-2.5">
-                <div class="d-flex align-items-center gap-1.5 small text-muted">
-                    <span style="font-size: 0.78rem;">Ukuran Halaman:</span>
-                    <select class="form-select form-select-sm" id="reviewPerPageSelect" style="width: 95px; font-size: 0.78rem;" onchange="changeReviewPerPage(this.value)">
+            <div class="table-pagination-control">
+                <div class="table-perpage-wrap">
+                    <label for="reviewPerPageSelect" class="table-perpage-label">Ukuran Halaman:</label>
+                    <select class="form-select table-perpage-select shadow-none" id="reviewPerPageSelect" onchange="changeReviewPerPage(this.value)">
                         <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
                         <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
                         <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
@@ -194,7 +194,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </select>
                 </div>
                 <nav aria-label="Review Pagination">
-                    <ul class="pagination pagination-sm mb-0" id="reviewPaginationNav">
+                    <ul class="pagination-segmented mb-0" id="reviewPaginationNav">
                         <!-- Populated dynamically by JavaScript -->
                     </ul>
                 </nav>
@@ -218,10 +218,10 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         </div>
                         <div>
                             <h5 class="modal-title fw-bold text-dark-blue fs-6 mb-0" id="revisionModalLabel">
-                                Minta Perbaikan / Revisi Dokumen
+                                Kembalikan ke GPM untuk Perbaikan
                             </h5>
                             <p class="text-muted small mb-0 mt-0.5" style="font-size: 0.78rem;">
-                                Berikan instruksi revisi yang jelas untuk unit pengunggah.
+                                Catatan evaluasi dikirimkan secara internal ke GPM Fakultas untuk dirumuskan ke unit pengunggah.
                             </p>
                         </div>
                     </div>
@@ -275,7 +275,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <div class="modal-footer px-4 py-3 bg-light bg-opacity-60 border-top d-flex justify-content-between align-items-center" style="border-color: #F1F5F9 !important;">
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold" data-bs-dismiss="modal" style="font-size: 0.82rem;">Batal</button>
                     <button type="submit" class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2" style="font-size: 0.82rem;">
-                        <i class="fas fa-paper-plane"></i> Kirim Catatan Revisi
+                        <i class="fas fa-undo"></i> Kembalikan ke GPM untuk Perbaikan
                     </button>
                 </div>
             </form>
@@ -375,10 +375,11 @@ function fetchReviewProdiData(page) {
         siklus: currentReviewSiklus,
         status_review: statusVal,
         tahun_akademik: tahunVal,
-        search: searchVal
+        search: searchVal,
+        q: searchVal
     });
 
-    fetch('<?= base_url("admin/review/prodi/" . $prodi["id"]) ?>?' + params.toString(), {
+    fetch('<?= base_url("admin/review-prodi/" . $prodi["id"]) ?>?' + params.toString(), {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(res => res.json())
@@ -438,8 +439,8 @@ function renderReviewPagination(totalPages, currentPage) {
 
         if (startPage > 2) {
             const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            dotsLi.className = 'page-item ellipsis disabled';
+            dotsLi.innerHTML = '<span class="page-link dots">&hellip;</span>';
             nav.appendChild(dotsLi);
         }
     }
@@ -457,8 +458,8 @@ function renderReviewPagination(totalPages, currentPage) {
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
             const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            dotsLi.className = 'page-item ellipsis disabled';
+            dotsLi.innerHTML = '<span class="page-link dots">&hellip;</span>';
             nav.appendChild(dotsLi);
         }
         const lastLi = document.createElement('li');

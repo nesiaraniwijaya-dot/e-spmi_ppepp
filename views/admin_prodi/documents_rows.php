@@ -11,11 +11,11 @@ if (!isset($no)) {
 if (!empty($documents)):
     foreach ($documents as $doc): 
         $status = $doc['status_review'] ?? 'belum_direview';
-        $isPerluPerbaikan = in_array($status, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']);
-        $isGpmRev = ($status === 'revisi_gpm');
-        $noteText = $isGpmRev ? ($doc['gpm_catatan'] ?? $doc['catatan_review'] ?? '') : ($doc['catatan_review'] ?? '');
-        $reviewerName = $isGpmRev ? ($doc['gpm_reviewer_name'] ?? 'Gugus Penjaminan Mutu (GPM)') : ($doc['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM');
-        $revDate = !empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : (!empty($doc['gpm_reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['gpm_reviewed_at'])) : '-');
+        $isPerluPerbaikan = in_array($status, ['revisi_gpm', 'perlu_perbaikan']);
+        $isGpmRev = true;
+        $noteText = $doc['gpm_catatan'] ?? $doc['catatan_review'] ?? '';
+        $reviewerName = ($doc['status_review'] === 'sesuai') ? 'Pusat Penjaminan Mutu LPM' : 'Gugus Penjaminan Mutu (GPM) Fakultas';
+        $revDate = !empty($doc['gpm_reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['gpm_reviewed_at'])) : (!empty($doc['reviewed_at']) ? date('d/m/Y H:i', strtotime($doc['reviewed_at'])) : '-');
     ?>
         <tr class="doc-row" 
             data-title="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
@@ -380,12 +380,12 @@ if (!empty($documents)):
                             </div>
                         <?php endif; ?>
 
-                        <!-- Catatan Evaluasi LPM -->
-                        <?php if (!empty($doc['catatan_review'])): ?>
+                        <!-- Catatan Evaluasi Resmi (Masking LPM sampai Pengesahan Akhir) -->
+                        <?php if (!empty($doc['catatan_review']) && $status !== 'revisi_lpm' && ($status === 'sesuai' || $doc['catatan_review'] !== ($doc['gpm_catatan'] ?? ''))): ?>
                             <div class="p-3 rounded-3 mb-3 border" style="background: #F8FAFC;">
                                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                                     <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.74rem;">
-                                        <i class="fas fa-comments text-primary me-1"></i> Catatan Evaluasi LPM:
+                                        <i class="fas fa-comments text-primary me-1"></i> <?= ($status === 'sesuai') ? 'Catatan Pengesahan Akhir LPM:' : 'Catatan Evaluasi GPM Fakultas:' ?>
                                     </span>
                                     <?php if (!empty($doc['reviewed_at'])): ?>
                                         <span class="small text-muted" style="font-size: 0.72rem;">
@@ -395,7 +395,7 @@ if (!empty($documents)):
                                 </div>
                                 <div class="small text-dark" style="line-height: 1.55; white-space: pre-wrap;"><?= htmlspecialchars($doc['catatan_review']) ?></div>
                                 <div class="small text-muted mt-2 pt-2 border-top" style="font-size: 0.72rem;">
-                                    <i class="fas fa-user-tie me-1"></i>Reviewer LPM: <?= htmlspecialchars($doc['reviewer_name'] ?? 'Pusat Penjaminan Mutu LPM') ?>
+                                    <i class="fas fa-shield-halved text-purple me-1"></i>Reviewer: <?= htmlspecialchars($reviewerName) ?>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -517,5 +517,17 @@ if (!empty($documents)):
             </div>
         </div>
     <?php endforeach; ?>
+<?php else: ?>
+    <tr id="emptyRow">
+        <td colspan="7" class="text-center py-5 text-muted">
+            <div class="py-4">
+                <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; font-size: 1.8rem;">
+                    <i class="fas fa-folder-open text-secondary"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">Tidak Ada Dokumen yang Ditemukan</h6>
+                <p class="small text-muted mb-0">Coba sesuaikan kata kunci pencarian atau filter yang dipilih.</p>
+            </div>
+        </td>
+    </tr>
 <?php endif; ?>
 

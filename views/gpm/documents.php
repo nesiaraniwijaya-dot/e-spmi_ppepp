@@ -213,53 +213,53 @@ foreach ($documents as $d) {
         <!-- 5 Siklus PPEPP Tabs Header -->
         <ul class="nav ppepp-nav-tabs mb-4" id="gpmPpeppTabs" role="tablist">
             <li class="nav-item">
-                <a href="<?= base_url('gpm/dokumen?' . http_build_query(array_merge($_GET, ['siklus' => '']))) ?>" 
+                <button type="button" onclick="selectGpmSiklusTab('', this)" 
                    class="nav-link <?= empty($siklusFilter) ? 'active' : '' ?>">
                     <i class="fas fa-layer-group"></i> Semua (<?= $siklusCounts['all'] ?>)
-                </a>
+                </button>
             </li>
             <li class="nav-item">
-                <a href="<?= base_url('gpm/dokumen?' . http_build_query(array_merge($_GET, ['siklus' => 'penetapan']))) ?>" 
+                <button type="button" onclick="selectGpmSiklusTab('penetapan', this)" 
                    class="nav-link tab-penetapan <?= $siklusFilter === 'penetapan' ? 'active' : '' ?>">
                     <i class="fas fa-file-signature"></i> Penetapan (<?= $siklusCounts['penetapan'] ?>)
-                </a>
+                </button>
             </li>
             <li class="nav-item">
-                <a href="<?= base_url('gpm/dokumen?' . http_build_query(array_merge($_GET, ['siklus' => 'pelaksanaan']))) ?>" 
+                <button type="button" onclick="selectGpmSiklusTab('pelaksanaan', this)" 
                    class="nav-link tab-pelaksanaan <?= $siklusFilter === 'pelaksanaan' ? 'active' : '' ?>">
                     <i class="fas fa-tasks"></i> Pelaksanaan (<?= $siklusCounts['pelaksanaan'] ?>)
-                </a>
+                </button>
             </li>
             <li class="nav-item">
-                <a href="<?= base_url('gpm/dokumen?' . http_build_query(array_merge($_GET, ['siklus' => 'evaluasi']))) ?>" 
+                <button type="button" onclick="selectGpmSiklusTab('evaluasi', this)" 
                    class="nav-link tab-evaluasi <?= $siklusFilter === 'evaluasi' ? 'active' : '' ?>">
                     <i class="fas fa-chart-line"></i> Evaluasi (<?= $siklusCounts['evaluasi'] ?>)
-                </a>
+                </button>
             </li>
             <li class="nav-item">
-                <a href="<?= base_url('gpm/dokumen?' . http_build_query(array_merge($_GET, ['siklus' => 'pengendalian']))) ?>" 
+                <button type="button" onclick="selectGpmSiklusTab('pengendalian', this)" 
                    class="nav-link tab-pengendalian <?= $siklusFilter === 'pengendalian' ? 'active' : '' ?>">
                     <i class="fas fa-sliders"></i> Pengendalian (<?= $siklusCounts['pengendalian'] ?>)
-                </a>
+                </button>
             </li>
             <li class="nav-item">
-                <a href="<?= base_url('gpm/dokumen?' . http_build_query(array_merge($_GET, ['siklus' => 'peningkatan']))) ?>" 
+                <button type="button" onclick="selectGpmSiklusTab('peningkatan', this)" 
                    class="nav-link tab-peningkatan <?= $siklusFilter === 'peningkatan' ? 'active' : '' ?>">
                     <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= $siklusCounts['peningkatan'] ?>)
-                </a>
+                </button>
             </li>
         </ul>
 
         <!-- Filter Form Toolbar: Pencarian (Baris 1) & Filter Dropdown (Baris 2) -->
-        <form method="GET" action="<?= base_url('gpm/dokumen') ?>" class="mb-4">
-            <input type="hidden" name="unit" value="<?= htmlspecialchars($unitFilter) ?>">
-            <input type="hidden" name="siklus" value="<?= htmlspecialchars($siklusFilter) ?>">
+        <form id="gpmFilterForm" method="GET" action="<?= base_url('gpm/dokumen') ?>" onsubmit="event.preventDefault(); onGpmFilterChange(true);" class="mb-4">
+            <input type="hidden" name="unit" id="gpmUnitFilterInput" value="<?= htmlspecialchars($unitFilter) ?>">
+            <input type="hidden" name="siklus" id="gpmSiklusFilterInput" value="<?= htmlspecialchars($siklusFilter) ?>">
 
             <!-- Baris 1: Keyword Search (Full Width) -->
             <div class="mb-2.5">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 text-muted px-3"><i class="fas fa-magnifying-glass"></i></span>
-                    <input type="text" name="search" class="form-control border-start-0 ps-1" placeholder="Cari nama dokumen, kode, prodi..." value="<?= htmlspecialchars($search) ?>">
+                    <input type="text" id="gpmSearchInput" name="search" class="form-control border-start-0 ps-1" placeholder="Cari nama dokumen, kode, prodi..." value="<?= htmlspecialchars($search) ?>" oninput="onGpmFilterChange()">
                     <button type="submit" class="btn btn-primary bg-scu-blue border-0 px-4">Cari</button>
                 </div>
             </div>
@@ -270,7 +270,7 @@ foreach ($documents as $d) {
                 <div class="col-lg-3 col-md-6">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-bookmark"></i></span>
-                        <select name="bidang_id" class="form-select border-start-0" onchange="this.form.submit()">
+                        <select name="bidang_id" id="gpmBidangSelect" class="form-select border-start-0" onchange="onGpmFilterChange(true)">
                             <option value="">Semua Bidang</option>
                             <?php foreach ($bidangList as $b): ?>
                                 <option value="<?= $b['id'] ?>" <?= $bidangFilter == $b['id'] ? 'selected' : '' ?>>
@@ -285,7 +285,7 @@ foreach ($documents as $d) {
                 <div class="col-lg-4 col-md-6">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-shield"></i></span>
-                        <select name="status_review" class="form-select border-start-0" onchange="this.form.submit()">
+                        <select name="status_review" id="gpmStatusSelect" class="form-select border-start-0" onchange="onGpmFilterChange(true)">
                             <option value="">Semua Status Review</option>
                             <option value="menunggu_review_gpm" <?= in_array($statusFilter, ['menunggu_review_gpm', 'belum_direview']) ? 'selected' : '' ?>>Menunggu Telaah GPM</option>
                             <option value="revisi_gpm" <?= $statusFilter === 'revisi_gpm' ? 'selected' : '' ?>>Perlu Revisi (GPM)</option>
@@ -302,7 +302,7 @@ foreach ($documents as $d) {
                 <div class="col-lg-3 col-md-6">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-calendar-alt"></i></span>
-                        <select name="tahun_akademik" class="form-select border-start-0" onchange="this.form.submit()">
+                        <select name="tahun_akademik" id="gpmTahunSelect" class="form-select border-start-0" onchange="onGpmFilterChange(true)">
                             <option value="">Semua Tahun Akademik</option>
                             <?php foreach (get_distinct_tahun_akademik() as $ta): ?>
                                 <option value="<?= htmlspecialchars($ta) ?>" <?= ($tahunFilter ?? '') === $ta ? 'selected' : '' ?>>
@@ -315,11 +315,9 @@ foreach ($documents as $d) {
 
                 <!-- Reset Button -->
                 <div class="col-lg-2 col-md-6 ms-auto text-end">
-                    <?php if (!empty($unitFilter !== 'all') || !empty($siklusFilter) || !empty($bidangFilter) || !empty($statusFilter) || !empty($tahunFilter) || !empty($search)): ?>
-                        <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-outline-secondary btn-sm rounded-pill w-100 fw-semibold" style="font-size: 0.78rem;" title="Reset Filter">
-                            <i class="fas fa-rotate-left me-1"></i> Reset Filter
-                        </a>
-                    <?php endif; ?>
+                    <button type="button" onclick="resetGpmFilters()" class="btn btn-outline-secondary btn-sm rounded-pill w-100 fw-semibold" style="font-size: 0.78rem;" title="Reset Filter">
+                        <i class="fas fa-rotate-left me-1"></i> Reset Filter
+                    </button>
                 </div>
             </div>
         </form>
@@ -378,17 +376,26 @@ foreach ($documents as $d) {
             </table>
         </div>
 
-        <?php if (!empty($documents)): ?>
-            <!-- Footer Pagination Controls -->
-            <div class="pt-3.5 mt-2 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3" id="gpmPaginationWrapper" style="border-color: #E2E8F0 !important;">
-                <div class="small text-muted" id="gpmTableInfo">
-                    Menampilkan <span class="fw-bold text-dark" id="gpmStartNum"><?= $startNum ?></span> - <span class="fw-bold text-dark" id="gpmEndNum"><?= $endNum ?></span> dari <span class="fw-bold text-dark" id="gpmTotalFiltered"><?= number_format($totalFiltered, 0, ',', '.') ?></span> Dokumen
+        <!-- Footer Pagination Controls -->
+        <div class="pt-3.5 mt-2 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3" id="gpmPaginationWrapper" style="border-color: #E2E8F0 !important; display: <?= empty($documents) ? 'none !important' : 'flex' ?>;">
+            <div class="small text-muted" id="gpmTableInfo">
+                Menampilkan <span class="fw-bold text-dark" id="gpmStartNum"><?= $startNum ?></span> - <span class="fw-bold text-dark" id="gpmEndNum"><?= $endNum ?></span> dari <span class="fw-bold text-dark" id="gpmTotalFiltered"><?= number_format($totalFiltered, 0, ',', '.') ?></span> Dokumen
+            </div>
+            <div class="table-pagination-control">
+                <div class="table-perpage-wrap">
+                    <label for="gpmPageSizeSelect" class="table-perpage-label">Ukuran Halaman:</label>
+                    <select id="gpmPageSizeSelect" class="form-select table-perpage-select shadow-none" onchange="changeGpmPageSize(this.value)">
+                        <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
+                        <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
+                        <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
+                        <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100 data</option>
+                    </select>
                 </div>
                 <nav aria-label="Navigasi Halaman Dokumen" id="gpmTablePagination">
                     <!-- Tombol pagination digenerate oleh JavaScript -->
                 </nav>
             </div>
-        <?php endif; ?>
+        </div>
     </div>
 </div>
 
@@ -398,6 +405,45 @@ let gpmPerPage = <?= (int)$perPage ?>;
 let gpmTotalPages = <?= (int)$totalPages ?>;
 let gpmSearchTimer = null;
 
+function selectGpmSiklusTab(siklus, btn) {
+    const siklusInput = document.getElementById('gpmSiklusFilterInput');
+    if (siklusInput) siklusInput.value = siklus;
+    const tabs = document.querySelectorAll('#gpmPpeppTabs .nav-link');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    fetchGpmData(1);
+}
+
+function onGpmFilterChange(immediate = false) {
+    clearTimeout(gpmSearchTimer);
+    if (immediate) {
+        fetchGpmData(1);
+    } else {
+        gpmSearchTimer = setTimeout(() => {
+            fetchGpmData(1);
+        }, 250);
+    }
+}
+
+function resetGpmFilters() {
+    const sInput = document.getElementById('gpmSearchInput');
+    if (sInput) sInput.value = '';
+    const bSel = document.getElementById('gpmBidangSelect');
+    if (bSel) bSel.value = '';
+    const stSel = document.getElementById('gpmStatusSelect');
+    if (stSel) stSel.value = '';
+    const thSel = document.getElementById('gpmTahunSelect');
+    if (thSel) thSel.value = '';
+    const siklusInput = document.getElementById('gpmSiklusFilterInput');
+    if (siklusInput) siklusInput.value = '';
+
+    const tabs = document.querySelectorAll('#gpmPpeppTabs .nav-link');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (tabs[0]) tabs[0].classList.add('active');
+
+    fetchGpmData(1);
+}
+
 function changeGpmPageSize(size) {
     gpmPerPage = parseInt(size, 10) || 50;
     fetchGpmData(1);
@@ -405,12 +451,16 @@ function changeGpmPageSize(size) {
 
 function fetchGpmData(page) {
     gpmCurrentPage = page || 1;
-    const form = document.querySelector('form[action*="gpm/dokumen"]') || document.forms[0];
+    const form = document.getElementById('gpmFilterForm');
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
     params.set('ajax', '1');
     params.set('page', gpmCurrentPage);
     params.set('per_page', gpmPerPage);
+
+    const searchVal = document.getElementById('gpmSearchInput') ? document.getElementById('gpmSearchInput').value.trim() : '';
+    params.set('search', searchVal);
+    params.set('q', searchVal);
 
     const tbody = document.getElementById('gpmDocTableBody');
     if (tbody) tbody.style.opacity = '0.5';
@@ -432,13 +482,24 @@ function fetchGpmData(page) {
         const endEl = document.getElementById('gpmEndNum');
         const totalEl = document.getElementById('gpmTotalFiltered');
         const topInfo = document.getElementById('gpmTopTableInfo');
+        const pagWrapper = document.getElementById('gpmPaginationWrapper');
 
         if (startEl) startEl.textContent = data.start_num || 0;
         if (endEl) endEl.textContent = data.end_num || 0;
         if (totalEl) totalEl.textContent = Number(data.total || 0).toLocaleString('id-ID');
         if (topInfo) topInfo.innerHTML = '<i class="fas fa-layer-group text-primary me-1"></i> Menampilkan total <strong>' + Number(data.total || 0).toLocaleString('id-ID') + ' Dokumen Mutu</strong>';
 
+        if (pagWrapper) {
+            pagWrapper.style.setProperty('display', (data.total > 0) ? 'flex' : 'none', 'important');
+        }
+
         renderGpmPagination(gpmTotalPages, gpmCurrentPage);
+
+        // Smooth scroll ke tabel saat ganti slide halaman
+        const tableEl = document.getElementById('gpmDocumentsTable');
+        if (tableEl && page > 1) {
+            tableEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     })
     .catch(err => {
         console.error("Error fetching gpm data:", err);
@@ -453,9 +514,9 @@ function renderGpmPagination(totalPages, currentPage) {
 
     if (totalPages <= 1) return;
 
-    let html = '<ul class="pagination pagination-sm mb-0">';
+    let html = '<ul class="pagination-segmented mb-0">';
     html += '<li class="page-item ' + (currentPage <= 1 ? 'disabled' : '') + '">';
-    html += '<button type="button" class="page-link rounded-start-pill" onclick="fetchGpmData(' + (currentPage - 1) + ')" aria-label="Sebelumnya">&laquo;</button>';
+    html += '<button type="button" class="page-link" ' + (currentPage > 1 ? 'onclick="fetchGpmData(' + (currentPage - 1) + ')\"' : 'disabled') + ' aria-label="Sebelumnya"><i class="fas fa-chevron-left" style="font-size: 0.72rem;"></i></button>';
     html += '</li>';
 
     let startPage = Math.max(1, currentPage - 2);
@@ -464,7 +525,7 @@ function renderGpmPagination(totalPages, currentPage) {
     if (startPage > 1) {
         html += '<li class="page-item"><button type="button" class="page-link" onclick="fetchGpmData(1)">1</button></li>';
         if (startPage > 2) {
-            html += '<li class="page-item disabled"><span class="page-link">&hellip;</span></li>';
+            html += '<li class="page-item ellipsis disabled"><span class="page-link dots">&hellip;</span></li>';
         }
     }
 
@@ -476,38 +537,18 @@ function renderGpmPagination(totalPages, currentPage) {
 
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
-            html += '<li class="page-item disabled"><span class="page-link">&hellip;</span></li>';
+            html += '<li class="page-item ellipsis disabled"><span class="page-link dots">&hellip;</span></li>';
         }
         html += '<li class="page-item"><button type="button" class="page-link" onclick="fetchGpmData(' + totalPages + ')">' + totalPages + '</button></li>';
     }
 
     html += '<li class="page-item ' + (currentPage >= totalPages ? 'disabled' : '') + '">';
-    html += '<button type="button" class="page-link rounded-end-pill" onclick="fetchGpmData(' + (currentPage + 1) + ')" aria-label="Selanjutnya">&raquo;</button>';
+    html += '<button type="button" class="page-link" ' + (currentPage < totalPages ? 'onclick="fetchGpmData(' + (currentPage + 1) + ')\"' : 'disabled') + ' aria-label="Selanjutnya"><i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i></button>';
     html += '</li>';
     html += '</ul>';
 
     nav.innerHTML = html;
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    renderGpmPagination(gpmTotalPages, gpmCurrentPage);
-
-    // Otomatis buka modal review jika diarahkan dari dashboard (?open_review=ID)
-    const urlParams = new URLSearchParams(window.location.search);
-    const openReviewId = urlParams.get('open_review');
-    if (openReviewId) {
-        const modalEl = document.getElementById('gpmReviewModal' + openReviewId);
-        if (modalEl) {
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-            const rowEl = document.getElementById('doc-row-' + openReviewId);
-            if (rowEl) {
-                rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                rowEl.classList.add('table-warning');
-            }
-        }
-    }
-});
 </script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

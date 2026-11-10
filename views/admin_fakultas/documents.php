@@ -183,10 +183,10 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                 <div class="col-auto d-flex align-items-center gap-2">
                     <label for="topFakultasPerPageSelect" class="small text-muted text-nowrap mb-0 d-none d-sm-inline" style="font-size: 0.78rem;">Tampilkan:</label>
                     <select class="form-select form-select-sm" id="topFakultasPerPageSelect" style="min-width: 95px; width: auto;" onchange="changeFakultasPerPage(this.value)">
-                        <option value="10">10 data</option>
-                        <option value="20">20 data</option>
-                        <option value="50" selected>50 data</option>
-                        <option value="100">100 data</option>
+                        <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
+                        <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
+                        <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
+                        <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100 data</option>
                     </select>
                 </div>
             </div>
@@ -250,10 +250,10 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
             <div id="tableInfo" class="small text-muted">
                 Menampilkan <span class="fw-bold text-dark" id="fakultasStartNum"><?= $startNum ?></span> - <span class="fw-bold text-dark" id="fakultasEndNum"><?= $endNum ?></span> dari <span class="fw-bold text-dark" id="fakultasTotalFiltered"><?= number_format($totalFiltered, 0, ',', '.') ?></span> Dokumen
             </div>
-            <div class="d-flex flex-wrap align-items-center gap-2.5">
-                <div class="d-flex align-items-center gap-1.5 small text-muted">
-                    <span style="font-size: 0.78rem;">Ukuran Halaman:</span>
-                    <select class="form-select form-select-sm" id="fakultasPerPageSelect" style="width: 95px; font-size: 0.78rem;" onchange="changeFakultasPerPage(this.value)">
+            <div class="table-pagination-control">
+                <div class="table-perpage-wrap">
+                    <label for="fakultasPerPageSelect" class="table-perpage-label">Ukuran Halaman:</label>
+                    <select class="form-select table-perpage-select shadow-none" id="fakultasPerPageSelect" onchange="changeFakultasPerPage(this.value)">
                         <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
                         <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
                         <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
@@ -261,7 +261,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                     </select>
                 </div>
                 <nav aria-label="Fakultas Pagination">
-                    <ul class="pagination pagination-sm mb-0" id="fakultasPaginationNav">
+                    <ul class="pagination-segmented mb-0" id="fakultasPaginationNav">
                         <!-- Populated dynamically -->
                     </ul>
                 </nav>
@@ -286,7 +286,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                     <div class="fw-bold text-dark-blue p-2.5 rounded-3 bg-light border" id="modalNoteDocTitle">-</div>
                 </div>
                 <div class="d-flex align-items-center justify-content-between mb-3 text-muted small pb-2 border-bottom">
-                    <span><i class="fas fa-building-columns text-primary me-1"></i> <strong id="modalNoteReviewer">Pusat Penjaminan Mutu LPM</strong></span>
+                    <span><i class="fas fa-shield-halved text-purple me-1"></i> <strong id="modalNoteReviewer">Gugus Penjaminan Mutu (GPM) Fakultas</strong></span>
                     <span><i class="fas fa-calendar-alt text-warning me-1"></i> <span id="modalNoteDate">-</span></span>
                 </div>
                 <div class="mb-0">
@@ -340,6 +340,10 @@ function toggleFilterReviewStatus(status) {
 
 function changeFakultasPerPage(val) {
     currentFakultasPerPage = parseInt(val, 10) || 50;
+    const topSel = document.getElementById('topFakultasPerPageSelect');
+    if (topSel && topSel.value != val) topSel.value = val;
+    const btmSel = document.getElementById('fakultasPerPageSelect');
+    if (btmSel && btmSel.value != val) btmSel.value = val;
     fetchFakultasData(1);
 }
 
@@ -347,7 +351,7 @@ function onFakultasFilterChange() {
     clearTimeout(fakultasSearchTimer);
     fakultasSearchTimer = setTimeout(() => {
         fetchFakultasData(1);
-    }, 280);
+    }, 250);
 }
 
 function fetchFakultasData(page) {
@@ -367,6 +371,7 @@ function fetchFakultasData(page) {
         bidang_id: bidangVal,
         tahun_akademik: tahunVal,
         status_review: filterReviewStatusVal,
+        search: searchVal,
         q: searchVal
     });
 
@@ -386,12 +391,23 @@ function fetchFakultasData(page) {
         const startEl = document.getElementById('fakultasStartNum');
         const endEl = document.getElementById('fakultasEndNum');
         const totalEl = document.getElementById('fakultasTotalFiltered');
+        const pagWrapper = document.getElementById('fakultasPaginationWrapper');
 
         if (startEl) startEl.textContent = data.start_num || 0;
         if (endEl) endEl.textContent = data.end_num || 0;
         if (totalEl) totalEl.textContent = Number(data.total || 0).toLocaleString('id-ID');
 
+        if (pagWrapper) {
+            pagWrapper.style.setProperty('display', (data.total > 0) ? 'flex' : 'none', 'important');
+        }
+
         renderFakultasPagination(fakultasTotalPages, currentFakultasPage);
+
+        // Smooth scroll ke atas tabel saat navigasi halaman
+        const tableEl = document.getElementById('documentsTable');
+        if (tableEl && page > 1) {
+            tableEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     })
     .catch(err => {
         console.error("Error fetching fakultas data:", err);
@@ -427,8 +443,8 @@ function renderFakultasPagination(totalPages, currentPage) {
 
         if (startPage > 2) {
             const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            dotsLi.className = 'page-item ellipsis disabled';
+            dotsLi.innerHTML = '<span class="page-link dots">&hellip;</span>';
             nav.appendChild(dotsLi);
         }
     }
@@ -446,8 +462,8 @@ function renderFakultasPagination(totalPages, currentPage) {
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
             const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            dotsLi.className = 'page-item ellipsis disabled';
+            dotsLi.innerHTML = '<span class="page-link dots">&hellip;</span>';
             nav.appendChild(dotsLi);
         }
         const lastLi = document.createElement('li');
@@ -487,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!button) return;
             const title = button.getAttribute('data-title') || '-';
             const notes = button.getAttribute('data-notes') || 'Tidak ada catatan perbaikan khusus.';
-            const reviewer = button.getAttribute('data-reviewer') || 'Pusat Penjaminan Mutu LPM';
+            const reviewer = button.getAttribute('data-reviewer') || 'Gugus Penjaminan Mutu (GPM) Fakultas';
             const date = button.getAttribute('data-date') || '-';
 
             document.getElementById('modalNoteDocTitle').textContent = title;

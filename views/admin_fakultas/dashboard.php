@@ -9,7 +9,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 <div class="container-fluid p-0 admin-container">
     <!-- Header Banner -->
     <?php 
-    $perluTindakanDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => in_array($d['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])));
+    $perluTindakanDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => in_array($d['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm'])));
     $menungguVerifikasiDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
     $totalRevisiCount = count($perluTindakanDocs) + count($menungguVerifikasiDocs);
     $perluCount = count($perluTindakanDocs);
@@ -147,7 +147,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     </div>
 
-    <!-- Ringkasan Perbaikan Dokumen dari LPM (Minimalis & Ringkas) -->
+    <!-- Ringkasan Perbaikan Dokumen dari GPM Fakultas (Minimalis & Ringkas) -->
     <?php if ($totalRevisiCount > 0): ?>
         <div class="dashboard-revision-box mb-4 shadow-sm" id="sectionPerbaikanFakultas" style="border-color: <?= !empty($perluTindakanDocs) ? '#FECACA' : '#BFDBFE' ?> !important;">
             <!-- Header Ringkas & Elegan -->
@@ -161,7 +161,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div>
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-1.5">
                             <h6 class="fw-bold <?= !empty($perluTindakanDocs) ? 'text-danger' : 'text-primary' ?> mb-0" style="font-size: 1.05rem; letter-spacing: -0.2px;">
-                                Dokumen Memerlukan Revisi (Evaluasi GPM / LPM)
+                                Dokumen Memerlukan Revisi (Evaluasi GPM Fakultas)
                             </h6>
                             <?php if (!empty($perluTindakanDocs)): ?>
                                 <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
@@ -175,7 +175,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <?php endif; ?>
                         </div>
                         <p class="text-muted small mb-0" style="font-size: 0.83rem; line-height: 1.55;">
-                            <?= !empty($perluTindakanDocs) ? 'Terdapat catatan evaluasi dari GPM Fakultas / LPM yang harus diperbaiki agar dokumen mutu fakultas dapat disahkan.' : 'Berkas perbaikan dokumen fakultas telah masuk ke antrean verifikasi tim penjaminan mutu.' ?>
+                            <?= !empty($perluTindakanDocs) ? 'Terdapat catatan evaluasi dari Gugus Penjaminan Mutu (GPM) Fakultas yang harus diperbaiki agar dokumen mutu fakultas dapat disahkan.' : 'Berkas perbaikan dokumen fakultas telah masuk ke antrean verifikasi Gugus Penjaminan Mutu (GPM) Fakultas.' ?>
                         </p>
                     </div>
                 </div>
@@ -194,19 +194,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <?php 
                 $displayDocs = array_slice(array_merge($perluTindakanDocs, $menungguVerifikasiDocs), 0, 3);
                 foreach ($displayDocs as $item): 
-                    $isPerlu = in_array($item['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']);
-                    $isGpmRev = ($item['status_review'] ?? '') === 'revisi_gpm';
-                    if ($isGpmRev) {
-                        $revLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
-                        $revDate = !empty($item['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['gpm_reviewed_at'])) . ' WIB' : (!empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : '-');
-                        $noteExcerpt = trim($item['gpm_catatan'] ?: ($item['catatan_review'] ?? 'Silakan periksa dan sesuaikan berkas dokumen tingkat fakultas.'));
-                    } else {
-                        $revLabel = 'Pusat Penjaminan Mutu LPM';
-                        $revDate = !empty($item['lpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['lpm_reviewed_at'])) . ' WIB' : (!empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : (!empty($item['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['gpm_reviewed_at'])) . ' WIB' : '-'));
-                        $noteExcerpt = trim($item['lpm_catatan'] ?: ($item['catatan_review'] ?: ($item['gpm_catatan'] ?? 'Silakan periksa dan sesuaikan berkas dokumen tingkat fakultas.')));
-                    }
+                    $isPerlu = in_array($item['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm']);
+                    $isGpmRev = true;
+                    $revLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
+                    $revDate = !empty($item['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($item['gpm_reviewed_at'])) . ' WIB' : (!empty($item['reviewed_at']) ? date('d M Y, H:i', strtotime($item['reviewed_at'])) . ' WIB' : '-');
+                    $noteExcerpt = trim($item['gpm_catatan'] ?: ($item['catatan_review'] ?? ''));
                     if (empty($noteExcerpt)) {
-                        $noteExcerpt = $isPerlu ? 'Silakan periksa dan sesuaikan berkas dokumen tingkat fakultas.' : 'Menunggu review ulang.';
+                        $noteExcerpt = $isPerlu ? 'Silakan periksa dan sesuaikan berkas dokumen tingkat fakultas sesuai arahan GPM.' : 'Menunggu review ulang GPM Fakultas.';
                     }
                 ?>
                     <div class="dashboard-revision-item d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3 gap-lg-4">

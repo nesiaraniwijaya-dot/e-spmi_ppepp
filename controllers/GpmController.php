@@ -248,7 +248,7 @@ class GpmController extends Controller {
         $bidangFilter = !empty($_GET['bidang_id']) ? (int)$_GET['bidang_id'] : 0;
         $statusFilter = trim($_GET['status_review'] ?? '');
         $tahunFilter  = trim($_GET['tahun_akademik'] ?? '');
-        $search       = trim($_GET['search'] ?? '');
+        $search       = trim($_GET['search'] ?? $_GET['q'] ?? '');
         $perPage      = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
         if (!in_array($perPage, [10, 20, 50, 100])) {
             $perPage = 50;
@@ -308,7 +308,8 @@ class GpmController extends Controller {
         }
 
         if ($search) {
-            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR b.nama_bidang LIKE ? OR p.nama_prodi LIKE ?)";
+            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR d.deskripsi LIKE ? OR b.nama_bidang LIKE ? OR p.nama_prodi LIKE ?)";
+            $params[] = "%{$search}%";
             $params[] = "%{$search}%";
             $params[] = "%{$search}%";
             $params[] = "%{$search}%";
@@ -522,6 +523,110 @@ class GpmController extends Controller {
             Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' dikembalikan dengan catatan perbaikan untuk ditindaklanjuti oleh unit pengunggah.");
         }
 
+        redirect($redirectUrl);
+    }
+
+    /**
+     * Meneruskan Catatan Evaluasi dari LPM ke Unit Pengunggah (Prodi / Dekanat).
+     * Melakukan masking: catatan dan reviewer diposisikan murni atas nama GPM Fakultas,
+     * menyembunyikan deliberasi internal LPM dari akses langsung Prodi/Dekanat.
+     */
+    public function forwardLpmRevision(): void {
+        $docId         = !empty($_POST['document_id']) ? (int)$_POST['document_id'] : (!empty($_POST['id']) ? (int)$_POST['id'] : 0);
+        $catatanGpm    = trim($_POST['catatan_gpm'] ?? '');
+        $redirectUrl   = trim($_POST['redirect_to'] ?? 'gpm/perbaikan');
+
+        if (!$docId) {
+            Auth::setFlash('danger', 'ID Dokumen tidak valid.');
+            redirect($redirectUrl);
+            return;
+        }
+
+        $doc = $this->findDocWithScope($docId);
+        if (!$doc) {
+            Auth::setFlash('danger', 'Dokumen tidak ditemukan atau di luar wewenang review GPM fakultas Anda.');
+            redirect($redirectUrl);
+            return;
+        }
+
+        if (empty($catatanGpm)) {
+            Auth::setFlash('danger', 'Arahan perbaikan resmi GPM wajib diisi sebelum diteruskan ke unit sasaran.');
+            redirect($redirectUrl);
+            return;
+        }
+
+        $reviewerId           = Auth::id();
+        $officialReviewerName = 'GPM ' . ($this->fakultas['nama_fakultas'] ?? 'Fakultas');
+
+        // 1. Update Dokumen PPEPP: Status menjadi 'revisi_gpm', catatan resmi diupdate dengan arahan GPM
+        $stmtUpdate = $this->db->prepare("
+            UPDATE ppepp_documents 
+            SET status_review = 'revisi_gpm',
+                tahap_review = 'gpm',
+                catatan_review = ?,
+                gpm_catatan = ?,
+                gpm_reviewed_by = ?,
+                gpm_reviewed_at = NOW(),
+                updated_at = NOW()
+            WHERE id = ?
+        ");
+        $stmtUpdate->execute([
+            $catatanGpm,
+            $catatanGpm,
+            $reviewerId,
+            $docId
+        ]);
+
+        // 2. Catat Riwayat Review ke ppepp_document_reviews atas nama GPM Fakultas
+        $stmtLog = $this->db->prepare("
+            INSERT INTO ppepp_document_reviews 
+            (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
+            VALUES (?, ?, 'gpm', ?, 'gpm', 'revisi_lpm', 'revisi_gpm', ?, NOW())
+        ");
+        $stmtLog->execute([
+            $docId,
+            $reviewerId,
+            $officialReviewerName,
+            $catatanGpm
+        ]);
+
+        // 3. Catat ke ppepp_document_revisions atas nama GPM untuk tracking unit pengunggah
+        try {
+            $revNumberStmt = $this->db->prepare("SELECT COUNT(*) FROM ppepp_document_revisions WHERE document_id = ?");
+            $revNumberStmt->execute([$docId]);
+            $nextRevNumber = (int)$revNumberStmt->fetchColumn() + 1;
+
+            $stmtInsRev = $this->db->prepare("
+                INSERT INTO ppepp_document_revisions 
+                (document_id, cycle_id, revisi_ke, reviewer_id, reviewer_name, reviewer_role, status_review, catatan_review, reviewed_at, created_at)
+                VALUES (?, ?, ?, ?, ?, 'gpm', 'revisi_gpm', ?, NOW(), NOW())
+            ");
+            $stmtInsRev->execute([
+                $docId,
+                $doc['cycle_id'] ?? null,
+                $nextRevNumber,
+                $reviewerId,
+                $officialReviewerName,
+                $catatanGpm
+            ]);
+        } catch (\Throwable $e) {
+            // Abaikan jika tabel revisi belum ada
+        }
+
+        // 4. Audit Log
+        $unitName = ($doc['level'] === 'fakultas') 
+            ? ($this->fakultas['nama_fakultas'] ?? 'Dekanat Fakultas') 
+            : 'Program Studi';
+        AuditLogger::log('UPDATE', 'Teruskan Revisi GPM ke Unit', (string)$docId, $doc['nama_dokumen'], $doc, [
+            'status_review'  => 'revisi_gpm',
+            'tahap_review'   => 'gpm',
+            'catatan_review' => $catatanGpm,
+            'reviewer_role'  => 'gpm',
+            'reviewer'       => $officialReviewerName,
+            'verifikator'    => Auth::user()['name'] ?? 'Petugas GPM'
+        ], (int)($doc['prodi_id'] ?? 0), $unitName);
+
+        Auth::setFlash('success', "Arahan perbaikan dokumen '{$doc['nama_dokumen']}' telah berhasil diteruskan ke unit sasaran atas nama GPM Fakultas.");
         redirect($redirectUrl);
     }
 
@@ -1286,6 +1391,16 @@ class GpmController extends Controller {
         $revisiDocs = $stmt->fetchAll();
         $this->attachFilesToDocs($revisiDocs);
 
+        // Segmentasi dokumen berjenjang:
+        // 1. Dokumen yang baru dikembalikan LPM dan menunggu GPM meneruskannya ke unit
+        $lpmRevisiDocs = array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['revisi_lpm', 'perlu_perbaikan'])));
+        // 2. Dokumen yang sudah diteruskan GPM dan sedang dalam pengerjaan oleh unit sasaran
+        $unitRevisiDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'revisi_gpm'));
+        // 3. Dokumen hasil revisi dari unit yang siap ditelaah ulang oleh GPM
+        $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
+        // 4. Seluruh dokumen dalam cakupan perlu tindakan
+        $perluDocs = array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['revisi_lpm', 'revisi_gpm', 'perlu_perbaikan'])));
+
         // Hitung statistik ringkas perbaikan
         $scopeWhere = "( (fakultas_id = {$this->fakultasId} AND level = 'fakultas') OR prodi_id IN ({$prodiIdPlaceholder}) )";
         $totalRevisiGpm = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review = 'revisi_gpm' AND deleted_at IS NULL")->fetchColumn();
@@ -1301,6 +1416,10 @@ class GpmController extends Controller {
             'fakultas'       => $this->fakultas,
             'prodisList'     => $this->prodisList,
             'revisiDocs'     => $revisiDocs,
+            'lpmRevisiDocs'  => $lpmRevisiDocs,
+            'unitRevisiDocs' => $unitRevisiDocs,
+            'sudahDocs'      => $sudahDocs,
+            'perluDocs'      => $perluDocs,
             'unitFilter'     => $unitFilter,
             'totalPerlu'     => $totalPerlu,
             'totalRevisiGpm' => $totalRevisiGpm,

@@ -49,13 +49,13 @@ class AdminFakultasController extends Controller {
         ];
         $cycleStats['total'] = $cycleStats['penetapan'] + $cycleStats['pelaksanaan'] + $cycleStats['evaluasi'] + $cycleStats['pengendalian'] + $cycleStats['peningkatan'];
 
-        // Dokumen dalam proses review/revisi dengan LPM
+        // Dokumen dalam proses review/revisi dengan GPM (Masking: revisi_lpm tersembunyi sampai diteruskan resmi oleh GPM)
         $stmtRevisi = $this->db->prepare("
             SELECT d.*, b.nama_bidang, u.name as reviewer_name 
             FROM ppepp_documents d 
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN users u ON d.reviewed_by = u.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL 
             ORDER BY 
                 GREATEST(
                     COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
@@ -134,9 +134,9 @@ class AdminFakultasController extends Controller {
             'peningkatan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='peningkatan' AND deleted_at IS NULL")->fetchColumn(),
         ];
 
-        // Hitung total banner revisi, antrean & draf tingkat fakultas
-        $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
-        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm') AND deleted_at IS NULL")->fetchColumn();
+        // Hitung total banner revisi, antrean & draf tingkat fakultas (Masking: revisi_lpm tersembunyi di GPM)
+        $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
+        $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm') AND deleted_at IS NULL")->fetchColumn();
         $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
 
         // Base WHERE: Murni dokumen tingkat dekanat / fakultas
@@ -160,7 +160,11 @@ class AdminFakultasController extends Controller {
 
         if (!empty($statusFilter)) {
             if ($statusFilter === 'revisi') {
-                $where[] = "d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+                $where[] = "d.status_review IN ('revisi_gpm', 'perlu_perbaikan')";
+            } elseif ($statusFilter === 'antrean') {
+                $where[] = "d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm')";
+            } elseif ($statusFilter === 'menunggu_review_gpm') {
+                $where[] = "d.status_review IN ('menunggu_review_gpm', 'revisi_lpm', 'belum_direview')";
             } else {
                 $where[] = "d.status_review = ?";
                 $params[] = $statusFilter;
@@ -168,7 +172,10 @@ class AdminFakultasController extends Controller {
         }
 
         if (!empty($search)) {
-            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ?)";
+            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR d.deskripsi LIKE ? OR b.nama_bidang LIKE ? OR u.name LIKE ?)";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
             $params[] = "%{$search}%";
             $params[] = "%{$search}%";
         }
@@ -176,7 +183,13 @@ class AdminFakultasController extends Controller {
         $whereClause = implode(" AND ", $where);
 
         // Count total
-        $stmtCount = $this->db->prepare("SELECT COUNT(*) FROM ppepp_documents d WHERE {$whereClause}");
+        $stmtCount = $this->db->prepare("
+            SELECT COUNT(*) 
+            FROM ppepp_documents d 
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+            LEFT JOIN users u ON d.user_id = u.id
+            WHERE {$whereClause}
+        ");
         $stmtCount->execute($params);
         $totalFiltered = (int)$stmtCount->fetchColumn();
 
@@ -262,10 +275,9 @@ class AdminFakultasController extends Controller {
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id 
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users rev ON d.reviewed_by = rev.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.status_review IN ('revisi_gpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
             ORDER BY 
                 GREATEST(
-                    COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
                     COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
                     COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
                     COALESCE(d.updated_at, '1970-01-01 00:00:00')
@@ -275,7 +287,18 @@ class AdminFakultasController extends Controller {
         $documents = $stmt->fetchAll();
         $this->attachFilesToDocs($documents);
 
-        $perluDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
+        // Masking privasi alur berjenjang:
+        // Seluruh catatan evaluasi dan identitas reviewer untuk Dekanat Fakultas diposisikan murni atas nama GPM Fakultas
+        foreach ($documents as &$d) {
+            $d['reviewer_name'] = 'Gugus Penjaminan Mutu (GPM) ' . ($this->fakultas['nama_fakultas'] ?? 'Fakultas');
+            $d['reviewer_role'] = 'gpm';
+            if (!empty($d['gpm_catatan'])) {
+                $d['catatan_review'] = $d['gpm_catatan'];
+            }
+        }
+        unset($d);
+
+        $perluDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'perlu_perbaikan'])));
         $sudahDocs = array_values(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm'])));
 
         $this->render('admin_fakultas/perbaikan', [

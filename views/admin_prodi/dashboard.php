@@ -23,9 +23,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     </div>
 
-    <!-- Alert Banner Perlu Perbaikan (Jika Ada Dokumen Direvisi LPM) -->
+    <!-- Alert Banner Perlu Perbaikan (Jika Ada Dokumen Direvisi GPM Fakultas) -->
     <?php 
-    $perluTindakanList = array_values(array_filter($revisiDocs ?? [], fn($d) => ($d['status_review'] ?? '') === 'perlu_perbaikan'));
+    $perluTindakanList = array_values(array_filter($revisiDocs ?? [], fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'perlu_perbaikan'])));
     $perluCount = count($perluTindakanList);
     if ($perluCount > 0): 
     ?>
@@ -41,10 +41,10 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <span class="text-danger fw-bold small">&bull; <?= $perluCount ?> Dokumen Butuh Revisi</span>
                     </div>
                     <h6 class="fw-bold text-dark-blue mb-1" style="font-size: 1.02rem;">
-                        Pemberitahuan: Terdapat <?= $perluCount ?> dokumen mutu yang memerlukan perbaikan dari LPM!
+                        Pemberitahuan: Terdapat <?= $perluCount ?> dokumen mutu yang memerlukan perbaikan dari GPM Fakultas!
                     </h6>
                     <p class="text-muted small mb-0" style="font-size: 0.82rem;">
-                        Tim Penjaminan Mutu telah memberikan catatan evaluasi. Harap segera periksa dan perbarui berkas agar dapat disahkan.
+                        Gugus Penjaminan Mutu (GPM) Fakultas telah memberikan catatan evaluasi. Harap segera periksa dan perbarui berkas agar dapat dilanjutkan ke pengesahan.
                     </p>
                 </div>
             </div>
@@ -175,9 +175,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     </div>
 
-    <!-- Pusat Notifikasi & Ringkasan Perbaikan Dokumen dari LPM -->
+    <!-- Pusat Notifikasi & Ringkasan Perbaikan Dokumen dari GPM Fakultas -->
     <?php 
-    $perluTindakanDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
+    $perluTindakanDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'perlu_perbaikan'])));
     $menungguVerifikasiDocs = array_values(array_filter($revisiDocs ?? [], fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_gpm', 'menunggu_review_lpm'])));
     $totalRevisiCount = count($perluTindakanDocs) + count($menungguVerifikasiDocs);
     if ($totalRevisiCount > 0): 
@@ -194,7 +194,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div>
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-1.5">
                             <h6 class="fw-bold <?= !empty($perluTindakanDocs) ? 'text-danger' : 'text-primary' ?> mb-0" style="font-size: 1.05rem; letter-spacing: -0.2px;">
-                                Dokumen Memerlukan Revisi (Evaluasi GPM / LPM)
+                                Dokumen Memerlukan Revisi (Evaluasi GPM Fakultas)
                             </h6>
                             <?php if (!empty($perluTindakanDocs)): ?>
                                 <span class="badge rounded-pill bg-danger text-white px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
@@ -208,7 +208,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <?php endif; ?>
                         </div>
                         <p class="text-muted small mb-0" style="font-size: 0.83rem; line-height: 1.55;">
-                            <?= !empty($perluTindakanDocs) ? 'Terdapat catatan evaluasi dari GPM Fakultas / LPM yang harus diperbaiki agar dokumen mutu dapat disahkan.' : 'Berkas perbaikan Anda telah masuk ke antrean verifikasi tim penjaminan mutu.' ?>
+                            <?= !empty($perluTindakanDocs) ? 'Terdapat catatan evaluasi dari Gugus Penjaminan Mutu (GPM) Fakultas yang harus diperbaiki agar dokumen mutu dapat disahkan.' : 'Berkas perbaikan Anda telah masuk ke antrean verifikasi Gugus Penjaminan Mutu (GPM) Fakultas.' ?>
                         </p>
                     </div>
                 </div>
@@ -227,19 +227,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <?php 
                 $displayDocs = array_slice(array_merge($perluTindakanDocs, $menungguVerifikasiDocs), 0, 3);
                 foreach ($displayDocs as $item): 
-                    $isPerlu = in_array($item['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']);
-                    $isGpmReview = (($item['status_review'] ?? '') === 'revisi_gpm');
-                    if ($isGpmReview) {
-                        $noteExcerpt = trim($item['gpm_catatan'] ?: ($item['catatan_review'] ?? ''));
-                        $reviewerLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
-                        $reviewerDate = !empty($item['gpm_reviewed_at']) ? $item['gpm_reviewed_at'] : ($item['reviewed_at'] ?? $item['updated_at']);
-                    } else {
-                        $noteExcerpt = trim($item['lpm_catatan'] ?: ($item['catatan_review'] ?: ($item['gpm_catatan'] ?? '')));
-                        $reviewerLabel = 'Pusat Penjaminan Mutu LPM';
-                        $reviewerDate = !empty($item['lpm_reviewed_at']) ? $item['lpm_reviewed_at'] : ($item['reviewed_at'] ?? ($item['gpm_reviewed_at'] ?? $item['updated_at']));
-                    }
+                    $isPerlu = in_array($item['status_review'] ?? '', ['revisi_gpm', 'perlu_perbaikan']);
+                    $isGpmReview = true;
+                    $noteExcerpt = trim($item['gpm_catatan'] ?: ($item['catatan_review'] ?? ''));
+                    $reviewerLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
+                    $reviewerDate = !empty($item['gpm_reviewed_at']) ? $item['gpm_reviewed_at'] : ($item['reviewed_at'] ?? $item['updated_at']);
                     if (empty($noteExcerpt)) {
-                        $noteExcerpt = $isPerlu ? 'Silakan sesuaikan isi dan lampiran dokumen mutu sesuai standar penjaminan mutu.' : 'Menunggu review ulang.';
+                        $noteExcerpt = $isPerlu ? 'Silakan sesuaikan isi dan lampiran dokumen mutu sesuai arahan GPM Fakultas.' : 'Menunggu review ulang GPM Fakultas.';
                     }
                 ?>
                     <div class="dashboard-revision-item d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3 gap-lg-4">

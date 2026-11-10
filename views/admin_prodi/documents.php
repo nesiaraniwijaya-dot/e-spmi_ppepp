@@ -184,7 +184,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 <div class="col">
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
-                        <input type="text" id="tableSearchInput" class="form-control bg-light border-start-0 ps-1" placeholder="Cari nama dokumen, nomor SK...">
+                        <input type="text" id="tableSearchInput" class="form-control bg-light border-start-0 ps-1" placeholder="Cari nama dokumen, nomor SK..." oninput="onProdiFilterChange()">
                     </div>
                 </div>
                 <div class="col-auto d-flex align-items-center gap-2">
@@ -223,7 +223,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
         <!-- Table -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" id="ppeppDocumentTable" style="font-size: 0.85rem;">
+            <table class="table table-hover align-middle mb-0" id="prodiDocumentsTable" style="font-size: 0.85rem;">
                 <thead class="table-light">
                     <tr>
                         <th style="width: 45px;">No</th>
@@ -259,10 +259,10 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <div id="tableInfo" class="small text-muted">
                 Menampilkan <span class="fw-bold text-dark" id="prodiStartNum"><?= $startNum ?></span> - <span class="fw-bold text-dark" id="prodiEndNum"><?= $endNum ?></span> dari <span class="fw-bold text-dark" id="prodiTotalFiltered"><?= number_format($totalFiltered, 0, ',', '.') ?></span> Dokumen
             </div>
-            <div class="d-flex flex-wrap align-items-center gap-2.5">
-                <div class="d-flex align-items-center gap-1.5 small text-muted">
-                    <span style="font-size: 0.78rem;">Ukuran Halaman:</span>
-                    <select class="form-select form-select-sm" id="prodiPerPageSelect" style="width: 95px; font-size: 0.78rem;" onchange="changeProdiPerPage(this.value)">
+            <div class="table-pagination-control">
+                <div class="table-perpage-wrap">
+                    <label for="prodiPerPageSelect" class="table-perpage-label">Ukuran Halaman:</label>
+                    <select class="form-select table-perpage-select shadow-none" id="prodiPerPageSelect" onchange="changeProdiPerPage(this.value)">
                         <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
                         <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
                         <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
@@ -270,7 +270,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </select>
                 </div>
                 <nav aria-label="Prodi Pagination">
-                    <ul class="pagination pagination-sm mb-0" id="prodiPaginationNav">
+                    <ul class="pagination-segmented mb-0" id="prodiPaginationNav">
                         <!-- Populated dynamically -->
                     </ul>
                 </nav>
@@ -304,7 +304,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div class="p-3 rounded-3 bg-white border border-danger border-opacity-25 text-dark" style="font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;" id="prodiNoteContent">-</div>
                 </div>
                 <div class="small text-muted d-flex align-items-center gap-2" id="prodiNoteMeta">
-                    <i class="fas fa-building-columns text-primary"></i> <span id="prodiNoteReviewer">Pusat Penjaminan Mutu LPM</span> &bull; <span id="prodiNoteDate">-</span>
+                    <i class="fas fa-shield-halved text-purple"></i> <span id="prodiNoteReviewer">Gugus Penjaminan Mutu (GPM) Fakultas</span> &bull; <span id="prodiNoteDate">-</span>
                 </div>
             </div>
             <div class="modal-footer bg-light px-4 py-3 d-flex justify-content-between">
@@ -359,6 +359,10 @@ function selectProdiSiklusTab(btn, siklus) {
 
 function changeProdiPerPage(val) {
     currentProdiPerPage = parseInt(val, 10) || 50;
+    const topSel = document.getElementById('tablePerPageSelect');
+    if (topSel && topSel.value != val) topSel.value = val;
+    const btmSel = document.getElementById('prodiPerPageSelect');
+    if (btmSel && btmSel.value != val) btmSel.value = val;
     fetchProdiData(1);
 }
 
@@ -366,7 +370,7 @@ function onProdiFilterChange() {
     clearTimeout(prodiSearchTimer);
     prodiSearchTimer = setTimeout(() => {
         fetchProdiData(1);
-    }, 280);
+    }, 250);
 }
 
 function fetchProdiData(page) {
@@ -386,7 +390,8 @@ function fetchProdiData(page) {
         bidang_id: bidangVal,
         tahun_akademik: tahunVal,
         status_review: currentReviewStatus,
-        search: searchVal
+        search: searchVal,
+        q: searchVal
     });
 
     fetch('<?= base_url("prodi/dokumen") ?>?' + params.toString(), {
@@ -405,12 +410,23 @@ function fetchProdiData(page) {
         const startEl = document.getElementById('prodiStartNum');
         const endEl = document.getElementById('prodiEndNum');
         const totalEl = document.getElementById('prodiTotalFiltered');
+        const pagWrapper = document.getElementById('prodiPaginationWrapper');
 
         if (startEl) startEl.textContent = data.start_num || 0;
         if (endEl) endEl.textContent = data.end_num || 0;
         if (totalEl) totalEl.textContent = Number(data.total || 0).toLocaleString('id-ID');
 
+        if (pagWrapper) {
+            pagWrapper.style.setProperty('display', (data.total > 0) ? 'flex' : 'none', 'important');
+        }
+
         renderProdiPagination(prodiTotalPages, currentProdiPage);
+
+        // Smooth scroll ke atas tabel saat navigasi halaman
+        const tableEl = document.getElementById('prodiDocumentsTable');
+        if (tableEl && page > 1) {
+            tableEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     })
     .catch(err => {
         console.error("Error fetching prodi data:", err);
@@ -446,8 +462,8 @@ function renderProdiPagination(totalPages, currentPage) {
 
         if (startPage > 2) {
             const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            dotsLi.className = 'page-item ellipsis disabled';
+            dotsLi.innerHTML = '<span class="page-link dots">&hellip;</span>';
             nav.appendChild(dotsLi);
         }
     }
@@ -465,8 +481,8 @@ function renderProdiPagination(totalPages, currentPage) {
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
             const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            dotsLi.className = 'page-item ellipsis disabled';
+            dotsLi.innerHTML = '<span class="page-link dots">&hellip;</span>';
             nav.appendChild(dotsLi);
         }
         const lastLi = document.createElement('li');
@@ -507,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!button) return;
             const title = button.getAttribute('data-title') || '-';
             const notes = button.getAttribute('data-notes') || 'Tidak ada catatan perbaikan khusus.';
-            const reviewer = button.getAttribute('data-reviewer') || 'Pusat Penjaminan Mutu LPM';
+            const reviewer = button.getAttribute('data-reviewer') || 'Gugus Penjaminan Mutu (GPM) Fakultas';
             const date = button.getAttribute('data-date') || '-';
             const status = button.getAttribute('data-status') || '';
             const editUrl = button.getAttribute('data-edit-url') || '#';
@@ -524,7 +540,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.getElementById('prodiNoteDocTitle').textContent = title;
             document.getElementById('prodiNoteContent').textContent = notes;
-            document.getElementById('prodiNoteReviewer').textContent = reviewer || (isGpm ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM');
+            document.getElementById('prodiNoteReviewer').textContent = (reviewer && reviewer !== 'Pusat Penjaminan Mutu LPM') ? reviewer : 'Gugus Penjaminan Mutu (GPM) Fakultas';
             document.getElementById('prodiNoteDate').textContent = date || '-';
             document.getElementById('prodiNoteEditBtn').setAttribute('href', editUrl);
 

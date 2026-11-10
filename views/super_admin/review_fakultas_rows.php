@@ -475,5 +475,13 @@ if (!empty($documents)):
             </div>
         </div>
     <?php endforeach; ?>
+<?php else: ?>
+    <tr id="emptyRow">
+        <td colspan="6" class="text-center py-5 text-muted">
+            <i class="fas fa-folder-open fa-3x text-secondary opacity-50 mb-3 d-block"></i>
+            <h6 class="fw-bold">Tidak Ada Dokumen yang Sesuai</h6>
+            <p class="small mb-0">Coba ubah filter atau kata kunci pencarian.</p>
+        </td>
+    </tr>
 <?php endif; ?>
 

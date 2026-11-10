@@ -61,6 +61,7 @@ $router->post('admin/sub-bidang/delete/{id}', ['SuperAdminController', 'deleteSu
 
 // Pusat Review & Verifikasi Dokumen Mutu (Admin LPM / Super Admin)
 $router->get('admin/review', ['SuperAdminController', 'reviewHub']);
+$router->get('admin/review-hub', ['SuperAdminController', 'reviewHub']);
 $router->get('admin/review-dokumen', ['SuperAdminController', 'reviewHub']);
 $router->get('admin/monitoring-dokumen', ['SuperAdminController', 'monitoringDokumen']);
 $router->get('admin/monitoring-berkas', ['SuperAdminController', 'monitoringBerkas']);
@@ -68,7 +69,9 @@ $router->get('admin/monitoring-lalulintas', ['SuperAdminController', 'monitoring
 $router->get('admin/monitoring-gpm', ['SuperAdminController', 'monitoringGpm']);
 $router->get('admin/monitoring-gpm/history/{id:\d+}', ['SuperAdminController', 'gpmReviewHistory']);
 $router->get('admin/review-prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
+$router->get('admin/review/prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
 $router->get('admin/review-fakultas/{id:\d+}', ['SuperAdminController', 'reviewFakultas']);
+$router->get('admin/review/fakultas/{id:\d+}', ['SuperAdminController', 'reviewFakultas']);
 $router->post('admin/review-dokumen/submit', ['SuperAdminController', 'submitReview']);
 $router->get('api/dokumen-revisi/{id:\d+}', ['SuperAdminController', 'getDocumentRevisions']);
 
@@ -171,6 +174,7 @@ $router->get('gpm/dokumen/arsip', ['GpmController', 'arsip']);
 
 // GPM Review Submission
 $router->post('gpm/review/submit', ['GpmController', 'submitReview']);
+$router->post('gpm/review/forward-lpm', ['GpmController', 'forwardLpmRevision']);
 
 $router->get('api/document-review-history/{id:\d+}', ['ApiController', 'reviewHistoryJson']);
 $router->get('api/check-upload-access', ['ApiController', 'checkUploadAccess']);

@@ -184,7 +184,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <div class="col">
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted px-3"><i class="fas fa-search"></i></span>
-                                <input type="text" id="liveSearchInput" class="form-control bg-white border-start-0 ps-1" placeholder="Cari dokumen, SK, uploader..." onkeyup="filterHubTable()">
+                                <input type="text" id="liveSearchInput" class="form-control bg-white border-start-0 ps-1" placeholder="Cari dokumen, SK, uploader..." oninput="filterHubTable()">
                             </div>
                         </div>
                         <div class="col-auto">
@@ -301,10 +301,10 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div class="small text-muted" id="hubTableInfo">
                         Menampilkan <span class="fw-bold text-dark" id="hubStartNum"><?= $startNum ?></span> - <span class="fw-bold text-dark" id="hubEndNum"><?= $endNum ?></span> dari <span class="fw-bold text-dark" id="hubTotalFiltered"><?= number_format($totalFiltered, 0, ',', '.') ?></span> Dokumen
                     </div>
-                    <div class="d-flex flex-wrap align-items-center gap-2.5">
-                        <div class="d-flex align-items-center gap-1.5 small text-muted">
-                            <span style="font-size: 0.78rem;">Ukuran Halaman:</span>
-                            <select class="form-select form-select-sm" id="hubPerPageSelect" style="width: 95px; font-size: 0.78rem;" onchange="changeHubPerPage(this.value)">
+                    <div class="table-pagination-control">
+                        <div class="table-perpage-wrap">
+                            <label for="hubPerPageSelect" class="table-perpage-label">Ukuran Halaman:</label>
+                            <select class="form-select table-perpage-select shadow-none" id="hubPerPageSelect" onchange="changeHubPerPage(this.value)">
                                 <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10 data</option>
                                 <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20 data</option>
                                 <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 data</option>
@@ -312,7 +312,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             </select>
                         </div>
                         <nav aria-label="Review Hub Pagination">
-                            <ul class="pagination pagination-sm mb-0" id="hubPaginationNav">
+                            <ul class="pagination-segmented mb-0" id="hubPaginationNav">
                                 <!-- Populated dynamically by JavaScript -->
                             </ul>
                         </nav>
@@ -1140,7 +1140,8 @@ function fetchHubData(page) {
         siklus: siklusVal,
         bidang_id: bidangVal,
         tahun_akademik: tahunVal,
-        search: searchVal
+        search: searchVal,
+        q: searchVal
     });
 
     fetch('<?= base_url("admin/review-hub") ?>?' + params.toString(), {
@@ -1196,7 +1197,7 @@ function renderHubPagination(totalPages, currentPage) {
 
     if (totalPages <= 1) return;
 
-    // Tombol Previous
+    // Previous Button
     const prevLi = document.createElement('li');
     prevLi.className = 'page-item ' + (currentPage <= 1 ? 'disabled' : '');
     prevLi.innerHTML = '<a class="page-link" href="javascript:void(0)" aria-label="Previous"><i class="fas fa-chevron-left" style="font-size: 0.72rem;"></i></a>';
@@ -1205,7 +1206,6 @@ function renderHubPagination(totalPages, currentPage) {
     }
     nav.appendChild(prevLi);
 
-    // Range halaman
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, currentPage + 2);
 
@@ -1218,8 +1218,8 @@ function renderHubPagination(totalPages, currentPage) {
 
         if (startPage > 2) {
             const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            dotsLi.className = 'page-item ellipsis disabled';
+            dotsLi.innerHTML = '<span class="page-link dots">&hellip;</span>';
             nav.appendChild(dotsLi);
         }
     }
@@ -1237,8 +1237,8 @@ function renderHubPagination(totalPages, currentPage) {
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
             const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = '<span class="page-link">&hellip;</span>';
+            dotsLi.className = 'page-item ellipsis disabled';
+            dotsLi.innerHTML = '<span class="page-link dots">&hellip;</span>';
             nav.appendChild(dotsLi);
         }
         const lastLi = document.createElement('li');
@@ -1248,7 +1248,7 @@ function renderHubPagination(totalPages, currentPage) {
         nav.appendChild(lastLi);
     }
 
-    // Tombol Next
+    // Next Button
     const nextLi = document.createElement('li');
     nextLi.className = 'page-item ' + (currentPage >= totalPages ? 'disabled' : '');
     nextLi.innerHTML = '<a class="page-link" href="javascript:void(0)" aria-label="Next"><i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i></a>';

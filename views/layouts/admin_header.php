@@ -17,11 +17,10 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
         $stmt = $headerDb->prepare("
-            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, status_review, reviewed_at, gpm_reviewed_at, updated_at
             FROM ppepp_documents
-            WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
+            WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'perlu_perbaikan') AND deleted_at IS NULL
             ORDER BY GREATEST(
-                COALESCE(lpm_reviewed_at, '1970-01-01 00:00:00'),
                 COALESCE(gpm_reviewed_at, '1970-01-01 00:00:00'),
                 COALESCE(reviewed_at, '1970-01-01 00:00:00'),
                 COALESCE(updated_at, '1970-01-01 00:00:00')
@@ -38,11 +37,10 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
         $stmt = $headerDb->prepare("
-            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
+            SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, status_review, reviewed_at, gpm_reviewed_at, updated_at
             FROM ppepp_documents
-            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
+            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'perlu_perbaikan') AND deleted_at IS NULL
             ORDER BY GREATEST(
-                COALESCE(lpm_reviewed_at, '1970-01-01 00:00:00'),
                 COALESCE(gpm_reviewed_at, '1970-01-01 00:00:00'),
                 COALESCE(reviewed_at, '1970-01-01 00:00:00'),
                 COALESCE(updated_at, '1970-01-01 00:00:00')
@@ -316,7 +314,9 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                             </div>
                                             <?php 
                                             $notifStatus = $notifDoc['status_review'] ?? '';
-                                            if ($notifStatus === 'revisi_gpm') {
+                                            if (Auth::isProdi() || Auth::isFakultas()) {
+                                                $notifNote = trim($notifDoc['gpm_catatan'] ?: ($notifDoc['catatan_review'] ?? ''));
+                                            } elseif ($notifStatus === 'revisi_gpm') {
                                                 $notifNote = trim($notifDoc['gpm_catatan'] ?: ($notifDoc['catatan_review'] ?? ''));
                                             } elseif ($notifStatus === 'revisi_lpm') {
                                                 $notifNote = trim($notifDoc['lpm_catatan'] ?: ($notifDoc['catatan_review'] ?: ($notifDoc['gpm_catatan'] ?? '')));

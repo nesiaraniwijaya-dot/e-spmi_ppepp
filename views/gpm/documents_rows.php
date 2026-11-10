@@ -249,6 +249,18 @@ if (!empty($documents)):
                                 </td>
                             </tr>
     <?php endforeach; ?>
+<?php else: ?>
+    <tr id="gpmEmptyRow">
+        <td colspan="7" class="text-center py-5 text-muted">
+            <div class="py-4">
+                <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; font-size: 1.8rem;">
+                    <i class="fas fa-folder-open text-secondary"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">Tidak Ada Dokumen yang Sesuai</h6>
+                <p class="small text-muted mb-0">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
+            </div>
+        </td>
+    </tr>
 <?php endif; ?>
 
 <!-- Modals Container: Terpisah di luar card dan container agar tidak terpengaruh stacking context / z-index card -->
@@ -544,16 +556,33 @@ if (!empty($documents)):
                                         </div>
                                     <?php endif; ?>
 
-                                    <!-- Catatan Evaluasi Sebelumnya (LPM / GPM) jika ada -->
-                                    <?php if (!empty($doc['catatan_review'])): ?>
+                                    <!-- Catatan Evaluasi Internal LPM (Khusus Akses GPM) jika ada -->
+                                    <?php if (!empty($doc['lpm_catatan'])): ?>
+                                        <div class="p-3 rounded-3 mb-3 border border-warning-subtle" style="background: #FFFBEB;">
+                                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1.5">
+                                                <span class="small fw-bold text-warning-emphasis text-uppercase d-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
+                                                    <i class="fas fa-lock text-warning"></i> Catatan Evaluasi Internal dari Tim LPM (Khusus GPM):
+                                                </span>
+                                                <?php if (!empty($doc['lpm_reviewed_at'])): ?>
+                                                    <span class="badge bg-white text-secondary border px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                                        <i class="far fa-clock me-1 text-secondary opacity-75"></i><?= date('d M Y, H:i', strtotime($doc['lpm_reviewed_at'])) ?> WIB
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="bg-white p-3 rounded-3 border border-warning border-opacity-25 small text-dark" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($doc['lpm_catatan']) ?></div>
+                                            <div class="text-muted small mt-1" style="font-size: 0.71rem;">
+                                                <i class="fas fa-info-circle text-primary me-1"></i> Catatan asli dari LPM ini <strong>tidak akan diperlihatkan</strong> kepada Program Studi / Dekanat.
+                                            </div>
+                                        </div>
+                                    <?php elseif (!empty($doc['catatan_review'])): ?>
                                         <div class="p-3 rounded-3 mb-3 border border-warning-subtle bg-warning bg-opacity-10">
                                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1.5">
                                                 <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
-                                                    <i class="fas fa-comment-dots text-warning"></i> Catatan Evaluasi Reviewer Sebelumnya:
+                                                    <i class="fas fa-comment-dots text-warning"></i> Catatan Evaluasi Sebelumnya:
                                                 </span>
-                                                <?php if (!empty($doc['lpm_reviewed_at']) || !empty($doc['reviewed_at']) || !empty($doc['gpm_reviewed_at'])): ?>
+                                                <?php if (!empty($doc['gpm_reviewed_at']) || !empty($doc['reviewed_at'])): ?>
                                                     <span class="badge bg-white text-secondary border px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
-                                                        <i class="far fa-clock me-1 text-secondary opacity-75"></i><?= date('d M Y, H:i', strtotime($doc['lpm_reviewed_at'] ?? $doc['reviewed_at'] ?? $doc['gpm_reviewed_at'])) ?> WIB
+                                                        <i class="far fa-clock me-1 text-secondary opacity-75"></i><?= date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'] ?? $doc['reviewed_at'])) ?> WIB
                                                     </span>
                                                 <?php endif; ?>
                                             </div>
@@ -678,4 +707,16 @@ if (!empty($documents)):
                 </div>
 
     <?php endforeach; ?>
+<?php else: ?>
+    <tr id="gpmEmptyRow">
+        <td colspan="7" class="text-center py-5 text-muted">
+            <div class="py-4">
+                <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; font-size: 1.8rem;">
+                    <i class="fas fa-folder-open text-secondary"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">Tidak Ada Dokumen yang Sesuai</h6>
+                <p class="small text-muted mb-0">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
+            </div>
+        </td>
+    </tr>
 <?php endif; ?>

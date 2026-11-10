@@ -21,7 +21,7 @@ try {
     if (Auth::isProdi() && $sidebarProdiId > 0) {
         $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
+            WHERE prodi_id = ? AND status_review IN ('revisi_gpm', 'perlu_perbaikan') AND deleted_at IS NULL
         ");
         $stmtRevisi->execute([$sidebarProdiId]);
         $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();
@@ -36,7 +36,7 @@ try {
     } elseif (Auth::isFakultas() && $sidebarFakultasId > 0) {
         $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
-            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
+            WHERE fakultas_id = ? AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'perlu_perbaikan') AND deleted_at IS NULL
         ");
         $stmtRevisi->execute([$sidebarFakultasId]);
         $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();

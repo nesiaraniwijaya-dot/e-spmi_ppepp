@@ -26,7 +26,7 @@ $totalDocs = count($documents);
             </div>
             <h3 class="fw-bold text-dark-blue mb-1" style="letter-spacing: -0.3px;">Perbaikan Dokumen Mutu Fakultas</h3>
             <p class="text-muted small mb-0" style="line-height: 1.5;">
-                Kelola dan tindak lanjuti dokumen mutu tingkat <strong><?= htmlspecialchars($fakultas['nama_fakultas']) ?></strong> yang memperoleh catatan evaluasi perbaikan dari Lembaga Penjaminan Mutu (LPM).
+                Kelola dan tindak lanjuti dokumen mutu tingkat <strong><?= htmlspecialchars($fakultas['nama_fakultas']) ?></strong> yang memperoleh catatan arahan evaluasi dari Gugus Penjaminan Mutu (GPM) Fakultas.
             </p>
         </div>
         <div class="d-flex flex-wrap gap-2">
@@ -54,14 +54,14 @@ $totalDocs = count($documents);
                         <span class="saas-stat-number text-danger"><?= $perluCount ?></span>
                         <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2.5 py-0.5" style="font-size: 0.72rem;">Wajib Revisi</span>
                     </div>
-                    <div class="saas-stat-help">Wajib diperbaiki sesuai arahan tim evaluator LPM</div>
+                    <div class="saas-stat-help">Wajib diperbaiki sesuai arahan telaah GPM Fakultas</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="saas-stat-card" style="border-top: 4px solid #2563EB !important;">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="saas-stat-label text-primary">Menunggu Review Ulang LPM</span>
+                    <span class="saas-stat-label text-primary">Menunggu Telaah Hasil Perbaikan (GPM)</span>
                     <div class="saas-stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;">
                         <i class="fas fa-clock-rotate-left"></i>
                     </div>
@@ -111,7 +111,7 @@ $totalDocs = count($documents);
                     </button>
                     <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
                         <i class="fas fa-clock-rotate-left text-primary"></i>
-                        <span>Menunggu Review LPM</span>
+                        <span>Menunggu Telaah GPM</span>
                         <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= $sudahCount ?></span>
                     </button>
                 </div>
@@ -178,7 +178,7 @@ $totalDocs = count($documents);
                             <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #DC2626; color: #FFFFFF; font-size: 0.8rem;">
                                 <i class="fas fa-wrench"></i> <strong><?= $perluCount ?> Dokumen Wajib Direvisi</strong>
                             </span>
-                            <span class="text-muted small">Terdapat catatan evaluasi dari LPM yang harus disesuaikan untuk dokumen tingkat fakultas</span>
+                            <span class="text-muted small">Terdapat catatan arahan perbaikan dari GPM Fakultas yang harus disesuaikan</span>
                         </div>
                     </div>
 
@@ -318,7 +318,7 @@ $totalDocs = count($documents);
                     <!-- Footer Pagination Tab 1 -->
                     <div class="p-3 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2" id="pagWrapTabPerluFak" style="border-color: #E2E8F0 !important;">
                         <div class="small text-muted" id="infoTabPerluFak">Menghitung...</div>
-                        <nav id="pagTabPerluFak" aria-label="Navigasi Halaman"></nav>
+                        <div class="table-pagination-control"><div class="table-perpage-wrap"><label class="table-perpage-label">Ukuran Halaman:</label><select class="form-select table-perpage-select shadow-none" onchange="changePerbaikanPageSize(this.value)"><option value="10">10 data</option><option value="20">20 data</option><option value="50" selected>50 data</option><option value="100">100 data</option></select></div><nav id="pagTabPerluFak" aria-label="Navigasi Halaman"></nav></div>
                     </div>
                 </div>
             <?php endif; ?>
@@ -345,7 +345,7 @@ $totalDocs = count($documents);
                             <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #2563EB; color: #FFFFFF; font-size: 0.8rem;">
                                 <i class="fas fa-clock-rotate-left"></i> <strong><?= $sudahCount ?> Dokumen Dalam Antrean Review</strong>
                             </span>
-                            <span class="text-muted small">Perbaikan tingkat fakultas telah dikirim dan sedang menunggu verifikasi ulang LPM</span>
+                            <span class="text-muted small">Perbaikan telah dikirim dan sedang dalam antrean verifikasi ulang GPM Fakultas</span>
                         </div>
                     </div>
 
@@ -476,7 +476,7 @@ $totalDocs = count($documents);
                     <!-- Footer Pagination Tab 2 -->
                     <div class="p-3 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2" id="pagWrapTabSudahFak" style="border-color: #E2E8F0 !important;">
                         <div class="small text-muted" id="infoTabSudahFak">Menghitung...</div>
-                        <nav id="pagTabSudahFak" aria-label="Navigasi Halaman"></nav>
+                        <div class="table-pagination-control"><div class="table-perpage-wrap"><label class="table-perpage-label">Ukuran Halaman:</label><select class="form-select table-perpage-select shadow-none" onchange="changePerbaikanPageSize(this.value)"><option value="10">10 data</option><option value="20">20 data</option><option value="50" selected>50 data</option><option value="100">100 data</option></select></div><nav id="pagTabSudahFak" aria-label="Navigasi Halaman"></nav></div>
                     </div>
                 </div>
             <?php endif; ?>
@@ -602,7 +602,7 @@ $totalDocs = count($documents);
                     <!-- Footer Pagination Tab 3 -->
                     <div class="p-3 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2" id="pagWrapTabAllFak" style="border-color: #E2E8F0 !important;">
                         <div class="small text-muted" id="infoTabAllFak">Menghitung...</div>
-                        <nav id="pagTabAllFak" aria-label="Navigasi Halaman"></nav>
+                        <div class="table-pagination-control"><div class="table-perpage-wrap"><label class="table-perpage-label">Ukuran Halaman:</label><select class="form-select table-perpage-select shadow-none" onchange="changePerbaikanPageSize(this.value)"><option value="10">10 data</option><option value="20">20 data</option><option value="50" selected>50 data</option><option value="100">100 data</option></select></div><nav id="pagTabAllFak" aria-label="Navigasi Halaman"></nav></div>
                     </div>
                 </div>
             <?php endif; ?>
@@ -637,7 +637,7 @@ $totalDocs = count($documents);
                         <div class="d-flex flex-wrap align-items-center gap-3 mt-2 pt-2 border-top text-muted small" style="font-size: 0.76rem;">
                             <div class="d-flex align-items-center gap-1.5">
                                 <i class="fas fa-building-columns text-primary" id="evalModalReviewerIcon"></i>
-                                <span class="text-dark fw-bold" id="evalModalReviewer">Pusat Penjaminan Mutu LPM</span>
+                                <span class="text-dark fw-bold" id="evalModalReviewer">Gugus Penjaminan Mutu (GPM) Fakultas</span>
                             </div>
                             <div class="d-flex align-items-center gap-1.5">
                                 <i class="far fa-calendar-check text-secondary"></i>
@@ -758,37 +758,54 @@ function paginateFakultasTab(tabId, page) {
         return;
     }
 
-    let html = '<ul class="pagination pagination-sm mb-0">';
-    html += `<li class="page-item ${finalPage === 1 ? 'disabled' : ''}">
-        <button type="button" class="page-link rounded-start-pill" onclick="paginateFakultasTab('${tabId}', ${finalPage - 1})" aria-label="Sebelumnya">&laquo;</button>
-    </li>`;
+    let html = '<ul class="pagination-segmented mb-0">';
+    html += '<li class="page-item ' + (finalPage <= 1 ? 'disabled' : '') + '">';
+    html += '<button type="button" class="page-link" ' + (finalPage > 1 ? 'onclick="paginateFakultasTab(\'' + tabId + '\', ' + (finalPage - 1) + ')\"' : 'disabled') + ' aria-label="Sebelumnya"><i class="fas fa-chevron-left" style="font-size: 0.72rem;"></i></button>';
+    html += '</li>';
 
-    for (let p = 1; p <= totalPages; p++) {
-        if (totalPages > 7) {
-            if (p !== 1 && p !== totalPages && Math.abs(p - finalPage) > 1) {
-                if (p === 2 || p === totalPages - 1) {
-                    html += '<li class="page-item disabled"><span class="page-link">&hellip;</span></li>';
-                }
-                continue;
-            }
+    let startPage = Math.max(1, finalPage - 2);
+    let endPage = Math.min(totalPages, finalPage + 2);
+
+    if (startPage > 1) {
+        html += '<li class="page-item"><button type="button" class="page-link" onclick="paginateFakultasTab(\'' + tabId + '\', 1)">1</button></li>';
+        if (startPage > 2) {
+            html += '<li class="page-item ellipsis disabled"><span class="page-link dots">&hellip;</span></li>';
         }
-        html += `<li class="page-item ${p === finalPage ? 'active' : ''}">
-            <button type="button" class="page-link" onclick="paginateFakultasTab('${tabId}', ${p})">${p}</button>
-        </li>`;
     }
 
-    html += `<li class="page-item ${finalPage === totalPages ? 'disabled' : ''}">
-        <button type="button" class="page-link rounded-end-pill" onclick="paginateFakultasTab('${tabId}', ${finalPage + 1})" aria-label="Selanjutnya">&raquo;</button>
-    </li>`;
+    for (let p = startPage; p <= endPage; p++) {
+        html += '<li class="page-item ' + (p === finalPage ? 'active' : '') + '">';
+        html += '<button type="button" class="page-link" onclick="paginateFakultasTab(\'' + tabId + '\', ' + p + ')">' + p + '</button>';
+        html += '</li>';
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            html += '<li class="page-item ellipsis disabled"><span class="page-link dots">&hellip;</span></li>';
+        }
+        html += '<li class="page-item"><button type="button" class="page-link" onclick="paginateFakultasTab(\'' + tabId + '\', ' + totalPages + ')">' + totalPages + '</button></li>';
+    }
+
+    html += '<li class="page-item ' + (finalPage >= totalPages ? 'disabled' : '') + '">';
+    html += '<button type="button" class="page-link" ' + (finalPage < totalPages ? 'onclick="paginateFakultasTab(\'' + tabId + '\', ' + (finalPage + 1) + ')\"' : 'disabled') + ' aria-label="Selanjutnya"><i class="fas fa-chevron-right" style="font-size: 0.72rem;"></i></button>';
+    html += '</li>';
     html += '</ul>';
+
     pagEl.innerHTML = html;
-}
 
 function filterPerbaikanList() {
     currentPerbaikanFakPages = { 'tab-perlu': 1, 'tab-sudah': 1, 'tab-all': 1 };
     ['tab-perlu', 'tab-sudah', 'tab-all'].forEach(tabId => {
         paginateFakultasTab(tabId);
     });
+}
+
+function changePerbaikanPageSize(val) {
+    document.querySelectorAll('[id^="perPagePerbaikan"]').forEach(s => s.value = val);
+    document.querySelectorAll('.table-perpage-select').forEach(s => s.value = val);
+    if (typeof paginateProdiTab !== 'undefined') { paginateProdiTab('tab-perlu', 1); paginateProdiTab('tab-sudah', 1); }
+    if (typeof paginateFakultasTab !== 'undefined') { paginateFakultasTab('tab-perlu', 1); paginateFakultasTab('tab-sudah', 1); }
+    if (typeof paginateGpmTab !== 'undefined') { paginateGpmTab('tab-perlu', 1); paginateGpmTab('tab-sudah', 1); }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -845,13 +862,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (catEl) catEl.textContent = catatan;
 
             if (modalLabel) {
-                modalLabel.textContent = isGpm ? 'Catatan Evaluasi / Rekomendasi GPM' : 'Catatan Evaluasi / Arahan LPM';
+                modalLabel.textContent = 'Catatan Evaluasi / Arahan GPM Fakultas';
             }
             if (modalSubLabel) {
-                modalSubLabel.textContent = isGpm ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Lembaga Penjaminan Mutu (LPM) UNIKA Soegijapranata';
+                modalSubLabel.textContent = 'Gugus Penjaminan Mutu (GPM) Fakultas';
             }
             if (revIconEl) {
-                revIconEl.className = isGpm ? 'fas fa-shield-halved text-purple' : 'fas fa-building-columns text-primary';
+                revIconEl.className = 'fas fa-shield-halved text-purple';
             }
             
             if (editBtn) {

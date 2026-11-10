@@ -706,7 +706,7 @@ class SuperAdminController extends Controller {
         $siklusFilter  = strtolower(trim($_GET['siklus'] ?? ''));
         $bidangId      = !empty($_GET['bidang_id']) ? (int)$_GET['bidang_id'] : 0;
         $tahunAkademik = trim($_GET['tahun_akademik'] ?? '');
-        $search        = trim($_GET['search'] ?? '');
+        $search        = trim($_GET['search'] ?? $_GET['q'] ?? '');
         $perPage       = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
         if (!in_array($perPage, [10, 20, 50, 100])) {
             $perPage = 50;
@@ -1076,7 +1076,7 @@ class SuperAdminController extends Controller {
         $siklusFilter  = strtolower(trim($_GET['siklus'] ?? ''));
         $statusFilter  = trim($_GET['status_review'] ?? '');
         $tahunFilter   = trim($_GET['tahun_akademik'] ?? '');
-        $search        = trim($_GET['search'] ?? '');
+        $search        = trim($_GET['search'] ?? $_GET['q'] ?? '');
         $perPage       = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
         if (!in_array($perPage, [10, 20, 50, 100])) {
             $perPage = 50;
@@ -1269,7 +1269,7 @@ class SuperAdminController extends Controller {
         $siklusFilter  = strtolower(trim($_GET['siklus'] ?? ''));
         $statusFilter  = trim($_GET['status_review'] ?? '');
         $tahunFilter   = trim($_GET['tahun_akademik'] ?? '');
-        $search        = trim($_GET['search'] ?? '');
+        $search        = trim($_GET['search'] ?? $_GET['q'] ?? '');
         $perPage       = !empty($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
         if (!in_array($perPage, [10, 20, 50, 100])) {
             $perPage = 50;
@@ -1510,6 +1510,13 @@ class SuperAdminController extends Controller {
         $tahapReview = ($statusReview === 'sesuai') ? 'selesai' : 'gpm';
         $finalCatatan = ($statusReview === 'sesuai') ? ($catatanReview ?: 'Disetujui dan sesuai standar mutu.') : $catatanReview;
 
+        // Masking Privasi Catatan LPM:
+        // Jika LPM meminta perbaikan, catatan LPM disimpan di kolom `lpm_catatan` (hanya bisa diakses GPM).
+        // Kolom `catatan_review` (yang dibaca Prodi/Dekanat) tidak dioverwrite dengan catatan LPM,
+        // melainkan tetap mempertahankan catatan arahan GPM sebelumnya (atau NULL) hingga GPM meneruskannya.
+        $catatanReviewDoc = ($statusReview === 'sesuai') ? $finalCatatan : ($doc['gpm_catatan'] ?? null);
+        $lpmCatatanVal = $finalCatatan;
+
         // Update status review (disahkan atas nama Pusat Penjaminan Mutu LPM)
         $stmtUpdate = $this->db->prepare("
             UPDATE ppepp_documents 
@@ -1527,9 +1534,9 @@ class SuperAdminController extends Controller {
         $stmtUpdate->execute([
             $finalStatus,
             $tahapReview,
-            $finalCatatan,
+            $catatanReviewDoc,
             $reviewerId,
-            $finalCatatan,
+            $lpmCatatanVal,
             $reviewerId,
             $docId
         ]);
@@ -1549,35 +1556,38 @@ class SuperAdminController extends Controller {
             $finalCatatan
         ]);
 
-        // Simpan juga ke riwayat revisi (ppepp_document_revisions) untuk tracking siklus & timeline revisi
-        try {
-            $revNumberStmt = $this->db->prepare("SELECT COUNT(*) FROM ppepp_document_revisions WHERE document_id = ?");
-            $revNumberStmt->execute([$docId]);
-            $nextRevNumber = (int)$revNumberStmt->fetchColumn() + 1;
+        // Jika disetujui (sesuai), catat juga pengesahan ke ppepp_document_revisions
+        // Namun jika 'revisi_lpm', rekaman revisi untuk Prodi belum dibuat di tabel revisions,
+        // melainkan akan dicatat atas nama GPM saat GPM meneruskannya ke Prodi/Dekanat.
+        if ($finalStatus === 'sesuai') {
+            try {
+                $revNumberStmt = $this->db->prepare("SELECT COUNT(*) FROM ppepp_document_revisions WHERE document_id = ?");
+                $revNumberStmt->execute([$docId]);
+                $nextRevNumber = (int)$revNumberStmt->fetchColumn() + 1;
 
-            $reviewerUser = Auth::user();
-            $reviewerDisplayName = ($reviewerUser['name'] ?? 'Verifikator LPM') . ' (' . ($reviewerUser['role'] === 'super_admin' ? 'Admin LPM' : strtoupper(str_replace('_', ' ', $reviewerUser['role'] ?? ''))) . ')';
+                $reviewerUser = Auth::user();
+                $reviewerDisplayName = ($reviewerUser['name'] ?? 'Verifikator LPM') . ' (' . ($reviewerUser['role'] === 'super_admin' ? 'Admin LPM' : strtoupper(str_replace('_', ' ', $reviewerUser['role'] ?? ''))) . ')';
 
-            $stmtInsRev = $this->db->prepare("
-                INSERT INTO ppepp_document_revisions 
-                (document_id, cycle_id, revisi_ke, reviewer_id, reviewer_name, reviewer_role, status_review, catatan_review, reviewed_at, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-            ");
-            $stmtInsRev->execute([
-                $docId,
-                $doc['cycle_id'] ?? null,
-                $nextRevNumber,
-                $reviewerId,
-                $reviewerDisplayName,
-                $reviewerUser['role'] ?? 'super_admin',
-                $finalStatus,
-                $finalCatatan
-            ]);
-        } catch (\Throwable $e) {
-            // Abaikan jika tabel revisi belum dimigrasi
+                $stmtInsRev = $this->db->prepare("
+                    INSERT INTO ppepp_document_revisions 
+                    (document_id, cycle_id, revisi_ke, reviewer_id, reviewer_name, reviewer_role, status_review, catatan_review, reviewed_at, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                ");
+                $stmtInsRev->execute([
+                    $docId,
+                    $doc['cycle_id'] ?? null,
+                    $nextRevNumber,
+                    $reviewerId,
+                    $reviewerDisplayName,
+                    $reviewerUser['role'] ?? 'super_admin',
+                    $finalStatus,
+                    $finalCatatan
+                ]);
+            } catch (\Throwable $e) {
+                // Abaikan jika tabel revisi belum dimigrasi
+            }
         }
 
-        $statusLabel = ($finalStatus === 'sesuai') ? 'Sesuai Standar Mutu' : 'Perlu Perbaikan (LPM)';
         $unitName = $isFakultasDoc ? ($doc['nama_fakultas'] ?? 'Fakultas') : ($doc['nama_prodi'] ?? 'Program Studi');
         AuditLogger::log('UPDATE', 'Review Dokumen PPEPP', (string)$docId, $doc['nama_dokumen'], $doc, [
             'status_review' => $finalStatus,
@@ -1587,7 +1597,11 @@ class SuperAdminController extends Controller {
             'verifikator' => Auth::user()['name'] ?? 'Admin LPM'
         ], (int)($doc['prodi_id'] ?? 0), $unitName);
 
-        Auth::setFlash('success', "Review dokumen '{$doc['nama_dokumen']}' berhasil disimpan atas nama Pusat Penjaminan Mutu LPM (Status: {$statusLabel}).");
+        if ($finalStatus === 'sesuai') {
+            Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' berhasil disetujui atas nama Pusat Penjaminan Mutu LPM.");
+        } else {
+            Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' telah dikembalikan ke GPM Fakultas dengan catatan perbaikan untuk ditindaklanjuti ke unit pengunggah.");
+        }
         redirect($redirectUrl);
     }
 

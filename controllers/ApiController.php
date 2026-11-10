@@ -184,6 +184,30 @@ class ApiController extends Controller {
             }
             unset($hItem);
 
+            $userRole = class_exists('Auth') && Auth::check() ? Auth::role() : null;
+            $isUnitUser = in_array($userRole, ['admin_prodi', 'admin_fakultas', 'kaprodi', 'sekprodi', 'dekan', 'wadek']);
+
+            // Masking privasi alur berjenjang:
+            // Bagi role Prodi/Dekanat, jangan perlihatkan catatan internal dan nama reviewer dari LPM
+            if ($isUnitUser) {
+                $doc['lpm_catatan'] = null;
+                $doc['lpm_reviewed_at'] = null;
+                if ($doc['status_review'] === 'revisi_lpm') {
+                    $doc['status_review'] = 'menunggu_review_gpm';
+                }
+
+                $history = array_values(array_filter($history, function($item) {
+                    $tahap = strtolower($item['tahap'] ?? '');
+                    $role = strtolower($item['reviewer_role'] ?? ($item['reviewer_user_role'] ?? ''));
+                    $isLpmItem = ($tahap === 'lpm' || in_array($role, ['lpm', 'super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']));
+                    if ($isLpmItem) {
+                        // Hanya izinkan pengesahan akhir ('sesuai') LPM; seluruh catatan revisi/tolakan LPM wajib dirahasiakan
+                        return ($item['status_hasil'] ?? '') === 'sesuai';
+                    }
+                    return true;
+                }));
+            }
+
             echo json_encode([
                 'success' => true,
                 'document' => [
@@ -192,8 +216,8 @@ class ApiController extends Controller {
                     'nomor_dokumen' => $doc['nomor_dokumen'],
                     'status_review' => $doc['status_review'],
                     'tahap_review' => $doc['tahap_review'] ?? null,
-                    'status_badge' => render_review_status_badge($doc['status_review'], $doc['tahap_review'] ?? null),
-                    'status_label' => get_review_status_label($doc['status_review'])
+                    'status_badge' => render_review_status_badge($doc['status_review'], '', $userRole),
+                    'status_label' => get_review_status_label($doc['status_review'], $userRole)
                 ],
                 'history' => $history
             ]);
