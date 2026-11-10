@@ -61,7 +61,9 @@ $router->post('admin/sub-bidang/delete/{id}', ['SuperAdminController', 'deleteSu
 
 // Pusat Review & Verifikasi Dokumen Mutu (Admin LPM / Super Admin)
 $router->get('admin/review', ['SuperAdminController', 'reviewHub']);
+$router->get('admin/review-hub', ['SuperAdminController', 'reviewHub']);
 $router->get('admin/review-dokumen', ['SuperAdminController', 'reviewHub']);
+$router->get('admin/review/fakultas-cycles/{id:\d+}', ['SuperAdminController', 'fakultasCyclesAjax']);
 $router->get('admin/monitoring-dokumen', ['SuperAdminController', 'monitoringDokumen']);
 $router->get('admin/monitoring-berkas', ['SuperAdminController', 'monitoringBerkas']);
 $router->get('admin/monitoring-lalulintas', ['SuperAdminController', 'monitoringBerkas']);

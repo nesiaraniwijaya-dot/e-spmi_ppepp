@@ -387,7 +387,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <a href="javascript:void(0)" class="text-decoration-none fw-bold text-dark-blue d-inline-flex align-items-center gap-1.5" data-bs-toggle="collapse" data-bs-target="#collapse-fak-<?= $fsum['id'] ?>" title="Klik untuk membuka/tutup rincian siklus">
                                                 <span><?= htmlspecialchars($fsum['nama_fakultas']) ?></span>
                                                 <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
-                                                    <?= count($cycles) ?> Siklus PPEPP
+                                                    <?= number_format((int)($fsum['total_cycles'] ?? 0), 0, ',', '.') ?> Siklus PPEPP
                                                 </span>
                                             </a>
                                         </td>
@@ -443,7 +443,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         </td>
                                     </tr>
 
-                                    <!-- DROPDOWN ACCORDION DAFTAR JUDUL ASPEK SIKLUS PPEPP -->
+                                    <!-- DROPDOWN ACCORDION DAFTAR JUDUL ASPEK SIKLUS PPEPP (LAZY-LOADED ON DEMAND) -->
                                     <tr class="collapse bg-light border-bottom p-0" id="collapse-fak-<?= $fsum['id'] ?>">
                                         <td colspan="9" class="p-3 bg-light">
                                             <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
@@ -456,154 +456,11 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                         Bobot: 20% per Tahapan Disetujui (Total 100%)
                                                     </span>
                                                 </div>
-                                                <div class="card-body p-0">
-                                                    <?php if (empty($cycles)): ?>
-                                                        <div class="p-4 text-center text-muted small">
-                                                            <i class="fas fa-folder-open fa-2x opacity-50 mb-2"></i>
-                                                            <p class="mb-0">Belum ada judul siklus dokumen PPEPP yang diunggah untuk fakultas ini.</p>
-                                                        </div>
-                                                    <?php else: ?>
-                                                        <div class="table-responsive">
-                                                            <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.82rem;">
-                                                                <thead class="table-light text-secondary" style="font-size: 0.72rem; text-transform: uppercase;">
-                                                                    <tr>
-                                                                        <th class="ps-3" style="width: 30px;">#</th>
-                                                                        <th style="min-width: 220px;">Judul Aspek / Topik Mutu PPEPP</th>
-                                                                        <th style="min-width: 140px;">Unit Pengunggah</th>
-                                                                        <th class="text-center" style="min-width: 130px;">Progres Kepatuhan</th>
-                                                                        <th class="text-center" style="min-width: 250px;">Tahapan PPEPP (P-P-E-P-P)</th>
-                                                                        <th class="text-center" style="width: 100px;">Total Berkas</th>
-                                                                        <th class="text-center pe-3" style="width: 160px;">Aksi & Riwayat</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <?php 
-                                                                    $cIdx = 1;
-                                                                    foreach ($cycles as $cyc): 
-                                                                        $cScore = (int)($cyc['total_score'] ?? 0);
-                                                                        $stages = $cyc['stages'] ?? [];
-                                                                        $unitLabel = !empty($cyc['nama_prodi']) ? 'Prodi ' . htmlspecialchars($cyc['nama_prodi']) : 'Dekanat (Fakultas)';
-                                                                        $unitBadge = !empty($cyc['nama_prodi']) ? 'bg-primary bg-opacity-10 text-primary' : 'bg-warning bg-opacity-20 text-dark';
-                                                                    ?>
-                                                                        <tr>
-                                                                            <td class="ps-3 text-muted"><?= $cIdx++ ?></td>
-                                                                            <td>
-                                                                                <div class="fw-bold text-dark mb-0.5"><?= htmlspecialchars($cyc['judul_siklus']) ?></div>
-                                                                                <?php if (!empty($cyc['tahun_akademik'])): ?>
-                                                                                    <span class="badge bg-light text-muted border" style="font-size: 0.65rem;"><?= htmlspecialchars($cyc['tahun_akademik']) ?></span>
-                                                                                <?php endif; ?>
-                                                                            </td>
-                                                                            <td>
-                                                                                <span class="badge <?= $unitBadge ?> border px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;">
-                                                                                    <?= $unitLabel ?>
-                                                                                </span>
-                                                                            </td>
-                                                                            <td class="text-center">
-                                                                                <div class="d-inline-flex flex-column align-items-center justify-content-center py-1" style="min-width: 110px;">
-                                                                                    <div class="d-flex align-items-center justify-content-center gap-2 w-100 mb-1" style="max-width: 115px;">
-                                                                                        <div class="progress flex-grow-1 rounded-pill" style="height: 8px; background-color: #E2E8F0;">
-                                                                                            <div class="progress-bar rounded-pill <?= $cScore >= 100 ? 'bg-success' : ($cScore >= 60 ? 'bg-info' : ($cScore >= 20 ? 'bg-warning' : 'bg-secondary')) ?>" 
-                                                                                                 role="progressbar" 
-                                                                                                 style="width: <?= $cScore ?>%"></div>
-                                                                                        </div>
-                                                                                        <span class="badge <?= $cScore >= 100 ? 'bg-success text-white' : ($cScore >= 60 ? 'bg-info text-dark' : ($cScore >= 20 ? 'bg-warning text-dark' : 'bg-light text-secondary border')) ?> fw-bold rounded-pill px-2 py-0.5" style="font-size: 0.72rem; min-width: 36px; text-align: center;">
-                                                                                            <?= $cScore ?>%
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div class="text-muted fw-semibold" style="font-size: 0.68rem; letter-spacing: -0.01em;">
-                                                                                        (<?= $cScore / 20 ?>/5 Tahap Disetujui)
-                                                                                    </div>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td class="text-center">
-                                                                                <div class="d-inline-flex align-items-center gap-1">
-                                                                                    <?php 
-                                                                                    $stageMap = [
-                                                                                        'penetapan'    => ['P', 'Penetapan'],
-                                                                                        'pelaksanaan'  => ['P', 'Pelaksanaan'],
-                                                                                        'evaluasi'     => ['E', 'Evaluasi'],
-                                                                                        'pengendalian' => ['P', 'Pengendalian'],
-                                                                                        'peningkatan'  => ['P', 'Peningkatan'],
-                                                                                    ];
-                                                                                    foreach ($stageMap as $stKey => $stMeta):
-                                                                                        $stInfo = $stages[$stKey] ?? ['exists' => false, 'status' => 'belum_diisi', 'score' => 0];
-                                                                                        $isAcc = ($stInfo['status'] === 'sesuai');
-                                                                                        $isRevisi = in_array($stInfo['status'], ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']);
-                                                                                        $isReviewLpm = in_array($stInfo['status'], ['menunggu_review_lpm', 'sudah_diperbaiki']);
-                                                                                        $isReviewGpm = in_array($stInfo['status'], ['menunggu_review_gpm', 'belum_direview']);
-                                                                                        $isExists = !empty($stInfo['exists']);
-                                                                                        $docItem = $stInfo['doc'] ?? null;
-
-                                                                                        $badgeClass = 'bg-light text-muted border';
-                                                                                        $badgeTitle = $stMeta[1] . ': Belum Diisi';
-                                                                                        $iconHtml = '';
-
-                                                                                        if ($isAcc) {
-                                                                                            $badgeClass = 'bg-success text-white shadow-xs';
-                                                                                            $badgeTitle = $stMeta[1] . ': Disetujui (Sesuai Mutu)';
-                                                                                            $iconHtml = '<i class="fas fa-check-circle me-0.5"></i>';
-                                                                                        } elseif ($isRevisi) {
-                                                                                            $badgeClass = 'bg-warning text-dark border border-warning';
-                                                                                            $revNote = ($stInfo['status'] === 'revisi_gpm') ? ' (GPM)' : (($stInfo['status'] === 'revisi_lpm') ? ' (LPM)' : '');
-                                                                                            $badgeTitle = $stMeta[1] . ': Perlu Revisi' . $revNote;
-                                                                                            $iconHtml = '<i class="fas fa-exclamation-triangle me-0.5"></i>';
-                                                                                        } elseif ($isReviewLpm) {
-                                                                                            $badgeClass = 'bg-primary text-white shadow-xs';
-                                                                                            $badgeTitle = $stMeta[1] . ': Menunggu Review LPM';
-                                                                                            $iconHtml = '<i class="fas fa-clock me-0.5"></i>';
-                                                                                        } elseif ($isReviewGpm) {
-                                                                                            $badgeClass = 'bg-info bg-opacity-25 text-info-emphasis border border-info border-opacity-50';
-                                                                                            $badgeTitle = $stMeta[1] . ': Menunggu Telaah GPM';
-                                                                                            $iconHtml = '<i class="fas fa-hourglass-half me-0.5"></i>';
-                                                                                        }
-                                                                                    ?>
-                                                                                        <span class="badge rounded-pill px-2 py-1 <?= $badgeClass ?>" 
-                                                                                              style="font-size: 0.68rem; cursor: <?= $docItem ? 'pointer' : 'default' ?>;"
-                                                                                              title="<?= $badgeTitle ?>"
-                                                                                              <?php if ($docItem): ?>
-                                                                                                  onclick="openDocReviewHistory(<?= $docItem['id'] ?>)"
-                                                                                              <?php endif; ?>>
-                                                                                            <?= $iconHtml ?>
-                                                                                            <?= $stMeta[0] ?>
-                                                                                        </span>
-                                                                                    <?php endforeach; ?>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td class="text-center">
-                                                                                <span class="badge bg-light text-dark border px-2 py-1">
-                                                                                    <?= $cyc['docs_count'] ?> Berkas
-                                                                                </span>
-                                                                            </td>
-                                                                            <td class="text-center pe-3">
-                                                                                <div class="d-flex align-items-center justify-content-center gap-1">
-                                                                                    <?php 
-                                                                                    $firstDoc = !empty($cyc['all_docs']) ? $cyc['all_docs'][0] : null;
-                                                                                    if ($firstDoc): 
-                                                                                    ?>
-                                                                                        <button type="button" 
-                                                                                                class="btn btn-xs btn-outline-info rounded-pill px-2 py-0.5 btn-open-revisions" 
-                                                                                                data-doc-id="<?= $firstDoc['id'] ?>"
-                                                                                                title="Lihat Riwayat Catatan Revisi Sebelumnya">
-                                                                                            <i class="fas fa-history me-1"></i> Revisi
-                                                                                        </button>
-                                                                                    <?php endif; ?>
-                                                                                    <?php if (!empty($cyc['prodi_id'])): ?>
-                                                                                        <a href="<?= base_url('admin/review-prodi/' . $cyc['prodi_id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" title="Review Dokumen Prodi">
-                                                                                            <i class="fas fa-arrow-right"></i>
-                                                                                        </a>
-                                                                                    <?php else: ?>
-                                                                                        <a href="<?= base_url('admin/review-fakultas/' . $fsum['id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" title="Review Dokumen Dekanat">
-                                                                                            <i class="fas fa-arrow-right"></i>
-                                                                                        </a>
-                                                                                    <?php endif; ?>
-                                                                                </div>
-                                                                            </td>
-                                                                        </tr>
-                                                                    <?php endforeach; ?>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    <?php endif; ?>
+                                                <div class="card-body p-0 fak-cycles-container" id="fak-cycles-content-<?= $fsum['id'] ?>" data-fak-id="<?= $fsum['id'] ?>" data-loaded="false">
+                                                    <div class="p-4 text-center text-muted small">
+                                                        <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                                                        <span>Memuat pratinjau judul siklus PPEPP...</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -1143,7 +1000,7 @@ function fetchHubData(page) {
         search: searchVal
     });
 
-    fetch('<?= base_url("admin/review-hub") ?>?' + params.toString(), {
+    fetch('<?= base_url("admin/review") ?>?' + params.toString(), {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(res => res.json())
@@ -1267,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Modal bindings on page load
 document.addEventListener('DOMContentLoaded', function () {
     // Initial filter execution to apply 'perlu_tindakan' default
-    filterHubTable();
+    // Initial server rows pre-rendered by PHP
 
     // 1. Quick Approve Modal
     const approveModal = document.getElementById('quickApproveModal');
@@ -1551,6 +1408,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+    // 6. Lazy load cycles saat accordion fakultas dibuka
+    document.querySelectorAll('[id^="collapse-fak-"]').forEach(collapseEl => {
+        collapseEl.addEventListener('show.bs.collapse', function () {
+            const container = this.querySelector('.fak-cycles-container');
+            if (!container || container.getAttribute('data-loaded') === 'true') return;
+            const fakId = container.getAttribute('data-fak-id');
+            if (!fakId) return;
+
+            fetch('<?= base_url("admin/review/fakultas-cycles/") ?>' + fakId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.html) {
+                        container.innerHTML = data.html;
+                        container.setAttribute('data-loaded', 'true');
+                    } else {
+                        container.innerHTML = '<div class="p-4 text-center text-danger small"><i class="fas fa-triangle-exclamation me-1"></i> Gagal memuat data siklus.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error("Error loading cycles:", err);
+                    container.innerHTML = '<div class="p-4 text-center text-danger small"><i class="fas fa-triangle-exclamation me-1"></i> Terjadi kesalahan saat memuat data.</div>';
+                });
+        });
+    });
 </script>
 
 <!-- MODAL RIWAYAT REVISI DOKUMEN MUTU -->
