@@ -85,7 +85,7 @@ function formatHoursToDays(?float $hours): string {
                                 <!-- Foto Profil -->
                                 <div class="position-relative flex-shrink-0">
                                     <?php if ($avatarUrl): ?>
-                                        <img src="<?= $avatarUrl ?>" alt="<?= htmlspecialchars($m['name']) ?>" 
+                                        <img src="<?= $avatarUrl ?>" loading="lazy" decoding="async" alt="<?= htmlspecialchars($m['name']) ?>" 
                                              class="rounded-circle shadow-xs border border-2 border-white" 
                                              style="width: 58px; height: 58px; object-fit: cover;">
                                     <?php else: ?>
@@ -303,7 +303,7 @@ function openGpmHistoryModal(gpmId, name, fakultas, email, avatarUrl) {
     // Avatar
     const avatarWrap = document.getElementById('modalGpmAvatarWrap');
     if (avatarUrl) {
-        avatarWrap.innerHTML = `<img src="${avatarUrl}" class="rounded-circle shadow-xs border border-2 border-white" style="width: 48px; height: 48px; object-fit: cover;">`;
+        avatarWrap.innerHTML = `<img src="${avatarUrl}" class="rounded-circle shadow-xs border border-2 border-white" style="width: 48px; height: 48px; object-fit: cover;" loading="lazy" decoding="async">`;
     } else {
         const init = (name || 'G').trim().charAt(0).toUpperCase();
         avatarWrap.innerHTML = `<div class="rounded-circle shadow-xs d-flex align-items-center justify-content-center text-white fw-bold" style="width: 48px; height: 48px; font-size: 1.15rem; background: linear-gradient(135deg, #1E3A8A, #3B82F6);">${init}</div>`;

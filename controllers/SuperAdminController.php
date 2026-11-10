@@ -926,105 +926,47 @@ class SuperAdminController extends Controller {
         ");
         $prodiSummaries = $stmtProdiSummary->fetchAll();
 
-        // Rekapitulasi Tingkat Fakultas & Siklus Berkelanjutan (Dengan Dropdown Aspek Judul & Skor 20% per Tahap Disetujui)
-        $fakultasRows = $this->db->query("SELECT id, kode_fakultas, nama_fakultas, nama_dekan FROM fakultas ORDER BY id ASC")->fetchAll();
-        $fakultasSummaries = [];
-
-        foreach ($fakultasRows as $fak) {
-            $fakId = (int)$fak['id'];
-
-            // Ambil seluruh cycle di fakultas ini (baik level fakultas maupun prodi di bawahnya)
-            $cycles = [];
-            try {
-                $stmtCycles = $this->db->prepare("
-                    SELECT c.*, p.nama_prodi, p.jenjang
-                    FROM ppepp_cycles c
-                    LEFT JOIN prodis p ON c.prodi_id = p.id
-                    WHERE (c.fakultas_id = ? OR p.fakultas_id = ?) AND c.deleted_at IS NULL
-                    ORDER BY c.created_at DESC
-                ");
-                $stmtCycles->execute([$fakId, $fakId]);
-                $cycles = $stmtCycles->fetchAll();
-            } catch (\PDOException $e) {
-                // Defensive fallback jika tabel ppepp_cycles belum siap / sedang dimigrasi
-                $cycles = [];
-            }
-
-            $totalFakultasPct = 0;
-            $totalFakultasDocs = 0;
-            $fakPerluReview = 0;
-            $fakPerluRevisi = 0;
-            $fakSesuai = 0;
-
-            $processedCycles = [];
-            foreach ($cycles as $c) {
-                $cId = (int)$c['id'];
-
-                $stmtStageDocs = $this->db->prepare("
-                    SELECT id, nama_dokumen, nomor_dokumen, siklus, status_review, tahap_review, file_path, external_link, jenis_upload, created_at
-                    FROM ppepp_documents
-                    WHERE cycle_id = ? AND deleted_at IS NULL AND status_review != 'draft'
-                    ORDER BY created_at ASC
-                ");
-                $stmtStageDocs->execute([$cId]);
-                $docs = $stmtStageDocs->fetchAll();
-
-                $stages = [
-                    'penetapan'    => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
-                    'pelaksanaan'  => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
-                    'evaluasi'     => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
-                    'pengendalian' => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
-                    'peningkatan'  => ['exists' => false, 'status' => 'belum_ada', 'doc' => null, 'score' => 0],
-                ];
-
-                $cycleDocsCount = count($docs);
-                $totalFakultasDocs += $cycleDocsCount;
-
-                foreach ($docs as $d) {
-                    $cy = $d['siklus'];
-                    if (isset($stages[$cy])) {
-                        $stages[$cy]['exists'] = true;
-                        $stages[$cy]['status'] = $d['status_review'];
-                        $stages[$cy]['doc'] = $d;
-
-                        // Aturan Klien: Bobot 20% HANYA jika status_review == 'sesuai' (ACC)
-                        if ($d['status_review'] === 'sesuai') {
-                            $stages[$cy]['score'] = 20;
-                            $fakSesuai++;
-                        } elseif (in_array($d['status_review'], ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])) {
-                            $fakPerluRevisi++;
-                        } elseif (
-                            $d['status_review'] === 'menunggu_review_lpm' ||
-                            ($d['status_review'] === 'sudah_diperbaiki' && ($d['tahap_review'] ?? 'lpm') === 'lpm') ||
-                            $d['status_review'] === 'belum_direview'
-                        ) {
-                            $fakPerluReview++;
-                        }
-                    }
-                }
-
-                // Skor per judul = akumulasi 20% per tahapan yang ACC
-                $cycleScore = array_sum(array_column($stages, 'score'));
-                $totalFakultasPct += $cycleScore;
-
-                $c['stages'] = $stages;
-                $c['total_score'] = $cycleScore;
-                $c['docs_count'] = $cycleDocsCount;
-                $c['all_docs'] = $docs;
-                $processedCycles[] = $c;
-            }
-
-            $numCycles = count($processedCycles);
-            $fak['cycles'] = $processedCycles;
-            $fak['total_cycles'] = $numCycles;
-            $fak['total_dokumen_fakultas'] = $totalFakultasDocs;
-            $fak['perlu_review_count'] = $fakPerluReview;
-            $fak['revisi_count'] = $fakPerluRevisi;
-            $fak['sesuai_count'] = $fakSesuai;
-            $fak['progres_kepatuhan'] = $numCycles > 0 ? round($totalFakultasPct / $numCycles) : 0;
-
-            $fakultasSummaries[] = $fak;
+        // Rekapitulasi Tingkat Fakultas via agregasi cepat (bebas N+1 query & hemat RAM/DOM)
+        $stmtFakSummary = $this->db->query("
+            SELECT 
+                f.id, f.kode_fakultas, f.nama_fakultas, f.nama_dekan,
+                COALESCE(doc_agg.total_dokumen_fakultas, 0) as total_dokumen_fakultas,
+                COALESCE(doc_agg.perlu_review_count, 0) as perlu_review_count,
+                COALESCE(doc_agg.revisi_count, 0) as revisi_count,
+                COALESCE(doc_agg.sesuai_count, 0) as sesuai_count,
+                COALESCE(cyc_agg.total_cycles, 0) as total_cycles
+            FROM fakultas f
+            LEFT JOIN (
+                SELECT 
+                    COALESCE(d.fakultas_id, p.fakultas_id) as f_id,
+                    COUNT(d.id) as total_dokumen_fakultas,
+                    SUM(CASE WHEN (d.status_review = 'menunggu_review_lpm' OR (d.status_review = 'sudah_diperbaiki' AND d.tahap_review = 'lpm') OR d.status_review = 'belum_direview') THEN 1 ELSE 0 END) as perlu_review_count,
+                    SUM(CASE WHEN d.status_review IN ('perlu_perbaikan', 'revisi_lpm', 'revisi_gpm') THEN 1 ELSE 0 END) as revisi_count,
+                    SUM(CASE WHEN d.status_review = 'sesuai' THEN 1 ELSE 0 END) as sesuai_count
+                FROM ppepp_documents d
+                LEFT JOIN prodis p ON d.prodi_id = p.id
+                WHERE d.deleted_at IS NULL AND d.status_review != 'draft'
+                GROUP BY COALESCE(d.fakultas_id, p.fakultas_id)
+            ) doc_agg ON f.id = doc_agg.f_id
+            LEFT JOIN (
+                SELECT 
+                    COALESCE(c.fakultas_id, p.fakultas_id) as f_id,
+                    COUNT(c.id) as total_cycles
+                FROM ppepp_cycles c
+                LEFT JOIN prodis p ON c.prodi_id = p.id
+                WHERE c.deleted_at IS NULL
+                GROUP BY COALESCE(c.fakultas_id, p.fakultas_id)
+            ) cyc_agg ON f.id = cyc_agg.f_id
+            ORDER BY f.id ASC
+        ");
+        $fakultasSummaries = $stmtFakSummary->fetchAll();
+        foreach ($fakultasSummaries as &$f) {
+            $tot = (int)$f['total_dokumen_fakultas'];
+            $acc = (int)$f['sesuai_count'];
+            $f['progres_kepatuhan'] = $tot > 0 ? round(($acc / $tot) * 100) : 0;
+            $f['cycles'] = []; // Dimuat on-demand via AJAX untuk performa instan tanpa lag
         }
+        unset($f);
 
         $this->render('super_admin/review_hub', [
             'pageTitle'         => 'Pusat Review Dokumen Mutu PPEPP',
@@ -1052,7 +994,246 @@ class SuperAdminController extends Controller {
         ]);
     }
 
-    /**
+        /**
+     * AJAX endpoint: Mengambil 15 siklus terbaru suatu fakultas on-demand
+     * Mencegah DOM freeze dan menghemat puluhan megabyte HTML
+     */
+    public function fakultasCyclesAjax(string $fakultasId): void {
+        header('Content-Type: application/json; charset=utf-8');
+        $fakId = (int)$fakultasId;
+
+        $stmtFak = $this->db->prepare("SELECT id, nama_fakultas, kode_fakultas FROM fakultas WHERE id = ?");
+        $stmtFak->execute([$fakId]);
+        $fak = $stmtFak->fetch();
+
+        if (!$fak) {
+            echo json_encode(['success' => false, 'message' => 'Fakultas tidak ditemukan']);
+            exit;
+        }
+
+        // Ambil total siklus
+        $stmtCount = $this->db->prepare("
+            SELECT COUNT(*) 
+            FROM ppepp_cycles c
+            LEFT JOIN prodis p ON c.prodi_id = p.id
+            WHERE (c.fakultas_id = ? OR p.fakultas_id = ?) AND c.deleted_at IS NULL
+        ");
+        $stmtCount->execute([$fakId, $fakId]);
+        $totalCycles = (int)$stmtCount->fetchColumn();
+
+        if ($totalCycles === 0) {
+            $html = '<div class="p-4 text-center text-muted small"><i class="fas fa-folder-open fa-2x opacity-50 mb-2 d-block"></i>Belum ada judul siklus dokumen PPEPP yang diunggah untuk fakultas ini.</div>';
+            echo json_encode(['success' => true, 'total_cycles' => 0, 'html' => $html]);
+            exit;
+        }
+
+        // Ambil 15 siklus terbaru
+        $stmtCycles = $this->db->prepare("
+            SELECT c.*, p.nama_prodi, p.jenjang
+            FROM ppepp_cycles c
+            LEFT JOIN prodis p ON c.prodi_id = p.id
+            WHERE (c.fakultas_id = ? OR p.fakultas_id = ?) AND c.deleted_at IS NULL
+            ORDER BY c.created_at DESC
+            LIMIT 15
+        ");
+        $stmtCycles->execute([$fakId, $fakId]);
+        $cycles = $stmtCycles->fetchAll();
+
+        // Ambil dokumen sekaligus (1 single batch query, no N+1)
+        $cycleIds = array_column($cycles, 'id');
+        $docsByCycle = [];
+        if (!empty($cycleIds)) {
+            $inPlaceholders = implode(',', array_fill(0, count($cycleIds), '?'));
+            $stmtDocs = $this->db->prepare("
+                SELECT id, cycle_id, nama_dokumen, nomor_dokumen, siklus, status_review, tahap_review, file_path, external_link, jenis_upload, created_at
+                FROM ppepp_documents
+                WHERE cycle_id IN ({$inPlaceholders}) AND deleted_at IS NULL AND status_review != 'draft'
+                ORDER BY created_at ASC
+            ");
+            $stmtDocs->execute($cycleIds);
+            foreach ($stmtDocs->fetchAll() as $d) {
+                $docsByCycle[$d['cycle_id']][] = $d;
+            }
+        }
+
+        // Generate HTML
+        ob_start();
+        $detailUrl = base_url('admin/review-fakultas/' . $fakId);
+        ?>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.82rem;">
+                <thead class="table-light text-secondary" style="font-size: 0.72rem; text-transform: uppercase;">
+                    <tr>
+                        <th class="ps-3" style="width: 30px;">#</th>
+                        <th style="min-width: 220px;">Judul Aspek / Topik Mutu PPEPP</th>
+                        <th style="min-width: 140px;">Unit Pengunggah</th>
+                        <th class="text-center" style="min-width: 130px;">Progres Kepatuhan</th>
+                        <th class="text-center" style="min-width: 250px;">Tahapan PPEPP (P-P-E-P-P)</th>
+                        <th class="text-center" style="width: 100px;">Total Berkas</th>
+                        <th class="text-center pe-3" style="width: 160px;">Aksi &amp; Riwayat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $cIdx = 1;
+                    $stageMap = [
+                        'penetapan'    => ['P', 'Penetapan'],
+                        'pelaksanaan'  => ['P', 'Pelaksanaan'],
+                        'evaluasi'     => ['E', 'Evaluasi'],
+                        'pengendalian' => ['P', 'Pengendalian'],
+                        'peningkatan'  => ['P', 'Peningkatan'],
+                    ];
+
+                    foreach ($cycles as $cyc): 
+                        $cId = (int)$cyc['id'];
+                        $docs = $docsByCycle[$cId] ?? [];
+                        $stages = [
+                            'penetapan'    => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                            'pelaksanaan'  => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                            'evaluasi'     => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                            'pengendalian' => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                            'peningkatan'  => ['exists' => false, 'status' => 'belum_diisi', 'score' => 0, 'doc' => null],
+                        ];
+                        foreach ($docs as $d) {
+                            $cy = $d['siklus'];
+                            if (isset($stages[$cy])) {
+                                $stages[$cy]['exists'] = true;
+                                $stages[$cy]['status'] = $d['status_review'];
+                                $stages[$cy]['doc'] = $d;
+                                if ($d['status_review'] === 'sesuai') {
+                                    $stages[$cy]['score'] = 20;
+                                }
+                            }
+                        }
+                        $cScore = array_sum(array_column($stages, 'score'));
+                        $unitLabel = !empty($cyc['nama_prodi']) ? 'Prodi ' . htmlspecialchars($cyc['nama_prodi']) : 'Dekanat (Fakultas)';
+                        $unitBadge = !empty($cyc['nama_prodi']) ? 'bg-primary bg-opacity-10 text-primary' : 'bg-warning bg-opacity-20 text-dark';
+                    ?>
+                        <tr>
+                            <td class="ps-3 text-muted"><?= $cIdx++ ?></td>
+                            <td>
+                                <div class="fw-bold text-dark mb-0.5"><?= htmlspecialchars($cyc['judul_siklus']) ?></div>
+                                <?php if (!empty($cyc['tahun_akademik'])): ?>
+                                    <span class="badge bg-light text-muted border" style="font-size: 0.65rem;"><?= htmlspecialchars($cyc['tahun_akademik']) ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="badge <?= $unitBadge ?> border px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;">
+                                    <?= $unitLabel ?>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-inline-flex flex-column align-items-center justify-content-center py-1" style="min-width: 110px;">
+                                    <div class="d-flex align-items-center justify-content-center gap-2 w-100 mb-1" style="max-width: 115px;">
+                                        <div class="progress flex-grow-1 rounded-pill" style="height: 8px; background-color: #E2E8F0;">
+                                            <div class="progress-bar rounded-pill <?= $cScore >= 100 ? 'bg-success' : ($cScore >= 60 ? 'bg-info' : ($cScore >= 20 ? 'bg-warning' : 'bg-secondary')) ?>" 
+                                                 role="progressbar" 
+                                                 style="width: <?= $cScore ?>%"></div>
+                                        </div>
+                                        <span class="badge <?= $cScore >= 100 ? 'bg-success text-white' : ($cScore >= 60 ? 'bg-info text-dark' : ($cScore >= 20 ? 'bg-warning text-dark' : 'bg-light text-secondary border')) ?> fw-bold rounded-pill px-2 py-0.5" style="font-size: 0.72rem; min-width: 36px; text-align: center;">
+                                            <?= $cScore ?>%
+                                        </span>
+                                    </div>
+                                    <div class="text-muted fw-semibold" style="font-size: 0.68rem; letter-spacing: -0.01em;">
+                                        (<?= $cScore / 20 ?>/5 Tahap Disetujui)
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-inline-flex align-items-center gap-1">
+                                    <?php 
+                                    foreach ($stageMap as $stKey => $stMeta):
+                                        $stInfo = $stages[$stKey];
+                                        $isAcc = ($stInfo['status'] === 'sesuai');
+                                        $isRevisi = in_array($stInfo['status'], ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan']);
+                                        $isReviewLpm = in_array($stInfo['status'], ['menunggu_review_lpm', 'sudah_diperbaiki']);
+                                        $isReviewGpm = in_array($stInfo['status'], ['menunggu_review_gpm', 'belum_direview']);
+                                        $docItem = $stInfo['doc'];
+
+                                        $badgeClass = 'bg-light text-muted border';
+                                        $badgeTitle = $stMeta[1] . ': Belum Diisi';
+                                        $iconHtml = '';
+
+                                        if ($isAcc) {
+                                            $badgeClass = 'bg-success text-white shadow-xs';
+                                            $badgeTitle = $stMeta[1] . ': Disetujui (Sesuai Mutu)';
+                                            $iconHtml = '<i class="fas fa-check-circle me-0.5"></i>';
+                                        } elseif ($isRevisi) {
+                                            $badgeClass = 'bg-warning text-dark border border-warning';
+                                            $badgeTitle = $stMeta[1] . ': Perlu Revisi';
+                                            $iconHtml = '<i class="fas fa-exclamation-triangle me-0.5"></i>';
+                                        } elseif ($isReviewLpm) {
+                                            $badgeClass = 'bg-primary text-white shadow-xs';
+                                            $badgeTitle = $stMeta[1] . ': Menunggu Review LPM';
+                                            $iconHtml = '<i class="fas fa-clock me-0.5"></i>';
+                                        } elseif ($isReviewGpm) {
+                                            $badgeClass = 'bg-info bg-opacity-25 text-info-emphasis border border-info border-opacity-50';
+                                            $badgeTitle = $stMeta[1] . ': Menunggu Telaah GPM';
+                                            $iconHtml = '<i class="fas fa-hourglass-half me-0.5"></i>';
+                                        }
+                                    ?>
+                                        <span class="badge rounded-pill px-2 py-1 <?= $badgeClass ?>" 
+                                              style="font-size: 0.68rem; cursor: <?= $docItem ? 'pointer' : 'default' ?>;"
+                                              title="<?= $badgeTitle ?>"
+                                              <?php if ($docItem): ?>
+                                                  onclick="openDocReviewHistory(<?= $docItem['id'] ?>)"
+                                              <?php endif; ?>>
+                                            <?= $iconHtml ?><?= $stMeta[0] ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border px-2 py-1">
+                                    <?= count($docs) ?> Berkas
+                                </span>
+                            </td>
+                            <td class="text-center pe-3">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    <?php if (!empty($docs)): ?>
+                                        <button type="button" 
+                                                class="btn btn-xs btn-outline-info rounded-pill px-2 py-0.5 btn-open-revisions" 
+                                                data-doc-id="<?= $docs[0]['id'] ?>"
+                                                title="Lihat Riwayat Catatan Revisi">
+                                            <i class="fas fa-history me-1"></i> Revisi
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if (!empty($cyc['prodi_id'])): ?>
+                                        <a href="<?= base_url('admin/review-prodi/' . $cyc['prodi_id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" title="Review Dokumen Prodi">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </a>
+                                    <?php else: ?>
+                                        <a href="<?= $detailUrl ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" title="Review Dokumen Dekanat">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php if ($totalCycles > count($cycles)): ?>
+            <div class="p-2.5 bg-light text-center border-top">
+                <a href="<?= $detailUrl ?>" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold text-white shadow-2xs">
+                    <i class="fas fa-arrow-up-right-from-square me-1"></i> Lihat Seluruh <?= number_format($totalCycles, 0, ',', '.') ?> Siklus di Halaman Review Fakultas &rarr;
+                </a>
+            </div>
+        <?php endif; ?>
+        <?php
+        $html = ob_get_clean();
+
+        echo json_encode([
+            'success'      => true,
+            'total_cycles' => $totalCycles,
+            'shown_cycles' => count($cycles),
+            'html'         => $html
+        ]);
+        exit;
+    }
+
+/**
      * Halaman Review Dokumen Mutu per Program Studi (LPM)
      */
     public function reviewProdi(string $prodiId): void {

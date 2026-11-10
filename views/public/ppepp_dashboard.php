@@ -136,32 +136,32 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
 
                 <ul class="nav ppepp-nav-tabs" id="ppeppTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="tab-all-btn" data-bs-toggle="tab" data-bs-target="#tab-all" type="button" role="tab">
+                        <button class="nav-link active" id="tab-all-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('', this)">
                             <i class="fas fa-layer-group"></i> Semua (<?= $cycleStats['total'] ?>)
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-penetapan" id="tab-p1-btn" data-bs-toggle="tab" data-bs-target="#tab-p1" type="button" role="tab">
+                        <button class="nav-link tab-penetapan" id="tab-p1-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('penetapan', this)">
                             <i class="fas fa-file-signature"></i> Penetapan (<?= $cycleStats['penetapan'] ?>)
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-pelaksanaan" id="tab-p2-btn" data-bs-toggle="tab" data-bs-target="#tab-p2" type="button" role="tab">
+                        <button class="nav-link tab-pelaksanaan" id="tab-p2-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('pelaksanaan', this)">
                             <i class="fas fa-person-chalkboard"></i> Pelaksanaan (<?= $cycleStats['pelaksanaan'] ?>)
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-evaluasi" id="tab-e-btn" data-bs-toggle="tab" data-bs-target="#tab-e" type="button" role="tab">
+                        <button class="nav-link tab-evaluasi" id="tab-e-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('evaluasi', this)">
                             <i class="fas fa-magnifying-glass-chart"></i> Evaluasi (<?= $cycleStats['evaluasi'] ?>)
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-pengendalian" id="tab-p3-btn" data-bs-toggle="tab" data-bs-target="#tab-p3" type="button" role="tab">
+                        <button class="nav-link tab-pengendalian" id="tab-p3-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('pengendalian', this)">
                             <i class="fas fa-sliders"></i> Pengendalian (<?= $cycleStats['pengendalian'] ?>)
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link tab-peningkatan" id="tab-p4-btn" data-bs-toggle="tab" data-bs-target="#tab-p4" type="button" role="tab">
+                        <button class="nav-link tab-peningkatan" id="tab-p4-btn" type="button" role="tab" onclick="changeProdiPpeppCycleTab('peningkatan', this)">
                             <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= $cycleStats['peningkatan'] ?>)
                         </button>
                     </li>
@@ -218,39 +218,9 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                     </div>
                 </div>
 
-                <!-- Tab Panes -->
-                <div class="tab-content" id="ppeppTabsContent">
-                    
-                    <!-- 1. All Documents Tab -->
-                    <div class="tab-pane fade show active" id="tab-all" role="tabpanel">
-                        <?php renderDocTable($allDocuments, 'ppeppDocumentTable'); ?>
-                    </div>
-
-                    <!-- 2. Penetapan Tab -->
-                    <div class="tab-pane fade" id="tab-p1" role="tabpanel">
-                        <?php renderDocTable($docsByCycle['penetapan']); ?>
-                    </div>
-
-                    <!-- 3. Pelaksanaan Tab -->
-                    <div class="tab-pane fade" id="tab-p2" role="tabpanel">
-                        <?php renderDocTable($docsByCycle['pelaksanaan']); ?>
-                    </div>
-
-                    <!-- 4. Evaluasi Tab -->
-                    <div class="tab-pane fade" id="tab-e" role="tabpanel">
-                        <?php renderDocTable($docsByCycle['evaluasi']); ?>
-                    </div>
-
-                    <!-- 5. Pengendalian Tab -->
-                    <div class="tab-pane fade" id="tab-p3" role="tabpanel">
-                        <?php renderDocTable($docsByCycle['pengendalian']); ?>
-                    </div>
-
-                    <!-- 6. Peningkatan Tab -->
-                    <div class="tab-pane fade" id="tab-p4" role="tabpanel">
-                        <?php renderDocTable($docsByCycle['peningkatan']); ?>
-                    </div>
-
+                <!-- Single Optimized Table Container -->
+                <div id="ppeppTableContainer">
+                    <?php renderDocTable($allDocuments, 'ppeppDocumentTable'); ?>
                 </div>
 
                 <!-- Footer Table Pagination Controls -->
@@ -266,6 +236,16 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
 
     </div>
 </section>
+
+<script>
+function changeProdiPpeppCycleTab(cycle, btn) {
+    document.querySelectorAll('#ppeppTabs .nav-link').forEach(el => el.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (typeof window.setProdiPpeppCycleFilter === 'function') {
+        window.setProdiPpeppCycleFilter(cycle);
+    }
+}
+</script>
 
 <?php
 /**
@@ -301,7 +281,8 @@ function renderDocTable(array $docs, string $tableId = ''): void {
                             data-title="<?= htmlspecialchars($doc['nama_dokumen'] . ' ' . $adaptive['standards_text']) ?>" 
                             data-nomor="<?= htmlspecialchars($doc['nomor_dokumen'] ?? '') ?>" 
                             data-bidang-id="<?= htmlspecialchars(implode(',', $adaptive['bidang_ids'])) ?>"
-                            data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>">
+                            data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
+                            data-siklus="<?= strtolower($doc['siklus'] ?? '') ?>">
                             <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
                             <td>
                                 <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen']) ?></div>

@@ -179,7 +179,7 @@ class PublicController extends Controller {
 
         $this->attachFilesToDocs($allDocuments);
 
-        // Calculate accurate statistics per cycle
+        // Accurate statistics per cycle & bidang (single pass, zero duplication)
         $cycleStats = [
             'penetapan' => 0,
             'pelaksanaan' => 0,
@@ -188,17 +188,6 @@ class PublicController extends Controller {
             'peningkatan' => 0,
             'total' => 0
         ];
-
-        // Group documents by cycle for tab rendering
-        $docsByCycle = [
-            'penetapan' => [],
-            'pelaksanaan' => [],
-            'evaluasi' => [],
-            'pengendalian' => [],
-            'peningkatan' => []
-        ];
-
-        // Calculate statistics per bidang
         $bidangStats = [];
 
         foreach ($allDocuments as $doc) {
@@ -206,7 +195,6 @@ class PublicController extends Controller {
             if (isset($cycleStats[$siklus])) {
                 $cycleStats[$siklus]++;
                 $cycleStats['total']++;
-                $docsByCycle[$siklus][] = $doc;
             }
 
             $bidangName = $doc['nama_bidang'] ?? 'Lainnya';
@@ -245,7 +233,6 @@ class PublicController extends Controller {
             'prodiList' => $prodiList,
             'bidangList' => $bidangList,
             'allDocuments' => $allDocuments,
-            'docsByCycle' => $docsByCycle,
             'cycleStats' => $cycleStats,
             'bidangStats' => $bidangStats
         ]);
@@ -289,7 +276,7 @@ class PublicController extends Controller {
 
         $this->attachFilesToDocs($allDocuments);
 
-        // Accurate statistics per cycle
+        // Accurate statistics per cycle & bidang (single pass, zero duplication)
         $cycleStats = [
             'penetapan' => 0,
             'pelaksanaan' => 0,
@@ -298,16 +285,6 @@ class PublicController extends Controller {
             'peningkatan' => 0,
             'total' => 0
         ];
-
-        $docsByCycle = [
-            'penetapan' => [],
-            'pelaksanaan' => [],
-            'evaluasi' => [],
-            'pengendalian' => [],
-            'peningkatan' => []
-        ];
-
-        // Calculate statistics per bidang
         $bidangStats = [];
 
         foreach ($allDocuments as $doc) {
@@ -315,7 +292,6 @@ class PublicController extends Controller {
             if (isset($cycleStats[$siklus])) {
                 $cycleStats[$siklus]++;
                 $cycleStats['total']++;
-                $docsByCycle[$siklus][] = $doc;
             }
 
             $bidangName = $doc['nama_bidang'] ?? 'Lainnya';
@@ -341,7 +317,6 @@ class PublicController extends Controller {
             'fakultas' => $fakultas,
             'bidangList' => $bidangList,
             'allDocuments' => $allDocuments,
-            'docsByCycle' => $docsByCycle,
             'cycleStats' => $cycleStats,
             'bidangStats' => $bidangStats,
             'prodiList' => $prodiList

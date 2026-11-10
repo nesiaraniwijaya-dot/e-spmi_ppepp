@@ -133,7 +133,7 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
     <div class="admin-sidebar-header d-flex align-items-center justify-content-between">
         <a href="<?= base_url(Auth::getDashboardRoute()) ?>" style="display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0;" class="flex-grow-1">
             <div class="brand-logo-wrap" style="width:40px;height:40px;flex-shrink:0;">
-                <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
+                <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
             </div>
             <div class="text-truncate">
                 <div class="brand-title" style="font-family:var(--font-heading);font-weight:800;font-size:0.95rem;color:#fff;line-height:1.2;">MITRA</div>
@@ -474,7 +474,7 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
     <div class="admin-sidebar-footer">
         <div style="display:flex;align-items:center;gap:10px;">
             <?php if (!empty($currentUser['avatar']) && file_exists(ROOT_PATH . '/' . $currentUser['avatar'])): ?>
-                <img src="<?= base_url($currentUser['avatar']) ?>" alt="Avatar" class="rounded-circle" style="width:28px;height:28px;object-fit:cover;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.3);">
+                <img src="<?= base_url($currentUser['avatar']) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle" style="width:28px;height:28px;object-fit:cover;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.3);">
             <?php else: ?>
                 <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;box-shadow:0 0 6px rgba(74,222,128,0.6);"></div>
             <?php endif; ?>

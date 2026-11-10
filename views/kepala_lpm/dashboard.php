@@ -151,6 +151,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     </div>
 </div>
 
+<!-- ApexCharts (Loaded on-demand only for executive dashboard) -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Donut

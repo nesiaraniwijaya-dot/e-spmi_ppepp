@@ -243,24 +243,24 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         
                                         <!-- Dropdown Halaman Tersedia -->
                                         <select id="selectHeroBtn1" class="form-select mb-2 fw-medium">
-                                            <optgroup label="📌 Bagian Beranda (Scroll Halus / Anchor)">
+                                            <optgroup label="Bagian Beranda (Scroll Halus / Anchor)">
                                                 <option value="#direktoriFakultas" <?= $btn1CurrentUrl === '#direktoriFakultas' ? 'selected' : '' ?>>Direktori Fakultas &amp; Prodi (#direktoriFakultas)</option>
                                                 <option value="#alurMutu" <?= $btn1CurrentUrl === '#alurMutu' ? 'selected' : '' ?>>Alur 5 Siklus PPEPP (#alurMutu)</option>
                                             </optgroup>
-                                            <optgroup label="📄 Halaman Publik Sistem">
+                                            <optgroup label="Halaman Publik Sistem">
                                                 <option value="dokumen" <?= $btn1CurrentUrl === 'dokumen' ? 'selected' : '' ?>>Repositori Dokumen Mutu (dokumen)</option>
                                                 <option value="tentang" <?= $btn1CurrentUrl === 'tentang' ? 'selected' : '' ?>>Tentang SPMI &amp; PPEPP (tentang)</option>
                                                 <option value="login" <?= $btn1CurrentUrl === 'login' ? 'selected' : '' ?>>Portal Login Akun (login)</option>
                                             </optgroup>
-                                            <optgroup label="📑 Dokumen Mutu Per Siklus PPEPP">
+                                            <optgroup label="Dokumen Mutu Per Siklus PPEPP">
                                                 <option value="dokumen?siklus=penetapan" <?= $btn1CurrentUrl === 'dokumen?siklus=penetapan' ? 'selected' : '' ?>>Dokumen Mutu: Penetapan (P1)</option>
                                                 <option value="dokumen?siklus=pelaksanaan" <?= $btn1CurrentUrl === 'dokumen?siklus=pelaksanaan' ? 'selected' : '' ?>>Dokumen Mutu: Pelaksanaan (P2)</option>
                                                 <option value="dokumen?siklus=evaluasi" <?= $btn1CurrentUrl === 'dokumen?siklus=evaluasi' ? 'selected' : '' ?>>Dokumen Mutu: Evaluasi (E)</option>
                                                 <option value="dokumen?siklus=pengendalian" <?= $btn1CurrentUrl === 'dokumen?siklus=pengendalian' ? 'selected' : '' ?>>Dokumen Mutu: Pengendalian (P3)</option>
                                                 <option value="dokumen?siklus=peningkatan" <?= $btn1CurrentUrl === 'dokumen?siklus=peningkatan' ? 'selected' : '' ?>>Dokumen Mutu: Peningkatan (P4)</option>
                                             </optgroup>
-                                            <optgroup label="🌐 Tautan Khusus">
-                                                <option value="__custom__" <?= $isBtn1Custom ? 'selected' : '' ?>>🔗 Link Eksternal / URL Kustom Lainnya (Ketik Manual...)</option>
+                                            <optgroup label="Tautan Khusus">
+                                                <option value="__custom__" <?= $isBtn1Custom ? 'selected' : '' ?>>Link Eksternal / URL Kustom Lainnya (Ketik Manual...)</option>
                                             </optgroup>
                                         </select>
 
@@ -310,24 +310,24 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                                         <!-- Dropdown Halaman Tersedia -->
                                         <select id="selectHeroBtn2" class="form-select mb-2 fw-medium">
-                                            <optgroup label="📌 Bagian Beranda (Scroll Halus / Anchor)">
+                                            <optgroup label="Bagian Beranda (Scroll Halus / Anchor)">
                                                 <option value="#direktoriFakultas" <?= $btn2CurrentUrl === '#direktoriFakultas' ? 'selected' : '' ?>>Direktori Fakultas &amp; Prodi (#direktoriFakultas)</option>
                                                 <option value="#alurMutu" <?= $btn2CurrentUrl === '#alurMutu' ? 'selected' : '' ?>>Alur 5 Siklus PPEPP (#alurMutu)</option>
                                             </optgroup>
-                                            <optgroup label="📄 Halaman Publik Sistem">
+                                            <optgroup label="Halaman Publik Sistem">
                                                 <option value="dokumen" <?= $btn2CurrentUrl === 'dokumen' ? 'selected' : '' ?>>Repositori Dokumen Mutu (dokumen)</option>
                                                 <option value="tentang" <?= $btn2CurrentUrl === 'tentang' ? 'selected' : '' ?>>Tentang SPMI &amp; PPEPP (tentang)</option>
                                                 <option value="login" <?= $btn2CurrentUrl === 'login' ? 'selected' : '' ?>>Portal Login Akun (login)</option>
                                             </optgroup>
-                                            <optgroup label="📑 Dokumen Mutu Per Siklus PPEPP">
+                                            <optgroup label="Dokumen Mutu Per Siklus PPEPP">
                                                 <option value="dokumen?siklus=penetapan" <?= $btn2CurrentUrl === 'dokumen?siklus=penetapan' ? 'selected' : '' ?>>Dokumen Mutu: Penetapan (P1)</option>
                                                 <option value="dokumen?siklus=pelaksanaan" <?= $btn2CurrentUrl === 'dokumen?siklus=pelaksanaan' ? 'selected' : '' ?>>Dokumen Mutu: Pelaksanaan (P2)</option>
                                                 <option value="dokumen?siklus=evaluasi" <?= $btn2CurrentUrl === 'dokumen?siklus=evaluasi' ? 'selected' : '' ?>>Dokumen Mutu: Evaluasi (E)</option>
                                                 <option value="dokumen?siklus=pengendalian" <?= $btn2CurrentUrl === 'dokumen?siklus=pengendalian' ? 'selected' : '' ?>>Dokumen Mutu: Pengendalian (P3)</option>
                                                 <option value="dokumen?siklus=peningkatan" <?= $btn2CurrentUrl === 'dokumen?siklus=peningkatan' ? 'selected' : '' ?>>Dokumen Mutu: Peningkatan (P4)</option>
                                             </optgroup>
-                                            <optgroup label="🌐 Tautan Khusus">
-                                                <option value="__custom__" <?= $isBtn2Custom ? 'selected' : '' ?>>🔗 Link Eksternal / URL Kustom Lainnya (Ketik Manual...)</option>
+                                            <optgroup label="Tautan Khusus">
+                                                <option value="__custom__" <?= $isBtn2Custom ? 'selected' : '' ?>>Link Eksternal / URL Kustom Lainnya (Ketik Manual...)</option>
                                             </optgroup>
                                         </select>
 
@@ -644,7 +644,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <div class="col-lg-5 col-md-12">
                                         <div class="footer-brand d-flex align-items-center gap-3 mb-3">
                                             <div class="footer-logo-wrap" style="width:48px;height:48px;">
-                                                <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;">
+                                                <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;">
                                             </div>
                                             <div>
                                                 <div class="footer-brand-title" id="previewFooterBrand"><?= htmlspecialchars($settings['footer_brand_title'] ?? 'MITRA') ?></div>

@@ -20,8 +20,6 @@ $currentUser = Auth::user();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- ApexCharts -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <!-- LPM Design System Stylesheet -->
     <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
     <script>
@@ -41,7 +39,7 @@ $currentUser = Auth::user();
             <!-- Brand -->
             <a class="navbar-brand" href="<?= base_url() ?>">
                 <div class="brand-logo-wrap">
-                    <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA Soegijapranata" class="brand-logo-img">
+                    <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" class="brand-logo-img">
                 </div>
                 <div class="brand-text-wrap">
                     <div class="brand-title">MITRA</div>
@@ -96,7 +94,7 @@ $currentUser = Auth::user();
                                         type="button" data-bs-toggle="dropdown" aria-expanded="false"
                                         style="font-size:0.82rem; border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.08);">
                                     <?php if (!empty($currentUser['avatar']) && file_exists(ROOT_PATH . '/' . $currentUser['avatar'])): ?>
-                                        <img src="<?= base_url($currentUser['avatar']) ?>" alt="Avatar" class="rounded-circle" style="width: 22px; height: 22px; object-fit: cover;">
+                                        <img src="<?= base_url($currentUser['avatar']) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle" style="width: 22px; height: 22px; object-fit: cover;">
                                     <?php else: ?>
                                         <i class="fas fa-circle-user fa-lg text-white-50"></i>
                                     <?php endif; ?>

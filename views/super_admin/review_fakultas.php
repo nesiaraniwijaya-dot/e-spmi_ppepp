@@ -134,9 +134,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <select id="reviewStatusFilter" class="form-select bg-light" onchange="filterReviewTable()">
                         <option value="">-- Semua Status Review --</option>
                         <option value="belum_direview">⏳ Belum Direview</option>
-                        <option value="perlu_perbaikan">⚠️ Perlu Perbaikan (Revisi)</option>
-                        <option value="sudah_diperbaiki">🔄 Perlu Review Ulang</option>
-                        <option value="sesuai">✅ Sesuai Standar</option>
+                        <option value="perlu_perbaikan">Perlu Perbaikan (Revisi)</option>
+                        <option value="sudah_diperbaiki">Perlu Review Ulang</option>
+                        <option value="sesuai">Sesuai Standar</option>
                     </select>
                 </div>
                 <div class="col-md-4 col-sm-6">
