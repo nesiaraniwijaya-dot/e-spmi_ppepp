@@ -287,14 +287,14 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                         <table class="table table-hover align-middle mb-0 table-modern-perbaikan">
                             <thead>
                                 <tr>
-                                    <th class="ps-4 text-center" style="width: 50px;">No</th>
-                                    <th style="width: 140px;">Unit Sasaran</th>
-                                    <th style="min-width: 250px; width: 28%;">Nama Dokumen Mutu</th>
-                                    <th class="text-center" style="width: 120px;">Siklus PPEPP</th>
-                                    <th style="min-width: 170px; width: 17%;">Bidang</th>
-                                    <th class="text-center" style="width: 150px;">Catatan LPM</th>
-                                    <th class="text-center" style="width: 110px;">Lampiran</th>
-                                    <th class="pe-4 text-center" style="width: 160px;">Aksi GPM</th>
+                                    <th class="ps-4 text-center" style="width: 48px;">No</th>
+                                    <th style="width: 135px;">Unit Sasaran</th>
+                                    <th style="min-width: 210px; width: 23%;">Nama Dokumen Mutu</th>
+                                    <th class="text-center" style="width: 115px;">Siklus PPEPP</th>
+                                    <th style="min-width: 150px; width: 14%;">Bidang</th>
+                                    <th style="min-width: 250px; width: 26%;">Catatan LPM (Akses GPM)</th>
+                                    <th class="text-center" style="width: 105px;">Lampiran</th>
+                                    <th class="pe-4 text-center" style="width: 165px;">Aksi GPM</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -304,6 +304,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                                     $lpmNote = trim($doc['lpm_catatan'] ?: ($doc['catatan_review'] ?? ''));
                                     $unitLabel = ($doc['level'] === 'fakultas') ? 'Tingkat Fakultas' : (($doc['jenjang'] ?? 'S1') . ' ' . ($doc['nama_prodi'] ?? ''));
                                     $lpmDate = !empty($doc['lpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['lpm_reviewed_at'])) . ' WIB' : (!empty($doc['reviewed_at']) ? date('d M Y, H:i', strtotime($doc['reviewed_at'])) . ' WIB' : '-');
+                                    $hasFreshGpmRevisionNote = !empty($doc['gpm_catatan']) && !empty($doc['gpm_reviewed_at']) && !empty($doc['lpm_reviewed_at']) && strtotime($doc['gpm_reviewed_at']) > strtotime($doc['lpm_reviewed_at']);
                                 ?>
                                     <tr class="perbaikan-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . $unitLabel)) ?>">
                                         <td class="ps-4 text-center text-muted fw-bold small" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
@@ -351,23 +352,34 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                                             <?php endif; ?>
                                         </td>
 
-                                        <!-- Catatan LPM -->
-                                        <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
-                                            <button type="button" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs"
-                                                    style="font-size: 0.78rem;"
+                                        <!-- Catatan LPM (Terbaca Langsung oleh GPM + Modal Detail) -->
+                                        <td class="py-3 px-3 text-start" style="border-end: 1px solid #F1F5F9;">
+                                            <div class="p-2.5 rounded-3 border border-warning-subtle mb-1.5" style="background: #FFFBEB; border-left: 3px solid #D97706 !important; max-width: 280px;">
+                                                <div class="d-flex align-items-center justify-content-between gap-1 mb-1">
+                                                    <span class="fw-bold text-warning-emphasis d-inline-flex align-items-center gap-1" style="font-size: 0.7rem;">
+                                                        <i class="fas fa-lock text-warning"></i> Catatan LPM:
+                                                    </span>
+                                                    <span class="text-muted" style="font-size: 0.65rem;"><?= $lpmDate ?></span>
+                                                </div>
+                                                <div class="small text-dark mb-0" style="font-size: 0.78rem; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;" title="<?= htmlspecialchars($lpmNote ?: 'Tidak ada catatan tertulis.') ?>">
+                                                    <?= htmlspecialchars($lpmNote ?: 'Tidak ada catatan tertulis.') ?>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-xs btn-outline-warning text-dark rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs"
+                                                    style="font-size: 0.72rem;"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#modalCatatanEvaluator"
-                                                    data-nama="<?= htmlspecialchars($doc['nama_dokumen']) ?>"
-                                                    data-unit="<?= htmlspecialchars($unitLabel) ?>"
+                                                    data-nama="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
+                                                    data-unit="<?= htmlspecialchars($unitLabel, ENT_QUOTES) ?>"
                                                     data-reviewer="Pusat Penjaminan Mutu LPM (Internal GPM)"
-                                                    data-tanggal="<?= $lpmDate ?>"
-                                                    data-catatan="<?= htmlspecialchars($lpmNote) ?>"
-                                                    data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '') ?>"
+                                                    data-tanggal="<?= htmlspecialchars($lpmDate, ENT_QUOTES) ?>"
+                                                    data-catatan="<?= htmlspecialchars($lpmNote ?: 'Tidak ada catatan tertulis.', ENT_QUOTES) ?>"
+                                                    data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '', ENT_QUOTES) ?>"
                                                     data-status="revisi_lpm"
                                                     data-is-gpm="0"
                                                     data-edit-url="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>">
-                                                <i class="fas fa-lock text-warning"></i>
-                                                <span>Catatan LPM</span>
+                                                <i class="fas fa-expand-alt text-warning"></i>
+                                                <span>Baca Catatan Lengkap</span>
                                             </button>
                                         </td>
 
@@ -397,7 +409,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                                                         data-doc-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                         data-unit-name="<?= htmlspecialchars($unitLabel, ENT_QUOTES) ?>"
                                                         data-lpm-note="<?= htmlspecialchars($lpmNote, ENT_QUOTES) ?>"
-                                                        data-gpm-note="<?= htmlspecialchars($doc['gpm_catatan'] ?? '', ENT_QUOTES) ?>">
+                                                        data-gpm-note="<?= $hasFreshGpmRevisionNote ? htmlspecialchars($doc['gpm_catatan'], ENT_QUOTES) : '' ?>">
                                                     <i class="fas fa-paper-plane"></i> Teruskan ke Unit
                                                 </button>
                                                 <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
@@ -771,17 +783,25 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                             <thead>
                                 <tr>
                                     <th class="ps-4 text-center" style="width: 50px;">No</th>
-                                    <th style="width: 140px;">Unit Sasaran</th>
-                                    <th style="min-width: 250px; width: 28%;">Nama Dokumen Mutu</th>
-                                    <th class="text-center" style="width: 160px;">Status Alur Revisi</th>
-                                    <th class="text-center" style="width: 120px;">Siklus PPEPP</th>
-                                    <th style="min-width: 170px; width: 17%;">Bidang</th>
-                                    <th class="pe-4 text-center" style="width: 130px;">Aksi</th>
+                                    <th style="width: 135px;">Unit Sasaran</th>
+                                    <th style="min-width: 220px; width: 24%;">Nama Dokumen Mutu</th>
+                                    <th class="text-center" style="width: 155px;">Status Alur Revisi</th>
+                                    <th class="text-center" style="width: 115px;">Siklus PPEPP</th>
+                                    <th style="min-width: 220px; width: 23%;">Catatan LPM / GPM</th>
+                                    <th class="pe-4 text-center" style="width: 135px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($revisiDocs as $idx => $doc): 
                                     $unitLabel = ($doc['level'] === 'fakultas') ? 'Tingkat Fakultas' : (($doc['jenjang'] ?? 'S1') . ' ' . ($doc['nama_prodi'] ?? ''));
+                                    $allLpmNote = trim($doc['lpm_catatan'] ?? '');
+                                    $allGpmNote = trim($doc['gpm_catatan'] ?? '');
+                                    $isLpmStage = in_array($doc['status_review'] ?? '', ['revisi_lpm', 'perlu_perbaikan']);
+                                    $allNote = $isLpmStage ? ($allLpmNote ?: ($doc['catatan_review'] ?? '')) : ($allGpmNote ?: ($allLpmNote ?: ($doc['catatan_review'] ?? '')));
+                                    $allReviewer = $isLpmStage ? 'Pusat Penjaminan Mutu LPM (Internal GPM)' : 'Gugus Penjaminan Mutu (GPM) Fakultas';
+                                    $allDate = $isLpmStage
+                                        ? (!empty($doc['lpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['lpm_reviewed_at'])) . ' WIB' : '-')
+                                        : (!empty($doc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'])) . ' WIB' : '-');
                                 ?>
                                     <tr class="perbaikan-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . $unitLabel)) ?>">
                                         <td class="ps-4 text-center text-muted fw-bold small" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
@@ -817,15 +837,32 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                                             <?= siklus_badge($doc['siklus']) ?>
                                         </td>
 
-                                        <td class="py-3 px-3.5" style="border-end: 1px solid #F1F5F9;">
-                                            <div class="small fw-semibold text-secondary" style="line-height: 1.35;">
-                                                <?= htmlspecialchars($doc['nama_bidang'] ?? 'Standar Mutu') ?>
-                                            </div>
-                                            <?php if (!empty($doc['nama_sub_bidang'])): ?>
-                                                <div class="text-muted small mt-1 d-flex align-items-center gap-1" style="font-size: 0.72rem;">
-                                                    <i class="fas fa-angle-right text-secondary opacity-75"></i>
-                                                    <span><?= htmlspecialchars($doc['nama_sub_bidang']) ?></span>
+                                        <td class="py-3 px-3 text-start" style="border-end: 1px solid #F1F5F9;">
+                                            <?php if (!empty($allLpmNote)): ?>
+                                                <div class="p-2 rounded-2 border border-warning-subtle mb-1" style="background:#FFFBEB; max-width:250px;">
+                                                    <div class="fw-bold text-warning-emphasis" style="font-size:0.68rem;"><i class="fas fa-lock text-warning me-1"></i>Catatan LPM:</div>
+                                                    <div class="text-dark text-truncate" style="font-size:0.75rem;" title="<?= htmlspecialchars($allLpmNote) ?>"><?= htmlspecialchars($allLpmNote) ?></div>
                                                 </div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($allNote)): ?>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-0.5 fw-semibold d-inline-flex align-items-center gap-1"
+                                                        style="font-size: 0.71rem;"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalCatatanEvaluator"
+                                                        data-nama="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
+                                                        data-unit="<?= htmlspecialchars($unitLabel, ENT_QUOTES) ?>"
+                                                        data-reviewer="<?= htmlspecialchars($allReviewer, ENT_QUOTES) ?>"
+                                                        data-tanggal="<?= htmlspecialchars($allDate, ENT_QUOTES) ?>"
+                                                        data-catatan="<?= htmlspecialchars($allNote, ENT_QUOTES) ?>"
+                                                        data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '', ENT_QUOTES) ?>"
+                                                        data-status="<?= htmlspecialchars($doc['status_review'] ?? '', ENT_QUOTES) ?>"
+                                                        data-is-gpm="<?= $isLpmStage ? '0' : '1' ?>"
+                                                        data-edit-url="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>">
+                                                    <i class="fas fa-comment-dots text-primary"></i>
+                                                    <span>Lihat Catatan</span>
+                                                </button>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
                                             <?php endif; ?>
                                         </td>
 
@@ -1151,10 +1188,11 @@ function changePerbaikanPageSize(val) {
 }
 
 function copyLpmToGpm() {
-    const lpmText = document.getElementById('forwardModalLpmNote')?.textContent || '';
+    let lpmText = document.getElementById('forwardModalLpmNote')?.textContent || '';
+    lpmText = lpmText.replace(/^\[CATATAN\s+INTERNAL\s+LPM[^\]]*\]\s*/i, '').trim();
     const gpmInput = document.getElementById('forwardGpmNoteInput');
     if (gpmInput) {
-        gpmInput.value = lpmText.trim();
+        gpmInput.value = lpmText;
         gpmInput.focus();
     }
 }
@@ -1188,24 +1226,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Handler tombol Forward LPM Revision
-    document.querySelectorAll('.btn-open-forward').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const docId = this.getAttribute('data-doc-id');
-            const docTitle = this.getAttribute('data-doc-title') || '-';
-            const unitName = this.getAttribute('data-unit-name') || '-';
-            const lpmNote = this.getAttribute('data-lpm-note') || '-';
-            const gpmNote = this.getAttribute('data-gpm-note') || '';
+    // Handler tombol Forward LPM Revision (delegated)
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-open-forward');
+        if (!btn) return;
+        const docId = btn.getAttribute('data-doc-id');
+        const docTitle = btn.getAttribute('data-doc-title') || '-';
+        const unitName = btn.getAttribute('data-unit-name') || '-';
+        const lpmNote = btn.getAttribute('data-lpm-note') || '-';
+        const gpmNote = btn.getAttribute('data-gpm-note') || '';
 
-            document.getElementById('forwardModalDocId').value = docId;
-            document.getElementById('forwardModalDocTitle').textContent = docTitle;
-            document.getElementById('forwardModalUnitBadge').textContent = unitName;
-            document.getElementById('forwardModalLpmNote').textContent = lpmNote;
-            document.getElementById('forwardGpmNoteInput').value = gpmNote || lpmNote;
+        document.getElementById('forwardModalDocId').value = docId;
+        document.getElementById('forwardModalDocTitle').textContent = docTitle;
+        document.getElementById('forwardModalUnitBadge').textContent = unitName;
+        document.getElementById('forwardModalLpmNote').textContent = lpmNote;
+        document.getElementById('forwardGpmNoteInput').value = gpmNote;
 
-            const modal = new bootstrap.Modal(document.getElementById('modalForwardLpmRevision'));
-            modal.show();
-        });
+        const modalEl = document.getElementById('modalForwardLpmRevision');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
     });
 
     // Handler modal detail evaluator
@@ -1246,4 +1286,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php require_once ROOT_PATH . '/views/layouts/admin_footer.php'; ?>
+<?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

@@ -337,18 +337,20 @@ if (!empty($documents)):
                                     </div>
                                 </div>
 
-                                <!-- Catatan Evaluasi LPM -->
-                                <?php if (!empty($doc['catatan_review'])): ?>
+                                <!-- Catatan Evaluasi LPM (Khusus Akses GPM) -->
+                                <?php 
+                                $detailLpmNote = !empty($doc['lpm_catatan']) ? $doc['lpm_catatan'] : (($doc['status_review'] !== 'revisi_gpm' && !empty($doc['catatan_review'])) ? $doc['catatan_review'] : '');
+                                if (!empty($detailLpmNote)): ?>
                                     <div class="p-3 rounded-3 mb-3 border <?= in_array($doc['status_review'], ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'border-danger' : 'border-primary' ?>" style="background: <?= in_array($doc['status_review'], ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#FFF1F2' : '#EFF6FF' ?>; border-left: 4px solid <?= in_array($doc['status_review'], ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? '#DC2626' : '#2563EB' ?> !important;">
                                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                                             <span class="small fw-bold text-uppercase <?= in_array($doc['status_review'], ['perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'text-danger' : 'text-primary' ?>" style="font-size: 0.74rem;">
-                                                <i class="fas fa-comment-dots me-1"></i> Catatan Evaluasi Reviewer:
+                                                <i class="fas fa-lock me-1"></i> Catatan Evaluasi Internal LPM (Akses GPM):
                                             </span>
                                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
                                                 <i class="fas fa-award me-0.5"></i> Pusat Penjaminan Mutu LPM
                                             </span>
                                         </div>
-                                        <div class="small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($doc['catatan_review']) ?></div>
+                                        <div class="small text-dark mb-2" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($detailLpmNote) ?></div>
                                         <div class="small text-muted d-flex align-items-center gap-2 pt-1 border-top" style="font-size: 0.72rem; border-color: rgba(0,0,0,0.06) !important;">
                                             <span><i class="fas fa-building-columns text-primary me-1"></i>Pusat Penjaminan Mutu LPM</span>
                                             <?php if (!empty($doc['reviewed_at']) || !empty($doc['lpm_reviewed_at'])): ?>
