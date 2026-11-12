@@ -44,7 +44,7 @@ $totalDraft = $totalDraft ?? count($documents);
         </div>
         <div class="small flex-grow-1" style="line-height: 1.65; color: #475569;">
             <strong class="text-dark d-block mb-1" style="font-size: 0.92rem;">Tentang Ruang Kerja Draf Dokumen:</strong>
-            Dokumen yang tersimpan sebagai draf bersifat rahasia internal program studi dan <strong>belum dapat dilihat oleh pengunjung umum ataupun Tim Penjaminan Mutu (LPM)</strong>. Anda dapat mencicil isian formulir serta melengkapi berkas lampiran kapan saja, lalu menekan tombol <strong>Ajukan ke LPM</strong> saat berkas telah lengkap dan siap diverifikasi.
+            Dokumen yang tersimpan sebagai draf bersifat rahasia internal program studi dan <strong>belum dapat dilihat oleh pengunjung umum ataupun Tim Penjaminan Mutu (GPM Fakultas)</strong>. Anda dapat mencicil isian formulir serta melengkapi berkas lampiran kapan saja, lalu menekan tombol <strong>Ajukan ke GPM</strong> saat berkas telah lengkap dan siap ditelaah.
         </div>
     </div>
 
@@ -105,7 +105,7 @@ $totalDraft = $totalDraft ?? count($documents);
             <div class="col-md-4">
                 <div class="saas-stat-card" style="border-top: 4px solid #16A34A !important;">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="saas-stat-label text-success">Siap Diajukan ke LPM</span>
+                        <span class="saas-stat-label text-success">Siap Diajukan ke GPM</span>
                         <div class="saas-stat-icon-wrap" style="background: #DCFCE7; color: #16A34A;">
                             <i class="fas fa-file-circle-check"></i>
                         </div>
@@ -264,21 +264,21 @@ $totalDraft = $totalDraft ?? count($documents);
                                 </td>
                                 <td class="pe-4 py-3.5 text-center">
                                     <div class="d-inline-flex align-items-center justify-content-center gap-1.5">
-                                        <!-- Tombol Ajukan ke LPM -->
+                                        <!-- Tombol Ajukan ke GPM -->
                                         <?php if ($hasAnyAttachment): ?>
-                                            <form action="<?= base_url('prodi/dokumen/ajukan/' . $doc['id']) ?>" method="POST" class="d-inline" onsubmit="return confirm('Ajukan draf dokumen \'<?= htmlspecialchars(addslashes($doc['nama_dokumen'])) ?>\' ke LPM sekarang?\n\nSetelah diajukan, dokumen akan masuk antrean review Tim Penjaminan Mutu.');">
-                                                <button type="submit" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #002B49; color: #FFFFFF; font-size: 0.76rem;" title="Ajukan ke Tim Penjamin Mutu LPM">
+                                            <form action="<?= base_url('prodi/dokumen/ajukan/' . $doc['id']) ?>" method="POST" class="d-inline" onsubmit="return confirm('Ajukan draf dokumen \'<?= htmlspecialchars(addslashes($doc['nama_dokumen'])) ?>\' ke GPM Fakultas sekarang?\n\nSetelah diajukan, dokumen akan masuk antrean review tahap 1 oleh GPM Fakultas.');">
+                                                <button type="submit" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #002B49; color: #FFFFFF; font-size: 0.76rem;" title="Ajukan ke Gugus Penjaminan Mutu (GPM) Fakultas">
                                                     <i class="fas fa-paper-plane text-warning"></i>
-                                                    <span>Ajukan ke LPM</span>
+                                                    <span>Ajukan ke GPM</span>
                                                 </button>
                                             </form>
                                         <?php else: ?>
                                             <button type="button" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs" 
                                                     style="background: #FFFBEB; color: #B45309; border: 1px solid #FCD34D; font-size: 0.76rem;" 
-                                                    title="Lengkapi berkas sebelum mengajukan ke LPM"
+                                                    title="Lengkapi berkas sebelum mengajukan ke GPM"
                                                     onclick="alertBelumAdaBerkas('<?= htmlspecialchars(addslashes($doc['nama_dokumen'])) ?>', '<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>')">
                                                 <i class="fas fa-paper-plane text-warning"></i>
-                                                <span>Ajukan ke LPM</span>
+                                                <span>Ajukan ke GPM</span>
                                             </button>
                                         <?php endif; ?>
 
@@ -454,7 +454,7 @@ function alertBelumAdaBerkas(docName, editUrl) {
         Swal.fire({
             icon: 'warning',
             title: 'Berkas Belum Lengkap',
-            html: `Dokumen <strong>"${docName}"</strong> belum memiliki berkas terlampir (PDF/Word/Excel) atau tautan Google Drive.<br><br>Harap lengkapi berkas dokumen terlebih dahulu sebelum mengajukannya ke LPM.`,
+            html: `Dokumen <strong>"${docName}"</strong> belum memiliki berkas terlampir (PDF/Word/Excel) atau tautan Google Drive.<br><br>Harap lengkapi berkas dokumen terlebih dahulu sebelum mengajukannya ke GPM Fakultas.`,
             showCancelButton: true,
             confirmButtonText: '<i class="fas fa-wrench me-1"></i> Lengkapi Berkas Sekarang',
             cancelButtonText: 'Batal',

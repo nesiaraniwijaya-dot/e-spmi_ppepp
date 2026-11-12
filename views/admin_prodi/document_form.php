@@ -746,7 +746,7 @@ $siklusDefinitions = [
                         </button>
                         <button type="submit" name="action_submit" value="publish" class="btn btn-warning rounded-pill px-4 py-2.5 fw-bold text-dark shadow-sm d-flex align-items-center gap-2" id="btnSubmitPublishBatch">
                             <i class="fas fa-paper-plane"></i>
-                            <span>Terbitkan &amp; Ajukan ke LPM</span>
+                            <span>Terbitkan &amp; Ajukan ke GPM</span>
                         </button>
                     </div>
                 </div>
