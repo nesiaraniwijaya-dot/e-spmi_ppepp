@@ -40,21 +40,21 @@ if (empty($periodeOptions)) {
 
 <div class="container-fluid p-0">
     <!-- Header Page -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-        <div>
-            <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill small fw-bold mb-2" style="background: #EEF2FF; color: #1E3A8A; border: 1px solid #C7D2FE;">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+        <div class="flex-grow-1 min-w-0" style="max-width: 680px;">
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill small fw-bold mb-2" style="background: #EEF2FF; color: #1E3A8A; border: 1px solid #C7D2FE;">
                 <i class="fas fa-shield-halved text-primary"></i>
-                <span>Gugus Penjaminan Mutu (GPM) • Penilaian Eksklusif LPM</span>
+                <span>Gugus Penjaminan Mutu (GPM) &bull; Penilaian Eksklusif LPM</span>
             </div>
             <h3 class="fw-bold text-dark-blue mb-1">Monitoring &amp; Penilaian Kinerja GPM</h3>
             <p class="text-muted small mb-0">Evaluasi kinerja anggota GPM fakultas berbasis Akurasi Lolos LPM, ketuntasan relay catatan LPM, kecepatan respon, dan penilaian manual tim LPM. Data nilai ini hanya tampil untuk role LPM.</p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs">
+        <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap flex-shrink-0">
+            <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm text-nowrap">
                 <i class="fas fa-user-plus"></i>
                 <span>Kelola Akun GPM</span>
             </a>
-            <a href="<?= base_url('admin/monitoring-dokumen') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5 py-2 shadow-sm bg-scu-blue border-0 fw-semibold d-inline-flex align-items-center gap-1.5">
+            <a href="<?= base_url('admin/monitoring-dokumen') ?>" class="btn btn-primary btn-sm rounded-pill px-3 py-2 shadow-sm bg-scu-blue border-0 fw-semibold d-inline-flex align-items-center gap-2 text-nowrap">
                 <i class="fas fa-file-waveform"></i>
                 <span>Monitoring Dokumen</span>
             </a>
@@ -62,29 +62,33 @@ if (empty($periodeOptions)) {
     </div>
 
     <!-- Summary KPIs & Filter Toolbar Card -->
-    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-3.5 mb-4 bg-white">
-        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
+    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-4 bg-white">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-stretch align-items-xl-center gap-3">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: #EEF2FF; color: #1E3A8A; border: 1px solid #C7D2FE; font-size: 0.8rem;">
-                    <i class="fas fa-users text-primary me-1.5"></i> <?= (int)($totalGpm ?? count($gpmMembers)) ?> Anggota GPM
+                <span class="gpm-kpi-chip" style="background: #EEF2FF; color: #1E3A8A; border-color: #C7D2FE;">
+                    <i class="fas fa-users text-primary"></i>
+                    <span><?= (int)($totalGpm ?? count($gpmMembers)) ?> Anggota GPM</span>
                 </span>
-                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 0.8rem;">
-                    <i class="fas fa-check-double me-1.5"></i> <?= (int)($totalReviewedAll ?? 0) ?> Aksi Telaah &amp; Relay
+                <span class="gpm-kpi-chip" style="background: #ECFDF5; color: #047857; border-color: #A7F3D0;">
+                    <i class="fas fa-check-double"></i>
+                    <span><?= (int)($totalReviewedAll ?? 0) ?> Aksi Telaah &amp; Relay</span>
                 </span>
-                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size: 0.8rem;">
-                    <i class="fas fa-hourglass-half me-1.5"></i> <?= (int)($totalPendingAll ?? 0) ?> Antrean Pending
+                <span class="gpm-kpi-chip" style="background: #FFFBEB; color: #B45309; border-color: #FDE68A;">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span><?= (int)($totalPendingAll ?? 0) ?> Antrean Pending</span>
                     <?php if (!empty($totalPendingRelayAll)): ?>
-                        <span class="ms-1 px-1.5 py-0.5 rounded-pill text-white" style="background:#EA580C; font-size:0.7rem;">
+                        <span class="gpm-kpi-subbadge" style="background:#EA580C; color:#FFFFFF;">
                             <?= (int)$totalPendingRelayAll ?> Relay LPM
                         </span>
                     <?php endif; ?>
                 </span>
-                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; font-size: 0.8rem;">
-                    <i class="fas fa-arrow-rotate-left me-1.5"></i> <?= (int)($totalLpmReturnedAll ?? 0) ?>x Dikembalikan LPM
+                <span class="gpm-kpi-chip" style="background: #FEF2F2; color: #B91C1C; border-color: #FECACA;">
+                    <i class="fas fa-arrow-rotate-left"></i>
+                    <span><?= (int)($totalLpmReturnedAll ?? 0) ?>x Dikembalikan LPM</span>
                 </span>
             </div>
 
-            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center" style="min-width: 280px;">
+            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center flex-shrink-0">
                 <select id="filterPredikatSelect" class="form-select form-select-sm rounded-3" style="min-width: 195px;" onchange="applyGpmFilters()">
                     <option value="all">Semua Predikat &amp; Status</option>
                     <option value="pending_relay">Ada Relay LPM Tertunda</option>
@@ -94,8 +98,8 @@ if (empty($periodeOptions)) {
                     <option value="Perlu Pembinaan">Predikat: Perlu Pembinaan (&lt; 55)</option>
                     <option value="Belum Ada Data">Belum Ada Data</option>
                 </select>
-                <div class="input-group input-group-sm" style="min-width: 220px;">
-                    <span class="input-group-text bg-light border-end-0 text-muted px-2.5">
+                <div class="input-group input-group-sm" style="min-width: 225px;">
+                    <span class="input-group-text bg-light border-end-0 text-muted px-2">
                         <i class="fas fa-magnifying-glass"></i>
                     </span>
                     <input type="text" class="form-control form-control-sm border-start-0 ps-1" id="searchGpmInput"
@@ -104,15 +108,15 @@ if (empty($periodeOptions)) {
             </div>
         </div>
 
-        <div class="mt-2.5 pt-2.5 border-top d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 text-muted" style="font-size: 0.74rem;">
+        <div class="mt-3 pt-3 border-top d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 text-muted" style="font-size: 0.75rem; line-height: 1.55;">
             <div>
                 <i class="fas fa-calculator text-primary me-1"></i>
                 <strong>Formula Kinerja:</strong>
                 Skor Otomatis = <code>50%</code> Akurasi Lolos LPM + <code>30%</code> Ketuntasan Antrean &amp; Relay + <code>20%</code> Kecepatan.
                 Skor Akhir = <code>60%</code> Otomatis + <code>40%</code> Penilaian Manual LPM (atau <code>100%</code> Otomatis sebelum dinilai manual).
             </div>
-            <div class="text-nowrap">
-                <i class="fas fa-user-shield text-indigo me-1" style="color:#6D28D9;"></i>
+            <div class="text-lg-end flex-shrink-0">
+                <i class="fas fa-user-shield me-1" style="color:#6D28D9;"></i>
                 Aksi akun <em>Multi-Role</em> otomatis masuk ke fakultas sasaran.
             </div>
         </div>
@@ -128,7 +132,7 @@ if (empty($periodeOptions)) {
             </div>
         </div>
     <?php else: ?>
-        <div class="row g-3.5" id="gpmCardsContainer">
+        <div class="row g-4" id="gpmCardsContainer">
             <?php foreach ($gpmMembers as $m):
                 $avgHours = $m['avg_relay_hours'] ?? ($m['avg_review_hours'] ?? null);
                 $avgReviewStr = formatHoursToDays(isset($m['avg_review_hours']) ? (float)$m['avg_review_hours'] : null);
@@ -168,7 +172,7 @@ if (empty($periodeOptions)) {
                     'UTF-8'
                 );
             ?>
-                <div class="col-12 col-md-6 col-xl-4 gpm-card-item"
+                <div class="col-12 col-xl-6 gpm-card-item"
                      data-name="<?= htmlspecialchars(strtolower($m['name'])) ?>"
                      data-fakultas="<?= htmlspecialchars(strtolower($m['nama_fakultas'] ?? '')) ?>"
                      data-email="<?= htmlspecialchars(strtolower($m['email'])) ?>"
@@ -178,48 +182,50 @@ if (empty($periodeOptions)) {
                         <!-- Top Accent Bar Colored by Predikat -->
                         <div class="w-100" style="height: 5px; background: <?= $pStyle['bar'] ?>;"></div>
 
-                        <div class="p-3.5 p-md-4 d-flex flex-column h-100">
+                        <div class="p-3 p-md-4 d-flex flex-column h-100 gap-3">
                             <!-- Header Profil + Kotak Skor Akhir -->
-                            <div class="d-flex align-items-start justify-content-between gap-2.5 mb-2.5">
-                                <div class="d-flex align-items-start gap-2.5 min-w-0 flex-grow-1">
+                            <div class="d-flex flex-column flex-sm-row align-items-sm-start justify-content-between gap-3">
+                                <div class="d-flex align-items-start gap-3 min-w-0 flex-grow-1">
                                     <div class="position-relative flex-shrink-0">
                                         <?php if ($avatarUrl): ?>
                                             <img src="<?= $avatarUrl ?>" loading="lazy" decoding="async" alt="<?= htmlspecialchars($m['name']) ?>"
-                                                 class="rounded-circle shadow-xs border border-2 border-white"
-                                                 style="width: 52px; height: 52px; object-fit: cover;">
+                                                 class="rounded-circle shadow-sm border border-2 border-white"
+                                                 style="width: 54px; height: 54px; object-fit: cover;">
                                         <?php else: ?>
-                                            <div class="rounded-circle shadow-xs d-flex align-items-center justify-content-center text-white fw-bold"
-                                                 style="width: 52px; height: 52px; font-size: 1.25rem; background: linear-gradient(135deg, #1E3A8A, #3B82F6);">
+                                            <div class="rounded-circle shadow-sm d-flex align-items-center justify-content-center text-white fw-bold"
+                                                 style="width: 54px; height: 54px; font-size: 1.25rem; background: linear-gradient(135deg, #1E3A8A, #3B82F6);">
                                                 <?= $initials ?>
                                             </div>
                                         <?php endif; ?>
-                                        <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-2 border-white rounded-circle"
+                                        <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-white rounded-circle"
                                               title="Akun GPM Aktif" style="width: 13px; height: 13px;"></span>
                                     </div>
 
                                     <div class="min-w-0 flex-grow-1">
-                                        <h6 class="fw-bold text-dark-blue mb-0.5 text-truncate" title="<?= htmlspecialchars($m['name']) ?>" style="font-size: 0.94rem;">
+                                        <h6 class="fw-bold text-dark-blue mb-1 gpm-card-name" title="<?= htmlspecialchars($m['name']) ?>">
                                             <?= htmlspecialchars($m['name']) ?>
                                         </h6>
-                                        <div class="text-muted small text-truncate mb-1" style="font-size: 0.74rem;" title="<?= htmlspecialchars($m['email']) ?>">
+                                        <div class="text-muted small text-truncate mb-2" style="font-size: 0.77rem;" title="<?= htmlspecialchars($m['email']) ?>">
                                             <i class="far fa-envelope me-1 text-secondary opacity-75"></i><?= htmlspecialchars($m['email']) ?>
                                         </div>
-                                        <div class="d-flex flex-wrap align-items-center gap-1">
+                                        <div class="d-flex flex-wrap align-items-center gap-1 gpm-badge-row">
                                             <?php if (!empty($m['nama_fakultas'])): ?>
-                                                <span class="badge rounded-pill px-2 py-0.5 fw-semibold text-truncate d-inline-block"
-                                                      style="background:#EDE9FE; color:#6D28D9; border:1px solid #DDD6FE; font-size:0.69rem; max-width: 100%;"
+                                                <span class="gpm-meta-badge"
+                                                      style="background:#EDE9FE; color:#6D28D9; border-color:#DDD6FE;"
                                                       title="<?= htmlspecialchars($m['nama_fakultas']) ?>">
-                                                    <i class="fas fa-building-columns me-1"></i><?= htmlspecialchars($m['nama_fakultas']) ?>
+                                                    <i class="fas fa-building-columns"></i>
+                                                    <span><?= htmlspecialchars($m['nama_fakultas']) ?></span>
                                                 </span>
                                             <?php else: ?>
-                                                <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.69rem;">Belum Dipetakan</span>
+                                                <span class="gpm-meta-badge bg-light text-muted">Belum Dipetakan</span>
                                             <?php endif; ?>
 
                                             <?php if ($multiRoleCnt > 0): ?>
-                                                <span class="badge rounded-pill px-2 py-0.5 fw-semibold"
-                                                      style="background:#E0F2FE; color:#0369A1; border:1px solid #BAE6FD; font-size:0.67rem;"
+                                                <span class="gpm-meta-badge"
+                                                      style="background:#E0F2FE; color:#0369A1; border-color:#BAE6FD;"
                                                       title="Termasuk aksi review menggunakan akun Multi-Role yang memilih fakultas ini">
-                                                    <i class="fas fa-user-shield me-1"></i>Multi-Role: <?= $multiRoleCnt ?>
+                                                    <i class="fas fa-user-shield"></i>
+                                                    <span>Multi-Role: <?= $multiRoleCnt ?></span>
                                                 </span>
                                             <?php endif; ?>
                                         </div>
@@ -227,57 +233,60 @@ if (empty($periodeOptions)) {
                                 </div>
 
                                 <!-- Score & Predikat Pill -->
-                                <div class="text-center rounded-3 px-2.5 py-2 flex-shrink-0"
-                                     style="min-width: 82px; background: <?= $pStyle['bg'] ?>; border: 1px solid <?= $pStyle['border'] ?>; color: <?= $pStyle['text'] ?>;">
-                                    <div class="fw-bold lh-1" style="font-size: 1.25rem;">
+                                <div class="gpm-score-box text-center rounded-3 flex-shrink-0"
+                                     style="background: <?= $pStyle['bg'] ?>; border: 1px solid <?= $pStyle['border'] ?>; color: <?= $pStyle['text'] ?>;">
+                                    <div class="fw-bold lh-1" style="font-size: 1.35rem;">
                                         <?= $combinedScore !== null ? number_format((float)$combinedScore, 1) : '-' ?>
                                     </div>
-                                    <div style="font-size: 0.63rem; opacity: 0.82; font-weight: 600;">Skor Akhir</div>
-                                    <div class="mt-1 badge rounded-pill fw-bold px-2 py-0.5"
-                                         style="font-size: 0.63rem; background: #FFFFFF; color: <?= $pStyle['text'] ?>; border: 1px solid <?= $pStyle['border'] ?>;">
-                                        <i class="fas <?= $pStyle['icon'] ?> me-0.5"></i> <?= htmlspecialchars($predikat) ?>
+                                    <div style="font-size: 0.65rem; opacity: 0.85; font-weight: 600; margin-top: 0.15rem;">Skor Akhir</div>
+                                    <div class="gpm-predikat-pill"
+                                         style="background: #FFFFFF; color: <?= $pStyle['text'] ?>; border: 1px solid <?= $pStyle['border'] ?>;">
+                                        <i class="fas <?= $pStyle['icon'] ?>"></i>
+                                        <span><?= htmlspecialchars($predikat) ?></span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Alert Strip jika ada Catatan LPM belum diteruskan -->
                             <?php if ($pendingRelay > 0): ?>
-                                <div class="d-flex align-items-center justify-content-between gap-2 px-2.5 py-1.5 rounded-3 mb-2.5"
-                                     style="background: #FFF7ED; border: 1px solid #FDBA74; color: #C2410C; font-size: 0.74rem; font-weight: 700;">
-                                    <span><i class="fas fa-bell me-1"></i> <?= $pendingRelay ?> Catatan LPM Belum Diteruskan ke Unit</span>
-                                    <span class="badge rounded-pill text-white" style="background:#EA580C; font-size:0.64rem;">Prioritas</span>
+                                <div class="gpm-priority-banner rounded-3 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <i class="fas fa-bell"></i>
+                                        <span><?= $pendingRelay ?> Catatan LPM Belum Diteruskan ke Unit</span>
+                                    </span>
+                                    <span class="gpm-priority-tag">Prioritas</span>
                                 </div>
                             <?php endif; ?>
 
                             <!-- 3-Column Score Breakdown: Akurasi Lolos LPM, Skor Sistem, Nilai Manual LPM -->
-                            <div class="row g-1.5 mb-2.5 text-center">
+                            <div class="row g-2 text-center">
                                 <div class="col-4">
-                                    <div class="p-2 rounded-3 border bg-light-subtle h-100">
-                                        <div class="text-muted fw-bold" style="font-size: 0.64rem; text-transform: uppercase;">Lolos LPM</div>
-                                        <div class="fw-bold text-dark-blue" style="font-size: 0.95rem;">
+                                    <div class="gpm-stat-tile h-100">
+                                        <div class="gpm-stat-label">Lolos LPM</div>
+                                        <div class="gpm-stat-value text-dark-blue">
                                             <?= $accuracyLpm !== null ? number_format((float)$accuracyLpm, 1) . '%' : 'N/A' ?>
                                         </div>
-                                        <div class="text-muted" style="font-size: 0.63rem;">
+                                        <div class="gpm-stat-sub">
                                             <?= (int)($m['first_pass_sesuai'] ?? 0) ?>/<?= (int)($m['evaluated_by_lpm'] ?? 0) ?> dok
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="p-2 rounded-3 border bg-light-subtle h-100">
-                                        <div class="text-muted fw-bold" style="font-size: 0.64rem; text-transform: uppercase;">Sistem (60%)</div>
-                                        <div class="fw-bold text-primary" style="font-size: 0.95rem;">
+                                    <div class="gpm-stat-tile h-100">
+                                        <div class="gpm-stat-label">Sistem (60%)</div>
+                                        <div class="gpm-stat-value text-primary">
                                             <?= $autoScore !== null ? number_format((float)$autoScore, 1) : '-' ?>
                                         </div>
-                                        <div class="text-muted" style="font-size: 0.63rem;">Skor Otomatis</div>
+                                        <div class="gpm-stat-sub">Skor Otomatis</div>
                                     </div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="p-2 rounded-3 border bg-light-subtle h-100">
-                                        <div class="text-muted fw-bold" style="font-size: 0.64rem; text-transform: uppercase;">LPM (40%)</div>
-                                        <div class="fw-bold" style="font-size: 0.95rem; color: <?= $manualScore !== null ? '#6D28D9' : '#94A3B8' ?>;">
+                                    <div class="gpm-stat-tile h-100">
+                                        <div class="gpm-stat-label">LPM (40%)</div>
+                                        <div class="gpm-stat-value" style="color: <?= $manualScore !== null ? '#6D28D9' : '#94A3B8' ?>;">
                                             <?= $manualScore !== null ? number_format((float)$manualScore, 1) : 'Belum' ?>
                                         </div>
-                                        <div class="text-muted" style="font-size: 0.63rem;">
+                                        <div class="gpm-stat-sub">
                                             <?= (int)($m['eval_count'] ?? 0) > 0 ? (int)$m['eval_count'] . 'x nilai' : 'Nilai Manual' ?>
                                         </div>
                                     </div>
@@ -285,46 +294,46 @@ if (empty($periodeOptions)) {
                             </div>
 
                             <!-- 4 Compact Metrics: Approve, Pending, Revisi+Relay, Ditolak LPM -->
-                            <div class="row g-1.5 text-center mb-2.5">
-                                <div class="col-3">
-                                    <div class="p-2 rounded-3 border h-100" style="background: #F0FDF4; border-color: #86EFAC !important;">
-                                        <div class="fw-bold lh-1" style="color: #166534; font-size: 1.08rem;">
+                            <div class="row g-2 text-center">
+                                <div class="col-6 col-sm-3">
+                                    <div class="gpm-activity-tile h-100" style="background: #F0FDF4; border-color: #86EFAC;">
+                                        <div class="gpm-activity-num" style="color: #166534;">
                                             <?= (int)$m['total_diteruskan'] ?>
                                         </div>
-                                        <div style="color: #15803D; font-size: 0.63rem; font-weight: 700;">Approve</div>
-                                        <div style="color: #16A34A; font-size: 0.58rem;">ke LPM</div>
+                                        <div class="gpm-activity-title" style="color: #15803D;">Approve</div>
+                                        <div class="gpm-activity-sub" style="color: #16A34A;">ke LPM</div>
                                     </div>
                                 </div>
-                                <div class="col-3">
-                                    <div class="p-2 rounded-3 border h-100" style="background: #FFFBEB; border-color: #FCD34D !important;">
-                                        <div class="fw-bold lh-1" style="color: #92400E; font-size: 1.08rem;">
+                                <div class="col-6 col-sm-3">
+                                    <div class="gpm-activity-tile h-100" style="background: #FFFBEB; border-color: #FCD34D;">
+                                        <div class="gpm-activity-num" style="color: #92400E;">
                                             <?= (int)$m['pending_review'] ?>
                                         </div>
-                                        <div style="color: #B45309; font-size: 0.63rem; font-weight: 700;">Pending</div>
-                                        <div style="color: #D97706; font-size: 0.58rem;">
+                                        <div class="gpm-activity-title" style="color: #B45309;">Pending</div>
+                                        <div class="gpm-activity-sub" style="color: #D97706;">
                                             <?= $pendingRelay > 0 ? "{$pendingRelay} Relay" : 'Antrean' ?>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-3">
-                                    <div class="p-2 rounded-3 border h-100" style="background: #EFF6FF; border-color: #93C5FD !important;"
+                                <div class="col-6 col-sm-3">
+                                    <div class="gpm-activity-tile h-100" style="background: #EFF6FF; border-color: #93C5FD;"
                                          title="<?= (int)($m['total_revisi_murni'] ?? 0) ?> temuan GPM + <?= (int)($m['total_relay_lpm'] ?? 0) ?> relay LPM">
-                                        <div class="fw-bold lh-1" style="color: #1E40AF; font-size: 1.08rem;">
+                                        <div class="gpm-activity-num" style="color: #1E40AF;">
                                             <?= (int)$m['total_revisi'] ?>
                                         </div>
-                                        <div style="color: #1D4ED8; font-size: 0.63rem; font-weight: 700;">Revisi</div>
-                                        <div style="color: #2563EB; font-size: 0.58rem;">
+                                        <div class="gpm-activity-title" style="color: #1D4ED8;">Revisi</div>
+                                        <div class="gpm-activity-sub" style="color: #2563EB;">
                                             <?= (int)($m['total_relay_lpm'] ?? 0) ?> Relay
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-3">
-                                    <div class="p-2 rounded-3 border h-100" style="background: #FEF2F2; border-color: #FCA5A5 !important;">
-                                        <div class="fw-bold lh-1" style="color: #991B1B; font-size: 1.08rem;">
+                                <div class="col-6 col-sm-3">
+                                    <div class="gpm-activity-tile h-100" style="background: #FEF2F2; border-color: #FCA5A5;">
+                                        <div class="gpm-activity-num" style="color: #991B1B;">
                                             <?= (int)($m['lpm_returned_unique_docs'] ?? 0) ?>
                                         </div>
-                                        <div style="color: #DC2626; font-size: 0.63rem; font-weight: 700;">Ditolak</div>
-                                        <div style="color: #EF4444; font-size: 0.58rem;">
+                                        <div class="gpm-activity-title" style="color: #DC2626;">Ditolak</div>
+                                        <div class="gpm-activity-sub" style="color: #EF4444;">
                                             <?= (int)($m['lpm_returned_events'] ?? 0) ?>x LPM
                                         </div>
                                     </div>
@@ -332,11 +341,11 @@ if (empty($periodeOptions)) {
                             </div>
 
                             <!-- Kecepatan Respon & Relay -->
-                            <div class="d-flex justify-content-between align-items-center px-2.5 py-2 rounded-3 border mb-2.5" style="background: #F8FAFC; border-color: #E2E8F0 !important; font-size: 0.74rem;">
+                            <div class="gpm-speed-bar d-flex flex-wrap justify-content-between align-items-center gap-2">
                                 <span class="text-muted">
-                                    <i class="fas fa-stopwatch text-primary me-1"></i>Telaah: <strong class="text-dark"><?= $avgReviewStr ?></strong>
+                                    <i class="fas fa-stopwatch text-primary me-1"></i>Rata-rata Telaah: <strong class="text-dark"><?= $avgReviewStr ?></strong>
                                 </span>
-                                <span class="text-muted">|</span>
+                                <span class="text-muted d-none d-sm-inline">|</span>
                                 <span class="text-muted">
                                     <i class="fas fa-paper-plane text-warning me-1"></i>Relay LPM: <strong class="text-dark"><?= $avgRelayStr ?></strong>
                                 </span>
@@ -344,41 +353,41 @@ if (empty($periodeOptions)) {
 
                             <!-- Catatan Evaluasi Manual LPM Terbaru -->
                             <?php if (!empty($latestEval)): ?>
-                                <div class="p-2.5 rounded-3 border mb-3 mt-auto" style="background: #F5F3FF; border-color: #DDD6FE !important;">
-                                    <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 0.69rem;">
+                                <div class="gpm-eval-box mt-auto" style="background: #F5F3FF; border-color: #DDD6FE;">
+                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1" style="font-size: 0.72rem;">
                                         <span class="fw-bold" style="color: #5B21B6;">
                                             <i class="fas fa-comment-medical me-1"></i>Evaluasi LPM (<?= htmlspecialchars($latestEval['periode'] ?? '-') ?>)
                                         </span>
-                                        <span class="badge rounded-pill bg-white border text-dark fw-bold" style="font-size: 0.66rem;">
+                                        <span class="badge rounded-pill bg-white border text-dark fw-bold" style="font-size: 0.68rem;">
                                             <?= number_format((float)$latestEval['skor_manual_total'], 1) ?>/100
                                         </span>
                                     </div>
-                                    <div class="text-dark small gpm-eval-excerpt" style="font-size: 0.75rem; line-height: 1.4;">
+                                    <div class="text-dark small gpm-eval-excerpt" style="font-size: 0.77rem; line-height: 1.45;">
                                         <?= !empty($latestEval['catatan_evaluasi'])
                                             ? htmlspecialchars($latestEval['catatan_evaluasi'])
                                             : '<span class="text-muted fst-italic">Skor manual tersimpan tanpa catatan teks.</span>' ?>
                                     </div>
-                                    <div class="text-muted mt-1" style="font-size: 0.66rem;">
+                                    <div class="text-muted mt-1" style="font-size: 0.68rem;">
                                         Oleh: <?= htmlspecialchars($latestEval['evaluator_name'] ?? 'Tim LPM') ?>
                                     </div>
                                 </div>
                             <?php else: ?>
-                                <div class="p-2.5 rounded-3 mb-3 mt-auto text-center text-muted" style="border: 1px dashed #CBD5E1; background: #F8FAFC; font-size: 0.73rem;">
+                                <div class="gpm-eval-empty mt-auto text-center text-muted">
                                     <i class="far fa-note-sticky me-1"></i>Belum ada catatan evaluasi manual dari LPM.
                                 </div>
                             <?php endif; ?>
 
                             <!-- Card Footer Actions -->
-                            <div class="d-flex gap-2">
+                            <div class="d-flex flex-wrap gap-2 pt-1">
                                 <button type="button"
-                                        class="btn btn-outline-primary btn-sm rounded-pill flex-grow-1 fw-semibold py-2 d-inline-flex align-items-center justify-content-center gap-1.5 shadow-2xs"
+                                        class="btn btn-outline-primary btn-sm rounded-pill flex-grow-1 fw-semibold py-2 px-3 d-inline-flex align-items-center justify-content-center gap-2 shadow-sm"
                                         data-gpm="<?= $cardPayloadAttr ?>"
                                         onclick="openGpmHistoryFromBtn(this)">
                                     <i class="fas fa-clock-rotate-left"></i>
                                     <span>More Detail</span>
                                 </button>
                                 <button type="button"
-                                        class="btn btn-primary btn-sm rounded-pill flex-grow-1 fw-semibold py-2 d-inline-flex align-items-center justify-content-center gap-1.5 shadow-2xs border-0"
+                                        class="btn btn-primary btn-sm rounded-pill flex-grow-1 fw-semibold py-2 px-3 d-inline-flex align-items-center justify-content-center gap-2 shadow-sm border-0"
                                         style="background: linear-gradient(135deg, #4F46E5, #6D28D9);"
                                         data-gpm="<?= $cardPayloadAttr ?>"
                                         onclick="openEvaluateModalFromBtn(this)">
@@ -397,47 +406,52 @@ if (empty($periodeOptions)) {
 <!-- MODAL 1: MORE DETAIL RIWAYAT REVIEW, RELAY & PENILAIAN LPM -->
 <div class="modal fade" id="modalGpmHistory" tabindex="-1" aria-labelledby="modalGpmName" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
-        <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
             <!-- Modal Header -->
-            <div class="modal-header border-bottom pb-3 bg-light rounded-top-4">
-                <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
-                    <div id="modalGpmAvatarWrap" class="flex-shrink-0"></div>
-                    <div class="min-w-0 flex-grow-1">
-                        <h6 class="modal-title fw-bold text-dark-blue mb-0 text-truncate" id="modalGpmName">-</h6>
-                        <div class="text-muted small text-truncate" style="font-size: 0.75rem;" id="modalGpmEmail">-</div>
-                        <div class="mt-1 d-flex flex-wrap align-items-center gap-1.5" id="modalGpmFakultasBadge"></div>
+            <div class="modal-header gpm-modal-header border-bottom">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center gap-3 min-w-0">
+                        <div id="modalGpmAvatarWrap" class="flex-shrink-0"></div>
+                        <div class="min-w-0">
+                            <h6 class="modal-title fw-bold text-dark-blue mb-1 text-truncate" id="modalGpmName">-</h6>
+                            <div class="text-muted small text-truncate" style="font-size: 0.77rem;" id="modalGpmEmail">-</div>
+                            <div class="mt-1 d-flex flex-wrap align-items-center gap-1" id="modalGpmFakultasBadge"></div>
+                        </div>
                     </div>
-                    <div class="d-none d-sm-flex align-items-center gap-2 me-2" id="modalGpmScoreBadgeWrap"></div>
+                    <div class="d-flex align-items-center flex-shrink-0" id="modalGpmScoreBadgeWrap"></div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close gpm-modal-close flex-shrink-0" data-bs-dismiss="modal" aria-label="Tutup"></button>
             </div>
 
             <!-- Modal Navigation Tabs & Filter Bar -->
-            <div class="px-4 pt-2.5 pb-2 bg-white border-bottom">
-                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2.5">
-                    <div class="nav nav-pills nav-sm gap-1.5" id="modalHistoryMainTabs" role="tablist">
-                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold active" id="tabBtnReviewHistory" onclick="switchHistoryModalTab('reviews')">
-                            <i class="fas fa-list-check me-1"></i> Riwayat Telaah &amp; Relay
-                            <span class="badge bg-white text-primary ms-1" id="modalHistoryCount">0</span>
+            <div class="gpm-modal-toolbar bg-white border-bottom">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2" id="modalHistoryMainTabs" role="tablist">
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold active d-inline-flex align-items-center gap-2" id="tabBtnReviewHistory" onclick="switchHistoryModalTab('reviews')">
+                            <i class="fas fa-list-check"></i>
+                            <span>Riwayat Telaah &amp; Relay</span>
+                            <span class="badge rounded-pill bg-white text-primary" id="modalHistoryCount">0</span>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold" id="tabBtnEvalHistory" onclick="switchHistoryModalTab('evaluations')">
-                            <i class="fas fa-star-half-stroke me-1"></i> Riwayat Penilaian LPM
-                            <span class="badge bg-secondary text-white ms-1" id="modalEvalCount">0</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-2" id="tabBtnEvalHistory" onclick="switchHistoryModalTab('evaluations')">
+                            <i class="fas fa-star-half-stroke"></i>
+                            <span>Riwayat Penilaian LPM</span>
+                            <span class="badge rounded-pill bg-secondary text-white" id="modalEvalCount">0</span>
                         </button>
                     </div>
+                    <div class="text-muted small fw-semibold" id="modalHistoryShowingMeta" style="font-size: 0.75rem;"></div>
+                </div>
 
-                    <div class="btn-group btn-group-sm flex-wrap" role="group" id="modalHistoryFilterGroup">
-                        <button type="button" class="btn btn-primary active py-1 px-2.5" data-cat="all" onclick="filterModalHistory('all', this)">Semua</button>
-                        <button type="button" class="btn btn-outline-success py-1 px-2.5" data-cat="approve" onclick="filterModalHistory('approve', this)">Approve</button>
-                        <button type="button" class="btn btn-outline-warning py-1 px-2.5" data-cat="revisi_gpm" onclick="filterModalHistory('revisi_gpm', this)">Temuan GPM</button>
-                        <button type="button" class="btn btn-outline-primary py-1 px-2.5" data-cat="relay_lpm" onclick="filterModalHistory('relay_lpm', this)">Relay LPM</button>
-                        <button type="button" class="btn btn-outline-danger py-1 px-2.5" data-cat="returned_lpm" onclick="filterModalHistory('returned_lpm', this)">Ditolak LPM</button>
-                    </div>
+                <div class="gpm-filter-chip-row mt-2 pt-2 border-top" id="modalHistoryFilterGroup" role="group" aria-label="Filter kategori riwayat">
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold active" data-cat="all" onclick="filterModalHistory('all', this)">Semua</button>
+                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold" data-cat="approve" onclick="filterModalHistory('approve', this)">Approve</button>
+                    <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-semibold" data-cat="revisi_gpm" onclick="filterModalHistory('revisi_gpm', this)">Temuan GPM</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" data-cat="relay_lpm" onclick="filterModalHistory('relay_lpm', this)">Relay LPM</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" data-cat="returned_lpm" onclick="filterModalHistory('returned_lpm', this)">Ditolak LPM</button>
                 </div>
             </div>
 
             <!-- Modal Body -->
-            <div class="modal-body p-4 bg-light-subtle" id="modalGpmHistoryBody" style="min-height: 320px;">
+            <div class="modal-body p-3 p-md-4" id="modalGpmHistoryBody" style="background: #F1F5F9; min-height: 320px;">
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary mb-2" role="status" style="width: 2rem; height: 2rem;"></div>
                     <div class="small text-muted">Memuat data riwayat telaah &amp; evaluasi GPM...</div>
@@ -445,14 +459,14 @@ if (empty($periodeOptions)) {
             </div>
 
             <!-- Modal Footer -->
-            <div class="modal-footer border-top bg-white rounded-bottom-4 py-2.5 justify-content-between">
-                <button type="button" class="btn btn-sm rounded-pill px-3 fw-semibold text-white border-0"
+            <div class="modal-footer border-top bg-white py-3 px-4 justify-content-between gap-2">
+                <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-white border-0 shadow-sm"
                         id="modalQuickEvalBtn"
                         style="background: linear-gradient(135deg, #4F46E5, #6D28D9);"
                         onclick="openEvaluateFromHistoryModal()">
                     <i class="fas fa-clipboard-check me-1"></i> Beri / Update Penilaian LPM
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3 py-1.5 fw-semibold" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4 py-2 fw-semibold" data-bs-dismiss="modal">
                     Tutup
                 </button>
             </div>
@@ -463,24 +477,24 @@ if (empty($periodeOptions)) {
 <!-- MODAL 2: FORM PENILAIAN & CATATAN EVALUASI MANUAL LPM -->
 <div class="modal fade" id="modalEvaluateGpm" tabindex="-1" aria-labelledby="modalEvalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
             <form method="POST" action="<?= base_url('admin/monitoring-gpm/evaluate') ?>" id="formEvaluateGpm">
                 <?= function_exists('csrf_field') ? csrf_field() : '' ?>
                 <input type="hidden" name="gpm_user_id" id="evalGpmUserId" value="">
 
-                <div class="modal-header border-bottom text-white rounded-top-4" style="background: linear-gradient(135deg, #1E3A8A 0%, #6D28D9 100%);">
-                    <div>
-                        <h6 class="modal-title fw-bold mb-0" id="modalEvalTitle">
+                <div class="modal-header border-bottom text-white" style="background: linear-gradient(135deg, #1E3A8A 0%, #6D28D9 100%);">
+                    <div class="min-w-0 pe-2">
+                        <h6 class="modal-title fw-bold mb-1 text-white" id="modalEvalTitle">
                             <i class="fas fa-clipboard-check me-2"></i>Penilaian &amp; Evaluasi Kinerja GPM (Khusus LPM)
                         </h6>
                         <div class="small opacity-75" id="evalTargetSub">Evaluasi manual tim LPM digabungkan 40% dengan skor otomatis sistem (60%)</div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white flex-shrink-0" data-bs-dismiss="modal" aria-label="Tutup"></button>
                 </div>
 
                 <div class="modal-body p-4">
                     <!-- Ringkasan Target & Estimasi Live Skor Kombinasi -->
-                    <div class="p-3 rounded-4 border mb-3.5 bg-light-subtle">
+                    <div class="p-3 rounded-4 border mb-3 bg-light-subtle">
                         <div class="row g-2 align-items-center">
                             <div class="col-md-5">
                                 <div class="fw-bold text-dark-blue" id="evalTargetName">-</div>
@@ -571,7 +585,7 @@ if (empty($periodeOptions)) {
 <style>
 .gpm-card-box {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(15, 23, 42, 0.08) !important;
 }
 .gpm-card-box:hover {
     transform: translateY(-3px);
@@ -580,11 +594,225 @@ if (empty($periodeOptions)) {
 .min-w-0 {
     min-width: 0;
 }
+.gpm-kpi-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+.gpm-kpi-subbadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 0.15rem;
+}
+.gpm-card-name {
+    font-size: 0.98rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.gpm-meta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.24rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid #E2E8F0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+.gpm-score-box {
+    min-width: 118px;
+    padding: 0.65rem 0.75rem;
+}
+.gpm-predikat-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.gpm-priority-banner {
+    background: #FFF7ED;
+    border: 1px solid #FDBA74;
+    color: #C2410C;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+.gpm-priority-tag {
+    background: #EA580C;
+    color: #FFFFFF;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+.gpm-stat-tile {
+    padding: 0.65rem 0.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+}
+.gpm-stat-label {
+    color: #64748B;
+    font-weight: 700;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.2rem;
+}
+.gpm-stat-value {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+.gpm-stat-sub {
+    color: #64748B;
+    font-size: 0.67rem;
+    margin-top: 0.15rem;
+}
+.gpm-activity-tile {
+    padding: 0.65rem 0.45rem;
+    border-radius: 0.75rem;
+    border: 1px solid transparent;
+}
+.gpm-activity-num {
+    font-weight: 800;
+    font-size: 1.15rem;
+    line-height: 1.15;
+}
+.gpm-activity-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-top: 0.2rem;
+}
+.gpm-activity-sub {
+    font-size: 0.64rem;
+    font-weight: 500;
+}
+.gpm-speed-bar {
+    padding: 0.55rem 0.85rem;
+    border-radius: 0.75rem;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    font-size: 0.76rem;
+}
+.gpm-eval-box {
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.75rem;
+    border: 1px solid #DDD6FE;
+}
+.gpm-eval-empty {
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.75rem;
+    border: 1px dashed #CBD5E1;
+    background: #F8FAFC;
+    font-size: 0.75rem;
+}
 .gpm-eval-excerpt {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+/* Modal Header & Close Button Fixes (Overrides global .modal-header filter: invert(1)) */
+#modalGpmHistory .gpm-modal-header {
+    background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%) !important;
+    color: var(--navy) !important;
+    padding: 1.15rem 1.5rem;
+    align-items: center;
+    gap: 0.85rem;
+}
+#modalGpmHistory .gpm-modal-header .gpm-modal-close {
+    filter: none !important;
+    opacity: 0.9;
+    margin: 0 !important;
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 50%;
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0;
+    background-size: 0.72rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    transition: all 0.15s ease;
+}
+#modalGpmHistory .gpm-modal-header .gpm-modal-close:hover {
+    opacity: 1;
+    background-color: #FEE2E2;
+    border-color: #FCA5A5;
+}
+.gpm-modal-score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid #CBD5E1;
+    background: #FFFFFF;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0F172A;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    white-space: nowrap;
+}
+#modalGpmHistory .gpm-modal-toolbar {
+    padding: 0.9rem 1.5rem;
+}
+.gpm-filter-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+.gpm-filter-chip-row .btn-outline-warning {
+    color: #B45309;
+    border-color: #F59E0B;
+}
+.gpm-filter-chip-row .btn-outline-warning:hover,
+.gpm-filter-chip-row .btn-warning {
+    background-color: #FEF3C7;
+    border-color: #D97706;
+    color: #92400E;
+}
+.gpm-history-card {
+    border: 1px solid #E2E8F0;
+    border-left-width: 4px;
+    border-radius: 0.85rem;
+    padding: 1rem 1.15rem;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.gpm-history-note {
+    padding: 0.75rem 0.95rem;
+    border-radius: 0.65rem;
+    border: 1px solid transparent;
+}
+#modalEvaluateGpm .modal-header .btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+    opacity: 0.9;
+}
+#modalEvaluateGpm .modal-header .btn-close-white:hover {
+    opacity: 1;
 }
 </style>
 
@@ -673,25 +901,35 @@ function openGpmHistoryModal(gpm) {
 
     const badgeContainer = document.getElementById('modalGpmFakultasBadge');
     if (fakultas) {
-        badgeContainer.innerHTML = `<span class="badge rounded-pill px-2.5 py-0.5 fw-semibold" style="background:#EDE9FE; color:#6D28D9; border:1px solid #DDD6FE; font-size:0.7rem;"><i class="fas fa-building-columns me-1"></i>${escapeHtml(fakultas)}</span>`;
+        badgeContainer.innerHTML = `<span class="gpm-meta-badge" style="background:#EDE9FE; color:#6D28D9; border-color:#DDD6FE;"><i class="fas fa-building-columns"></i><span>${escapeHtml(fakultas)}</span></span>`;
     } else {
-        badgeContainer.innerHTML = `<span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;">Belum Dipetakan</span>`;
+        badgeContainer.innerHTML = `<span class="gpm-meta-badge bg-light text-muted">Belum Dipetakan</span>`;
     }
 
+    const predToneMap = {
+        success:   { bg: '#ECFDF5', border: '#6EE7B7', text: '#047857' },
+        primary:   { bg: '#EFF6FF', border: '#93C5FD', text: '#1D4ED8' },
+        warning:   { bg: '#FFFBEB', border: '#FCD34D', text: '#B45309' },
+        danger:    { bg: '#FEF2F2', border: '#FCA5A5', text: '#B91C1C' },
+        secondary: { bg: '#FFFFFF', border: '#CBD5E1', text: '#475569' }
+    };
+    const tone = predToneMap[gpm.predikat_color || 'secondary'] || predToneMap.secondary;
     const scoreWrap = document.getElementById('modalGpmScoreBadgeWrap');
     const scoreTxt = (gpm.combined_score !== null && gpm.combined_score !== undefined) ? Number(gpm.combined_score).toFixed(1) : '-';
     scoreWrap.innerHTML = `
-        <span class="badge rounded-pill bg-white border text-dark px-3 py-1.5 fw-bold">
-            Skor Akhir: <span class="text-primary">${scoreTxt}</span> (${escapeHtml(gpm.predikat || 'Belum Ada Data')})
+        <span class="gpm-modal-score-pill" style="background:${tone.bg}; border-color:${tone.border}; color:${tone.text};">
+            <span>Skor Akhir:</span>
+            <strong style="font-size:0.9rem;">${scoreTxt}</strong>
+            <span style="opacity:0.9; font-weight:600;">(${escapeHtml(gpm.predikat || 'Belum Ada Data')})</span>
         </span>
     `;
 
     const avatarWrap = document.getElementById('modalGpmAvatarWrap');
     if (avatarUrl) {
-        avatarWrap.innerHTML = `<img src="${escapeHtml(avatarUrl)}" class="rounded-circle shadow-xs border border-2 border-white" style="width: 48px; height: 48px; object-fit: cover;" loading="lazy" decoding="async">`;
+        avatarWrap.innerHTML = `<img src="${escapeHtml(avatarUrl)}" class="rounded-circle shadow-sm border border-2 border-white" style="width: 48px; height: 48px; object-fit: cover;" loading="lazy" decoding="async">`;
     } else {
         const init = name.trim().charAt(0).toUpperCase() || 'G';
-        avatarWrap.innerHTML = `<div class="rounded-circle shadow-xs d-flex align-items-center justify-content-center text-white fw-bold" style="width: 48px; height: 48px; font-size: 1.15rem; background: linear-gradient(135deg, #1E3A8A, #3B82F6);">${escapeHtml(init)}</div>`;
+        avatarWrap.innerHTML = `<div class="rounded-circle shadow-sm d-flex align-items-center justify-content-center text-white fw-bold" style="width: 48px; height: 48px; font-size: 1.15rem; background: linear-gradient(135deg, #1E3A8A, #3B82F6);">${escapeHtml(init)}</div>`;
     }
 
     const modalEl = document.getElementById('modalGpmHistory');
@@ -746,12 +984,12 @@ function updateHistoryTabButtons() {
     const filterGroup = document.getElementById('modalHistoryFilterGroup');
 
     if (currentHistoryTab === 'reviews') {
-        btnRev.className = 'btn btn-sm btn-primary rounded-pill px-3 fw-semibold active';
-        btnEval.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold';
-        filterGroup.style.display = '';
+        btnRev.className = 'btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold active d-inline-flex align-items-center gap-2';
+        btnEval.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-2';
+        filterGroup.style.display = 'flex';
     } else {
-        btnRev.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold';
-        btnEval.className = 'btn btn-sm btn-primary rounded-pill px-3 fw-semibold active';
+        btnRev.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-2';
+        btnEval.className = 'btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold active d-inline-flex align-items-center gap-2';
         filterGroup.style.display = 'none';
     }
 }
@@ -763,13 +1001,16 @@ function switchHistoryModalTab(tab) {
 }
 
 function renderActiveHistoryTab() {
+    const metaEl = document.getElementById('modalHistoryShowingMeta');
     if (currentHistoryTab === 'evaluations') {
+        if (metaEl) metaEl.textContent = `${currentGpmEvaluations.length} penilaian tersimpan`;
         renderModalEvaluationsList(currentGpmEvaluations);
         return;
     }
     const filtered = currentHistoryCategory === 'all'
         ? currentGpmHistoryData
         : currentGpmHistoryData.filter(i => resolveHistoryCategory(i) === currentHistoryCategory);
+    if (metaEl) metaEl.textContent = `Menampilkan ${filtered.length} dari ${currentGpmHistoryData.length} aktivitas`;
     renderModalHistoryList(filtered);
 }
 
@@ -793,8 +1034,8 @@ function resetFilterButtonsState(activeCat) {
         const cat = b.dataset.cat;
         const tone = classMap[cat] || 'secondary';
         b.className = (cat === activeCat)
-            ? `btn btn-${tone} active py-1 px-2.5`
-            : `btn btn-outline-${tone} py-1 px-2.5`;
+            ? `btn btn-sm btn-${tone} rounded-pill px-3 fw-semibold active`
+            : `btn btn-sm btn-outline-${tone} rounded-pill px-3 fw-semibold`;
     });
 }
 
@@ -824,32 +1065,36 @@ function renderModalHistoryList(list) {
 
     const catBadgeMap = {
         approve: {
-            badge: '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1 rounded-pill fw-bold" style="font-size:0.71rem;"><i class="fas fa-circle-check me-1"></i> Disetujui GPM &rarr; LPM</span>',
+            accent: '#16A34A',
+            badge: '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1 rounded-pill fw-bold" style="font-size:0.72rem;"><i class="fas fa-circle-check me-1"></i> Disetujui GPM &rarr; LPM</span>',
             noteLabel: '<i class="fas fa-comment-dots text-success me-1"></i> Catatan Verifikasi GPM:',
             noteBg: '#F0FDF4',
             noteBorder: '#BBF7D0'
         },
         revisi_gpm: {
-            badge: '<span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50 px-2.5 py-1 rounded-pill fw-bold" style="font-size:0.71rem;"><i class="fas fa-rotate-left text-warning me-1"></i> Temuan Revisi GPM &rarr; Unit</span>',
+            accent: '#D97706',
+            badge: '<span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50 px-3 py-1 rounded-pill fw-bold" style="font-size:0.72rem;"><i class="fas fa-rotate-left text-warning me-1"></i> Temuan Revisi GPM &rarr; Unit</span>',
             noteLabel: '<i class="fas fa-comment-dots text-warning me-1"></i> Arahan Perbaikan GPM:',
             noteBg: '#FFFBEB',
             noteBorder: '#FDE68A'
         },
         relay_lpm: {
-            badge: '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 rounded-pill fw-bold" style="font-size:0.71rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan GPM (Relay LPM &rarr; Unit)</span>',
+            accent: '#2563EB',
+            badge: '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 rounded-pill fw-bold" style="font-size:0.72rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan GPM (Relay LPM &rarr; Unit)</span>',
             noteLabel: '<i class="fas fa-share-from-square text-primary me-1"></i> Arahan Resmi GPM (Hasil Relay LPM):',
             noteBg: '#EFF6FF',
             noteBorder: '#BFDBFE'
         },
         returned_lpm: {
-            badge: '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2.5 py-1 rounded-pill fw-bold" style="font-size:0.71rem;"><i class="fas fa-triangle-exclamation me-1"></i> Dikembalikan LPM &rarr; GPM</span>',
+            accent: '#DC2626',
+            badge: '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1 rounded-pill fw-bold" style="font-size:0.72rem;"><i class="fas fa-triangle-exclamation me-1"></i> Dikembalikan LPM &rarr; GPM</span>',
             noteLabel: '<i class="fas fa-lock text-danger me-1"></i> Catatan Evaluasi Internal LPM ke GPM:',
             noteBg: '#FEF2F2',
             noteBorder: '#FECACA'
         }
     };
 
-    let html = '<div class="d-flex flex-column gap-2.5">';
+    let html = '<div class="d-flex flex-column gap-3">';
     list.forEach(item => {
         const cat = resolveHistoryCategory(item);
         const styleCfg = catBadgeMap[cat] || catBadgeMap.revisi_gpm;
@@ -859,42 +1104,42 @@ function renderModalHistoryList(list) {
             : `${escapeHtml(item.nama_fakultas || 'Fakultas')}`;
 
         const multiRoleBadge = item.is_multi_role
-            ? `<span class="badge rounded-pill ms-1 px-2 py-0.5 fw-semibold" style="background:#E0F2FE; color:#0369A1; border:1px solid #BAE6FD; font-size:0.68rem;">
-                   <i class="fas fa-user-shield me-1"></i>Multi-Role: ${escapeHtml(item.actor_name || 'Tim')}
+            ? `<span class="gpm-meta-badge" style="background:#E0F2FE; color:#0369A1; border-color:#BAE6FD;">
+                   <i class="fas fa-user-shield"></i><span>Multi-Role: ${escapeHtml(item.actor_name || 'Tim')}</span>
                </span>`
             : '';
 
         html += `
-            <div class="card border rounded-3 p-3 bg-white shadow-2xs">
+            <div class="gpm-history-card" style="border-left-color: ${styleCfg.accent};">
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 pb-2 border-bottom">
-                    <div class="d-flex flex-wrap align-items-center gap-1">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
                         ${styleCfg.badge}
                         ${multiRoleBadge}
-                        <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.69rem;">
+                        <span class="badge bg-light text-muted border px-2 py-1 rounded-pill" style="font-size: 0.7rem;">
                             TA ${escapeHtml(item.tahun_akademik || '-')}
                         </span>
-                        ${item.siklus ? `<span class="badge bg-light text-secondary border px-2 py-0.5 rounded-pill" style="font-size: 0.69rem;">${escapeHtml(String(item.siklus).toUpperCase())}</span>` : ''}
+                        ${item.siklus ? `<span class="badge bg-light text-secondary border px-2 py-1 rounded-pill" style="font-size: 0.7rem;">${escapeHtml(String(item.siklus).toUpperCase())}</span>` : ''}
                     </div>
-                    <div class="text-muted small text-nowrap" style="font-size: 0.72rem;">
+                    <div class="text-muted small text-nowrap flex-shrink-0" style="font-size: 0.74rem;">
                         <i class="far fa-clock me-1"></i>${waktuFmt}
                     </div>
                 </div>
 
-                <div class="mt-2.5">
-                    <h6 class="fw-bold text-dark-blue mb-1" style="font-size: 0.88rem;">
+                <div class="mt-2">
+                    <h6 class="fw-bold text-dark-blue mb-1" style="font-size: 0.92rem; line-height: 1.35;">
                         ${escapeHtml(item.nama_dokumen || 'Dokumen Mutu')}
                     </h6>
-                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small mb-2" style="font-size: 0.74rem;">
+                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small mb-2" style="font-size: 0.76rem;">
                         <span><i class="fas fa-hashtag me-1"></i>${escapeHtml(item.nomor_dokumen || '-')}</span>
                         <span>&bull;</span>
                         <span><i class="fas fa-building me-1"></i>${unitName}</span>
                     </div>
 
-                    <div class="p-2.5 rounded-3 border" style="background:${styleCfg.noteBg}; border-color:${styleCfg.noteBorder} !important;">
-                        <div class="text-muted small fw-bold mb-1" style="font-size: 0.7rem; text-transform: uppercase;">
+                    <div class="gpm-history-note" style="background:${styleCfg.noteBg}; border-color:${styleCfg.noteBorder};">
+                        <div class="text-muted small fw-bold mb-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.02em;">
                             ${styleCfg.noteLabel}
                         </div>
-                        <div class="small text-dark" style="font-size: 0.8rem; line-height: 1.5; white-space: pre-line;">${item.catatan ? escapeHtml(item.catatan) : '<span class="text-muted fst-italic">Tidak ada catatan teks.</span>'}</div>
+                        <div class="small text-dark" style="font-size: 0.82rem; line-height: 1.55; white-space: pre-line;">${item.catatan ? escapeHtml(item.catatan) : '<span class="text-muted fst-italic">Tidak ada catatan teks.</span>'}</div>
                     </div>
                 </div>
             </div>
@@ -912,7 +1157,7 @@ function renderModalEvaluationsList(evals) {
                 <i class="fas fa-clipboard-list fa-2x text-secondary opacity-50 mb-2 d-block"></i>
                 <h6 class="fw-bold text-dark mb-1">Belum Ada Penilaian Manual LPM</h6>
                 <p class="small text-muted mb-3">Anggota GPM ini baru memiliki skor otomatis sistem. Tim LPM dapat memberikan penilaian manual ketelitian, kecepatan, dan komunikasi beserta catatan pembinaan.</p>
-                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold border-0"
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 py-2 fw-semibold border-0"
                         style="background: linear-gradient(135deg, #4F46E5, #6D28D9);"
                         onclick="openEvaluateFromHistoryModal()">
                     <i class="fas fa-plus me-1"></i> Tambah Penilaian LPM Sekarang
@@ -922,52 +1167,52 @@ function renderModalEvaluationsList(evals) {
         return;
     }
 
-    let html = '<div class="d-flex flex-column gap-2.5">';
+    let html = '<div class="d-flex flex-column gap-3">';
     evals.forEach(ev => {
         const waktuFmt = ev.created_at ? formatDateTimeStr(ev.created_at) : '-';
         html += `
-            <div class="card border rounded-3 p-3 bg-white shadow-2xs">
+            <div class="gpm-history-card" style="border-left-color: #6D28D9;">
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 pb-2 border-bottom">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="badge rounded-pill px-2.5 py-1 fw-bold" style="background:#EDE9FE; color:#5B21B6; border:1px solid #DDD6FE; font-size:0.72rem;">
+                        <span class="badge rounded-pill px-3 py-1 fw-bold" style="background:#EDE9FE; color:#5B21B6; border:1px solid #DDD6FE; font-size:0.73rem;">
                             <i class="fas fa-star me-1"></i> Skor Manual: ${Number(ev.skor_manual_total || 0).toFixed(1)} / 100
                         </span>
-                        <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill" style="font-size:0.7rem;">
+                        <span class="badge bg-light text-dark border px-2 py-1 rounded-pill" style="font-size:0.71rem;">
                             Periode ${escapeHtml(ev.periode || '-')}
                         </span>
                     </div>
-                    <div class="text-muted small" style="font-size: 0.72rem;">
+                    <div class="text-muted small text-nowrap flex-shrink-0" style="font-size: 0.74rem;">
                         <i class="far fa-clock me-1"></i>${waktuFmt}
                     </div>
                 </div>
 
                 <div class="row g-2 my-2 text-center">
                     <div class="col-4">
-                        <div class="p-2 rounded-3 border bg-light-subtle">
-                            <div class="text-muted" style="font-size:0.68rem;">Ketelitian</div>
+                        <div class="gpm-stat-tile">
+                            <div class="gpm-stat-label">Ketelitian</div>
                             <div class="fw-bold text-dark-blue">${parseInt(ev.skor_ketelitian || 0, 10)}</div>
                         </div>
                     </div>
                     <div class="col-4">
-                        <div class="p-2 rounded-3 border bg-light-subtle">
-                            <div class="text-muted" style="font-size:0.68rem;">Kecepatan &amp; Relay</div>
+                        <div class="gpm-stat-tile">
+                            <div class="gpm-stat-label">Kecepatan &amp; Relay</div>
                             <div class="fw-bold text-dark-blue">${parseInt(ev.skor_kecepatan || 0, 10)}</div>
                         </div>
                     </div>
                     <div class="col-4">
-                        <div class="p-2 rounded-3 border bg-light-subtle">
-                            <div class="text-muted" style="font-size:0.68rem;">Kualitas Arahan</div>
+                        <div class="gpm-stat-tile">
+                            <div class="gpm-stat-label">Kualitas Arahan</div>
                             <div class="fw-bold text-dark-blue">${parseInt(ev.skor_komunikasi || 0, 10)}</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="p-2.5 rounded-3 border" style="background:#F5F3FF; border-color:#DDD6FE !important;">
-                    <div class="small fw-bold mb-1" style="color:#5B21B6; font-size:0.7rem; text-transform:uppercase;">
+                <div class="gpm-history-note" style="background:#F5F3FF; border-color:#DDD6FE;">
+                    <div class="small fw-bold mb-1" style="color:#5B21B6; font-size:0.7rem; text-transform:uppercase; letter-spacing: 0.02em;">
                         <i class="fas fa-comment-medical me-1"></i>Catatan Evaluasi Tim LPM:
                     </div>
-                    <div class="small text-dark" style="font-size:0.81rem; line-height:1.5; white-space:pre-line;">${ev.catatan_evaluasi ? escapeHtml(ev.catatan_evaluasi) : '<span class="text-muted fst-italic">Tidak ada catatan tambahan.</span>'}</div>
-                    <div class="text-muted mt-1.5" style="font-size:0.69rem;">
+                    <div class="small text-dark" style="font-size:0.82rem; line-height:1.55; white-space:pre-line;">${ev.catatan_evaluasi ? escapeHtml(ev.catatan_evaluasi) : '<span class="text-muted fst-italic">Tidak ada catatan tambahan.</span>'}</div>
+                    <div class="text-muted mt-2" style="font-size:0.7rem;">
                         Penilai: <strong>${escapeHtml(ev.evaluator_name || 'Tim LPM')}</strong> (${escapeHtml(ev.evaluator_role || 'LPM')})
                     </div>
                 </div>
