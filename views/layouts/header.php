@@ -143,13 +143,16 @@ $currentUser = Auth::user();
                                         </a>
                                     </li>
                                     <?php endif; ?>
+                                    <?php if (empty($_SESSION['is_unika_civitas']) && Auth::role() !== 'civitas_unika'): ?>
                                     <li>
                                         <?php 
                                         $pubProfileLink = match(true) {
+                                            Auth::isLpm()      => base_url('admin/profile'),
                                             Auth::isProdi()    => base_url('prodi/profile'),
                                             Auth::isFakultas() => base_url('fakultas/profile'),
                                             Auth::isGpm()      => base_url('gpm/profile'),
-                                            default            => base_url('admin/profile'),
+                                            Auth::isPengguna() => base_url('profile'),
+                                            default            => base_url('profile'),
                                         };
                                         ?>
                                         <a class="dropdown-item d-flex align-items-center gap-2 py-2"
@@ -157,7 +160,8 @@ $currentUser = Auth::user();
                                             <i class="fas fa-user-gear text-secondary"></i> Profil & Foto Saya
                                         </a>
                                     </li>
-                                    <?php if (!empty($_SESSION['is_multi_role_testing']) || Auth::userEmail() === 'nesiaraniwijaya@gmail.com' || Auth::isSuperAdmin()): ?>
+                                    <?php endif; ?>
+                                    <?php if (Auth::canSwitchRole()): ?>
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-primary fw-bold" style="background: rgba(37, 99, 235, 0.08);"
                                            href="<?= base_url('auth/select-role') ?>">

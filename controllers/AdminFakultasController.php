@@ -836,7 +836,7 @@ class AdminFakultasController extends Controller {
                     }
 
                     $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
-                    $tahapReview  = $isDraft ? null : 'gpm';
+                    $tahapReview  = $isDraft ? 'draft' : 'gpm';
 
                     // Pastikan terhubung ke ppepp_cycles (Siklus Berkelanjutan Tingkat Fakultas)
                     $cycleId = !empty($d['cycle_id']) ? (int)$d['cycle_id'] : null;
@@ -1379,7 +1379,7 @@ class AdminFakultasController extends Controller {
             $newTahapReview  = $existing['tahap_review'] ?? 'gpm';
             if ($isDraft) {
                 $newStatusReview = 'draft';
-                $newTahapReview  = null;
+                $newTahapReview  = 'draft';
             } else {
                 if (in_array($newStatusReview, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'])) {
                     $newStatusReview = 'sudah_diperbaiki';

@@ -5,21 +5,35 @@
  */
 $currentUser = Auth::user();
 $isAdmin = Auth::isLpm();
-$isFak = Auth::isFakultas() || Auth::isGpm();
-$formAction = $isAdmin ? base_url('admin/profile/update') : ($isFak ? base_url('fakultas/profile/update') : base_url('prodi/profile/update'));
+$isPengguna = Auth::isPengguna();
+$formAction = match(true) {
+    Auth::isLpm()      => base_url('admin/profile/update'),
+    Auth::isFakultas() => base_url('fakultas/profile/update'),
+    Auth::isGpm()      => base_url('gpm/profile/update'),
+    Auth::isProdi()    => base_url('prodi/profile/update'),
+    Auth::isPengguna() => base_url('profile/update'),
+    default            => base_url('admin/profile/update'),
+};
 $backUrl = base_url(Auth::getDashboardRoute());
 
-require_once ROOT_PATH . '/views/layouts/admin_header.php';
+if ($isPengguna) {
+    require_once ROOT_PATH . '/views/layouts/header.php';
+} else {
+    require_once ROOT_PATH . '/views/layouts/admin_header.php';
+}
 ?>
 
 <?php
 $officialTitle = Auth::getOfficialTitle();
-$unitName = Auth::isProdi()
-    ? ($user['nama_fakultas'] ?? 'Fakultas')
-    : (Auth::isFakultas() || Auth::isGpm() ? ($user['nama_fakultas'] ?? 'Fakultas') : 'Lembaga Penjaminan Mutu (LPM) Universitas');
+$unitName = match(true) {
+    Auth::isProdi()                     => ($user['nama_fakultas'] ?? 'Fakultas'),
+    Auth::isFakultas() || Auth::isGpm() => ($user['nama_fakultas'] ?? 'Fakultas'),
+    Auth::isPengguna()                  => 'Civitas Akademika UNIKA Soegijapranata',
+    default                             => 'Lembaga Penjaminan Mutu (LPM) Universitas',
+};
 ?>
 
-<div class="container-fluid p-0">
+<div class="<?= $isPengguna ? 'container py-4' : 'container-fluid p-0' ?>">
     <!-- Header -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>

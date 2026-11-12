@@ -181,7 +181,7 @@ class AuthController extends Controller {
         // 3. Verifikasi & Login ke Sistem SPMI
         if (Auth::attemptGoogleLogin($googleEmail)) {
             $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com', 'lpm@unika.ac.id', 'tu.lpm@unika.ac.id', 'admin.lpm@unika.ac.id'];
-            if (in_array($googleEmail, $multiRoleEmails) || Auth::role() === 'testing' || in_array(Auth::role(), ['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu'])) {
+            if (in_array($googleEmail, $multiRoleEmails) || Auth::role() === 'testing' || Auth::role() === 'super_admin') {
                 $_SESSION['is_multi_role_testing'] = true;
                 redirect('auth/select-role');
             }
@@ -219,6 +219,10 @@ class AuthController extends Controller {
     public function showSelectRole(): void {
         if (!Auth::check()) {
             redirect('login');
+        }
+        if (!Auth::canSwitchRole()) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki wewenang untuk membuka halaman Ganti Peran.');
+            redirect(Auth::getDashboardRoute());
         }
 
         // Konsumsi flash sebelumnya jika ada, agar halaman pemilihan peran tetap bersih
@@ -268,8 +272,17 @@ class AuthController extends Controller {
         if (!Auth::check()) {
             redirect('login');
         }
+        if (!Auth::canSwitchRole()) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki wewenang untuk mengganti peran.');
+            redirect(Auth::getDashboardRoute());
+        }
 
-        $selectedRole = trim($_POST['role'] ?? 'super_admin');
+        $selectedRole = trim($_POST['role'] ?? '');
+        $allowedRoles = ['super_admin', 'kepala_lpm', 'kepala_pusat_mutu', 'gpm', 'dekan', 'wadek', 'kaprodi', 'sekprodi', 'pengguna'];
+        if (!in_array($selectedRole, $allowedRoles, true)) {
+            Auth::setFlash('danger', 'Peran yang dipilih tidak valid.');
+            redirect('auth/select-role');
+        }
         $reqFakId     = !empty($_POST['fakultas_id']) ? (int)$_POST['fakultas_id'] : 0;
         $reqProdiId   = !empty($_POST['prodi_id']) ? (int)$_POST['prodi_id'] : 0;
         $pdo = Database::getInstance()->getConnection();
@@ -382,8 +395,8 @@ class AuthController extends Controller {
                 $_SESSION['user_fakultas_name'] = null;
                 break;
             default:
-                $_SESSION['user_role'] = 'super_admin';
-                break;
+                Auth::setFlash('danger', 'Peran yang dipilih tidak valid.');
+                redirect('auth/select-role');
         }
 
         $_SESSION['is_multi_role_testing'] = true;

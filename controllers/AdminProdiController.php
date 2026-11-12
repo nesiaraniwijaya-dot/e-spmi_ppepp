@@ -871,7 +871,7 @@ class AdminProdiController extends Controller {
                     }
 
                     $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
-                    $tahapReview  = $isDraft ? null : 'gpm';
+                    $tahapReview  = $isDraft ? 'draft' : 'gpm';
 
                     // Pastikan terhubung ke ppepp_cycles (Siklus Berkelanjutan)
                     $cycleId = !empty($d['cycle_id']) ? (int)$d['cycle_id'] : null;
@@ -1502,7 +1502,7 @@ class AdminProdiController extends Controller {
             $newTahapReview  = $oldDoc['tahap_review'] ?? 'gpm';
             if ($isDraft) {
                 $newStatusReview = 'draft';
-                $newTahapReview  = null;
+                $newTahapReview  = 'draft';
             } else {
                 if (in_array($newStatusReview, ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki'])) {
                     $newStatusReview = 'sudah_diperbaiki';
@@ -1638,7 +1638,7 @@ class AdminProdiController extends Controller {
         }
 
         $statusReview = $isDraft ? 'draft' : 'menunggu_review_gpm';
-        $tahapReview  = $isDraft ? null : 'gpm';
+        $tahapReview  = $isDraft ? 'draft' : 'gpm';
 
         // Hubungkan ke ppepp_cycles untuk single mode
         $cycleId = !empty($_POST['cycle_id']) ? (int)$_POST['cycle_id'] : null;

@@ -23,16 +23,40 @@ class ApiController extends Controller {
         try {
             $docId = (int)$id;
             $stmtDoc = $this->db->prepare("
-                SELECT id, nama_dokumen, nomor_dokumen, status_review, tahap_review, level, prodi_id, fakultas_id,
-                       gpm_catatan, gpm_reviewed_at, lpm_catatan, lpm_reviewed_at
-                FROM ppepp_documents 
-                WHERE id = ? AND deleted_at IS NULL
+                SELECT d.id, d.nama_dokumen, d.nomor_dokumen, d.status_review, d.tahap_review, d.level, d.prodi_id, d.fakultas_id,
+                       d.gpm_catatan, d.gpm_reviewed_at, d.lpm_catatan, d.lpm_reviewed_at,
+                       COALESCE(d.fakultas_id, p.fakultas_id) AS resolved_fakultas_id
+                FROM ppepp_documents d
+                LEFT JOIN prodis p ON d.prodi_id = p.id
+                WHERE d.id = ? AND d.deleted_at IS NULL
             ");
             $stmtDoc->execute([$docId]);
             $doc = $stmtDoc->fetch();
 
             if (!$doc) {
+                http_response_code(404);
                 echo json_encode(['success' => false, 'message' => 'Dokumen tidak ditemukan.']);
+                exit;
+            }
+
+            $isAuthorized = false;
+            if (Auth::isLpm() || Auth::role() === 'testing') {
+                $isAuthorized = true;
+            } elseif (Auth::isGpm()) {
+                $userFakId = (int)(Auth::fakultasId() ?? 0);
+                $docFakId = (int)($doc['resolved_fakultas_id'] ?? 0);
+                $isAuthorized = ($userFakId > 0 && $docFakId === $userFakId);
+            } elseif (Auth::isFakultas()) {
+                $userFakId = (int)(Auth::fakultasId() ?? 0);
+                $isAuthorized = ($doc['level'] === 'fakultas' && $userFakId > 0 && (int)$doc['fakultas_id'] === $userFakId);
+            } elseif (Auth::isProdi()) {
+                $userProdiId = (int)(Auth::prodiId() ?? 0);
+                $isAuthorized = ($doc['level'] === 'prodi' && $userProdiId > 0 && (int)$doc['prodi_id'] === $userProdiId);
+            }
+
+            if (!$isAuthorized) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak: Anda tidak berwenang melihat riwayat review dokumen ini.']);
                 exit;
             }
 
@@ -184,8 +208,8 @@ class ApiController extends Controller {
             }
             unset($hItem);
 
-            $userRole = class_exists('Auth') && Auth::check() ? Auth::role() : null;
-            $isUnitUser = in_array($userRole, ['admin_prodi', 'admin_fakultas', 'kaprodi', 'sekprodi', 'dekan', 'wadek']);
+            $userRole = Auth::role();
+            $isUnitUser = Auth::isFakultas() || Auth::isProdi() || in_array($userRole, ['admin_prodi', 'admin_fakultas'], true);
 
             // Masking privasi alur berjenjang:
             // Bagi role Prodi/Dekanat, jangan perlihatkan catatan internal dan nama reviewer dari LPM
@@ -234,10 +258,48 @@ class ApiController extends Controller {
     public function checkUploadAccess(): void {
         header('Content-Type: application/json; charset=utf-8');
         try {
+            if (!Auth::isLpm() && !Auth::isGpm() && !Auth::isFakultas() && !Auth::isProdi() && Auth::role() !== 'testing') {
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'is_locked' => false,
+                    'message' => 'Akses ditolak: Peran Anda tidak memiliki wewenang akses unggah.'
+                ]);
+                exit;
+            }
+
             $user = Auth::user();
-            $level = trim($_GET['level'] ?? ($_POST['level'] ?? ($user['role'] ?? 'prodi')));
-            $prodiId = !empty($_GET['prodi_id']) ? (int)$_GET['prodi_id'] : (!empty($_POST['prodi_id']) ? (int)$_POST['prodi_id'] : ($user['prodi_id'] ?? null));
-            $fakultasId = !empty($_GET['fakultas_id']) ? (int)$_GET['fakultas_id'] : (!empty($_POST['fakultas_id']) ? (int)$_POST['fakultas_id'] : ($user['fakultas_id'] ?? null));
+            if (Auth::isProdi()) {
+                $level = 'prodi';
+                $prodiId = (int)(Auth::prodiId() ?? 0);
+                $fakultasId = (int)(Auth::fakultasId() ?? 0);
+            } elseif (Auth::isFakultas()) {
+                $level = 'fakultas';
+                $prodiId = null;
+                $fakultasId = (int)(Auth::fakultasId() ?? 0);
+            } elseif (Auth::isGpm()) {
+                $reqLevel = trim($_GET['level'] ?? ($_POST['level'] ?? 'fakultas'));
+                $level = in_array($reqLevel, ['prodi', 'fakultas'], true) ? $reqLevel : 'fakultas';
+                $fakultasId = (int)(Auth::fakultasId() ?? 0);
+                $prodiId = !empty($_GET['prodi_id']) ? (int)$_GET['prodi_id'] : (!empty($_POST['prodi_id']) ? (int)$_POST['prodi_id'] : null);
+                if ($level === 'prodi' && $prodiId) {
+                    $stmtCheckP = $this->db->prepare("SELECT fakultas_id FROM prodis WHERE id = ? LIMIT 1");
+                    $stmtCheckP->execute([$prodiId]);
+                    $pRow = $stmtCheckP->fetch();
+                    if (!$pRow || (int)$pRow['fakultas_id'] !== $fakultasId) {
+                        http_response_code(403);
+                        echo json_encode(['success' => false, 'is_locked' => false, 'message' => 'Akses ditolak: Prodi berada di luar cakupan fakultas Anda.']);
+                        exit;
+                    }
+                } else {
+                    $prodiId = null;
+                }
+            } else {
+                $reqLevel = trim($_GET['level'] ?? ($_POST['level'] ?? 'prodi'));
+                $level = in_array($reqLevel, ['prodi', 'fakultas', 'universitas'], true) ? $reqLevel : 'prodi';
+                $prodiId = !empty($_GET['prodi_id']) ? (int)$_GET['prodi_id'] : (!empty($_POST['prodi_id']) ? (int)$_POST['prodi_id'] : ($user['prodi_id'] ?? null));
+                $fakultasId = !empty($_GET['fakultas_id']) ? (int)$_GET['fakultas_id'] : (!empty($_POST['fakultas_id']) ? (int)$_POST['fakultas_id'] : ($user['fakultas_id'] ?? null));
+            }
 
             $date = trim($_GET['date'] ?? ($_POST['date'] ?? ''));
             $taInput = trim($_GET['tahun_akademik'] ?? ($_POST['tahun_akademik'] ?? ''));

@@ -17,7 +17,10 @@ class GpmController extends Controller {
 
     public function __construct() {
         parent::__construct();
-        Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_pusat_mutu', 'gpm']);
+        Auth::requireRole(['gpm']);
+        if (Auth::role() === 'testing') {
+            redirect('auth/select-role');
+        }
 
         $this->fakultasId = (int)(Auth::fakultasId() ?? 0);
         if (!$this->fakultasId) {

@@ -14,6 +14,34 @@ class ProfileController extends Controller {
     public function __construct() {
         parent::__construct();
         Auth::requireLogin();
+
+        if (!empty($_SESSION['is_unika_civitas']) || Auth::role() === 'civitas_unika') {
+            Auth::setFlash('info', 'Akun Civitas UNIKA dikelola melalui Google SSO dan tidak memiliki halaman profil internal terpisah.');
+            redirect('dokumen');
+        }
+
+        $this->enforceRouteRole();
+    }
+
+    private function enforceRouteRole(): void {
+        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        if ($scriptDir !== '/' && str_starts_with($uri, $scriptDir)) {
+            $uri = substr($uri, strlen($scriptDir));
+        }
+        $uri = strtolower(trim($uri, '/'));
+
+        if (str_starts_with($uri, 'admin/profile')) {
+            Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+        } elseif (str_starts_with($uri, 'fakultas/profile')) {
+            Auth::requireRole(['dekan', 'wadek']);
+        } elseif (str_starts_with($uri, 'prodi/profile')) {
+            Auth::requireRole(['kaprodi', 'sekprodi']);
+        } elseif (str_starts_with($uri, 'gpm/profile')) {
+            Auth::requireRole(['gpm']);
+        } elseif (str_starts_with($uri, 'profile')) {
+            Auth::requireRole(['pengguna']);
+        }
     }
 
     /**
@@ -63,12 +91,13 @@ class ProfileController extends Controller {
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
 
-        $role = Auth::role();
-        $redirectUrl = match($role) {
-            'super_admin', 'kepala_lpm' => 'admin/profile',
-            'admin_fakultas' => 'fakultas/profile',
-            'gpm' => 'gpm/profile',
-            default => 'prodi/profile'
+        $redirectUrl = match(true) {
+            Auth::isLpm()      => 'admin/profile',
+            Auth::isFakultas() => 'fakultas/profile',
+            Auth::isGpm()      => 'gpm/profile',
+            Auth::isProdi()    => 'prodi/profile',
+            Auth::isPengguna() => 'profile',
+            default            => Auth::getDashboardRoute(),
         };
 
         if (empty($name)) {
@@ -106,9 +135,10 @@ class ProfileController extends Controller {
             }
         }
 
-        // Handle Password Change (Only allowed for Super Admin / Admin LPM)
+        // Handle Password Change (Only allowed for LPM Admins)
         $passwordHash = $oldUser['password'];
-        $isAdminRole = in_array($role, ['super_admin', 'kepala_lpm']);
+        $isAdminRole = Auth::isLpm();
+        $passwordChanged = false;
 
         if ($isAdminRole && !empty($newPassword)) {
             if (strlen($newPassword) < 6) {
@@ -122,10 +152,11 @@ class ProfileController extends Controller {
             }
 
             $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $passwordChanged = true;
         }
 
         // Update database
-        if (!empty($newPassword)) {
+        if ($passwordChanged) {
             $stmtUpdate = $this->db->prepare("UPDATE users SET name = ?, avatar = ?, password = ?, password_plain = ? WHERE id = ?");
             $stmtUpdate->execute([$name, $avatarPath, $passwordHash, $newPassword, $userId]);
         } else {
@@ -139,7 +170,7 @@ class ProfileController extends Controller {
         AuditLogger::log('UPDATE', 'Profil Pengguna', (string)$userId, $name, $oldUser, [
             'name' => $name,
             'avatar_updated' => ($avatarPath !== $oldUser['avatar']),
-            'password_changed' => !empty($newPassword)
+            'password_changed' => $passwordChanged
         ]);
 
         Auth::setFlash('success', 'Profil dan informasi akun Anda berhasil diperbarui.');

@@ -47,6 +47,12 @@ class Auth {
         }
 
         if ($user && $passwordValid) {
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                @session_regenerate_id(true);
+            }
+            unset($_SESSION['is_multi_role_testing'], $_SESSION['is_unika_civitas']);
+            self::$cachedUser = null;
+
             // Set session data
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
@@ -102,6 +108,12 @@ class Auth {
         $user = $stmt->fetch();
 
         if ($user) {
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                @session_regenerate_id(true);
+            }
+            unset($_SESSION['is_multi_role_testing'], $_SESSION['is_unika_civitas']);
+            self::$cachedUser = null;
+
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
             $_SESSION['user_real_name'] = $user['name'];
@@ -273,6 +285,26 @@ class Auth {
 
     public static function isTesting(): bool {
         return self::role() === 'testing' || !empty($_SESSION['is_multi_role_testing']);
+    }
+
+    public static function canSwitchRole(): bool {
+        self::startSession();
+        if (!self::check()) {
+            return false;
+        }
+        $realRole = $_SESSION['user_real_role'] ?? ($_SESSION['user_role'] ?? '');
+        $realEmail = strtolower(trim((string)($_SESSION['user_email'] ?? '')));
+        $multiRoleEmails = [
+            'nesiaraniwijaya@gmail.com',
+            'ravywhienelda@gmail.com',
+            'lpm@unika.ac.id',
+            'tu.lpm@unika.ac.id',
+            'admin.lpm@unika.ac.id'
+        ];
+
+        return !empty($_SESSION['is_multi_role_testing'])
+            || in_array($realRole, ['testing', 'super_admin'], true)
+            || in_array($realEmail, $multiRoleEmails, true);
     }
 
     public static function getOfficialTitle(): string {

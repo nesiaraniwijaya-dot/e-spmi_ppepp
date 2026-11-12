@@ -102,6 +102,10 @@ $router->post('admin/landing-settings/reset', ['SuperAdminController', 'resetLan
 $router->get('admin/profile', ['ProfileController', 'index']);
 $router->post('admin/profile/update', ['ProfileController', 'update']);
 
+// Profil Pengguna / Civitas
+$router->get('profile', ['ProfileController', 'index']);
+$router->post('profile/update', ['ProfileController', 'update']);
+
 // ==========================================
 // 4. ADMIN PROGRAM STUDI ROUTES
 // ==========================================
@@ -186,10 +190,19 @@ $router->post('api/check-upload-access', ['ApiController', 'checkUploadAccess'])
 $router->get('gpm/profile', ['ProfileController', 'index']);
 $router->post('gpm/profile/update', ['ProfileController', 'update']);
 
-// Redirect rute lama kepala/* ke admin/*
-$router->get('kepala/dashboard', function() { redirect('admin/dashboard'); });
-$router->get('kepala/rekapitulasi', function() { redirect('admin/rekapitulasi'); });
-$router->get('kepala/audit', function() { redirect('admin/monitoring-dokumen'); });
+// Redirect rute lama kepala/* ke admin/* (dengan perlindungan RBAC LPM)
+$router->get('kepala/dashboard', function() {
+    Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+    redirect('admin/dashboard');
+});
+$router->get('kepala/rekapitulasi', function() {
+    Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+    redirect('admin/monitoring-berkas');
+});
+$router->get('kepala/audit', function() {
+    Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+    redirect('admin/monitoring-dokumen');
+});
 
 // Dispatch Request
 $router->dispatch();
