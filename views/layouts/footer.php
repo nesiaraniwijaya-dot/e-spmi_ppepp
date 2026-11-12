@@ -790,5 +790,25 @@
     })();
     </script>
 
+    <!-- Global Helper: Update Real-Time Siklus PPEPP Tab Counters -->
+    <script>
+    window.updatePpeppCycleTabCounts = function(containerSelector, cycleCounts, totalAllCycles) {
+        if (!cycleCounts) return;
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+        const totalVal = (totalAllCycles !== undefined && totalAllCycles !== null)
+            ? Number(totalAllCycles)
+            : Object.values(cycleCounts).reduce((acc, v) => acc + (Number(v) || 0), 0);
+
+        container.querySelectorAll('[data-siklus-tab]').forEach(btn => {
+            const key = (btn.getAttribute('data-siklus-tab') || '').toLowerCase().trim();
+            const countEl = btn.querySelector('.tab-cycle-count');
+            if (!countEl) return;
+            const countNum = (key === '') ? totalVal : (Number(cycleCounts[key]) || 0);
+            countEl.textContent = '(' + countNum.toLocaleString('id-ID') + ')';
+        });
+    };
+    </script>
+
 </body>
 </html>

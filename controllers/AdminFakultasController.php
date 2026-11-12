@@ -124,60 +124,61 @@ class AdminFakultasController extends Controller {
         $prodiUnderFakultas = $this->db->query("SELECT id, nama_prodi, jenjang FROM prodis WHERE fakultas_id = {$this->fakultasId} ORDER BY nama_prodi ASC, jenjang ASC")->fetchAll();
         $unitFilter = trim($_GET['unit_scope'] ?? $_GET['prodi_id'] ?? '');
 
-        // Per-cycle counts khusus tingkat dekanat / fakultas
-        $cycleCounts = [
-            'semua'        => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND deleted_at IS NULL")->fetchColumn(),
-            'penetapan'    => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='penetapan' AND deleted_at IS NULL")->fetchColumn(),
-            'pelaksanaan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='pelaksanaan' AND deleted_at IS NULL")->fetchColumn(),
-            'evaluasi'     => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='evaluasi' AND deleted_at IS NULL")->fetchColumn(),
-            'pengendalian' => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='pengendalian' AND deleted_at IS NULL")->fetchColumn(),
-            'peningkatan'  => (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id={$this->fakultasId} AND level='fakultas' AND status_review != 'draft' AND LOWER(TRIM(siklus))='peningkatan' AND deleted_at IS NULL")->fetchColumn(),
-        ];
-
         // Hitung total banner revisi, antrean & draf tingkat fakultas (Masking: revisi_lpm tersembunyi di GPM)
         $perluPerbaikanCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('revisi_gpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
         $sudahDiperbaikiCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm') AND deleted_at IS NULL")->fetchColumn();
         $draftCount = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = {$this->fakultasId} AND level = 'fakultas' AND status_review = 'draft' AND deleted_at IS NULL")->fetchColumn();
 
-        // Base WHERE: Murni dokumen tingkat dekanat / fakultas
-        $where = ["d.fakultas_id = ?", "d.level = 'fakultas'", "d.deleted_at IS NULL", "d.status_review != 'draft'"];
-        $params = [$this->fakultasId];
-
-        if (!empty($siklus) && in_array(strtolower($siklus), ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
-            $where[] = "LOWER(TRIM(d.siklus)) = ?";
-            $params[] = strtolower($siklus);
-        }
+        // Base WHERE dasar (tanpa filter siklus untuk tab counter real-time)
+        $baseWhere = ["d.fakultas_id = ?", "d.level = 'fakultas'", "d.deleted_at IS NULL", "d.status_review != 'draft'"];
+        $baseParams = [$this->fakultasId];
 
         if (!empty($bidangId)) {
-            $where[] = "d.bidang_id = ?";
-            $params[] = $bidangId;
+            $baseWhere[] = "d.bidang_id = ?";
+            $baseParams[] = $bidangId;
         }
 
         if (!empty($tahunFilter)) {
-            $where[] = "d.tahun_akademik = ?";
-            $params[] = $tahunFilter;
+            $baseWhere[] = "d.tahun_akademik = ?";
+            $baseParams[] = $tahunFilter;
         }
 
         if (!empty($statusFilter)) {
             if ($statusFilter === 'revisi') {
-                $where[] = "d.status_review IN ('revisi_gpm', 'perlu_perbaikan')";
+                $baseWhere[] = "d.status_review IN ('revisi_gpm', 'perlu_perbaikan')";
             } elseif ($statusFilter === 'antrean') {
-                $where[] = "d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm')";
+                $baseWhere[] = "d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm')";
             } elseif ($statusFilter === 'menunggu_review_gpm') {
-                $where[] = "d.status_review IN ('menunggu_review_gpm', 'revisi_lpm', 'belum_direview')";
+                $baseWhere[] = "d.status_review IN ('menunggu_review_gpm', 'revisi_lpm', 'belum_direview')";
             } else {
-                $where[] = "d.status_review = ?";
-                $params[] = $statusFilter;
+                $baseWhere[] = "d.status_review = ?";
+                $baseParams[] = $statusFilter;
             }
         }
 
         if (!empty($search)) {
-            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR d.deskripsi LIKE ? OR b.nama_bidang LIKE ? OR u.name LIKE ?)";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
+            $baseWhere[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR d.deskripsi LIKE ? OR b.nama_bidang LIKE ? OR u.name LIKE ?)";
+            $baseParams[] = "%{$search}%";
+            $baseParams[] = "%{$search}%";
+            $baseParams[] = "%{$search}%";
+            $baseParams[] = "%{$search}%";
+            $baseParams[] = "%{$search}%";
+        }
+
+        $baseWhereClause = implode(" AND ", $baseWhere);
+        $rawCycleCounts = $this->getSiklusCountsByWhere(
+            "FROM ppepp_documents d LEFT JOIN bidang_standar b ON d.bidang_id = b.id LEFT JOIN users u ON d.user_id = u.id",
+            $baseWhereClause,
+            $baseParams
+        );
+        $totalAllCycles = array_sum($rawCycleCounts);
+        $cycleCounts = array_merge(['semua' => $totalAllCycles], $rawCycleCounts);
+
+        $where = $baseWhere;
+        $params = $baseParams;
+        if (!empty($siklus) && in_array(strtolower($siklus), ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = strtolower($siklus);
         }
 
         $whereClause = implode(" AND ", $where);
@@ -230,14 +231,16 @@ class AdminFakultasController extends Controller {
             $rowsHtml = ob_get_clean();
 
             echo json_encode([
-                'success'      => true,
-                'html'         => $rowsHtml,
-                'page'         => $page,
-                'per_page'     => $perPage,
-                'total'        => $totalFiltered,
-                'total_pages'  => $totalPages,
-                'start_num'    => $startNum,
-                'end_num'      => $endNum
+                'success'          => true,
+                'html'             => $rowsHtml,
+                'page'             => $page,
+                'per_page'         => $perPage,
+                'total'            => $totalFiltered,
+                'total_pages'      => $totalPages,
+                'start_num'        => $startNum,
+                'end_num'          => $endNum,
+                'cycle_counts'     => $rawCycleCounts,
+                'total_all_cycles' => $totalAllCycles
             ]);
             exit;
         }
@@ -359,7 +362,7 @@ class AdminFakultasController extends Controller {
         $hasLegacyFile = !empty($doc['file_path']);
 
         if ($filesCount === 0 && !$hasLink && !$hasLegacyFile) {
-            Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' belum memiliki berkas terlampir atau tautan Google Drive. Harap lengkapi berkas terlebih dahulu sebelum mengajukan ke LPM.");
+            Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' belum memiliki berkas terlampir atau tautan Google Drive. Harap lengkapi berkas terlebih dahulu sebelum mengajukan ke GPM Fakultas.");
             redirect("fakultas/dokumen/edit/{$docId}");
             return;
         }
@@ -815,7 +818,7 @@ class AdminFakultasController extends Controller {
 
                     if (!$isDraft) {
                         if (!$hasFiles && !$hasLinks) {
-                            throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) wajib memiliki minimal 1 berkas fisik atau tautan Google Drive untuk diajukan ke LPM.");
+                            throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) wajib memiliki minimal 1 berkas fisik atau tautan Google Drive untuk diajukan ke GPM Fakultas.");
                         }
                     }
 
@@ -973,7 +976,7 @@ class AdminFakultasController extends Controller {
                     redirect('fakultas/draft');
                     return;
                 } else {
-                    Auth::setFlash('success', "Berhasil mengunggah {$successCount} dokumen mutu tingkat fakultas sekaligus dan diajukan ke LPM!");
+                    Auth::setFlash('success', "Berhasil mengunggah {$successCount} dokumen mutu tingkat fakultas sekaligus dan diajukan ke GPM Fakultas!");
                     redirect('fakultas/dokumen');
                     return;
                 }

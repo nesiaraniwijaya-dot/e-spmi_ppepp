@@ -21,20 +21,16 @@ $waitingLpmCount = $gpmWaitingLpmCount ?? count(array_filter($documents, fn($d) 
 $revisiCount     = $gpmPerluCount ?? count(array_filter($documents, fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
 $sesuaiCount     = $gpmSesuaiCount ?? count(array_filter($documents, fn($d) => ($d['status_review'] ?? '') === 'sesuai'));
 
-// Hitung siklus
-$siklusCounts = [
-    'all'          => count($documents),
-    'penetapan'    => 0,
-    'pelaksanaan'  => 0,
-    'evaluasi'     => 0,
-    'pengendalian' => 0,
-    'peningkatan'  => 0,
-];
-foreach ($documents as $d) {
-    $s = $d['siklus'] ?? '';
-    if (isset($siklusCounts[$s])) {
-        $siklusCounts[$s]++;
-    }
+// Siklus counts dikirim langsung oleh GpmController berdasarkan seluruh data sesuai filter aktif
+if (!isset($siklusCounts) || !is_array($siklusCounts)) {
+    $siklusCounts = [
+        'all'          => 0,
+        'penetapan'    => 0,
+        'pelaksanaan'  => 0,
+        'evaluasi'     => 0,
+        'pengendalian' => 0,
+        'peningkatan'  => 0,
+    ];
 }
 ?>
 
@@ -213,39 +209,39 @@ foreach ($documents as $d) {
         <!-- 5 Siklus PPEPP Tabs Header -->
         <ul class="nav ppepp-nav-tabs mb-4" id="gpmPpeppTabs" role="tablist">
             <li class="nav-item">
-                <button type="button" onclick="selectGpmSiklusTab('', this)" 
+                <button type="button" data-siklus-tab="" onclick="selectGpmSiklusTab('', this)" 
                    class="nav-link <?= empty($siklusFilter) ? 'active' : '' ?>">
-                    <i class="fas fa-layer-group"></i> Semua (<?= $siklusCounts['all'] ?>)
+                    <i class="fas fa-layer-group"></i> Semua <span class="tab-cycle-count">(<?= number_format($siklusCounts['all'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button type="button" onclick="selectGpmSiklusTab('penetapan', this)" 
+                <button type="button" data-siklus-tab="penetapan" onclick="selectGpmSiklusTab('penetapan', this)" 
                    class="nav-link tab-penetapan <?= $siklusFilter === 'penetapan' ? 'active' : '' ?>">
-                    <i class="fas fa-file-signature"></i> Penetapan (<?= $siklusCounts['penetapan'] ?>)
+                    <i class="fas fa-file-signature"></i> Penetapan <span class="tab-cycle-count">(<?= number_format($siklusCounts['penetapan'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button type="button" onclick="selectGpmSiklusTab('pelaksanaan', this)" 
+                <button type="button" data-siklus-tab="pelaksanaan" onclick="selectGpmSiklusTab('pelaksanaan', this)" 
                    class="nav-link tab-pelaksanaan <?= $siklusFilter === 'pelaksanaan' ? 'active' : '' ?>">
-                    <i class="fas fa-tasks"></i> Pelaksanaan (<?= $siklusCounts['pelaksanaan'] ?>)
+                    <i class="fas fa-tasks"></i> Pelaksanaan <span class="tab-cycle-count">(<?= number_format($siklusCounts['pelaksanaan'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button type="button" onclick="selectGpmSiklusTab('evaluasi', this)" 
+                <button type="button" data-siklus-tab="evaluasi" onclick="selectGpmSiklusTab('evaluasi', this)" 
                    class="nav-link tab-evaluasi <?= $siklusFilter === 'evaluasi' ? 'active' : '' ?>">
-                    <i class="fas fa-chart-line"></i> Evaluasi (<?= $siklusCounts['evaluasi'] ?>)
+                    <i class="fas fa-chart-line"></i> Evaluasi <span class="tab-cycle-count">(<?= number_format($siklusCounts['evaluasi'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button type="button" onclick="selectGpmSiklusTab('pengendalian', this)" 
+                <button type="button" data-siklus-tab="pengendalian" onclick="selectGpmSiklusTab('pengendalian', this)" 
                    class="nav-link tab-pengendalian <?= $siklusFilter === 'pengendalian' ? 'active' : '' ?>">
-                    <i class="fas fa-sliders"></i> Pengendalian (<?= $siklusCounts['pengendalian'] ?>)
+                    <i class="fas fa-sliders"></i> Pengendalian <span class="tab-cycle-count">(<?= number_format($siklusCounts['pengendalian'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button type="button" onclick="selectGpmSiklusTab('peningkatan', this)" 
+                <button type="button" data-siklus-tab="peningkatan" onclick="selectGpmSiklusTab('peningkatan', this)" 
                    class="nav-link tab-peningkatan <?= $siklusFilter === 'peningkatan' ? 'active' : '' ?>">
-                    <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= $siklusCounts['peningkatan'] ?>)
+                    <i class="fas fa-arrow-trend-up"></i> Peningkatan <span class="tab-cycle-count">(<?= number_format($siklusCounts['peningkatan'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
         </ul>
@@ -491,6 +487,10 @@ function fetchGpmData(page) {
 
         if (pagWrapper) {
             pagWrapper.style.setProperty('display', (data.total > 0) ? 'flex' : 'none', 'important');
+        }
+
+        if (data.cycle_counts && typeof window.updatePpeppCycleTabCounts === 'function') {
+            window.updatePpeppCycleTabCounts('#gpmPpeppTabs', data.cycle_counts, data.total_all_cycles);
         }
 
         renderGpmPagination(gpmTotalPages, gpmCurrentPage);

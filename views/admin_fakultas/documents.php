@@ -119,7 +119,7 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
                                     <?= $fakultasDraftCount ?> Draf Dokumen
                                 </div>
                                 <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                                    Belum diajukan ke LPM
+                                    Belum diajukan ke GPM
                                 </div>
                             </div>
                         </div>
@@ -139,33 +139,33 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
         <!-- 5 Siklus PPEPP Tabs Header -->
         <ul class="nav ppepp-nav-tabs mb-4" id="fakultasPpeppTabs" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active" type="button" onclick="selectFakultasSiklusTab('', this)">
-                    <i class="fas fa-layer-group"></i> Semua (<?= $totalSemua ?>)
+                <button class="nav-link active" type="button" data-siklus-tab="" onclick="selectFakultasSiklusTab('', this)">
+                    <i class="fas fa-layer-group"></i> Semua <span class="tab-cycle-count">(<?= number_format($totalSemua, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-penetapan" type="button" onclick="selectFakultasSiklusTab('penetapan', this)">
-                    <i class="fas fa-file-signature"></i> Penetapan (<?= $countPenetapan ?>)
+                <button class="nav-link tab-penetapan" type="button" data-siklus-tab="penetapan" onclick="selectFakultasSiklusTab('penetapan', this)">
+                    <i class="fas fa-file-signature"></i> Penetapan <span class="tab-cycle-count">(<?= number_format($countPenetapan, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-pelaksanaan" type="button" onclick="selectFakultasSiklusTab('pelaksanaan', this)">
-                    <i class="fas fa-person-chalkboard"></i> Pelaksanaan (<?= $countPelaksanaan ?>)
+                <button class="nav-link tab-pelaksanaan" type="button" data-siklus-tab="pelaksanaan" onclick="selectFakultasSiklusTab('pelaksanaan', this)">
+                    <i class="fas fa-person-chalkboard"></i> Pelaksanaan <span class="tab-cycle-count">(<?= number_format($countPelaksanaan, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-evaluasi" type="button" onclick="selectFakultasSiklusTab('evaluasi', this)">
-                    <i class="fas fa-magnifying-glass-chart"></i> Evaluasi (<?= $countEvaluasi ?>)
+                <button class="nav-link tab-evaluasi" type="button" data-siklus-tab="evaluasi" onclick="selectFakultasSiklusTab('evaluasi', this)">
+                    <i class="fas fa-magnifying-glass-chart"></i> Evaluasi <span class="tab-cycle-count">(<?= number_format($countEvaluasi, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-pengendalian" type="button" onclick="selectFakultasSiklusTab('pengendalian', this)">
-                    <i class="fas fa-sliders"></i> Pengendalian (<?= $countPengendalian ?>)
+                <button class="nav-link tab-pengendalian" type="button" data-siklus-tab="pengendalian" onclick="selectFakultasSiklusTab('pengendalian', this)">
+                    <i class="fas fa-sliders"></i> Pengendalian <span class="tab-cycle-count">(<?= number_format($countPengendalian, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-peningkatan" type="button" onclick="selectFakultasSiklusTab('peningkatan', this)">
-                    <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= $countPeningkatan ?>)
+                <button class="nav-link tab-peningkatan" type="button" data-siklus-tab="peningkatan" onclick="selectFakultasSiklusTab('peningkatan', this)">
+                    <i class="fas fa-arrow-trend-up"></i> Peningkatan <span class="tab-cycle-count">(<?= number_format($countPeningkatan, 0, ',', '.') ?>)</span>
                 </button>
             </li>
         </ul>
@@ -399,6 +399,10 @@ function fetchFakultasData(page) {
 
         if (pagWrapper) {
             pagWrapper.style.setProperty('display', (data.total > 0) ? 'flex' : 'none', 'important');
+        }
+
+        if (data.cycle_counts && typeof window.updatePpeppCycleTabCounts === 'function') {
+            window.updatePpeppCycleTabCounts('#fakultasPpeppTabs', data.cycle_counts, data.total_all_cycles);
         }
 
         renderFakultasPagination(fakultasTotalPages, currentFakultasPage);

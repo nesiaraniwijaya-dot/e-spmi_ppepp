@@ -173,44 +173,55 @@ class AdminProdiController extends Controller {
               AND deleted_at IS NULL
         ")->fetchColumn();
 
-        // Query filter dinamis
-        $where = ["d.prodi_id = ?", "d.deleted_at IS NULL", "d.status_review != 'draft'"];
-        $params = [$this->prodiId];
-
-        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
-            $where[] = "LOWER(TRIM(d.siklus)) = ?";
-            $params[] = $siklusFilter;
-        }
+        // Query filter dinamis dasar (tanpa filter siklus untuk tab counter real-time)
+        $baseWhere = ["d.prodi_id = ?", "d.deleted_at IS NULL", "d.status_review != 'draft'"];
+        $baseParams = [$this->prodiId];
 
         if (!empty($bidangFilter)) {
-            $where[] = "d.bidang_id = ?";
-            $params[] = $bidangFilter;
+            $baseWhere[] = "d.bidang_id = ?";
+            $baseParams[] = $bidangFilter;
         }
 
         if (!empty($tahunFilter)) {
-            $where[] = "d.tahun_akademik = ?";
-            $params[] = $tahunFilter;
+            $baseWhere[] = "d.tahun_akademik = ?";
+            $baseParams[] = $tahunFilter;
         }
 
         if (!empty($statusFilter)) {
             if ($statusFilter === 'revisi') {
-                $where[] = "d.status_review IN ('revisi_gpm', 'perlu_perbaikan')";
+                $baseWhere[] = "d.status_review IN ('revisi_gpm', 'perlu_perbaikan')";
             } elseif ($statusFilter === 'antrean') {
-                $where[] = "d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm')";
+                $baseWhere[] = "d.status_review IN ('sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm')";
             } elseif ($statusFilter === 'menunggu_review_gpm') {
-                $where[] = "d.status_review IN ('menunggu_review_gpm', 'revisi_lpm', 'belum_direview')";
+                $baseWhere[] = "d.status_review IN ('menunggu_review_gpm', 'revisi_lpm', 'belum_direview')";
             } else {
-                $where[] = "d.status_review = ?";
-                $params[] = $statusFilter;
+                $baseWhere[] = "d.status_review = ?";
+                $baseParams[] = $statusFilter;
             }
         }
 
         if (!empty($search)) {
-            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
+            $baseWhere[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
             $sParam = '%' . $search . '%';
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
+            $baseParams[] = $sParam;
+            $baseParams[] = $sParam;
+            $baseParams[] = $sParam;
+        }
+
+        $baseWhereClause = implode(" AND ", $baseWhere);
+        $cycleCounts = $this->getSiklusCountsByWhere(
+            "FROM ppepp_documents d LEFT JOIN users u ON d.user_id = u.id",
+            $baseWhereClause,
+            $baseParams
+        );
+        $totalAllCycles = array_sum($cycleCounts);
+        $ppeppCounts = array_merge(['all' => $totalAllCycles], $cycleCounts);
+
+        $where = $baseWhere;
+        $params = $baseParams;
+        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = $siklusFilter;
         }
 
         $whereClause = implode(" AND ", $where);
@@ -262,14 +273,16 @@ class AdminProdiController extends Controller {
             $rowsHtml = ob_get_clean();
 
             echo json_encode([
-                'success'      => true,
-                'html'         => $rowsHtml,
-                'page'         => $page,
-                'per_page'     => $perPage,
-                'total'        => $totalFiltered,
-                'total_pages'  => $totalPages,
-                'start_num'    => $startNum,
-                'end_num'      => $endNum
+                'success'          => true,
+                'html'             => $rowsHtml,
+                'page'             => $page,
+                'per_page'         => $perPage,
+                'total'            => $totalFiltered,
+                'total_pages'      => $totalPages,
+                'start_num'        => $startNum,
+                'end_num'          => $endNum,
+                'cycle_counts'     => $cycleCounts,
+                'total_all_cycles' => $totalAllCycles
             ]);
             exit;
         }
@@ -279,6 +292,7 @@ class AdminProdiController extends Controller {
             'prodi'               => $this->prodi,
             'bidangList'          => $bidangList,
             'documents'           => $documents,
+            'ppeppCounts'         => $ppeppCounts,
             'perluCount'          => $perluCount,
             'sudahCount'          => $sudahCount,
             'draftCount'          => $draftCount,
@@ -391,7 +405,7 @@ class AdminProdiController extends Controller {
         $hasLegacyFile = !empty($doc['file_path']);
 
         if ($filesCount === 0 && !$hasLink && !$hasLegacyFile) {
-            Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' belum memiliki berkas terlampir atau tautan Google Drive. Harap lengkapi berkas terlebih dahulu sebelum mengajukan ke LPM.");
+            Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' belum memiliki berkas terlampir atau tautan Google Drive. Harap lengkapi berkas terlebih dahulu sebelum mengajukan ke GPM.");
             redirect("prodi/dokumen/edit/{$docId}");
             return;
         }
@@ -849,7 +863,7 @@ class AdminProdiController extends Controller {
 
                     if (!$isDraft) {
                         if (!$hasFiles && !$hasLinks) {
-                            throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) wajib memiliki minimal 1 berkas file dokumen atau tautan Google Drive untuk diajukan ke LPM.");
+                            throw new \Exception("Dokumen #{$docNumber} ({$namaDokumen}) wajib memiliki minimal 1 berkas file dokumen atau tautan Google Drive untuk diajukan ke GPM.");
                         }
                     }
 
@@ -996,8 +1010,8 @@ class AdminProdiController extends Controller {
                     return;
                 } else {
                     $msg = ($successCount > 1) 
-                        ? "Berhasil mengunggah {$successCount} dokumen mutu sekaligus dan diajukan ke LPM untuk diverifikasi."
-                        : "Dokumen mutu '{$createdDocNames[0]}' berhasil diunggah dan diajukan ke LPM.";
+                        ? "Berhasil mengunggah {$successCount} dokumen mutu sekaligus dan diajukan ke GPM Fakultas untuk diverifikasi."
+                        : "Dokumen mutu '{$createdDocNames[0]}' berhasil diunggah dan diajukan ke GPM Fakultas.";
                     Auth::setFlash('success', $msg);
                     redirect('prodi/dokumen');
                     return;
@@ -1492,7 +1506,7 @@ class AdminProdiController extends Controller {
 
             if (!$isDraft) {
                 if (!$hasFiles && !$hasLinks) {
-                    Auth::setFlash('danger', 'Dokumen aktif wajib memiliki minimal 1 berkas file dokumen atau tautan Google Drive untuk diajukan ke LPM.');
+                    Auth::setFlash('danger', 'Dokumen aktif wajib memiliki minimal 1 berkas file dokumen atau tautan Google Drive untuk diajukan ke GPM.');
                     redirect($redirectUrl);
                     return;
                 }

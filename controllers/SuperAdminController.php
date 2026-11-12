@@ -1310,46 +1310,48 @@ class SuperAdminController extends Controller {
             'sesuai'              => (int)($rawStats['sesuai'] ?? 0)
         ];
 
-        $cycleStats = [
-            'penetapan'    => (int)($rawStats['penetapan'] ?? 0),
-            'pelaksanaan'  => (int)($rawStats['pelaksanaan'] ?? 0),
-            'evaluasi'     => (int)($rawStats['evaluasi'] ?? 0),
-            'pengendalian' => (int)($rawStats['pengendalian'] ?? 0),
-            'peningkatan'  => (int)($rawStats['peningkatan'] ?? 0)
-        ];
-
-        // Filter dinamis
-        $where = [$baseProdiCondition];
-        $params = [$id];
-
-        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
-            $where[] = "LOWER(TRIM(d.siklus)) = ?";
-            $params[] = $siklusFilter;
-        }
+        // Filter dinamis dasar (tanpa filter siklus agar angka tab per siklus tetap real-time)
+        $baseWhere = [$baseProdiCondition];
+        $baseParams = [$id];
 
         if (!empty($statusFilter)) {
             if ($statusFilter === 'belum_direview' || $statusFilter === 'menunggu_review_lpm') {
-                $where[] = "d.status_review IN ('menunggu_review_lpm', 'belum_direview')";
+                $baseWhere[] = "d.status_review IN ('menunggu_review_lpm', 'belum_direview')";
             } elseif ($statusFilter === 'perlu_perbaikan') {
-                $where[] = "d.status_review IN ('perlu_perbaikan', 'revisi_lpm')";
+                $baseWhere[] = "d.status_review IN ('perlu_perbaikan', 'revisi_lpm')";
             } elseif ($statusFilter === 'sudah_diperbaiki') {
-                $where[] = "d.status_review = 'sudah_diperbaiki'";
+                $baseWhere[] = "d.status_review = 'sudah_diperbaiki'";
             } elseif ($statusFilter === 'sesuai') {
-                $where[] = "d.status_review = 'sesuai'";
+                $baseWhere[] = "d.status_review = 'sesuai'";
             }
         }
 
         if (!empty($tahunFilter)) {
-            $where[] = "d.tahun_akademik = ?";
-            $params[] = $tahunFilter;
+            $baseWhere[] = "d.tahun_akademik = ?";
+            $baseParams[] = $tahunFilter;
         }
 
         if (!empty($search)) {
-            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
+            $baseWhere[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
             $sParam = '%' . $search . '%';
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
+            $baseParams[] = $sParam;
+            $baseParams[] = $sParam;
+            $baseParams[] = $sParam;
+        }
+
+        $baseWhereClause = implode(" AND ", $baseWhere);
+        $cycleStats = $this->getSiklusCountsByWhere(
+            "FROM ppepp_documents d LEFT JOIN users u ON d.user_id = u.id",
+            $baseWhereClause,
+            $baseParams
+        );
+        $totalAllCycles = array_sum($cycleStats);
+
+        $where = $baseWhere;
+        $params = $baseParams;
+        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = $siklusFilter;
         }
 
         $whereClause = implode(" AND ", $where);
@@ -1400,16 +1402,18 @@ class SuperAdminController extends Controller {
             $rowsHtml = ob_get_clean();
 
             echo json_encode([
-                'success'      => true,
-                'html'         => $rowsHtml,
-                'page'         => $page,
-                'per_page'     => $perPage,
-                'total'        => $totalFiltered,
-                'total_pages'  => $totalPages,
-                'start_num'    => $startNum,
-                'end_num'      => $endNum,
-                'review_stats' => $reviewStats,
-                'cycle_stats'  => $cycleStats
+                'success'          => true,
+                'html'             => $rowsHtml,
+                'page'             => $page,
+                'per_page'         => $perPage,
+                'total'            => $totalFiltered,
+                'total_pages'      => $totalPages,
+                'start_num'        => $startNum,
+                'end_num'          => $endNum,
+                'review_stats'     => $reviewStats,
+                'cycle_stats'      => $cycleStats,
+                'cycle_counts'     => $cycleStats,
+                'total_all_cycles' => $totalAllCycles
             ]);
             exit;
         }
@@ -1417,11 +1421,12 @@ class SuperAdminController extends Controller {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
         $this->render('super_admin/review_prodi', [
-            'pageTitle'     => 'Review Dokumen: ' . $prodi['nama_prodi'],
-            'prodi'         => $prodi,
-            'documents'     => $documents,
-            'reviewStats'   => $reviewStats,
-            'cycleStats'    => $cycleStats,
+            'pageTitle'      => 'Review Dokumen: ' . $prodi['nama_prodi'],
+            'prodi'          => $prodi,
+            'documents'      => $documents,
+            'reviewStats'    => $reviewStats,
+            'cycleStats'     => $cycleStats,
+            'totalAllCycles' => $totalAllCycles,
             'bidangList'    => $bidangList,
             'page'          => $page,
             'perPage'       => $perPage,
@@ -1504,46 +1509,48 @@ class SuperAdminController extends Controller {
             'sesuai'              => (int)($rawStats['sesuai'] ?? 0)
         ];
 
-        $cycleStats = [
-            'penetapan'    => (int)($rawStats['penetapan'] ?? 0),
-            'pelaksanaan'  => (int)($rawStats['pelaksanaan'] ?? 0),
-            'evaluasi'     => (int)($rawStats['evaluasi'] ?? 0),
-            'pengendalian' => (int)($rawStats['pengendalian'] ?? 0),
-            'peningkatan'  => (int)($rawStats['peningkatan'] ?? 0)
-        ];
-
-        // Filter dinamis
-        $where = [$baseFakCondition];
-        $params = [$id];
-
-        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
-            $where[] = "LOWER(TRIM(d.siklus)) = ?";
-            $params[] = $siklusFilter;
-        }
+        // Filter dinamis dasar (tanpa filter siklus agar angka tab per siklus tetap real-time)
+        $baseWhere = [$baseFakCondition];
+        $baseParams = [$id];
 
         if (!empty($statusFilter)) {
             if ($statusFilter === 'belum_direview' || $statusFilter === 'menunggu_review_lpm') {
-                $where[] = "d.status_review IN ('menunggu_review_lpm', 'belum_direview')";
+                $baseWhere[] = "d.status_review IN ('menunggu_review_lpm', 'belum_direview')";
             } elseif ($statusFilter === 'perlu_perbaikan') {
-                $where[] = "d.status_review IN ('perlu_perbaikan', 'revisi_lpm')";
+                $baseWhere[] = "d.status_review IN ('perlu_perbaikan', 'revisi_lpm')";
             } elseif ($statusFilter === 'sudah_diperbaiki') {
-                $where[] = "d.status_review = 'sudah_diperbaiki'";
+                $baseWhere[] = "d.status_review = 'sudah_diperbaiki'";
             } elseif ($statusFilter === 'sesuai') {
-                $where[] = "d.status_review = 'sesuai'";
+                $baseWhere[] = "d.status_review = 'sesuai'";
             }
         }
 
         if (!empty($tahunFilter)) {
-            $where[] = "d.tahun_akademik = ?";
-            $params[] = $tahunFilter;
+            $baseWhere[] = "d.tahun_akademik = ?";
+            $baseParams[] = $tahunFilter;
         }
 
         if (!empty($search)) {
-            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
+            $baseWhere[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR u.name LIKE ?)";
             $sParam = '%' . $search . '%';
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
+            $baseParams[] = $sParam;
+            $baseParams[] = $sParam;
+            $baseParams[] = $sParam;
+        }
+
+        $baseWhereClause = implode(" AND ", $baseWhere);
+        $cycleStats = $this->getSiklusCountsByWhere(
+            "FROM ppepp_documents d LEFT JOIN users u ON d.user_id = u.id",
+            $baseWhereClause,
+            $baseParams
+        );
+        $totalAllCycles = array_sum($cycleStats);
+
+        $where = $baseWhere;
+        $params = $baseParams;
+        if (!empty($siklusFilter) && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = $siklusFilter;
         }
 
         $whereClause = implode(" AND ", $where);
@@ -1594,16 +1601,18 @@ class SuperAdminController extends Controller {
             $rowsHtml = ob_get_clean();
 
             echo json_encode([
-                'success'      => true,
-                'html'         => $rowsHtml,
-                'page'         => $page,
-                'per_page'     => $perPage,
-                'total'        => $totalFiltered,
-                'total_pages'  => $totalPages,
-                'start_num'    => $startNum,
-                'end_num'      => $endNum,
-                'review_stats' => $reviewStats,
-                'cycle_stats'  => $cycleStats
+                'success'          => true,
+                'html'             => $rowsHtml,
+                'page'             => $page,
+                'per_page'         => $perPage,
+                'total'            => $totalFiltered,
+                'total_pages'      => $totalPages,
+                'start_num'        => $startNum,
+                'end_num'          => $endNum,
+                'review_stats'     => $reviewStats,
+                'cycle_stats'      => $cycleStats,
+                'cycle_counts'     => $cycleStats,
+                'total_all_cycles' => $totalAllCycles
             ]);
             exit;
         }
@@ -1611,11 +1620,12 @@ class SuperAdminController extends Controller {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
         $this->render('super_admin/review_fakultas', [
-            'pageTitle'     => 'Review Dokumen PPEPP ' . $fakultas['nama_fakultas'],
-            'fakultas'      => $fakultas,
-            'documents'     => $documents,
-            'reviewStats'   => $reviewStats,
-            'cycleStats'    => $cycleStats,
+            'pageTitle'      => 'Review Dokumen PPEPP ' . $fakultas['nama_fakultas'],
+            'fakultas'       => $fakultas,
+            'documents'      => $documents,
+            'reviewStats'    => $reviewStats,
+            'cycleStats'     => $cycleStats,
+            'totalAllCycles' => $totalAllCycles,
             'bidangList'    => $bidangList,
             'page'          => $page,
             'perPage'       => $perPage,

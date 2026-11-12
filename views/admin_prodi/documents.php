@@ -109,7 +109,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <?= $draftCount ?> Draf Dokumen
                                 </div>
                                 <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                                    Belum diajukan ke LPM
+                                    Belum diajukan ke GPM
                                 </div>
                             </div>
                         </div>
@@ -124,19 +124,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     <?php endif; ?>
 
     <?php
-    $ppeppCounts = [
-        'all' => count($documents),
-        'penetapan' => 0,
-        'pelaksanaan' => 0,
-        'evaluasi' => 0,
-        'pengendalian' => 0,
-        'peningkatan' => 0,
-    ];
-    foreach ($documents as $doc) {
-        $s = $doc['siklus'] ?? '';
-        if (isset($ppeppCounts[$s])) {
-            $ppeppCounts[$s]++;
-        }
+    if (!isset($ppeppCounts) || !is_array($ppeppCounts)) {
+        $ppeppCounts = [
+            'all' => 0,
+            'penetapan' => 0,
+            'pelaksanaan' => 0,
+            'evaluasi' => 0,
+            'pengendalian' => 0,
+            'peningkatan' => 0,
+        ];
     }
     ?>
 
@@ -146,33 +142,33 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         <!-- 5 Siklus PPEPP Tabs Header -->
         <ul class="nav ppepp-nav-tabs mb-4" id="prodiPpeppTabs" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active" type="button" onclick="selectProdiSiklusTab(this, '')">
-                    <i class="fas fa-layer-group"></i> Semua (<?= $ppeppCounts['all'] ?>)
+                <button class="nav-link active" type="button" data-siklus-tab="" onclick="selectProdiSiklusTab(this, '')">
+                    <i class="fas fa-layer-group"></i> Semua <span class="tab-cycle-count">(<?= number_format($ppeppCounts['all'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-penetapan" type="button" onclick="selectProdiSiklusTab(this, 'penetapan')">
-                    <i class="fas fa-file-signature"></i> Penetapan (<?= $ppeppCounts['penetapan'] ?>)
+                <button class="nav-link tab-penetapan" type="button" data-siklus-tab="penetapan" onclick="selectProdiSiklusTab(this, 'penetapan')">
+                    <i class="fas fa-file-signature"></i> Penetapan <span class="tab-cycle-count">(<?= number_format($ppeppCounts['penetapan'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-pelaksanaan" type="button" onclick="selectProdiSiklusTab(this, 'pelaksanaan')">
-                    <i class="fas fa-person-chalkboard"></i> Pelaksanaan (<?= $ppeppCounts['pelaksanaan'] ?>)
+                <button class="nav-link tab-pelaksanaan" type="button" data-siklus-tab="pelaksanaan" onclick="selectProdiSiklusTab(this, 'pelaksanaan')">
+                    <i class="fas fa-person-chalkboard"></i> Pelaksanaan <span class="tab-cycle-count">(<?= number_format($ppeppCounts['pelaksanaan'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-evaluasi" type="button" onclick="selectProdiSiklusTab(this, 'evaluasi')">
-                    <i class="fas fa-magnifying-glass-chart"></i> Evaluasi (<?= $ppeppCounts['evaluasi'] ?>)
+                <button class="nav-link tab-evaluasi" type="button" data-siklus-tab="evaluasi" onclick="selectProdiSiklusTab(this, 'evaluasi')">
+                    <i class="fas fa-magnifying-glass-chart"></i> Evaluasi <span class="tab-cycle-count">(<?= number_format($ppeppCounts['evaluasi'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-pengendalian" type="button" onclick="selectProdiSiklusTab(this, 'pengendalian')">
-                    <i class="fas fa-sliders"></i> Pengendalian (<?= $ppeppCounts['pengendalian'] ?>)
+                <button class="nav-link tab-pengendalian" type="button" data-siklus-tab="pengendalian" onclick="selectProdiSiklusTab(this, 'pengendalian')">
+                    <i class="fas fa-sliders"></i> Pengendalian <span class="tab-cycle-count">(<?= number_format($ppeppCounts['pengendalian'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link tab-peningkatan" type="button" onclick="selectProdiSiklusTab(this, 'peningkatan')">
-                    <i class="fas fa-arrow-trend-up"></i> Peningkatan (<?= $ppeppCounts['peningkatan'] ?>)
+                <button class="nav-link tab-peningkatan" type="button" data-siklus-tab="peningkatan" onclick="selectProdiSiklusTab(this, 'peningkatan')">
+                    <i class="fas fa-arrow-trend-up"></i> Peningkatan <span class="tab-cycle-count">(<?= number_format($ppeppCounts['peningkatan'] ?? 0, 0, ',', '.') ?>)</span>
                 </button>
             </li>
         </ul>
@@ -418,6 +414,10 @@ function fetchProdiData(page) {
 
         if (pagWrapper) {
             pagWrapper.style.setProperty('display', (data.total > 0) ? 'flex' : 'none', 'important');
+        }
+
+        if (data.cycle_counts && typeof window.updatePpeppCycleTabCounts === 'function') {
+            window.updatePpeppCycleTabCounts('#prodiPpeppTabs', data.cycle_counts, data.total_all_cycles);
         }
 
         renderProdiPagination(prodiTotalPages, currentProdiPage);

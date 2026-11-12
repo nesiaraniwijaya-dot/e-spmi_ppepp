@@ -261,62 +261,73 @@ class GpmController extends Controller {
         $prodiIds = array_column($this->prodisList, 'id');
         $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
 
-        // Base WHERE
-        $where = ["d.deleted_at IS NULL"];
-        $params = [];
+        // Base WHERE dasar (tanpa filter siklus untuk tab counter real-time)
+        $baseWhere = ["d.deleted_at IS NULL"];
+        $baseParams = [];
 
         // Filter Kepemilikan Dokumen (Unit Scope)
         if ($unitFilter === 'fakultas') {
-            $where[] = "(d.fakultas_id = ? AND (d.level = 'fakultas' OR d.prodi_id IS NULL))";
-            $params[] = $this->fakultasId;
+            $baseWhere[] = "(d.fakultas_id = ? AND (d.level = 'fakultas' OR d.prodi_id IS NULL))";
+            $baseParams[] = $this->fakultasId;
         } elseif (is_numeric($unitFilter) && in_array((int)$unitFilter, $prodiIds)) {
-            $where[] = "d.prodi_id = ?";
-            $params[] = (int)$unitFilter;
+            $baseWhere[] = "d.prodi_id = ?";
+            $baseParams[] = (int)$unitFilter;
         } else {
             // All: Tingkat Fakultas ATAU Seluruh Prodi di bawah fakultas ini
-            $where[] = "(d.fakultas_id = ? OR d.prodi_id IN ({$prodiIdPlaceholder}))";
-            $params[] = $this->fakultasId;
-        }
-
-        if ($siklusFilter && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
-            $where[] = "LOWER(TRIM(d.siklus)) = ?";
-            $params[] = strtolower($siklusFilter);
+            $baseWhere[] = "(d.fakultas_id = ? OR d.prodi_id IN ({$prodiIdPlaceholder}))";
+            $baseParams[] = $this->fakultasId;
         }
 
         if ($bidangFilter) {
-            $where[] = "d.bidang_id = ?";
-            $params[] = $bidangFilter;
+            $baseWhere[] = "d.bidang_id = ?";
+            $baseParams[] = $bidangFilter;
         }
 
         if ($statusFilter) {
             if ($statusFilter === 'menunggu_review_gpm' || $statusFilter === 'belum_direview') {
-                $where[] = "d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview')";
+                $baseWhere[] = "d.status_review IN ('menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview')";
             } elseif ($statusFilter === 'revisi_gpm') {
-                $where[] = "d.status_review = 'revisi_gpm'";
+                $baseWhere[] = "d.status_review = 'revisi_gpm'";
             } elseif ($statusFilter === 'menunggu_review_lpm') {
-                $where[] = "d.status_review = 'menunggu_review_lpm'";
+                $baseWhere[] = "d.status_review = 'menunggu_review_lpm'";
             } elseif ($statusFilter === 'revisi_lpm') {
-                $where[] = "d.status_review IN ('revisi_lpm', 'perlu_perbaikan')";
+                $baseWhere[] = "d.status_review IN ('revisi_lpm', 'perlu_perbaikan')";
             } elseif ($statusFilter === 'perlu_perbaikan') {
-                $where[] = "d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
+                $baseWhere[] = "d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan')";
             } elseif (in_array($statusFilter, ['draft', 'sesuai', 'sudah_diperbaiki'])) {
-                $where[] = "d.status_review = ?";
-                $params[] = $statusFilter;
+                $baseWhere[] = "d.status_review = ?";
+                $baseParams[] = $statusFilter;
             }
         }
 
         if ($tahunFilter) {
-            $where[] = "d.tahun_akademik = ?";
-            $params[] = $tahunFilter;
+            $baseWhere[] = "d.tahun_akademik = ?";
+            $baseParams[] = $tahunFilter;
         }
 
         if ($search) {
-            $where[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR d.deskripsi LIKE ? OR b.nama_bidang LIKE ? OR p.nama_prodi LIKE ?)";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
-            $params[] = "%{$search}%";
+            $baseWhere[] = "(d.nama_dokumen LIKE ? OR d.nomor_dokumen LIKE ? OR d.deskripsi LIKE ? OR b.nama_bidang LIKE ? OR p.nama_prodi LIKE ?)";
+            $baseParams[] = "%{$search}%";
+            $baseParams[] = "%{$search}%";
+            $baseParams[] = "%{$search}%";
+            $baseParams[] = "%{$search}%";
+            $baseParams[] = "%{$search}%";
+        }
+
+        $baseWhereClause = implode(" AND ", $baseWhere);
+        $cycleCounts = $this->getSiklusCountsByWhere(
+            "FROM ppepp_documents d LEFT JOIN bidang_standar b ON d.bidang_id = b.id LEFT JOIN prodis p ON d.prodi_id = p.id",
+            $baseWhereClause,
+            $baseParams
+        );
+        $totalAllCycles = array_sum($cycleCounts);
+        $siklusCounts = array_merge(['all' => $totalAllCycles], $cycleCounts);
+
+        $where = $baseWhere;
+        $params = $baseParams;
+        if ($siklusFilter && in_array($siklusFilter, ['penetapan', 'pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+            $where[] = "LOWER(TRIM(d.siklus)) = ?";
+            $params[] = strtolower($siklusFilter);
         }
 
         $whereClause = implode(" AND ", $where);
@@ -375,14 +386,16 @@ class GpmController extends Controller {
             $rowsHtml = ob_get_clean();
 
             echo json_encode([
-                'success'      => true,
-                'html'         => $rowsHtml,
-                'page'         => $page,
-                'per_page'     => $perPage,
-                'total'        => $totalFiltered,
-                'total_pages'  => $totalPages,
-                'start_num'    => $startNum,
-                'end_num'      => $endNum
+                'success'          => true,
+                'html'             => $rowsHtml,
+                'page'             => $page,
+                'per_page'         => $perPage,
+                'total'            => $totalFiltered,
+                'total_pages'      => $totalPages,
+                'start_num'        => $startNum,
+                'end_num'          => $endNum,
+                'cycle_counts'     => $cycleCounts,
+                'total_all_cycles' => $totalAllCycles
             ]);
             exit;
         }
@@ -405,6 +418,7 @@ class GpmController extends Controller {
             'fakultas'               => $this->fakultas,
             'prodisList'             => $this->prodisList,
             'documents'              => $documents,
+            'siklusCounts'           => $siklusCounts,
             'bidangList'             => $bidangList,
             'unitFilter'             => $unitFilter,
             'siklusFilter'           => $siklusFilter,
