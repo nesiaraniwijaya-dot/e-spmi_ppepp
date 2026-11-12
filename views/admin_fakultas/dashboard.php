@@ -358,7 +358,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <?= review_status_badge($rd['status_review'] ?? 'belum_direview') ?>
+                                            <?= render_review_status_badge($rd['status_review'] ?? 'belum_direview') ?>
                                         </td>
                                         <td class="text-end">
                                             <a href="<?= base_url('fakultas/dokumen/edit/' . $rd['id']) ?>" 

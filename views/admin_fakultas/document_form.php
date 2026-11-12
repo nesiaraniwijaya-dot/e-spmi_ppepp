@@ -100,13 +100,13 @@ $siklusDefinitions = [
             <form action="<?= base_url('fakultas/dokumen/save') ?>" method="POST" id="documentUploadForm" novalidate>
                 <input type="hidden" name="id" value="<?= $doc['id'] ?>">
                 
-                <?php if (in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])): 
-                    $isGpmFormRev = (($doc['status_review'] ?? '') === 'revisi_gpm');
+                <?php if (in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm'])):
+                    $isGpmFormRev = (($doc['status_review'] ?? '') === 'revisi_gpm') || !empty($doc['gpm_catatan']) || !empty($doc['gpm_reviewed_at']);
                     $formRevLabel = $isGpmFormRev ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
                     $formRevDate = $isGpmFormRev ? ($doc['gpm_reviewed_at'] ?? $doc['reviewed_at']) : ($doc['lpm_reviewed_at'] ?? $doc['reviewed_at'] ?? $doc['gpm_reviewed_at']);
                     $formRevNote = $isGpmFormRev 
                         ? trim($doc['gpm_catatan'] ?: ($doc['catatan_review'] ?? 'Silakan lakukan revisi sesuai standar penjaminan mutu SPMI.'))
-                        : trim($doc['lpm_catatan'] ?: ($doc['catatan_review'] ?: ($doc['gpm_catatan'] ?? 'Silakan lakukan revisi sesuai standar penjaminan mutu SPMI.')));
+                        : trim($doc['catatan_review'] ?: ($doc['lpm_catatan'] ?: ($doc['gpm_catatan'] ?? 'Silakan lakukan revisi sesuai standar penjaminan mutu SPMI.')));
                 ?>
                     <!-- Executive Review Notice Callout -->
                     <div class="rounded-4 mb-4 p-3.5 p-md-4 shadow-sm" style="background: #FFFDFD; border: 1px solid #FECACA; border-left: 6px solid #DC2626;">
@@ -146,7 +146,7 @@ $siklusDefinitions = [
                         <!-- Directive Sub-banner -->
                         <div class="d-flex align-items-center gap-2 text-danger small pt-1">
                             <i class="fas fa-circle-info flex-shrink-0"></i>
-                            <span>Silakan perbarui isian atau berkas di bawah ini, lalu klik tombol <strong>"Simpan &amp; Ajukan Ulang <?= $isGpmFormRev ? 'ke GPM' : 'ke LPM' ?>"</strong> untuk verifikasi lanjutan.</span>
+                            <span>Silakan perbarui isian atau berkas di bawah ini, lalu klik tombol <strong>"Simpan &amp; Ajukan Ulang ke GPM"</strong> untuk verifikasi lanjutan.</span>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -639,7 +639,7 @@ $siklusDefinitions = [
                                         <i class="fas fa-floppy-disk me-1.5"></i> Simpan Sebagai Draf
                                     </button>
                                     <button type="submit" name="action_submit" value="publish" class="btn btn-warning px-4 py-2.5 fw-bold rounded-pill text-dark shadow-sm w-100 w-sm-auto order-1 order-sm-2" id="btnSubmitPublishSingle">
-                                        <i class="fas fa-paper-plane me-1.5"></i> <?= in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm']) ? ('Simpan &amp; Ajukan Ulang ' . (($doc['status_review'] ?? '') === 'revisi_gpm' ? 'ke GPM' : 'ke LPM')) : 'Simpan &amp; Ajukan ke LPM' ?>
+                                        <i class="fas fa-paper-plane me-1.5"></i> <?= in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm']) ? 'Simpan &amp; Ajukan Ulang ke GPM' : 'Simpan &amp; Ajukan ke GPM' ?>
                                     </button>
                                 </div>
                             </div>

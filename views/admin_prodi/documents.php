@@ -21,8 +21,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     </div>
 
     <?php 
-    $perluPerbaikanDocs = $perluPerbaikanDocs ?? array_values(array_filter($documents ?? [], fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'revisi_lpm', 'perlu_perbaikan'])));
-    $sudahDiperbaikiDocs = $sudahDiperbaikiDocs ?? array_values(array_filter($documents ?? [], fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm'])));
+    $perluPerbaikanDocs = $perluPerbaikanDocs ?? array_values(array_filter($documents ?? [], fn($d) => in_array($d['status_review'] ?? '', ['revisi_gpm', 'perlu_perbaikan'])));
+    $sudahDiperbaikiDocs = $sudahDiperbaikiDocs ?? array_values(array_filter($documents ?? [], fn($d) => in_array($d['status_review'] ?? '', ['sudah_diperbaiki', 'menunggu_review_lpm', 'menunggu_review_gpm', 'revisi_lpm'])));
     $perluCount = isset($perluCount) ? (int)$perluCount : count($perluPerbaikanDocs);
     $sudahCount = isset($sudahCount) ? (int)$sudahCount : count($sudahDiperbaikiDocs);
     $draftCount = $draftCount ?? 0;

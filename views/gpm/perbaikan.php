@@ -1032,11 +1032,25 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                                         </td>
 
                                         <td class="pe-4 py-3 text-center">
-                                            <div class="d-inline-flex align-items-center gap-1.5">
-                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1 text-white" style="font-size: 0.78rem;">
-                                                    <i class="fas fa-clipboard-check"></i> Review
-                                                </a>
-                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 btn-review-history d-inline-flex align-items-center gap-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="font-size: 0.72rem;">
+                                            <div class="d-inline-flex align-items-center gap-1.5 text-nowrap">
+                                                <?php if ($isLpmStage):
+                                                    $allHasFreshGpm = !empty($doc['gpm_catatan']) && !empty($doc['gpm_reviewed_at']) && !empty($doc['lpm_reviewed_at']) && strtotime($doc['gpm_reviewed_at']) > strtotime($doc['lpm_reviewed_at']);
+                                                ?>
+                                                    <button type="button" class="btn btn-sm gpm-btn-forward rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 text-nowrap btn-open-forward"
+                                                            data-doc-id="<?= $doc['id'] ?>"
+                                                            data-doc-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
+                                                            data-unit-name="<?= htmlspecialchars($unitLabel, ENT_QUOTES) ?>"
+                                                            data-lpm-note="<?= htmlspecialchars($allLpmNote ?: ($doc['lpm_catatan'] ?? $doc['catatan_review'] ?? ''), ENT_QUOTES) ?>"
+                                                            data-gpm-note="<?= $allHasFreshGpm ? htmlspecialchars($doc['gpm_catatan'], ENT_QUOTES) : '' ?>">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                        <span>Teruskan ke Unit</span>
+                                                    </button>
+                                                <?php else: ?>
+                                                    <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1 text-white" style="font-size: 0.78rem;">
+                                                        <i class="fas fa-clipboard-check"></i> Review
+                                                    </a>
+                                                <?php endif; ?>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-circle p-0 btn-review-history d-inline-flex align-items-center justify-content-center shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="width: 32px; height: 32px; font-size: 0.76rem;">
                                                     <i class="fas fa-history text-secondary"></i>
                                                 </button>
                                             </div>
@@ -1093,7 +1107,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                 <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <form action="<?= base_url('gpm/review/forward-lpm') ?>" method="POST" onsubmit="const b=this.querySelector('button[type=submit]'); if(b){b.disabled=true; b.innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> <span>Mengirim...</span>';}">
+            <form action="<?= base_url('gpm/review/forward-lpm') ?>" method="POST" id="forwardLpmRevisionForm" onsubmit="if(this.dataset.submitting==='1'){return false;} this.dataset.submitting='1'; const b=this.querySelector('button[type=submit]'); if(b){b.disabled=true; b.innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> <span>Mengirim...</span>';}">
                 <?= csrf_field() ?>
                 <input type="hidden" name="document_id" id="forwardModalDocId" value="">
                 <input type="hidden" name="redirect_to" value="gpm/perbaikan">
@@ -1405,6 +1419,16 @@ function openForwardRevisionModal(docId, docTitle, unitName, lpmNote, gpmNote) {
     document.getElementById('forwardModalUnitBadge').textContent = unitName || '-';
     document.getElementById('forwardModalLpmNote').textContent = lpmNote || '-';
     document.getElementById('forwardGpmNoteInput').value = gpmNote || '';
+
+    const fwdForm = document.getElementById('forwardLpmRevisionForm');
+    if (fwdForm) {
+        fwdForm.dataset.submitting = '';
+        const fwdBtn = fwdForm.querySelector('button[type=submit]');
+        if (fwdBtn) {
+            fwdBtn.disabled = false;
+            fwdBtn.innerHTML = '<i class="fas fa-paper-plane"></i> <span>Kirim Arahan Revisi ke Unit</span>';
+        }
+    }
 
     const modalEl = document.getElementById('modalForwardLpmRevision');
     if (modalEl && typeof bootstrap !== 'undefined') {

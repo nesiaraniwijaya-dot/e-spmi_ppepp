@@ -504,9 +504,14 @@ class GpmController extends Controller {
             $finalCatatan
         ]);
 
+        // 2b. Jika status 'revisi_gpm', catat juga tracking revisi untuk unit pengunggah
+        if ($finalStatus === 'revisi_gpm') {
+            $this->recordRevisionTracking($doc, $reviewerId, $officialReviewerName, $finalCatatan);
+        }
+
         // 3. Catat ke Audit Logger
-        $unitName = ($doc['level'] === 'fakultas') 
-            ? ($this->fakultas['nama_fakultas'] ?? 'Dekanat Fakultas') 
+        $unitName = ($doc['level'] === 'fakultas')
+            ? ($this->fakultas['nama_fakultas'] ?? 'Dekanat Fakultas')
             : 'Program Studi';
         AuditLogger::log('UPDATE', 'Review Dokumen GPM', (string)$docId, $doc['nama_dokumen'], $doc, [
             'status_review'  => $finalStatus,
@@ -551,12 +556,25 @@ class GpmController extends Controller {
 
         if (empty($catatanGpm)) {
             Auth::setFlash('danger', 'Arahan perbaikan resmi GPM wajib diisi sebelum diteruskan ke unit sasaran.');
-            redirect($redirectUrl);
+            redirect($redirectUrl ?: 'gpm/perbaikan');
+            return;
+        }
+
+        // Guard idempotensi: cegah duplikasi record jika tombol Teruskan terklik dua kali dalam rentang singkat
+        $gpmTs = !empty($doc['gpm_reviewed_at']) ? strtotime($doc['gpm_reviewed_at']) : 0;
+        if (($doc['status_review'] ?? '') === 'revisi_gpm'
+            && trim((string)($doc['gpm_catatan'] ?? '')) === $catatanGpm
+            && $gpmTs > 0
+            && (time() - $gpmTs) <= 15
+        ) {
+            Auth::setFlash('success', "Arahan perbaikan dokumen '{$doc['nama_dokumen']}' telah berhasil diteruskan ke unit sasaran atas nama GPM Fakultas.");
+            redirect($redirectUrl ?: 'gpm/perbaikan');
             return;
         }
 
         $reviewerId           = Auth::id();
         $officialReviewerName = 'GPM ' . ($this->fakultas['nama_fakultas'] ?? 'Fakultas');
+        $prevStatus           = $doc['status_review'] ?? 'revisi_lpm';
 
         // 1. Update Dokumen PPEPP: Status menjadi 'revisi_gpm', catatan resmi diupdate dengan arahan GPM
         $stmtUpdate = $this->db->prepare("
@@ -581,17 +599,42 @@ class GpmController extends Controller {
         $stmtLog = $this->db->prepare("
             INSERT INTO ppepp_document_reviews 
             (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
-            VALUES (?, ?, 'gpm', ?, 'gpm', 'revisi_lpm', 'revisi_gpm', ?, NOW())
+            VALUES (?, ?, 'gpm', ?, 'gpm', ?, 'revisi_gpm', ?, NOW())
         ");
         $stmtLog->execute([
             $docId,
             $reviewerId,
             $officialReviewerName,
+            $prevStatus,
             $catatanGpm
         ]);
 
         // 3. Catat ke ppepp_document_revisions atas nama GPM untuk tracking unit pengunggah
+        $this->recordRevisionTracking($doc, $reviewerId, $officialReviewerName, $catatanGpm);
+
+        // 4. Audit Log
+        $unitName = ($doc['level'] === 'fakultas')
+            ? ($this->fakultas['nama_fakultas'] ?? 'Dekanat Fakultas')
+            : 'Program Studi';
+        AuditLogger::log('UPDATE', 'Teruskan Revisi GPM ke Unit', (string)$docId, $doc['nama_dokumen'], $doc, [
+            'status_review'  => 'revisi_gpm',
+            'tahap_review'   => 'gpm',
+            'catatan_review' => $catatanGpm,
+            'reviewer_role'  => 'gpm',
+            'reviewer'       => $officialReviewerName,
+            'verifikator'    => Auth::user()['name'] ?? 'Petugas GPM'
+        ], (int)($doc['prodi_id'] ?? 0), $unitName);
+
+        Auth::setFlash('success', "Arahan perbaikan dokumen '{$doc['nama_dokumen']}' telah berhasil diteruskan ke unit sasaran atas nama GPM Fakultas.");
+        redirect($redirectUrl ?: 'gpm/perbaikan');
+    }
+
+    /**
+     * Catat riwayat tracking revisi pada ppepp_document_revisions untuk unit pengunggah.
+     */
+    private function recordRevisionTracking(array $doc, int $reviewerId, string $reviewerName, string $catatan): void {
         try {
+            $docId = (int)$doc['id'];
             $revNumberStmt = $this->db->prepare("SELECT COUNT(*) FROM ppepp_document_revisions WHERE document_id = ?");
             $revNumberStmt->execute([$docId]);
             $nextRevNumber = (int)$revNumberStmt->fetchColumn() + 1;
@@ -606,28 +649,12 @@ class GpmController extends Controller {
                 $doc['cycle_id'] ?? null,
                 $nextRevNumber,
                 $reviewerId,
-                $officialReviewerName,
-                $catatanGpm
+                $reviewerName,
+                $catatan
             ]);
         } catch (\Throwable $e) {
-            // Abaikan jika tabel revisi belum ada
+            // Abaikan jika tabel revisi belum tersedia
         }
-
-        // 4. Audit Log
-        $unitName = ($doc['level'] === 'fakultas') 
-            ? ($this->fakultas['nama_fakultas'] ?? 'Dekanat Fakultas') 
-            : 'Program Studi';
-        AuditLogger::log('UPDATE', 'Teruskan Revisi GPM ke Unit', (string)$docId, $doc['nama_dokumen'], $doc, [
-            'status_review'  => 'revisi_gpm',
-            'tahap_review'   => 'gpm',
-            'catatan_review' => $catatanGpm,
-            'reviewer_role'  => 'gpm',
-            'reviewer'       => $officialReviewerName,
-            'verifikator'    => Auth::user()['name'] ?? 'Petugas GPM'
-        ], (int)($doc['prodi_id'] ?? 0), $unitName);
-
-        Auth::setFlash('success', "Arahan perbaikan dokumen '{$doc['nama_dokumen']}' telah berhasil diteruskan ke unit sasaran atas nama GPM Fakultas.");
-        redirect($redirectUrl);
     }
 
     /**

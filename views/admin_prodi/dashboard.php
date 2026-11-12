@@ -430,7 +430,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <?= review_status_badge($st) ?>
+                                            <?= render_review_status_badge($st) ?>
                                         </td>
                                         <td class="text-center">
                                             <div class="d-flex justify-content-center gap-1.5">

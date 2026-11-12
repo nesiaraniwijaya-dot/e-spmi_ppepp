@@ -207,7 +207,7 @@ if (!empty($documents)):
             <!-- Status Review Column -->
             <td>
                 <div class="d-flex flex-column align-items-start gap-1">
-                    <?= review_status_badge($reviewStatus) ?>
+                    <?= render_review_status_badge($reviewStatus) ?>
                     
                     <?php if ($isPerluPerbaikan): ?>
                         <div class="d-flex align-items-center gap-1 flex-wrap mt-0.5">
@@ -293,7 +293,7 @@ if (!empty($documents)):
                                 <span class="small text-muted d-block mb-1">Siklus PPEPP & Status:</span>
                                 <div class="d-flex align-items-center gap-2">
                                     <?= siklus_badge($doc['siklus']) ?>
-                                    <?= review_status_badge($reviewStatus) ?>
+                                    <?= render_review_status_badge($reviewStatus) ?>
                                 </div>
                             </div>
                             <div class="col-12">

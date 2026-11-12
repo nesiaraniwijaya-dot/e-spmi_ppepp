@@ -10,6 +10,7 @@ $isAdminLayout = true;
 // Notification items for Prodi, Fakultas, and GPM (Perlu Perbaikan & Sudah Diperbaiki / Menunggu Verifikasi LPM)
 $notificationItems = [];
 $notificationCount = 0;
+$headerUrgentCount = null;
 $headerProdiId = (int)($currentUser['prodi_id'] ?? Auth::prodiId());
 $headerFakultasId = (int)($currentUser['fakultas_id'] ?? Auth::fakultasId());
 
@@ -56,19 +57,32 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
 } elseif ($currentUser && (Auth::isGpm() || ($currentUser['role'] ?? '') === 'gpm') && $headerFakultasId > 0) {
     try {
         $headerDb = Database::getInstance()->getConnection();
+        $stmtCnt = $headerDb->prepare("
+            SELECT COUNT(*) AS total_cnt,
+                   SUM(CASE WHEN status_review IN ('revisi_lpm', 'perlu_perbaikan') THEN 1 ELSE 0 END) AS urgent_cnt
+            FROM ppepp_documents
+            WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
+              AND status_review IN ('revisi_lpm', 'menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL
+        ");
+        $stmtCnt->execute([$headerFakultasId, $headerFakultasId]);
+        $cntRow = $stmtCnt->fetch() ?: [];
+        $notificationCount = (int)($cntRow['total_cnt'] ?? 0);
+        $headerUrgentCount = (int)($cntRow['urgent_cnt'] ?? 0);
+
         $stmt = $headerDb->prepare("
             SELECT id, nama_dokumen, nomor_dokumen, siklus, catatan_review, gpm_catatan, lpm_catatan, status_review, reviewed_at, gpm_reviewed_at, lpm_reviewed_at, updated_at
             FROM ppepp_documents
             WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
               AND status_review IN ('revisi_lpm', 'menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview') AND deleted_at IS NULL
             ORDER BY FIELD(status_review, 'revisi_lpm', 'sudah_diperbaiki', 'menunggu_review_gpm', 'belum_direview'), updated_at DESC
+            LIMIT 20
         ");
         $stmt->execute([$headerFakultasId, $headerFakultasId]);
         $notificationItems = $stmt->fetchAll() ?: [];
-        $notificationCount = count($notificationItems);
     } catch (\Throwable $e) {
         $notificationItems = [];
         $notificationCount = 0;
+        $headerUrgentCount = 0;
     }
 } elseif ($currentUser && Auth::isLpm()) {
     try {
@@ -230,7 +244,7 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
 
             <!-- Notification Bell Icon (Revisi & Perbaikan Dokumen) -->
             <?php if (Auth::isProdi() || Auth::isFakultas() || Auth::isGpm() || Auth::isLpm() || (isset($currentUser['role']) && $currentUser['role'] === 'gpm')): 
-                $perluActionCount = count(array_filter($notificationItems, fn($i) => in_array($i['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])));
+                $perluActionCount = $headerUrgentCount ?? count(array_filter($notificationItems, fn($i) => in_array($i['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])));
             ?>
                 <div class="dropdown">
                     <button class="btn btn-light rounded-circle position-relative d-flex align-items-center justify-content-center shadow-2xs border" 

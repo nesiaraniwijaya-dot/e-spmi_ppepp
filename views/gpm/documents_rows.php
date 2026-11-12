@@ -634,13 +634,31 @@ if (!empty($documents)):
                                             </div>
                                         </div>
 
+                                        <?php
+                                            $isLpmReturn = in_array($doc['status_review'] ?? '', ['revisi_lpm', 'perlu_perbaikan']);
+                                            $hasFreshGpmText = !empty($doc['gpm_catatan']) && (
+                                                !$isLpmReturn
+                                                || (!empty($doc['gpm_reviewed_at']) && !empty($doc['lpm_reviewed_at']) && strtotime($doc['gpm_reviewed_at']) > strtotime($doc['lpm_reviewed_at']))
+                                            );
+                                            $prefillGpmText = $hasFreshGpmText ? $doc['gpm_catatan'] : '';
+                                            $cleanLpmRef = trim(preg_replace('/^\[CATATAN\s+INTERNAL\s+LPM[^\]]*\]\s*/i', '', (string)($doc['lpm_catatan'] ?? '')));
+                                        ?>
                                         <div class="mb-3">
-                                            <label for="catatanGpm<?= $doc['id'] ?>" class="form-label fw-bold text-dark small mb-1">
-                                                Catatan Evaluasi / Rekomendasi GPM
-                                            </label>
-                                            <textarea name="catatan_review" id="catatanGpm<?= $doc['id'] ?>" rows="3" class="form-control rounded-3" placeholder="Tuliskan catatan detail evaluasi, butir kekurangan, atau rekomendasi perbaikan..."><?= htmlspecialchars($doc['gpm_catatan'] ?? '') ?></textarea>
+                                            <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                                <label for="catatanGpm<?= $doc['id'] ?>" class="form-label fw-bold text-dark small mb-0">
+                                                    <?= $isLpmReturn ? 'Arahan Perbaikan Resmi GPM ke Unit' : 'Catatan Evaluasi / Rekomendasi GPM' ?>
+                                                </label>
+                                                <?php if ($isLpmReturn && !empty($cleanLpmRef)): ?>
+                                                    <button type="button" class="btn btn-xs btn-outline-warning text-dark bg-white rounded-pill px-2.5 py-0.5 fw-semibold" style="font-size: 0.7rem;"
+                                                            data-copy-text="<?= htmlspecialchars($cleanLpmRef, ENT_QUOTES) ?>"
+                                                            onclick="const ta=document.getElementById('catatanGpm<?= $doc['id'] ?>'); if(ta){ta.value=this.getAttribute('data-copy-text')||''; ta.focus();}">
+                                                        <i class="fas fa-copy text-warning me-1"></i>Salin Catatan LPM
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
+                                            <textarea name="catatan_review" id="catatanGpm<?= $doc['id'] ?>" rows="3" class="form-control rounded-3" placeholder="Tuliskan arahan resmi GPM atau detail evaluasi perbaikan untuk unit..."><?= htmlspecialchars($prefillGpmText) ?></textarea>
                                             <div class="form-text small" style="font-size: 0.72rem;">
-                                                <i class="fas fa-info-circle text-primary me-1"></i> Wajib diisi bila memilih opsi "Perlu Revisi". Catatan ini akan terbaca oleh unit sasaran dan reviewer LPM.
+                                                <i class="fas fa-info-circle text-primary me-1"></i> Wajib diisi bila memilih opsi "Perlu Revisi". <?= $isLpmReturn ? 'Unit hanya akan menerima arahan resmi ini atas nama GPM (catatan LPM tetap tersembunyi).' : 'Catatan ini akan terbaca oleh unit sasaran dan reviewer LPM.' ?>
                                             </div>
                                         </div>
 
