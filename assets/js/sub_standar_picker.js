@@ -239,6 +239,9 @@ function updateSubStandarPickerOptions(uniqueKey, newBidangId, inputName) {
     if (optionsContainer) {
         optionsContainer.innerHTML = newOptionsHtml;
     }
+    if (typeof window.refreshBatchAddCardState === 'function') {
+        window.refreshBatchAddCardState();
+    }
 }
 
 /**
@@ -295,7 +298,10 @@ function removeSubStandarTag(uniqueKey, subId) {
     const badge = document.getElementById(`badge_${uniqueKey}_${subId}`);
     if (badge) badge.remove();
     const checkbox = document.querySelector(`#options_list_${uniqueKey} input[value="${subId}"]`);
-    if (checkbox) checkbox.checked = false;
+    if (checkbox) {
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
     const container = document.getElementById(`badges_container_${uniqueKey}`);
     if (container && container.querySelectorAll('.badge').length === 0) {
         container.innerHTML = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';

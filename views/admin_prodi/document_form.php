@@ -708,11 +708,18 @@ $siklusDefinitions = [
                         <div class="text-muted" style="font-size: 0.72rem;" id="formHeaderSubtitle">Anda dapat mengunggah hingga 10 dokumen mutu sekaligus dalam satu kali proses simpan.</div>
                     </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3.5 py-2 fw-semibold d-flex align-items-center gap-1.5 shadow-xs" onclick="addNewDocCard()">
+                <div class="d-flex flex-column align-items-stretch align-items-md-end gap-1.5">
+                    <button type="button" id="btnAddDocCard"
+                            class="btn btn-sm btn-secondary opacity-75 border-0 rounded-pill px-3.5 py-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-xs"
+                            style="cursor: not-allowed;"
+                            onclick="addNewDocCard()" disabled
+                            title="Lengkapi seluruh isian wajib kartu saat ini sebelum menambah kartu baru">
                         <i class="fas fa-plus"></i>
                         <span>Tambah Kartu Dokumen</span>
                     </button>
+                    <div id="addCardRequirementHint" class="text-warning-emphasis bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-pill px-2.5 py-1 fw-medium text-md-end" style="font-size: 0.72rem; line-height: 1.3;">
+                        <i class="fas fa-circle-info me-1"></i>Lengkapi semua isian wajib kartu saat ini terlebih dahulu.
+                    </div>
                 </div>
             </div>
 
@@ -1199,7 +1206,7 @@ if (typeof renderSubStandarPicker !== 'function') {
                                style="font-size: 0.8rem; white-space: normal;" 
                                data-search-text="${escapeHtml(searchStr)}">
                             <input type="checkbox" class="form-check-input flex-shrink-0 mt-0.5 sub-check-input" 
-                                   name="${inputName}" value="${sb.id}" 
+                                   name="${inputName}" value="${sb.id}" ${isChecked ? 'checked' : ''} 
                                    onchange="handleSubStandarCheckChange('${uniqueKey}', this, ${sb.id}, '', '${escapeHtml(sb.nama_sub_bidang)}')">
                             <span class="lh-sm text-dark">${escapeHtml(sb.nama_sub_bidang)}</span>
                         </label>
@@ -1368,7 +1375,10 @@ if (typeof renderSubStandarPicker !== 'function') {
         const badge = document.getElementById(`badge_${uniqueKey}_${subId}`);
         if (badge) badge.remove();
         const checkbox = document.querySelector(`#options_list_${uniqueKey} input[value="${subId}"]`);
-        if (checkbox) checkbox.checked = false;
+        if (checkbox) {
+            checkbox.checked = false;
+            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        }
         const container = document.getElementById(`badges_container_${uniqueKey}`);
         if (container && container.querySelectorAll('.badge').length === 0) {
             container.innerHTML = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';
@@ -1587,12 +1597,18 @@ function selectBatchCycle(idx, cycleKey, elem) {
     elem.classList.add('selected');
     const radio = elem.querySelector('input[type="radio"]');
     if (radio) radio.checked = true;
+    if (typeof window.refreshBatchAddCardState === 'function') {
+        window.refreshBatchAddCardState();
+    }
 }
 
 function handleBatchCardBidangChange(idx, bidangId) {
     const card = document.getElementById(`docCard_${idx}`);
     if (!card) return;
     updateSubStandarPickersInContainer(card, bidangId);
+    if (typeof window.refreshBatchAddCardState === 'function') {
+        window.refreshBatchAddCardState();
+    }
 }
 
 function toggleCardMethod(idx, method) {
@@ -2014,11 +2030,19 @@ function renderCardFolders(idx) {
     });
 
     container.innerHTML = foldersHtml;
+    if (typeof window.refreshBatchAddCardState === 'function') {
+        window.refreshBatchAddCardState();
+    }
 }
 
 function addNewDocCard(presetData = null) {
     try {
         const currentCards = document.querySelectorAll('.doc-batch-card');
+        if (currentCards.length > 0 && !presetData && typeof window.canProceedAddDocCard === 'function') {
+            if (!window.canProceedAddDocCard()) {
+                return;
+            }
+        }
         if (currentCards.length >= 10) {
             alert('Maksimal pengunggahan sekaligus adalah 10 dokumen.');
             return;
@@ -2136,6 +2160,9 @@ function updateTotalCardCounter() {
     const cards = document.querySelectorAll('.doc-batch-card');
     const counter = document.getElementById('totalCardCounter');
     if (counter) counter.textContent = cards.length;
+    if (typeof window.refreshBatchAddCardState === 'function') {
+        window.refreshBatchAddCardState();
+    }
 }
 
 // Initialize on DOM ready

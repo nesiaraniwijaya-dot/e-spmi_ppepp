@@ -120,6 +120,8 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
     <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
     <!-- Sub Standar Mutu Picker Helper -->
     <script src="<?= asset('js/sub_standar_picker.js') ?>"></script>
+    <!-- Batch Document Card Completeness Gatekeeper -->
+    <script src="<?= asset('js/batch_doc_card_gate.js') ?>"></script>
     <script>
         window.IS_USER_LOGGED_IN = <?= Auth::check() ? 'true' : 'false' ?>;
         window.LOGIN_URL = '<?= base_url("login") ?>';
