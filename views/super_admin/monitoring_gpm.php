@@ -30,7 +30,7 @@ $predikatStyleMap = [
                 <span>Gugus Penjaminan Mutu (GPM) &bull; Skor Otomatis LPM</span>
             </div>
             <h3 class="fw-bold text-dark-blue mb-1">Monitoring Kinerja Otomatis GPM</h3>
-            <p class="text-muted small mb-0">Evaluasi kinerja anggota GPM fakultas secara otomatis berbasis Akurasi Lolos LPM, ketuntasan antrean &amp; relay catatan LPM, dan kecepatan respon penelaahan. Data skor ini hanya tampil untuk role LPM.</p>
+            <p class="text-muted small mb-0">Evaluasi kinerja anggota GPM fakultas secara otomatis berbasis Akurasi Lolos LPM, ketuntasan antrean &amp; penerusan catatan LPM, dan kecepatan respon penelaahan. Data skor ini hanya tampil untuk role LPM.</p>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap flex-shrink-0">
             <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm text-nowrap">
@@ -54,14 +54,14 @@ $predikatStyleMap = [
                 </span>
                 <span class="gpm-kpi-chip" style="background: #ECFDF5; color: #047857; border-color: #A7F3D0;">
                     <i class="fas fa-check-double"></i>
-                    <span><?= (int)($totalReviewedAll ?? 0) ?> Aksi Telaah &amp; Relay</span>
+                    <span><?= (int)($totalReviewedAll ?? 0) ?> Aksi Telaah &amp; Penerusan</span>
                 </span>
                 <span class="gpm-kpi-chip" style="background: #FFFBEB; color: #B45309; border-color: #FDE68A;">
                     <i class="fas fa-hourglass-half"></i>
                     <span><?= (int)($totalPendingAll ?? 0) ?> Antrean Pending</span>
                     <?php if (!empty($totalPendingRelayAll)): ?>
                         <span class="gpm-kpi-subbadge" style="background:#EA580C; color:#FFFFFF;">
-                            <?= (int)$totalPendingRelayAll ?> Relay LPM
+                            <?= (int)$totalPendingRelayAll ?> Belum Diteruskan
                         </span>
                     <?php endif; ?>
                 </span>
@@ -74,7 +74,7 @@ $predikatStyleMap = [
             <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center flex-shrink-0">
                 <select id="filterPredikatSelect" class="form-select form-select-sm rounded-3" style="min-width: 195px;" onchange="applyGpmFilters()">
                     <option value="all">Semua Predikat &amp; Status</option>
-                    <option value="pending_relay">Ada Relay LPM Tertunda</option>
+                    <option value="pending_relay">Ada Catatan LPM Belum Diteruskan</option>
                     <option value="Sangat Baik">Predikat: Sangat Baik (&ge; 85)</option>
                     <option value="Baik">Predikat: Baik (70 - 84.9)</option>
                     <option value="Cukup">Predikat: Cukup (55 - 69.9)</option>
@@ -95,7 +95,7 @@ $predikatStyleMap = [
             <div>
                 <i class="fas fa-calculator text-primary me-1"></i>
                 <strong>Formula Kinerja Otomatis:</strong>
-                Skor Akhir = <code>50%</code> Akurasi Lolos LPM + <code>30%</code> Ketuntasan Antrean &amp; Relay + <code>20%</code> Kecepatan Respon (dinormalisasi otomatis berdasarkan pilar yang memiliki data).
+                Skor Akhir = <code>50%</code> Akurasi Lolos LPM + <code>30%</code> Ketuntasan Antrean &amp; Penerusan + <code>20%</code> Kecepatan Respon (dinormalisasi otomatis berdasarkan pilar yang memiliki data).
             </div>
             <div class="text-lg-end flex-shrink-0">
                 <i class="fas fa-user-shield me-1" style="color:#6D28D9;"></i>
@@ -268,13 +268,13 @@ $predikatStyleMap = [
                                             <?= $scoreKecepatan !== null ? number_format((float)$scoreKecepatan, 1) : '-' ?>
                                         </div>
                                         <div class="gpm-stat-sub">
-                                            <?= ($avgRelayStr !== '-') ? "Relay {$avgRelayStr}" : (($avgReviewStr !== '-') ? "Telaah {$avgReviewStr}" : 'Belum ada data') ?>
+                                            <?= ($avgRelayStr !== '-') ? "Terusan {$avgRelayStr}" : (($avgReviewStr !== '-') ? "Telaah {$avgReviewStr}" : 'Belum ada data') ?>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- 4 Compact Metrics: Approve, Pending, Revisi+Relay, Ditolak LPM -->
+                            <!-- 4 Compact Metrics: Approve, Pending, Revisi+Penerusan, Ditolak LPM -->
                             <div class="row g-2 text-center">
                                 <div class="col-6 col-sm-3">
                                     <div class="gpm-activity-tile h-100" style="background: #F0FDF4; border-color: #86EFAC;">
@@ -292,19 +292,19 @@ $predikatStyleMap = [
                                         </div>
                                         <div class="gpm-activity-title" style="color: #B45309;">Pending</div>
                                         <div class="gpm-activity-sub" style="color: #D97706;">
-                                            <?= $pendingRelay > 0 ? "{$pendingRelay} Relay" : 'Antrean' ?>
+                                            <?= $pendingRelay > 0 ? "{$pendingRelay} Terusan" : 'Antrean' ?>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-6 col-sm-3">
                                     <div class="gpm-activity-tile h-100" style="background: #EFF6FF; border-color: #93C5FD;"
-                                         title="<?= (int)($m['total_revisi_murni'] ?? 0) ?> temuan GPM + <?= (int)($m['total_relay_lpm'] ?? 0) ?> relay LPM">
+                                         title="<?= (int)($m['total_revisi_murni'] ?? 0) ?> temuan GPM + <?= (int)($m['total_relay_lpm'] ?? 0) ?> penerusan catatan LPM">
                                         <div class="gpm-activity-num" style="color: #1E40AF;">
                                             <?= (int)$m['total_revisi'] ?>
                                         </div>
                                         <div class="gpm-activity-title" style="color: #1D4ED8;">Revisi</div>
                                         <div class="gpm-activity-sub" style="color: #2563EB;">
-                                            <?= (int)($m['total_relay_lpm'] ?? 0) ?> Relay
+                                            <?= (int)($m['total_relay_lpm'] ?? 0) ?> Terusan
                                         </div>
                                     </div>
                                 </div>
@@ -321,14 +321,14 @@ $predikatStyleMap = [
                                 </div>
                             </div>
 
-                            <!-- Kecepatan Respon & Relay -->
+                            <!-- Kecepatan Respon & Penerusan -->
                             <div class="gpm-speed-bar d-flex flex-wrap justify-content-between align-items-center gap-2">
                                 <span class="text-muted">
                                     <i class="fas fa-stopwatch text-primary me-1"></i>Rata-rata Telaah: <strong class="text-dark"><?= $avgReviewStr ?></strong>
                                 </span>
                                 <span class="text-muted d-none d-sm-inline">|</span>
                                 <span class="text-muted">
-                                    <i class="fas fa-paper-plane text-warning me-1"></i>Relay LPM: <strong class="text-dark"><?= $avgRelayStr ?></strong>
+                                    <i class="fas fa-paper-plane text-warning me-1"></i>Terusan LPM: <strong class="text-dark"><?= $avgRelayStr ?></strong>
                                 </span>
                             </div>
 
@@ -339,7 +339,7 @@ $predikatStyleMap = [
                                         data-gpm="<?= $cardPayloadAttr ?>"
                                         onclick="openGpmHistoryFromBtn(this)">
                                     <i class="fas fa-clock-rotate-left"></i>
-                                    <span>More Detail (Riwayat Telaah &amp; Relay)</span>
+                                    <span>More Detail (Riwayat Telaah &amp; Penerusan)</span>
                                 </button>
                             </div>
                         </div>
@@ -350,7 +350,7 @@ $predikatStyleMap = [
     <?php endif; ?>
 </div>
 
-<!-- MODAL: MORE DETAIL RIWAYAT TELAAH & RELAY GPM -->
+<!-- MODAL: MORE DETAIL RIWAYAT TELAAH & PENERUSAN GPM -->
 <div class="modal fade" id="modalGpmHistory" tabindex="-1" aria-labelledby="modalGpmName" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
@@ -375,7 +375,7 @@ $predikatStyleMap = [
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div class="d-inline-flex align-items-center gap-2 fw-bold text-dark-blue" style="font-size: 0.85rem;">
                         <i class="fas fa-list-check text-primary"></i>
-                        <span>Riwayat Telaah &amp; Relay</span>
+                        <span>Riwayat Telaah &amp; Penerusan</span>
                         <span class="badge rounded-pill bg-primary text-white" id="modalHistoryCount">0</span>
                     </div>
                     <div class="text-muted small fw-semibold" id="modalHistoryShowingMeta" style="font-size: 0.75rem;"></div>
@@ -385,7 +385,7 @@ $predikatStyleMap = [
                     <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold active" data-cat="all" onclick="filterModalHistory('all', this)">Semua</button>
                     <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold" data-cat="approve" onclick="filterModalHistory('approve', this)">Approve</button>
                     <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-semibold" data-cat="revisi_gpm" onclick="filterModalHistory('revisi_gpm', this)">Temuan GPM</button>
-                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" data-cat="relay_lpm" onclick="filterModalHistory('relay_lpm', this)">Relay LPM</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" data-cat="relay_lpm" onclick="filterModalHistory('relay_lpm', this)">Diteruskan ke Unit</button>
                     <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" data-cat="returned_lpm" onclick="filterModalHistory('returned_lpm', this)">Ditolak LPM</button>
                 </div>
             </div>
@@ -394,7 +394,7 @@ $predikatStyleMap = [
             <div class="modal-body p-3 p-md-4" id="modalGpmHistoryBody" style="background: #F1F5F9; min-height: 320px;">
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary mb-2" role="status" style="width: 2rem; height: 2rem;"></div>
-                    <div class="small text-muted">Memuat data riwayat telaah &amp; relay GPM...</div>
+                    <div class="small text-muted">Memuat data riwayat telaah &amp; penerusan GPM...</div>
                 </div>
             </div>
 
@@ -744,7 +744,7 @@ function openGpmHistoryModal(gpm) {
     body.innerHTML = `
         <div class="text-center py-5">
             <div class="spinner-border text-primary mb-2" role="status" style="width: 2rem; height: 2rem;"></div>
-            <div class="small text-muted">Memuat data riwayat telaah &amp; relay GPM...</div>
+            <div class="small text-muted">Memuat data riwayat telaah &amp; penerusan GPM...</div>
         </div>
     `;
 
@@ -823,7 +823,7 @@ function renderModalHistoryList(list) {
             <div class="text-center py-5 text-muted bg-white rounded-4 border p-4">
                 <i class="fas fa-folder-open fa-2x text-secondary opacity-50 mb-2 d-block"></i>
                 <h6 class="fw-bold text-dark mb-1">Belum Ada Data di Kategori Ini</h6>
-                <p class="small text-muted mb-0">Tidak ditemukan log aktivitas telaah, relay LPM, atau pengembalian pada filter yang dipilih.</p>
+                <p class="small text-muted mb-0">Tidak ditemukan log aktivitas telaah, penerusan catatan LPM, atau pengembalian pada filter yang dipilih.</p>
             </div>
         `;
         return;
@@ -846,8 +846,8 @@ function renderModalHistoryList(list) {
         },
         relay_lpm: {
             accent: '#2563EB',
-            badge: '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 rounded-pill fw-bold" style="font-size:0.72rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan GPM (Relay LPM &rarr; Unit)</span>',
-            noteLabel: '<i class="fas fa-share-from-square text-primary me-1"></i> Arahan Resmi GPM (Hasil Relay LPM):',
+            badge: '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 rounded-pill fw-bold" style="font-size:0.72rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan GPM (LPM &rarr; Unit)</span>',
+            noteLabel: '<i class="fas fa-share-from-square text-primary me-1"></i> Arahan Resmi GPM (Tindak Lanjut LPM):',
             noteBg: '#EFF6FF',
             noteBorder: '#BFDBFE'
         },
