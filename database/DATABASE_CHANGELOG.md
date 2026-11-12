@@ -153,15 +153,30 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
       - **Atribusi Akun Multi-Role**: Aktivitas telaah & relay dokumen menggunakan akun multi-role (`reviewer_role = 'gpm'`) otomatis dikaitkan ke fakultas sasaran dan digabung ke rekap kartu anggota GPM utama fakultas tersebut tanpa penghitungan ganda.
     - Migrasi bersifat idempoten (`CREATE TABLE IF NOT EXISTS`) dan turut dibuat otomatis oleh `SuperAdminController::ensureGpmEvaluationsTable()`.
 
+16. **Penyelarasan 6 Role Resmi LPM, Perbaikan `jenis_upload`, & Sinkronisasi Master SQL (12 November 2026)**:
+    - **Pembaruan `users.role` ENUM & 6 Akun Resmi LPM (`database/migration_lpm_roles.php`)**:
+      - Menambahkan enum role resmi LPM pada tabel `users`: `'sekretaris_lpm'`, `'ketua_pusat_spm'`, `'ketua_pusat_ami'`, `'ketua_pusat_pemeringkatan'`, `'tu_lpm'`.
+      - Memigrasikan/menyinkronkan 6 akun resmi LPM (`lpm@unika.ac.id`, `lpm.sekretaris@unika.ac.id`, `lpm.spm@unika.ac.id`, `lpm.ami@unika.ac.id`, `lpm.pemeringkatan@unika.ac.id`, `tu.lpm@unika.ac.id`) dan menormalkan role lama `kepala_pusat_mutu`/`admin_lpm` menjadi `'kepala_lpm'`.
+    - **Sinkronisasi Kolom `ppepp_documents.jenis_upload` (`database/migration_multi_upload_kombinasi.php`)**:
+      - Memastikan kolom `ppepp_documents.jenis_upload` bertipe `ENUM('file', 'link', 'kombinasi') NOT NULL DEFAULT 'file'` di database aktif (sebelumnya sempat tertinggal `ENUM('file', 'link')` tanpa `'kombinasi'`).
+    - **Pembaruan Master Schema & Seed Dump (`database/spmi_ppepp.sql`)**:
+      - Disinkronkan ulang terhadap seluruh 18 tabel MySQL aktif: menyertakan definisi tabel `gpm_evaluations`, seluruh 11 indeks performa (`idx_docs_*`, `idx_docfiles_*`, `idx_cycles_*`), `users.role` ENUM terbaru, `jenis_upload` `'kombinasi'`, serta data master & akun pengguna terbaru (tabel transaksional tetap kosong siap pakai).
+    - **Skrip Migrasi Gabungan Idempoten (`database/migrate_all.php`)**:
+      - Menyatukan langkah sinkronisasi skema terbaru (`jenis_upload`, `gpm_evaluations`, 11 indeks performa, dan role LPM) dalam satu perintah aman tanpa menghapus data dokumen yang sudah ada.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
-Cukup jalankan skrip migrasi PHP:
+Setelah melakukan `git pull`, cukup jalankan satu perintah terpadu (aman dijalankan ulang, tidak menghapus dokumen lokal):
 ```bash
-php database/migration_fitur_akademik_dan_gpm.php
-php database/migration_lpm_traffic_and_academic_year.php
-php database/apply_performance_indexes.php
+php database/migrate_all.php
+```
+Atau bila ingin menjalankan skripnya satu per satu:
+```bash
+php database/migration_multi_upload_kombinasi.php
 php database/migration_gpm_evaluations.php
+php database/apply_performance_indexes.php
+php database/migration_lpm_roles.php
 ```
 atau jalankan kueri SQL `database/migration_performance_indexes.sql` di phpMyAdmin / MySQL CLI, serta impor berkas master bila mulai dari awal:
 ```bash
