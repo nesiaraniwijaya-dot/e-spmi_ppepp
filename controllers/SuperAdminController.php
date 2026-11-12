@@ -12,7 +12,7 @@ class SuperAdminController extends Controller {
 
     public function __construct() {
         parent::__construct();
-        Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+        Auth::requireRole(Auth::LPM_ROLES);
     }
 
     /**
@@ -495,6 +495,11 @@ class SuperAdminController extends Controller {
         $email = trim($_POST['email'] ?? '');
         $password = trim($_POST['password'] ?? '');
         $role = trim($_POST['role'] ?? 'kaprodi');
+        $allowedUserRoles = array_merge(Auth::LPM_ROLES, ['dekan', 'wadek', 'gpm', 'kaprodi', 'sekprodi', 'pengguna', 'testing']);
+        if (!in_array($role, $allowedUserRoles, true)) {
+            Auth::setFlash('danger', 'Role pengguna tidak valid.');
+            redirect('admin/users');
+        }
         $isProdiRole = in_array($role, ['kaprodi', 'sekprodi']);
         $isFakultasRole = in_array($role, ['dekan', 'wadek', 'gpm']);
         $prodiId = ($isProdiRole && !empty($_POST['prodi_id'])) ? (int)$_POST['prodi_id'] : null;
@@ -1747,7 +1752,7 @@ class SuperAdminController extends Controller {
                 $nextRevNumber = (int)$revNumberStmt->fetchColumn() + 1;
 
                 $reviewerUser = Auth::user();
-                $reviewerDisplayName = ($reviewerUser['name'] ?? 'Verifikator LPM') . ' (' . ($reviewerUser['role'] === 'super_admin' ? 'Admin LPM' : strtoupper(str_replace('_', ' ', $reviewerUser['role'] ?? ''))) . ')';
+                $reviewerDisplayName = ($reviewerUser['name'] ?? 'Verifikator LPM') . ' (' . Auth::getRoleLabel($reviewerUser['role'] ?? 'super_admin') . ')';
 
                 $stmtInsRev = $this->db->prepare("
                     INSERT INTO ppepp_document_revisions 
@@ -2417,43 +2422,10 @@ class SuperAdminController extends Controller {
     }
 
     /**
-     * Memastikan tabel `gpm_evaluations` untuk penilaian kinerja GPM oleh LPM tersedia
-     */
-    private function ensureGpmEvaluationsTable(): void {
-        try {
-            $this->db->exec("
-                CREATE TABLE IF NOT EXISTS `gpm_evaluations` (
-                    `id` INT(11) NOT NULL AUTO_INCREMENT,
-                    `gpm_user_id` INT(11) NOT NULL,
-                    `fakultas_id` INT(11) NOT NULL,
-                    `evaluator_id` INT(11) NOT NULL,
-                    `evaluator_name` VARCHAR(255) NOT NULL,
-                    `evaluator_role` VARCHAR(50) NOT NULL,
-                    `periode` VARCHAR(50) NOT NULL DEFAULT '2025/2026',
-                    `skor_ketelitian` TINYINT(3) UNSIGNED NOT NULL DEFAULT 80,
-                    `skor_kecepatan` TINYINT(3) UNSIGNED NOT NULL DEFAULT 80,
-                    `skor_komunikasi` TINYINT(3) UNSIGNED NOT NULL DEFAULT 80,
-                    `skor_manual_total` DECIMAL(5,2) NOT NULL DEFAULT 80.00,
-                    `catatan_evaluasi` TEXT NULL,
-                    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    PRIMARY KEY (`id`),
-                    KEY `idx_gpm_eval_user` (`gpm_user_id`, `created_at`),
-                    KEY `idx_gpm_eval_fak` (`fakultas_id`, `periode`)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-            ");
-        } catch (\Throwable $e) {
-            // Abaikan bila DB read-only sementara
-        }
-    }
-
-    /**
-     * Halaman Monitoring Kinerja Anggota GPM (Kombinasi: Skor Otomatis LPM + Penilaian Manual LPM)
-     * Hanya dapat diakses oleh peran LPM (Super Admin, Admin LPM, Kepala LPM, Kepala Pusat Mutu).
+     * Halaman Monitoring Kinerja Anggota GPM (Skor Otomatis Sistem Eksklusif LPM)
+     * Berbasis Akurasi Lolos LPM (50%), Ketuntasan Antrean & Relay (30%), dan Kecepatan Respon (20%).
      */
     public function monitoringGpm(): void {
-        $this->ensureGpmEvaluationsTable();
-
         $gpmMembersRaw = $this->db->query("
             SELECT u.id, u.name, u.email, u.avatar, u.fakultas_id, u.created_at as member_since,
                    f.nama_fakultas, f.kode_fakultas
@@ -2598,27 +2570,7 @@ class SuperAdminController extends Controller {
             }
         }
 
-        // 4. Ambil penilaian manual LPM terbaru untuk setiap anggota GPM
-        $latestEvalByUser = [];
-        $evalCountByUser = [];
-        try {
-            $evalRows = $this->db->query("
-                SELECT e.*
-                FROM gpm_evaluations e
-                ORDER BY e.created_at DESC, e.id DESC
-            ")->fetchAll();
-            foreach ($evalRows as $ev) {
-                $gid = (int)$ev['gpm_user_id'];
-                $evalCountByUser[$gid] = ($evalCountByUser[$gid] ?? 0) + 1;
-                if (!isset($latestEvalByUser[$gid])) {
-                    $latestEvalByUser[$gid] = $ev;
-                }
-            }
-        } catch (\Throwable $e) {
-            // Abaikan
-        }
-
-        // 5. Susun & hitung metrik gabungan + Skor Kinerja Otomatis & Kombinasi per anggota GPM
+        // 4. Susun & hitung metrik gabungan + Skor Kinerja Otomatis per anggota GPM
         $gpmMembers = [];
         foreach ($gpmMembersRaw as $m) {
             $uid = (int)$m['id'];
@@ -2696,28 +2648,19 @@ class SuperAdminController extends Controller {
                 $autoScore = $wTotal > 0 ? round($wSum / $wTotal, 1) : null;
             }
 
-            $latestEval = $latestEvalByUser[$uid] ?? null;
-            $manualScore = $latestEval ? round((float)$latestEval['skor_manual_total'], 1) : null;
-
-            if ($manualScore !== null && $autoScore !== null) {
-                $combinedScore = round(($autoScore * 0.60) + ($manualScore * 0.40), 1);
-            } elseif ($manualScore !== null) {
-                $combinedScore = $manualScore;
-            } else {
-                $combinedScore = $autoScore;
-            }
+            $finalScore = $autoScore;
 
             // Predikat Kinerja
             $predikat = 'Belum Ada Data';
             $predikatColor = 'secondary';
-            if ($combinedScore !== null) {
-                if ($combinedScore >= 85) {
+            if ($finalScore !== null) {
+                if ($finalScore >= 85) {
                     $predikat = 'Sangat Baik';
                     $predikatColor = 'success';
-                } elseif ($combinedScore >= 70) {
+                } elseif ($finalScore >= 70) {
                     $predikat = 'Baik';
                     $predikatColor = 'primary';
-                } elseif ($combinedScore >= 55) {
+                } elseif ($finalScore >= 55) {
                     $predikat = 'Cukup';
                     $predikatColor = 'warning';
                 } else {
@@ -2745,12 +2688,9 @@ class SuperAdminController extends Controller {
             $m['score_antrean']            = $scoreAntrean;
             $m['score_kecepatan']          = $scoreKecepatan;
             $m['auto_score']               = $autoScore;
-            $m['manual_score']             = $manualScore;
-            $m['combined_score']           = $combinedScore;
+            $m['combined_score']           = $finalScore;
             $m['predikat']                 = $predikat;
             $m['predikat_color']           = $predikatColor;
-            $m['latest_eval']              = $latestEval;
-            $m['eval_count']               = $evalCountByUser[$uid] ?? 0;
             $m['last_reviewed_at']         = $act['last_at'] ?? $docAgg['last_reviewed_at'];
             $m['avg_review_hours']         = $avgReviewHours;
             $m['avg_relay_hours']          = $avgRelayHours;
@@ -2765,8 +2705,6 @@ class SuperAdminController extends Controller {
         $totalPendingAll = array_sum(array_column($gpmMembers, 'pending_review'));
         $totalPendingRelayAll = array_sum(array_column($gpmMembers, 'pending_relay_lpm'));
         $totalLpmReturnedAll = array_sum(array_column($gpmMembers, 'lpm_returned_events'));
-        $activeAy = get_active_tahun_akademik($this->db);
-        $defaultPeriode = $activeAy['tahun_akademik'] ?? '2025/2026';
 
         $this->render('super_admin/monitoring_gpm', [
             'pageTitle'            => 'Monitoring Kinerja Anggota GPM',
@@ -2776,17 +2714,14 @@ class SuperAdminController extends Controller {
             'totalPendingAll'      => $totalPendingAll,
             'totalPendingRelayAll' => $totalPendingRelayAll,
             'totalLpmReturnedAll'  => $totalLpmReturnedAll,
-            'defaultPeriode'       => $defaultPeriode,
-            'tahunList'            => get_distinct_tahun_akademik($this->db)
         ]);
     }
 
     /**
-     * API JSON: Riwayat Telaah, Relay LPM, Pengembalian LPM & Penilaian Kinerja GPM (Khusus LPM)
+     * API JSON: Riwayat Telaah, Relay LPM & Pengembalian LPM (Khusus LPM)
      */
     public function gpmReviewHistory(string $id): void {
         header('Content-Type: application/json; charset=utf-8');
-        $this->ensureGpmEvaluationsTable();
         $gpmId = (int)$id;
 
         $stmtGpm = $this->db->prepare("
@@ -2885,97 +2820,12 @@ class SuperAdminController extends Controller {
             }
         }
 
-        // Ambil riwayat penilaian manual LPM terhadap GPM ini
-        $evaluations = [];
-        try {
-            $stmtEval = $this->db->prepare("
-                SELECT * FROM gpm_evaluations
-                WHERE gpm_user_id = ?
-                ORDER BY created_at DESC, id DESC
-            ");
-            $stmtEval->execute([$gpmId]);
-            $evaluations = $stmtEval->fetchAll() ?: [];
-        } catch (\Throwable $e) {
-            $evaluations = [];
-        }
-
         echo json_encode([
-            'success'     => true,
-            'gpm'         => $gpm,
-            'history'     => $history,
-            'evaluations' => $evaluations
+            'success' => true,
+            'gpm'     => $gpm,
+            'history' => $history,
         ]);
         exit;
-    }
-
-    /**
-     * Simpan Penilaian & Catatan Evaluasi Manual Kinerja GPM oleh LPM
-     */
-    public function submitGpmEvaluation(): void {
-        $this->ensureGpmEvaluationsTable();
-
-        $gpmUserId   = !empty($_POST['gpm_user_id']) ? (int)$_POST['gpm_user_id'] : 0;
-        $periode     = trim($_POST['periode'] ?? '2025/2026');
-        $ketelitian  = max(0, min(100, (int)($_POST['skor_ketelitian'] ?? 80)));
-        $kecepatan   = max(0, min(100, (int)($_POST['skor_kecepatan'] ?? 80)));
-        $komunikasi  = max(0, min(100, (int)($_POST['skor_komunikasi'] ?? 80)));
-        $catatan     = trim($_POST['catatan_evaluasi'] ?? '');
-
-        if (!$gpmUserId) {
-            Auth::setFlash('danger', 'Anggota GPM sasaran evaluasi tidak valid.');
-            redirect('admin/monitoring-gpm');
-            return;
-        }
-
-        $stmtGpm = $this->db->prepare("SELECT u.id, u.name, u.fakultas_id, f.nama_fakultas FROM users u LEFT JOIN fakultas f ON u.fakultas_id = f.id WHERE u.id = ? AND u.role = 'gpm' LIMIT 1");
-        $stmtGpm->execute([$gpmUserId]);
-        $gpm = $stmtGpm->fetch();
-
-        if (!$gpm) {
-            Auth::setFlash('danger', 'Akun GPM tidak ditemukan.');
-            redirect('admin/monitoring-gpm');
-            return;
-        }
-
-        $manualTotal = round(($ketelitian + $kecepatan + $komunikasi) / 3, 2);
-        $evaluator = Auth::user();
-        $evaluatorId = Auth::id();
-        $evaluatorName = $evaluator['name'] ?? 'Tim LPM';
-        $evaluatorRole = Auth::role() ?? 'super_admin';
-
-        $stmtIns = $this->db->prepare("
-            INSERT INTO gpm_evaluations (
-                gpm_user_id, fakultas_id, evaluator_id, evaluator_name, evaluator_role,
-                periode, skor_ketelitian, skor_kecepatan, skor_komunikasi, skor_manual_total, catatan_evaluasi,
-                created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        ");
-        $stmtIns->execute([
-            $gpmUserId,
-            (int)($gpm['fakultas_id'] ?? 0),
-            $evaluatorId,
-            $evaluatorName,
-            $evaluatorRole,
-            $periode,
-            $ketelitian,
-            $kecepatan,
-            $komunikasi,
-            $manualTotal,
-            $catatan ?: null
-        ]);
-
-        AuditLogger::log('CREATE', 'Evaluasi Kinerja GPM', (string)$gpmUserId, $gpm['name'], null, [
-            'periode'           => $periode,
-            'skor_ketelitian'   => $ketelitian,
-            'skor_kecepatan'    => $kecepatan,
-            'skor_komunikasi'   => $komunikasi,
-            'skor_manual_total' => $manualTotal,
-            'catatan_evaluasi'  => $catatan,
-            'evaluator'         => $evaluatorName
-        ], 0, $gpm['nama_fakultas'] ?? 'Fakultas');
-
-        Auth::setFlash('success', "Penilaian kinerja LPM untuk <strong>" . htmlspecialchars($gpm['name']) . "</strong> (Skor Manual: {$manualTotal}/100) berhasil disimpan.");
-        redirect('admin/monitoring-gpm');
     }
 
     /**

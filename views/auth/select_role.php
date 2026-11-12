@@ -29,37 +29,81 @@ foreach ($prodiList as $p) {
 
 $rolesOptions = [
     [
-        'role' => 'super_admin',
-        'scope' => 'lpm',
-        'title' => 'Admin LPM (Super Admin)',
-        'subtitle' => 'Lembaga Penjaminan Mutu Universitas',
-        'desc' => 'Akses penuh ke seluruh master data, verifikasi dokumen, manajemen pengguna, dan audit trail.',
-        'badge' => 'Pusat LPM',
-        'badge_bg' => 'bg-danger',
-        'icon' => 'fas fa-user-shield',
-        'color' => '#DC2626'
-    ],
-    [
         'role' => 'kepala_lpm',
         'scope' => 'lpm',
-        'title' => 'Kepala LPM',
-        'subtitle' => 'Pimpinan Lembaga Penjaminan Mutu',
-        'desc' => 'Monitoring seluruh siklus PPEPP, laporan statistik universitas, dan log audit trail.',
-        'badge' => 'Pimpinan LPM',
+        'title' => 'Kepala Lembaga Penjaminan Mutu',
+        'subtitle' => 'lpm@unika.ac.id · Pimpinan LPM Universitas',
+        'desc' => 'Akses penuh pusat LPM: monitoring seluruh siklus PPEPP, review dokumen, kinerja GPM, dan audit trail.',
+        'badge' => 'Kepala LPM',
         'badge_bg' => 'bg-primary',
         'icon' => 'fas fa-user-tie',
         'color' => '#2563EB'
     ],
     [
-        'role' => 'kepala_pusat_mutu',
+        'role' => 'sekretaris_lpm',
         'scope' => 'lpm',
-        'title' => 'Kepala Pusat Penjaminan Mutu',
-        'subtitle' => 'Pusat Standar & Penjaminan Mutu',
-        'desc' => 'Monitoring ketercapaian standar mutu, verifikasi review, dan pengawasan siklus PPEPP.',
-        'badge' => 'Pusat Mutu',
-        'badge_bg' => 'bg-info',
-        'icon' => 'fas fa-award',
+        'title' => 'Sekretaris Lembaga Penjaminan Mutu',
+        'subtitle' => 'lpm.sekretaris@unika.ac.id · Sekretariat LPM',
+        'desc' => 'Koordinasi administrasi penjaminan mutu, verifikasi dokumen, monitoring GPM, dan laporan universitas.',
+        'badge' => 'Sekretaris LPM',
+        'badge_bg' => 'bg-info text-dark',
+        'icon' => 'fas fa-user-check',
         'color' => '#0284C7'
+    ],
+    [
+        'role' => 'ketua_pusat_spm',
+        'scope' => 'lpm',
+        'title' => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
+        'subtitle' => 'lpm.spm@unika.ac.id · Pusat SPM LPM',
+        'desc' => 'Pengembangan standar mutu, evaluasi ketercapaian PPEPP, review dokumen, dan pengawasan mutu.',
+        'badge' => 'Ketua Pusat SPM',
+        'badge_bg' => 'bg-navy',
+        'icon' => 'fas fa-award',
+        'color' => '#4338CA'
+    ],
+    [
+        'role' => 'ketua_pusat_ami',
+        'scope' => 'lpm',
+        'title' => 'Ketua Pusat Audit Mutu Internal',
+        'subtitle' => 'lpm.ami@unika.ac.id · Pusat AMI LPM',
+        'desc' => 'Pengawasan audit mutu internal, telaah dokumen akreditasi/evaluasi, dan monitoring ketuntasan unit.',
+        'badge' => 'Ketua Pusat AMI',
+        'badge_bg' => 'bg-success',
+        'icon' => 'fas fa-clipboard-check',
+        'color' => '#0F766E'
+    ],
+    [
+        'role' => 'ketua_pusat_pemeringkatan',
+        'scope' => 'lpm',
+        'title' => 'Ketua Pusat Pemeringkatan',
+        'subtitle' => 'lpm.pemeringkatan@unika.ac.id · Pusat Pemeringkatan LPM',
+        'desc' => 'Monitoring data pendukung pemeringkatan institusi, keterisian instrumen mutu, dan kinerja unit.',
+        'badge' => 'Ketua Pemeringkatan',
+        'badge_bg' => 'bg-purple',
+        'icon' => 'fas fa-medal',
+        'color' => '#7C3AED'
+    ],
+    [
+        'role' => 'tu_lpm',
+        'scope' => 'lpm',
+        'title' => 'TU Lembaga Penjaminan Mutu',
+        'subtitle' => 'tu.lpm@unika.ac.id · Tata Usaha LPM',
+        'desc' => 'Pengelolaan master data, administrasi berkas PPEPP, manajemen pengguna, dan dukungan operasional LPM.',
+        'badge' => 'TU LPM',
+        'badge_bg' => 'bg-secondary',
+        'icon' => 'fas fa-briefcase',
+        'color' => '#475569'
+    ],
+    [
+        'role' => 'super_admin',
+        'scope' => 'lpm',
+        'title' => 'Super Admin (Multi-Role LPM)',
+        'subtitle' => 'Akses Administrator Pusat LPM',
+        'desc' => 'Akses penuh ke seluruh master data, verifikasi dokumen, manajemen pengguna, dan audit trail.',
+        'badge' => 'Super Admin',
+        'badge_bg' => 'bg-danger',
+        'icon' => 'fas fa-user-shield',
+        'color' => '#DC2626'
     ],
     [
         'role' => 'gpm',

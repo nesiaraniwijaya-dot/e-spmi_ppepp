@@ -106,16 +106,22 @@ $currentUser = Auth::user();
                                         <div style="font-size:0.75rem;color:var(--text-muted);"><?= htmlspecialchars($currentUser['email']) ?></div>
                                         <?php
                                         $pubRoleLabel = match($currentUser['role'] ?? '') {
-                                            'super_admin', 'admin_lpm' => 'Admin LPM',
-                                            'kepala_pusat_mutu'        => 'Ketua Pusat Mutu',
-                                            'kepala_lpm'               => 'Kepala LPM',
-                                            'dekan'                    => 'Dekan',
-                                            'wadek'                    => 'Wakil Dekan',
-                                            'gpm'                      => 'GPM Fakultas',
-                                            'kaprodi'                  => 'Kaprodi',
-                                            'sekprodi'                 => 'Sekprodi',
-                                            'pengguna'                 => 'Pengguna Terdaftar',
-                                            default                    => 'Pengguna'
+                                            'kepala_lpm'                => 'Kepala Lembaga Penjaminan Mutu',
+                                            'sekretaris_lpm'            => 'Sekretaris Lembaga Penjaminan Mutu',
+                                            'ketua_pusat_spm'           => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
+                                            'ketua_pusat_ami'           => 'Ketua Pusat Audit Mutu Internal',
+                                            'ketua_pusat_pemeringkatan' => 'Ketua Pusat Pemeringkatan',
+                                            'tu_lpm'                    => 'TU Lembaga Penjaminan Mutu',
+                                            'super_admin'               => 'Super Admin',
+                                            'admin_lpm'                 => 'Admin LPM',
+                                            'kepala_pusat_mutu'         => 'Ketua Pusat Mutu',
+                                            'dekan'                     => 'Dekan',
+                                            'wadek'                     => 'Wakil Dekan',
+                                            'gpm'                       => 'GPM Fakultas',
+                                            'kaprodi'                   => 'Kaprodi',
+                                            'sekprodi'                  => 'Sekprodi',
+                                            'pengguna'                  => 'Pengguna Terdaftar',
+                                            default                     => 'Pengguna'
                                         };
                                         $isPengguna = ($currentUser['role'] ?? '') === 'pengguna';
                                         ?>

@@ -8,6 +8,42 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/AuditLogger.php';
 
 class Auth {
+    public const LPM_ROLES = [
+        'super_admin',
+        'kepala_lpm',
+        'sekretaris_lpm',
+        'ketua_pusat_spm',
+        'ketua_pusat_ami',
+        'ketua_pusat_pemeringkatan',
+        'tu_lpm',
+        'admin_lpm',
+        'kepala_pusat_mutu',
+    ];
+
+    public const LPM_ROLE_LABELS = [
+        'kepala_lpm'                => 'Kepala Lembaga Penjaminan Mutu',
+        'sekretaris_lpm'            => 'Sekretaris Lembaga Penjaminan Mutu',
+        'ketua_pusat_spm'           => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
+        'ketua_pusat_ami'           => 'Ketua Pusat Audit Mutu Internal',
+        'ketua_pusat_pemeringkatan' => 'Ketua Pusat Pemeringkatan',
+        'tu_lpm'                    => 'TU Lembaga Penjaminan Mutu',
+        'super_admin'               => 'Admin LPM (Super Admin)',
+    ];
+
+    public static function getRoleLabel(string $role): string {
+        return match ($role) {
+            'kepala_lpm'                => 'Kepala Lembaga Penjaminan Mutu',
+            'sekretaris_lpm'            => 'Sekretaris Lembaga Penjaminan Mutu',
+            'ketua_pusat_spm'           => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
+            'ketua_pusat_ami'           => 'Ketua Pusat Audit Mutu Internal',
+            'ketua_pusat_pemeringkatan' => 'Ketua Pusat Pemeringkatan',
+            'tu_lpm'                    => 'TU Lembaga Penjaminan Mutu',
+            'super_admin', 'admin_lpm'  => 'Admin LPM (Super Admin)',
+            'kepala_pusat_mutu'         => 'Ketua Pusat Penjaminan Mutu',
+            default                     => ucwords(str_replace('_', ' ', $role)),
+        };
+    }
+
     public static function startSession(): void {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -19,11 +55,6 @@ class Auth {
         $pdo = Database::getInstance()->getConnection();
 
         $searchEmail = trim(strtolower($email));
-        $altEmail = match($searchEmail) {
-            'admin.lpm@unika.ac.id' => 'lpm@unika.ac.id',
-            'lpm@unika.ac.id' => 'admin.lpm@unika.ac.id',
-            default => $searchEmail
-        };
 
         $stmt = $pdo->prepare("SELECT u.*, p.nama_prodi, p.kode_prodi, 
                 COALESCE(f_direct.nama_fakultas, f_prodi.nama_fakultas) as nama_fakultas,
@@ -32,8 +63,8 @@ class Auth {
             LEFT JOIN prodis p ON u.prodi_id = p.id 
             LEFT JOIN fakultas f_prodi ON p.fakultas_id = f_prodi.id 
             LEFT JOIN fakultas f_direct ON u.fakultas_id = f_direct.id
-            WHERE (LOWER(u.email) = ? OR LOWER(u.email) = ?) AND u.is_active = 1 LIMIT 1");
-        $stmt->execute([$searchEmail, $altEmail]);
+            WHERE LOWER(u.email) = ? AND u.is_active = 1 LIMIT 1");
+        $stmt->execute([$searchEmail]);
         $user = $stmt->fetch();
 
         $passwordValid = false;
@@ -90,11 +121,6 @@ class Auth {
         $pdo = Database::getInstance()->getConnection();
 
         $searchEmail = trim(strtolower($email));
-        $altEmail = match($searchEmail) {
-            'admin.lpm@unika.ac.id', 'tu.lpm@unika.ac.id' => 'lpm@unika.ac.id',
-            'lpm@unika.ac.id' => 'admin.lpm@unika.ac.id',
-            default => $searchEmail
-        };
 
         $stmt = $pdo->prepare("SELECT u.*, p.nama_prodi, p.kode_prodi, 
                 COALESCE(f_direct.nama_fakultas, f_prodi.nama_fakultas) as nama_fakultas,
@@ -103,8 +129,8 @@ class Auth {
             LEFT JOIN prodis p ON u.prodi_id = p.id 
             LEFT JOIN fakultas f_prodi ON p.fakultas_id = f_prodi.id 
             LEFT JOIN fakultas f_direct ON u.fakultas_id = f_direct.id
-            WHERE (LOWER(u.email) = ? OR LOWER(u.email) = ?) AND u.is_active = 1 LIMIT 1");
-        $stmt->execute([$searchEmail, $altEmail]);
+            WHERE LOWER(u.email) = ? AND u.is_active = 1 LIMIT 1");
+        $stmt->execute([$searchEmail]);
         $user = $stmt->fetch();
 
         if ($user) {
@@ -256,7 +282,7 @@ class Auth {
     }
 
     public static function isLpm(): bool {
-        return in_array(self::role(), ['super_admin', 'admin_lpm', 'kepala_pusat_mutu', 'kepala_lpm']);
+        return in_array(self::role(), self::LPM_ROLES, true);
     }
 
     public static function isSuperAdmin(): bool {
@@ -297,9 +323,6 @@ class Auth {
         $multiRoleEmails = [
             'nesiaraniwijaya@gmail.com',
             'ravywhienelda@gmail.com',
-            'lpm@unika.ac.id',
-            'tu.lpm@unika.ac.id',
-            'admin.lpm@unika.ac.id'
         ];
 
         return !empty($_SESSION['is_multi_role_testing'])
@@ -314,17 +337,22 @@ class Auth {
         $fakultasName = $_SESSION['user_fakultas_name'] ?? 'Fakultas';
 
         return match ($role) {
-            'testing'           => 'Akun Pengujian / Testing (Multi-Role)',
-            'kepala_pusat_mutu' => 'Ketua Pusat Penjaminan Mutu',
-            'kepala_lpm'        => 'Kepala Lembaga Penjamin Mutu (LPM)',
-            'super_admin', 'admin_lpm' => 'Admin Lembaga Penjamin Mutu (LPM)',
-            'dekan'             => 'Dekan ' . $fakultasName,
-            'wadek'             => 'Wakil Dekan ' . $fakultasName,
-            'gpm'               => 'GPM ' . $fakultasName,
-            'kaprodi'           => 'Ketua Program Studi ' . $prodiName,
-            'sekprodi'          => 'Sekretaris Program Studi ' . $prodiName,
-            'pengguna'          => 'Pengguna Terdaftar (Akses Dokumen Penuh)',
-            default             => 'Pengguna Terdaftar'
+            'testing'                   => 'Akun Pengujian / Testing (Multi-Role)',
+            'kepala_lpm'                => 'Kepala Lembaga Penjaminan Mutu',
+            'sekretaris_lpm'            => 'Sekretaris Lembaga Penjaminan Mutu',
+            'ketua_pusat_spm'           => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
+            'ketua_pusat_ami'           => 'Ketua Pusat Audit Mutu Internal',
+            'ketua_pusat_pemeringkatan' => 'Ketua Pusat Pemeringkatan',
+            'tu_lpm'                    => 'TU Lembaga Penjaminan Mutu',
+            'kepala_pusat_mutu'         => 'Ketua Pusat Penjaminan Mutu',
+            'super_admin', 'admin_lpm'  => 'Admin Lembaga Penjaminan Mutu (Super Admin)',
+            'dekan'                     => 'Dekan ' . $fakultasName,
+            'wadek'                     => 'Wakil Dekan ' . $fakultasName,
+            'gpm'                       => 'GPM ' . $fakultasName,
+            'kaprodi'                   => 'Ketua Program Studi ' . $prodiName,
+            'sekprodi'                  => 'Sekretaris Program Studi ' . $prodiName,
+            'pengguna'                  => 'Pengguna Terdaftar (Akses Dokumen Penuh)',
+            default                     => 'Pengguna Terdaftar'
         };
     }
 
@@ -359,8 +387,10 @@ class Auth {
 
     public static function getDashboardRoute(): string {
         $role = self::role();
+        if (in_array($role, self::LPM_ROLES, true)) {
+            return 'admin/dashboard';
+        }
         return match ($role) {
-            'super_admin', 'admin_lpm', 'kepala_pusat_mutu', 'kepala_lpm' => 'admin/dashboard',
             'kaprodi', 'sekprodi' => 'prodi/dashboard',
             'dekan', 'wadek' => 'fakultas/dashboard',
             'gpm' => 'gpm/dashboard',

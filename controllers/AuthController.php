@@ -39,8 +39,8 @@ class AuthController extends Controller {
         }
 
         if (Auth::attempt($email, $password)) {
-            $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com', 'lpm@unika.ac.id', 'tu.lpm@unika.ac.id', 'admin.lpm@unika.ac.id'];
-            if (in_array(strtolower($email), $multiRoleEmails) || Auth::role() === 'testing' || !empty($_SESSION['is_multi_role_testing'])) {
+            $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com'];
+            if (in_array(strtolower($email), $multiRoleEmails) || Auth::role() === 'testing' || Auth::role() === 'super_admin' || !empty($_SESSION['is_multi_role_testing'])) {
                 $_SESSION['is_multi_role_testing'] = true;
                 redirect('auth/select-role');
             }
@@ -180,7 +180,7 @@ class AuthController extends Controller {
 
         // 3. Verifikasi & Login ke Sistem SPMI
         if (Auth::attemptGoogleLogin($googleEmail)) {
-            $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com', 'lpm@unika.ac.id', 'tu.lpm@unika.ac.id', 'admin.lpm@unika.ac.id'];
+            $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com'];
             if (in_array($googleEmail, $multiRoleEmails) || Auth::role() === 'testing' || Auth::role() === 'super_admin') {
                 $_SESSION['is_multi_role_testing'] = true;
                 redirect('auth/select-role');
@@ -278,7 +278,16 @@ class AuthController extends Controller {
         }
 
         $selectedRole = trim($_POST['role'] ?? '');
-        $allowedRoles = ['super_admin', 'kepala_lpm', 'kepala_pusat_mutu', 'gpm', 'dekan', 'wadek', 'kaprodi', 'sekprodi', 'pengguna'];
+        $lpmSwitchRoles = [
+            'super_admin',
+            'kepala_lpm',
+            'sekretaris_lpm',
+            'ketua_pusat_spm',
+            'ketua_pusat_ami',
+            'ketua_pusat_pemeringkatan',
+            'tu_lpm',
+        ];
+        $allowedRoles = array_merge($lpmSwitchRoles, ['gpm', 'dekan', 'wadek', 'kaprodi', 'sekprodi', 'pengguna']);
         if (!in_array($selectedRole, $allowedRoles, true)) {
             Auth::setFlash('danger', 'Peran yang dipilih tidak valid.');
             redirect('auth/select-role');
@@ -321,82 +330,67 @@ class AuthController extends Controller {
         $rawName = $_SESSION['user_real_name'] ?? $_SESSION['user_name'] ?? 'Pengguna Testing';
         $cleanName = preg_replace('/\s*\(.*?\)$/', '', $rawName);
 
-        switch ($selectedRole) {
-            case 'super_admin':
-                $_SESSION['user_name'] = $cleanName . ' (Admin LPM / Super Admin)';
-                $_SESSION['user_role'] = 'super_admin';
-                $_SESSION['user_prodi_id'] = null;
-                $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = null;
-                $_SESSION['user_fakultas_name'] = null;
-                break;
-            case 'kepala_lpm':
-                $_SESSION['user_name'] = $cleanName . ' (Kepala LPM)';
-                $_SESSION['user_role'] = 'kepala_lpm';
-                $_SESSION['user_prodi_id'] = null;
-                $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = null;
-                $_SESSION['user_fakultas_name'] = null;
-                break;
-            case 'kepala_pusat_mutu':
-                $_SESSION['user_name'] = $cleanName . ' (Kepala Pusat Mutu)';
-                $_SESSION['user_role'] = 'kepala_pusat_mutu';
-                $_SESSION['user_prodi_id'] = null;
-                $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = null;
-                $_SESSION['user_fakultas_name'] = null;
-                break;
-            case 'gpm':
-                $_SESSION['user_name'] = $cleanName . " (GPM {$targetFakShort})";
-                $_SESSION['user_role'] = 'gpm';
-                $_SESSION['user_prodi_id'] = null;
-                $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = $targetFakId;
-                $_SESSION['user_fakultas_name'] = $targetFakName;
-                break;
-            case 'dekan':
-                $_SESSION['user_name'] = $cleanName . " (Dekan {$targetFakShort})";
-                $_SESSION['user_role'] = 'dekan';
-                $_SESSION['user_prodi_id'] = null;
-                $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = $targetFakId;
-                $_SESSION['user_fakultas_name'] = $targetFakName;
-                break;
-            case 'wadek':
-                $_SESSION['user_name'] = $cleanName . " (Wakil Dekan {$targetFakShort})";
-                $_SESSION['user_role'] = 'wadek';
-                $_SESSION['user_prodi_id'] = null;
-                $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = $targetFakId;
-                $_SESSION['user_fakultas_name'] = $targetFakName;
-                break;
-            case 'kaprodi':
-                $_SESSION['user_name'] = $cleanName . " (Kaprodi {$targetProdiName})";
-                $_SESSION['user_role'] = 'kaprodi';
-                $_SESSION['user_prodi_id'] = $targetProdiId;
-                $_SESSION['user_prodi_name'] = $targetProdiName;
-                $_SESSION['user_fakultas_id'] = $targetProdiFakId;
-                $_SESSION['user_fakultas_name'] = $targetProdiFakName;
-                break;
-            case 'sekprodi':
-                $_SESSION['user_name'] = $cleanName . " (Sekprodi {$targetProdiName})";
-                $_SESSION['user_role'] = 'sekprodi';
-                $_SESSION['user_prodi_id'] = $targetProdiId;
-                $_SESSION['user_prodi_name'] = $targetProdiName;
-                $_SESSION['user_fakultas_id'] = $targetProdiFakId;
-                $_SESSION['user_fakultas_name'] = $targetProdiFakName;
-                break;
-            case 'pengguna':
-                $_SESSION['user_name'] = $cleanName . ' (Civitas / Pengguna)';
-                $_SESSION['user_role'] = 'pengguna';
-                $_SESSION['user_prodi_id'] = null;
-                $_SESSION['user_prodi_name'] = null;
-                $_SESSION['user_fakultas_id'] = null;
-                $_SESSION['user_fakultas_name'] = null;
-                break;
-            default:
-                Auth::setFlash('danger', 'Peran yang dipilih tidak valid.');
-                redirect('auth/select-role');
+        if (in_array($selectedRole, $lpmSwitchRoles, true)) {
+            $_SESSION['user_name'] = $cleanName . ' (' . Auth::getRoleLabel($selectedRole) . ')';
+            $_SESSION['user_role'] = $selectedRole;
+            $_SESSION['user_prodi_id'] = null;
+            $_SESSION['user_prodi_name'] = null;
+            $_SESSION['user_fakultas_id'] = null;
+            $_SESSION['user_fakultas_name'] = null;
+        } else {
+            switch ($selectedRole) {
+                case 'gpm':
+                    $_SESSION['user_name'] = $cleanName . " (GPM {$targetFakShort})";
+                    $_SESSION['user_role'] = 'gpm';
+                    $_SESSION['user_prodi_id'] = null;
+                    $_SESSION['user_prodi_name'] = null;
+                    $_SESSION['user_fakultas_id'] = $targetFakId;
+                    $_SESSION['user_fakultas_name'] = $targetFakName;
+                    break;
+                case 'dekan':
+                    $_SESSION['user_name'] = $cleanName . " (Dekan {$targetFakShort})";
+                    $_SESSION['user_role'] = 'dekan';
+                    $_SESSION['user_prodi_id'] = null;
+                    $_SESSION['user_prodi_name'] = null;
+                    $_SESSION['user_fakultas_id'] = $targetFakId;
+                    $_SESSION['user_fakultas_name'] = $targetFakName;
+                    break;
+                case 'wadek':
+                    $_SESSION['user_name'] = $cleanName . " (Wakil Dekan {$targetFakShort})";
+                    $_SESSION['user_role'] = 'wadek';
+                    $_SESSION['user_prodi_id'] = null;
+                    $_SESSION['user_prodi_name'] = null;
+                    $_SESSION['user_fakultas_id'] = $targetFakId;
+                    $_SESSION['user_fakultas_name'] = $targetFakName;
+                    break;
+                case 'kaprodi':
+                    $_SESSION['user_name'] = $cleanName . " (Kaprodi {$targetProdiName})";
+                    $_SESSION['user_role'] = 'kaprodi';
+                    $_SESSION['user_prodi_id'] = $targetProdiId;
+                    $_SESSION['user_prodi_name'] = $targetProdiName;
+                    $_SESSION['user_fakultas_id'] = $targetProdiFakId;
+                    $_SESSION['user_fakultas_name'] = $targetProdiFakName;
+                    break;
+                case 'sekprodi':
+                    $_SESSION['user_name'] = $cleanName . " (Sekprodi {$targetProdiName})";
+                    $_SESSION['user_role'] = 'sekprodi';
+                    $_SESSION['user_prodi_id'] = $targetProdiId;
+                    $_SESSION['user_prodi_name'] = $targetProdiName;
+                    $_SESSION['user_fakultas_id'] = $targetProdiFakId;
+                    $_SESSION['user_fakultas_name'] = $targetProdiFakName;
+                    break;
+                case 'pengguna':
+                    $_SESSION['user_name'] = $cleanName . ' (Civitas / Pengguna)';
+                    $_SESSION['user_role'] = 'pengguna';
+                    $_SESSION['user_prodi_id'] = null;
+                    $_SESSION['user_prodi_name'] = null;
+                    $_SESSION['user_fakultas_id'] = null;
+                    $_SESSION['user_fakultas_name'] = null;
+                    break;
+                default:
+                    Auth::setFlash('danger', 'Peran yang dipilih tidak valid.');
+                    redirect('auth/select-role');
+            }
         }
 
         $_SESSION['is_multi_role_testing'] = true;

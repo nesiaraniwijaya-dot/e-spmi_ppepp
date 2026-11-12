@@ -69,7 +69,6 @@ $router->get('admin/monitoring-berkas', ['SuperAdminController', 'monitoringBerk
 $router->get('admin/monitoring-lalulintas', ['SuperAdminController', 'monitoringBerkas']);
 $router->get('admin/monitoring-gpm', ['SuperAdminController', 'monitoringGpm']);
 $router->get('admin/monitoring-gpm/history/{id:\d+}', ['SuperAdminController', 'gpmReviewHistory']);
-$router->post('admin/monitoring-gpm/evaluate', ['SuperAdminController', 'submitGpmEvaluation']);
 $router->get('admin/review-prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
 $router->get('admin/review/prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
 $router->get('admin/review-fakultas/{id:\d+}', ['SuperAdminController', 'reviewFakultas']);
@@ -192,15 +191,15 @@ $router->post('gpm/profile/update', ['ProfileController', 'update']);
 
 // Redirect rute lama kepala/* ke admin/* (dengan perlindungan RBAC LPM)
 $router->get('kepala/dashboard', function() {
-    Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+    Auth::requireRole(Auth::LPM_ROLES);
     redirect('admin/dashboard');
 });
 $router->get('kepala/rekapitulasi', function() {
-    Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+    Auth::requireRole(Auth::LPM_ROLES);
     redirect('admin/monitoring-berkas');
 });
 $router->get('kepala/audit', function() {
-    Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+    Auth::requireRole(Auth::LPM_ROLES);
     redirect('admin/monitoring-dokumen');
 });
 

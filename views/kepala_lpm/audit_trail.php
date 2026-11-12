@@ -120,10 +120,21 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <td>
                                     <?php
                                     $rBadge = match($log['user_role']) {
-                                        'super_admin' => '<span class="badge bg-danger">Admin LPM</span>',
-                                        'kepala_lpm'  => '<span class="badge bg-warning text-dark">Kepala LPM</span>',
-                                        'admin_prodi' => '<span class="badge bg-primary">Admin Prodi</span>',
-                                        default => '<span class="badge bg-secondary">Guest</span>'
+                                        'kepala_lpm'                => '<span class="badge bg-warning text-dark">Kepala LPM</span>',
+                                        'sekretaris_lpm'            => '<span class="badge bg-info text-dark">Sekretaris LPM</span>',
+                                        'ketua_pusat_spm'           => '<span class="badge text-white" style="background:#4338CA;">Ketua Pusat SPM</span>',
+                                        'ketua_pusat_ami'           => '<span class="badge bg-success">Ketua Pusat AMI</span>',
+                                        'ketua_pusat_pemeringkatan' => '<span class="badge text-white" style="background:#7C3AED;">Ketua Pemeringkatan</span>',
+                                        'tu_lpm'                    => '<span class="badge bg-secondary">TU LPM</span>',
+                                        'super_admin', 'admin_lpm'  => '<span class="badge bg-danger">Super Admin / LPM</span>',
+                                        'kepala_pusat_mutu'         => '<span class="badge text-white" style="background:#4338CA;">Ketua Pusat Mutu</span>',
+                                        'dekan'                     => '<span class="badge bg-primary">Dekan</span>',
+                                        'wadek'                     => '<span class="badge bg-primary bg-opacity-75">Wakil Dekan</span>',
+                                        'gpm'                       => '<span class="badge bg-teal text-white" style="background:#0D9488;">GPM Fakultas</span>',
+                                        'kaprodi'                   => '<span class="badge bg-primary">Kaprodi</span>',
+                                        'sekprodi'                  => '<span class="badge bg-info text-dark">Sekprodi</span>',
+                                        'admin_prodi'               => '<span class="badge bg-primary">Admin Prodi</span>',
+                                        default => '<span class="badge bg-secondary">' . htmlspecialchars((string)($log['user_role'] ?: 'Guest')) . '</span>'
                                     };
                                     echo $rBadge;
                                     ?>

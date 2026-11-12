@@ -32,7 +32,7 @@ class ProfileController extends Controller {
         $uri = strtolower(trim($uri, '/'));
 
         if (str_starts_with($uri, 'admin/profile')) {
-            Auth::requireRole(['super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']);
+            Auth::requireRole(Auth::LPM_ROLES);
         } elseif (str_starts_with($uri, 'fakultas/profile')) {
             Auth::requireRole(['dekan', 'wadek']);
         } elseif (str_starts_with($uri, 'prodi/profile')) {

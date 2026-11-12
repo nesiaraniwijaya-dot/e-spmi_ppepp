@@ -597,7 +597,7 @@
                 let html = '<div class="d-flex flex-column gap-3">';
                 items.forEach((item, idx) => {
                     const isGpm = (item.reviewer_role === 'gpm' || item.tahap === 'gpm');
-                    const isLpm = (item.reviewer_role === 'lpm' || item.reviewer_role === 'super_admin' || item.reviewer_role === 'kepala_lpm');
+                    const isLpm = ['lpm', 'super_admin', 'kepala_lpm', 'sekretaris_lpm', 'ketua_pusat_spm', 'ketua_pusat_ami', 'ketua_pusat_pemeringkatan', 'tu_lpm', 'admin_lpm', 'kepala_pusat_mutu'].includes(item.reviewer_role);
                     const isResubmit = (item.tahap === 'resubmission');
 
                     const roleBadge = isResubmit

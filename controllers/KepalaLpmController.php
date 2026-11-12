@@ -11,8 +11,7 @@ class KepalaLpmController extends Controller {
 
     public function __construct() {
         parent::__construct();
-        // Allowed for kepala_lpm and super_admin
-        Auth::requireRole(['kepala_lpm', 'super_admin']);
+        Auth::requireRole(Auth::LPM_ROLES);
     }
 
     /**

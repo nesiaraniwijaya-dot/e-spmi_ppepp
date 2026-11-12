@@ -220,10 +220,11 @@ class ApiController extends Controller {
                     $doc['status_review'] = 'menunggu_review_gpm';
                 }
 
-                $history = array_values(array_filter($history, function($item) {
+                $lpmCheckRoles = array_merge(['lpm'], Auth::LPM_ROLES);
+                $history = array_values(array_filter($history, function($item) use ($lpmCheckRoles) {
                     $tahap = strtolower($item['tahap'] ?? '');
                     $role = strtolower($item['reviewer_role'] ?? ($item['reviewer_user_role'] ?? ''));
-                    $isLpmItem = ($tahap === 'lpm' || in_array($role, ['lpm', 'super_admin', 'admin_lpm', 'kepala_lpm', 'kepala_pusat_mutu']));
+                    $isLpmItem = ($tahap === 'lpm' || in_array($role, $lpmCheckRoles, true));
                     if ($isLpmItem) {
                         // Hanya izinkan pengesahan akhir ('sesuai') LPM; seluruh catatan revisi/tolakan LPM wajib dirahasiakan
                         return ($item['status_hasil'] ?? '') === 'sesuai';

@@ -1,6 +1,6 @@
 <?php
 /**
- * Super Admin & LPM: Monitoring & Penilaian Kinerja Anggota GPM (Eksklusif Akses LPM)
+ * Super Admin & LPM: Monitoring Kinerja Otomatis Anggota GPM (Eksklusif Akses LPM)
  * SPMI PPEPP UNIKA Soegijapranata
  */
 require_once ROOT_PATH . '/views/layouts/admin_header.php';
@@ -19,23 +19,6 @@ $predikatStyleMap = [
     'danger'    => ['bg' => '#FEF2F2', 'border' => '#FCA5A5', 'text' => '#B91C1C', 'bar' => 'linear-gradient(90deg, #DC2626 0%, #EF4444 100%)', 'icon' => 'fa-circle-exclamation'],
     'secondary' => ['bg' => '#F8FAFC', 'border' => '#CBD5E1', 'text' => '#475569', 'bar' => 'linear-gradient(90deg, #64748B 0%, #94A3B8 100%)', 'icon' => 'fa-hourglass-half'],
 ];
-
-$periodeOptions = [];
-if (!empty($defaultPeriode)) {
-    $periodeOptions[] = (string)$defaultPeriode;
-}
-if (!empty($tahunList) && is_array($tahunList)) {
-    foreach ($tahunList as $ayItem) {
-        $val = is_array($ayItem) ? (string)($ayItem['tahun_akademik'] ?? reset($ayItem)) : (string)$ayItem;
-        $val = trim($val);
-        if ($val !== '' && !in_array($val, $periodeOptions, true)) {
-            $periodeOptions[] = $val;
-        }
-    }
-}
-if (empty($periodeOptions)) {
-    $periodeOptions = ['2025/2026', '2024/2025'];
-}
 ?>
 
 <div class="container-fluid p-0">
@@ -44,10 +27,10 @@ if (empty($periodeOptions)) {
         <div class="flex-grow-1 min-w-0" style="max-width: 680px;">
             <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill small fw-bold mb-2" style="background: #EEF2FF; color: #1E3A8A; border: 1px solid #C7D2FE;">
                 <i class="fas fa-shield-halved text-primary"></i>
-                <span>Gugus Penjaminan Mutu (GPM) &bull; Penilaian Eksklusif LPM</span>
+                <span>Gugus Penjaminan Mutu (GPM) &bull; Skor Otomatis LPM</span>
             </div>
-            <h3 class="fw-bold text-dark-blue mb-1">Monitoring &amp; Penilaian Kinerja GPM</h3>
-            <p class="text-muted small mb-0">Evaluasi kinerja anggota GPM fakultas berbasis Akurasi Lolos LPM, ketuntasan relay catatan LPM, kecepatan respon, dan penilaian manual tim LPM. Data nilai ini hanya tampil untuk role LPM.</p>
+            <h3 class="fw-bold text-dark-blue mb-1">Monitoring Kinerja Otomatis GPM</h3>
+            <p class="text-muted small mb-0">Evaluasi kinerja anggota GPM fakultas secara otomatis berbasis Akurasi Lolos LPM, ketuntasan antrean &amp; relay catatan LPM, dan kecepatan respon penelaahan. Data skor ini hanya tampil untuk role LPM.</p>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap flex-sm-nowrap flex-shrink-0">
             <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm text-nowrap">
@@ -111,9 +94,8 @@ if (empty($periodeOptions)) {
         <div class="mt-3 pt-3 border-top d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 text-muted" style="font-size: 0.75rem; line-height: 1.55;">
             <div>
                 <i class="fas fa-calculator text-primary me-1"></i>
-                <strong>Formula Kinerja:</strong>
-                Skor Otomatis = <code>50%</code> Akurasi Lolos LPM + <code>30%</code> Ketuntasan Antrean &amp; Relay + <code>20%</code> Kecepatan.
-                Skor Akhir = <code>60%</code> Otomatis + <code>40%</code> Penilaian Manual LPM (atau <code>100%</code> Otomatis sebelum dinilai manual).
+                <strong>Formula Kinerja Otomatis:</strong>
+                Skor Akhir = <code>50%</code> Akurasi Lolos LPM + <code>30%</code> Ketuntasan Antrean &amp; Relay + <code>20%</code> Kecepatan Respon (dinormalisasi otomatis berdasarkan pilar yang memiliki data).
             </div>
             <div class="text-lg-end flex-shrink-0">
                 <i class="fas fa-user-shield me-1" style="color:#6D28D9;"></i>
@@ -144,13 +126,13 @@ if (empty($periodeOptions)) {
                 $predColor = $m['predikat_color'] ?? 'secondary';
                 $pStyle = $predikatStyleMap[$predColor] ?? $predikatStyleMap['secondary'];
 
-                $combinedScore = $m['combined_score'] ?? null;
-                $autoScore     = $m['auto_score'] ?? null;
-                $manualScore   = $m['manual_score'] ?? null;
-                $accuracyLpm   = $m['accuracy_lpm'] ?? null;
-                $pendingRelay  = (int)($m['pending_relay_lpm'] ?? 0);
-                $multiRoleCnt  = (int)($m['multi_role_count'] ?? 0);
-                $latestEval    = $m['latest_eval'] ?? null;
+                $combinedScore  = $m['combined_score'] ?? null;
+                $autoScore      = $m['auto_score'] ?? null;
+                $accuracyLpm    = $m['accuracy_lpm'] ?? null;
+                $scoreAntrean   = $m['score_antrean'] ?? null;
+                $scoreKecepatan = $m['score_kecepatan'] ?? null;
+                $pendingRelay   = (int)($m['pending_relay_lpm'] ?? 0);
+                $multiRoleCnt   = (int)($m['multi_role_count'] ?? 0);
 
                 $cardPayload = [
                     'id'             => (int)$m['id'],
@@ -159,12 +141,9 @@ if (empty($periodeOptions)) {
                     'nama_fakultas'  => $m['nama_fakultas'] ?? '',
                     'avatar_url'     => $avatarUrl ?? '',
                     'auto_score'     => $autoScore,
-                    'manual_score'   => $manualScore,
                     'combined_score' => $combinedScore,
                     'predikat'       => $predikat,
                     'predikat_color' => $predColor,
-                    'latest_eval'    => $latestEval,
-                    'default_periode'=> $defaultPeriode ?? '2025/2026',
                 ];
                 $cardPayloadAttr = htmlspecialchars(
                     json_encode($cardPayload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP),
@@ -258,11 +237,11 @@ if (empty($periodeOptions)) {
                                 </div>
                             <?php endif; ?>
 
-                            <!-- 3-Column Score Breakdown: Akurasi Lolos LPM, Skor Sistem, Nilai Manual LPM -->
+                            <!-- 3-Column Score Breakdown: 3 Pilar Penilaian Otomatis Sistem -->
                             <div class="row g-2 text-center">
                                 <div class="col-4">
                                     <div class="gpm-stat-tile h-100">
-                                        <div class="gpm-stat-label">Lolos LPM</div>
+                                        <div class="gpm-stat-label">Lolos LPM (50%)</div>
                                         <div class="gpm-stat-value text-dark-blue">
                                             <?= $accuracyLpm !== null ? number_format((float)$accuracyLpm, 1) . '%' : 'N/A' ?>
                                         </div>
@@ -273,21 +252,23 @@ if (empty($periodeOptions)) {
                                 </div>
                                 <div class="col-4">
                                     <div class="gpm-stat-tile h-100">
-                                        <div class="gpm-stat-label">Sistem (60%)</div>
+                                        <div class="gpm-stat-label">Antrean (30%)</div>
                                         <div class="gpm-stat-value text-primary">
-                                            <?= $autoScore !== null ? number_format((float)$autoScore, 1) : '-' ?>
+                                            <?= $scoreAntrean !== null ? number_format((float)$scoreAntrean, 1) : '-' ?>
                                         </div>
-                                        <div class="gpm-stat-sub">Skor Otomatis</div>
+                                        <div class="gpm-stat-sub">
+                                            <?= (int)($m['pending_review'] ?? 0) > 0 ? (int)$m['pending_review'] . ' pending' : 'Antrean tuntas' ?>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="gpm-stat-tile h-100">
-                                        <div class="gpm-stat-label">LPM (40%)</div>
-                                        <div class="gpm-stat-value" style="color: <?= $manualScore !== null ? '#6D28D9' : '#94A3B8' ?>;">
-                                            <?= $manualScore !== null ? number_format((float)$manualScore, 1) : 'Belum' ?>
+                                        <div class="gpm-stat-label">Kecepatan (20%)</div>
+                                        <div class="gpm-stat-value" style="color: <?= $scoreKecepatan !== null ? '#0F766E' : '#94A3B8' ?>;">
+                                            <?= $scoreKecepatan !== null ? number_format((float)$scoreKecepatan, 1) : '-' ?>
                                         </div>
                                         <div class="gpm-stat-sub">
-                                            <?= (int)($m['eval_count'] ?? 0) > 0 ? (int)$m['eval_count'] . 'x nilai' : 'Nilai Manual' ?>
+                                            <?= ($avgRelayStr !== '-') ? "Relay {$avgRelayStr}" : (($avgReviewStr !== '-') ? "Telaah {$avgReviewStr}" : 'Belum ada data') ?>
                                         </div>
                                     </div>
                                 </div>
@@ -351,48 +332,14 @@ if (empty($periodeOptions)) {
                                 </span>
                             </div>
 
-                            <!-- Catatan Evaluasi Manual LPM Terbaru -->
-                            <?php if (!empty($latestEval)): ?>
-                                <div class="gpm-eval-box mt-auto" style="background: #F5F3FF; border-color: #DDD6FE;">
-                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1" style="font-size: 0.72rem;">
-                                        <span class="fw-bold" style="color: #5B21B6;">
-                                            <i class="fas fa-comment-medical me-1"></i>Evaluasi LPM (<?= htmlspecialchars($latestEval['periode'] ?? '-') ?>)
-                                        </span>
-                                        <span class="badge rounded-pill bg-white border text-dark fw-bold" style="font-size: 0.68rem;">
-                                            <?= number_format((float)$latestEval['skor_manual_total'], 1) ?>/100
-                                        </span>
-                                    </div>
-                                    <div class="text-dark small gpm-eval-excerpt" style="font-size: 0.77rem; line-height: 1.45;">
-                                        <?= !empty($latestEval['catatan_evaluasi'])
-                                            ? htmlspecialchars($latestEval['catatan_evaluasi'])
-                                            : '<span class="text-muted fst-italic">Skor manual tersimpan tanpa catatan teks.</span>' ?>
-                                    </div>
-                                    <div class="text-muted mt-1" style="font-size: 0.68rem;">
-                                        Oleh: <?= htmlspecialchars($latestEval['evaluator_name'] ?? 'Tim LPM') ?>
-                                    </div>
-                                </div>
-                            <?php else: ?>
-                                <div class="gpm-eval-empty mt-auto text-center text-muted">
-                                    <i class="far fa-note-sticky me-1"></i>Belum ada catatan evaluasi manual dari LPM.
-                                </div>
-                            <?php endif; ?>
-
                             <!-- Card Footer Actions -->
-                            <div class="d-flex flex-wrap gap-2 pt-1">
+                            <div class="mt-auto pt-1">
                                 <button type="button"
-                                        class="btn btn-outline-primary btn-sm rounded-pill flex-grow-1 fw-semibold py-2 px-3 d-inline-flex align-items-center justify-content-center gap-2 shadow-sm"
+                                        class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-semibold py-2 px-3 d-inline-flex align-items-center justify-content-center gap-2 shadow-sm"
                                         data-gpm="<?= $cardPayloadAttr ?>"
                                         onclick="openGpmHistoryFromBtn(this)">
                                     <i class="fas fa-clock-rotate-left"></i>
-                                    <span>More Detail</span>
-                                </button>
-                                <button type="button"
-                                        class="btn btn-primary btn-sm rounded-pill flex-grow-1 fw-semibold py-2 px-3 d-inline-flex align-items-center justify-content-center gap-2 shadow-sm border-0"
-                                        style="background: linear-gradient(135deg, #4F46E5, #6D28D9);"
-                                        data-gpm="<?= $cardPayloadAttr ?>"
-                                        onclick="openEvaluateModalFromBtn(this)">
-                                    <i class="fas fa-clipboard-check"></i>
-                                    <span>Nilai LPM</span>
+                                    <span>More Detail (Riwayat Telaah &amp; Relay)</span>
                                 </button>
                             </div>
                         </div>
@@ -403,7 +350,7 @@ if (empty($periodeOptions)) {
     <?php endif; ?>
 </div>
 
-<!-- MODAL 1: MORE DETAIL RIWAYAT REVIEW, RELAY & PENILAIAN LPM -->
+<!-- MODAL: MORE DETAIL RIWAYAT TELAAH & RELAY GPM -->
 <div class="modal fade" id="modalGpmHistory" tabindex="-1" aria-labelledby="modalGpmName" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
@@ -423,20 +370,13 @@ if (empty($periodeOptions)) {
                 <button type="button" class="btn-close gpm-modal-close flex-shrink-0" data-bs-dismiss="modal" aria-label="Tutup"></button>
             </div>
 
-            <!-- Modal Navigation Tabs & Filter Bar -->
+            <!-- Modal Filter Bar -->
             <div class="gpm-modal-toolbar bg-white border-bottom">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <div class="d-flex flex-wrap align-items-center gap-2" id="modalHistoryMainTabs" role="tablist">
-                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold active d-inline-flex align-items-center gap-2" id="tabBtnReviewHistory" onclick="switchHistoryModalTab('reviews')">
-                            <i class="fas fa-list-check"></i>
-                            <span>Riwayat Telaah &amp; Relay</span>
-                            <span class="badge rounded-pill bg-white text-primary" id="modalHistoryCount">0</span>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-2" id="tabBtnEvalHistory" onclick="switchHistoryModalTab('evaluations')">
-                            <i class="fas fa-star-half-stroke"></i>
-                            <span>Riwayat Penilaian LPM</span>
-                            <span class="badge rounded-pill bg-secondary text-white" id="modalEvalCount">0</span>
-                        </button>
+                    <div class="d-inline-flex align-items-center gap-2 fw-bold text-dark-blue" style="font-size: 0.85rem;">
+                        <i class="fas fa-list-check text-primary"></i>
+                        <span>Riwayat Telaah &amp; Relay</span>
+                        <span class="badge rounded-pill bg-primary text-white" id="modalHistoryCount">0</span>
                     </div>
                     <div class="text-muted small fw-semibold" id="modalHistoryShowingMeta" style="font-size: 0.75rem;"></div>
                 </div>
@@ -454,130 +394,16 @@ if (empty($periodeOptions)) {
             <div class="modal-body p-3 p-md-4" id="modalGpmHistoryBody" style="background: #F1F5F9; min-height: 320px;">
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary mb-2" role="status" style="width: 2rem; height: 2rem;"></div>
-                    <div class="small text-muted">Memuat data riwayat telaah &amp; evaluasi GPM...</div>
+                    <div class="small text-muted">Memuat data riwayat telaah &amp; relay GPM...</div>
                 </div>
             </div>
 
             <!-- Modal Footer -->
-            <div class="modal-footer border-top bg-white py-3 px-4 justify-content-between gap-2">
-                <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-white border-0 shadow-sm"
-                        id="modalQuickEvalBtn"
-                        style="background: linear-gradient(135deg, #4F46E5, #6D28D9);"
-                        onclick="openEvaluateFromHistoryModal()">
-                    <i class="fas fa-clipboard-check me-1"></i> Beri / Update Penilaian LPM
-                </button>
+            <div class="modal-footer border-top bg-white py-3 px-4 justify-content-end">
                 <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4 py-2 fw-semibold" data-bs-dismiss="modal">
                     Tutup
                 </button>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL 2: FORM PENILAIAN & CATATAN EVALUASI MANUAL LPM -->
-<div class="modal fade" id="modalEvaluateGpm" tabindex="-1" aria-labelledby="modalEvalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
-            <form method="POST" action="<?= base_url('admin/monitoring-gpm/evaluate') ?>" id="formEvaluateGpm">
-                <?= function_exists('csrf_field') ? csrf_field() : '' ?>
-                <input type="hidden" name="gpm_user_id" id="evalGpmUserId" value="">
-
-                <div class="modal-header border-bottom text-white" style="background: linear-gradient(135deg, #1E3A8A 0%, #6D28D9 100%);">
-                    <div class="min-w-0 pe-2">
-                        <h6 class="modal-title fw-bold mb-1 text-white" id="modalEvalTitle">
-                            <i class="fas fa-clipboard-check me-2"></i>Penilaian &amp; Evaluasi Kinerja GPM (Khusus LPM)
-                        </h6>
-                        <div class="small opacity-75" id="evalTargetSub">Evaluasi manual tim LPM digabungkan 40% dengan skor otomatis sistem (60%)</div>
-                    </div>
-                    <button type="button" class="btn-close btn-close-white flex-shrink-0" data-bs-dismiss="modal" aria-label="Tutup"></button>
-                </div>
-
-                <div class="modal-body p-4">
-                    <!-- Ringkasan Target & Estimasi Live Skor Kombinasi -->
-                    <div class="p-3 rounded-4 border mb-3 bg-light-subtle">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-md-5">
-                                <div class="fw-bold text-dark-blue" id="evalTargetName">-</div>
-                                <div class="small text-muted" id="evalTargetFakultas">-</div>
-                            </div>
-                            <div class="col-4 col-md-2 text-center">
-                                <div class="text-muted fw-bold" style="font-size:0.68rem;">SISTEM (60%)</div>
-                                <div class="fw-bold fs-5 text-primary" id="evalPreviewAuto">-</div>
-                            </div>
-                            <div class="col-4 col-md-2 text-center">
-                                <div class="text-muted fw-bold" style="font-size:0.68rem;">MANUAL (40%)</div>
-                                <div class="fw-bold fs-5" style="color:#6D28D9;" id="evalPreviewManual">80.0</div>
-                            </div>
-                            <div class="col-4 col-md-3 text-center">
-                                <div class="p-2 rounded-3 border bg-white">
-                                    <div class="text-muted fw-bold" style="font-size:0.66rem;">ESTIMASI AKHIR</div>
-                                    <div class="fw-bold fs-5 text-success" id="evalPreviewCombined">-</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Periode -->
-                    <div class="mb-3">
-                        <label for="evalPeriode" class="form-label small fw-bold text-dark">Periode Evaluasi / Tahun Akademik</label>
-                        <select name="periode" id="evalPeriode" class="form-select rounded-3">
-                            <?php foreach ($periodeOptions as $pOpt): ?>
-                                <option value="<?= htmlspecialchars($pOpt) ?>" <?= $pOpt === ($defaultPeriode ?? '') ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($pOpt) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <!-- 3 Kriteria Penilaian Manual -->
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <label for="evalKetelitianNum" class="form-label small fw-bold text-dark d-flex justify-content-between">
-                                <span>Ketelitian Telaah</span>
-                                <span class="text-primary">0-100</span>
-                            </label>
-                            <input type="range" class="form-range" min="0" max="100" value="80" id="evalKetelitianRange" oninput="syncEvalScore('ketelitian', this.value)">
-                            <input type="number" name="skor_ketelitian" id="evalKetelitianNum" class="form-control form-control-sm text-center fw-bold" min="0" max="100" value="80" required oninput="syncEvalScore('ketelitian', this.value)">
-                            <div class="form-text" style="font-size:0.7rem;">Kecermatan menyaring dokumen sebelum ke LPM.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="evalKecepatanNum" class="form-label small fw-bold text-dark d-flex justify-content-between">
-                                <span>Kecepatan &amp; Relay</span>
-                                <span class="text-primary">0-100</span>
-                            </label>
-                            <input type="range" class="form-range" min="0" max="100" value="80" id="evalKecepatanRange" oninput="syncEvalScore('kecepatan', this.value)">
-                            <input type="number" name="skor_kecepatan" id="evalKecepatanNum" class="form-control form-control-sm text-center fw-bold" min="0" max="100" value="80" required oninput="syncEvalScore('kecepatan', this.value)">
-                            <div class="form-text" style="font-size:0.7rem;">Responsivitas meneruskan catatan LPM ke unit.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="evalKomunikasiNum" class="form-label small fw-bold text-dark d-flex justify-content-between">
-                                <span>Kualitas Arahan</span>
-                                <span class="text-primary">0-100</span>
-                            </label>
-                            <input type="range" class="form-range" min="0" max="100" value="80" id="evalKomunikasiRange" oninput="syncEvalScore('komunikasi', this.value)">
-                            <input type="number" name="skor_komunikasi" id="evalKomunikasiNum" class="form-control form-control-sm text-center fw-bold" min="0" max="100" value="80" required oninput="syncEvalScore('komunikasi', this.value)">
-                            <div class="form-text" style="font-size:0.7rem;">Kejelasan perumusan arahan revisi ke Prodi/Dekanat.</div>
-                        </div>
-                    </div>
-
-                    <!-- Catatan Kualitatif LPM -->
-                    <div class="mb-1">
-                        <label for="evalCatatan" class="form-label small fw-bold text-dark">Catatan Evaluasi &amp; Pembinaan LPM</label>
-                        <textarea name="catatan_evaluasi" id="evalCatatan" rows="3" class="form-control rounded-3"
-                                  placeholder="Tuliskan catatan apresiasi, temuan ketidaktelitian telaah, atau arahan pembinaan internal dari LPM untuk anggota GPM ini..."></textarea>
-                        <div class="form-text" style="font-size:0.72rem;">
-                            <i class="fas fa-lock text-secondary me-1"></i>Catatan ini bersifat internal LPM dan tidak ditampilkan pada dashboard GPM, Prodi, maupun Dekanat.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer border-top bg-light rounded-bottom-4">
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold border-0" style="background: linear-gradient(135deg, #1E3A8A, #6D28D9);">
-                        <i class="fas fa-floppy-disk me-1"></i> Simpan Penilaian LPM
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -807,13 +633,6 @@ if (empty($periodeOptions)) {
     border-radius: 0.65rem;
     border: 1px solid transparent;
 }
-#modalEvaluateGpm .modal-header .btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%) !important;
-    opacity: 0.9;
-}
-#modalEvaluateGpm .modal-header .btn-close-white:hover {
-    opacity: 1;
-}
 </style>
 
 <script>
@@ -829,11 +648,7 @@ window.escapeHtml = window.escapeHtml || function(str) {
 var escapeHtml = window.escapeHtml;
 
 let currentGpmHistoryData = [];
-let currentGpmEvaluations = [];
-let currentHistoryTab = 'reviews';
 let currentHistoryCategory = 'all';
-let currentModalGpmPayload = null;
-let currentEvalAutoScore = null;
 
 // Filter real-time kartu GPM (pencarian + predikat)
 function applyGpmFilters() {
@@ -874,22 +689,8 @@ function openGpmHistoryFromBtn(btn) {
     openGpmHistoryModal(gpm);
 }
 
-function openEvaluateModalFromBtn(btn) {
-    const gpm = parseBtnPayload(btn);
-    openEvaluateModal(gpm);
-}
-
-function openEvaluateFromHistoryModal() {
-    if (!currentModalGpmPayload) return;
-    const histEl = document.getElementById('modalGpmHistory');
-    const histInst = bootstrap.Modal.getInstance(histEl);
-    if (histInst) histInst.hide();
-    openEvaluateModal(currentModalGpmPayload);
-}
-
 // Buka Modal Riwayat More Detail GPM
 function openGpmHistoryModal(gpm) {
-    currentModalGpmPayload = gpm;
     const gpmId = gpm.id || 0;
     const name = gpm.name || '-';
     const fakultas = gpm.nama_fakultas || '';
@@ -936,16 +737,14 @@ function openGpmHistoryModal(gpm) {
     const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
     bsModal.show();
 
-    currentHistoryTab = 'reviews';
     currentHistoryCategory = 'all';
-    updateHistoryTabButtons();
     resetFilterButtonsState('all');
 
     const body = document.getElementById('modalGpmHistoryBody');
     body.innerHTML = `
         <div class="text-center py-5">
             <div class="spinner-border text-primary mb-2" role="status" style="width: 2rem; height: 2rem;"></div>
-            <div class="small text-muted">Memuat data riwayat telaah &amp; evaluasi GPM...</div>
+            <div class="small text-muted">Memuat data riwayat telaah &amp; relay GPM...</div>
         </div>
     `;
 
@@ -954,9 +753,7 @@ function openGpmHistoryModal(gpm) {
         .then(data => {
             if (data && data.success) {
                 currentGpmHistoryData = data.history || [];
-                currentGpmEvaluations = data.evaluations || [];
                 document.getElementById('modalHistoryCount').textContent = currentGpmHistoryData.length;
-                document.getElementById('modalEvalCount').textContent = currentGpmEvaluations.length;
                 renderActiveHistoryTab();
             } else {
                 body.innerHTML = `
@@ -978,35 +775,8 @@ function openGpmHistoryModal(gpm) {
         });
 }
 
-function updateHistoryTabButtons() {
-    const btnRev = document.getElementById('tabBtnReviewHistory');
-    const btnEval = document.getElementById('tabBtnEvalHistory');
-    const filterGroup = document.getElementById('modalHistoryFilterGroup');
-
-    if (currentHistoryTab === 'reviews') {
-        btnRev.className = 'btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold active d-inline-flex align-items-center gap-2';
-        btnEval.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-2';
-        filterGroup.style.display = 'flex';
-    } else {
-        btnRev.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-2';
-        btnEval.className = 'btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold active d-inline-flex align-items-center gap-2';
-        filterGroup.style.display = 'none';
-    }
-}
-
-function switchHistoryModalTab(tab) {
-    currentHistoryTab = tab;
-    updateHistoryTabButtons();
-    renderActiveHistoryTab();
-}
-
 function renderActiveHistoryTab() {
     const metaEl = document.getElementById('modalHistoryShowingMeta');
-    if (currentHistoryTab === 'evaluations') {
-        if (metaEl) metaEl.textContent = `${currentGpmEvaluations.length} penilaian tersimpan`;
-        renderModalEvaluationsList(currentGpmEvaluations);
-        return;
-    }
     const filtered = currentHistoryCategory === 'all'
         ? currentGpmHistoryData
         : currentGpmHistoryData.filter(i => resolveHistoryCategory(i) === currentHistoryCategory);
@@ -1042,10 +812,6 @@ function resetFilterButtonsState(activeCat) {
 function filterModalHistory(type, btn) {
     currentHistoryCategory = type;
     resetFilterButtonsState(type);
-    if (currentHistoryTab !== 'reviews') {
-        currentHistoryTab = 'reviews';
-        updateHistoryTabButtons();
-    }
     renderActiveHistoryTab();
 }
 
@@ -1147,140 +913,6 @@ function renderModalHistoryList(list) {
     });
     html += '</div>';
     body.innerHTML = html;
-}
-
-function renderModalEvaluationsList(evals) {
-    const body = document.getElementById('modalGpmHistoryBody');
-    if (!evals || evals.length === 0) {
-        body.innerHTML = `
-            <div class="text-center py-5 text-muted bg-white rounded-4 border p-4">
-                <i class="fas fa-clipboard-list fa-2x text-secondary opacity-50 mb-2 d-block"></i>
-                <h6 class="fw-bold text-dark mb-1">Belum Ada Penilaian Manual LPM</h6>
-                <p class="small text-muted mb-3">Anggota GPM ini baru memiliki skor otomatis sistem. Tim LPM dapat memberikan penilaian manual ketelitian, kecepatan, dan komunikasi beserta catatan pembinaan.</p>
-                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 py-2 fw-semibold border-0"
-                        style="background: linear-gradient(135deg, #4F46E5, #6D28D9);"
-                        onclick="openEvaluateFromHistoryModal()">
-                    <i class="fas fa-plus me-1"></i> Tambah Penilaian LPM Sekarang
-                </button>
-            </div>
-        `;
-        return;
-    }
-
-    let html = '<div class="d-flex flex-column gap-3">';
-    evals.forEach(ev => {
-        const waktuFmt = ev.created_at ? formatDateTimeStr(ev.created_at) : '-';
-        html += `
-            <div class="gpm-history-card" style="border-left-color: #6D28D9;">
-                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 pb-2 border-bottom">
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="badge rounded-pill px-3 py-1 fw-bold" style="background:#EDE9FE; color:#5B21B6; border:1px solid #DDD6FE; font-size:0.73rem;">
-                            <i class="fas fa-star me-1"></i> Skor Manual: ${Number(ev.skor_manual_total || 0).toFixed(1)} / 100
-                        </span>
-                        <span class="badge bg-light text-dark border px-2 py-1 rounded-pill" style="font-size:0.71rem;">
-                            Periode ${escapeHtml(ev.periode || '-')}
-                        </span>
-                    </div>
-                    <div class="text-muted small text-nowrap flex-shrink-0" style="font-size: 0.74rem;">
-                        <i class="far fa-clock me-1"></i>${waktuFmt}
-                    </div>
-                </div>
-
-                <div class="row g-2 my-2 text-center">
-                    <div class="col-4">
-                        <div class="gpm-stat-tile">
-                            <div class="gpm-stat-label">Ketelitian</div>
-                            <div class="fw-bold text-dark-blue">${parseInt(ev.skor_ketelitian || 0, 10)}</div>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="gpm-stat-tile">
-                            <div class="gpm-stat-label">Kecepatan &amp; Relay</div>
-                            <div class="fw-bold text-dark-blue">${parseInt(ev.skor_kecepatan || 0, 10)}</div>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="gpm-stat-tile">
-                            <div class="gpm-stat-label">Kualitas Arahan</div>
-                            <div class="fw-bold text-dark-blue">${parseInt(ev.skor_komunikasi || 0, 10)}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gpm-history-note" style="background:#F5F3FF; border-color:#DDD6FE;">
-                    <div class="small fw-bold mb-1" style="color:#5B21B6; font-size:0.7rem; text-transform:uppercase; letter-spacing: 0.02em;">
-                        <i class="fas fa-comment-medical me-1"></i>Catatan Evaluasi Tim LPM:
-                    </div>
-                    <div class="small text-dark" style="font-size:0.82rem; line-height:1.55; white-space:pre-line;">${ev.catatan_evaluasi ? escapeHtml(ev.catatan_evaluasi) : '<span class="text-muted fst-italic">Tidak ada catatan tambahan.</span>'}</div>
-                    <div class="text-muted mt-2" style="font-size:0.7rem;">
-                        Penilai: <strong>${escapeHtml(ev.evaluator_name || 'Tim LPM')}</strong> (${escapeHtml(ev.evaluator_role || 'LPM')})
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    html += '</div>';
-    body.innerHTML = html;
-}
-
-// Buka Modal Penilaian Manual LPM
-function openEvaluateModal(gpm) {
-    currentEvalAutoScore = (gpm.auto_score !== null && gpm.auto_score !== undefined) ? parseFloat(gpm.auto_score) : null;
-
-    document.getElementById('evalGpmUserId').value = gpm.id || '';
-    document.getElementById('evalTargetName').textContent = gpm.name || '-';
-    document.getElementById('evalTargetFakultas').textContent = gpm.nama_fakultas ? `GPM ${gpm.nama_fakultas}` : (gpm.email || '-');
-    document.getElementById('evalPreviewAuto').textContent = currentEvalAutoScore !== null ? currentEvalAutoScore.toFixed(1) : '-';
-
-    const latest = gpm.latest_eval || null;
-    const periodeSel = document.getElementById('evalPeriode');
-    const targetPeriode = (latest && latest.periode) ? latest.periode : (gpm.default_periode || '');
-    if (targetPeriode) {
-        const existsOpt = Array.from(periodeSel.options).some(o => o.value === targetPeriode);
-        if (!existsOpt) {
-            const newOpt = new Option(targetPeriode, targetPeriode, true, true);
-            periodeSel.add(newOpt, 0);
-        }
-        periodeSel.value = targetPeriode;
-    }
-
-    syncEvalScore('ketelitian', latest ? parseInt(latest.skor_ketelitian ?? 80, 10) : 80);
-    syncEvalScore('kecepatan', latest ? parseInt(latest.skor_kecepatan ?? 80, 10) : 80);
-    syncEvalScore('komunikasi', latest ? parseInt(latest.skor_komunikasi ?? 80, 10) : 80);
-    document.getElementById('evalCatatan').value = latest && latest.catatan_evaluasi ? latest.catatan_evaluasi : '';
-
-    recalcEvalPreview();
-
-    const modalEl = document.getElementById('modalEvaluateGpm');
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
-}
-
-function syncEvalScore(field, val) {
-    let num = parseInt(val, 10);
-    if (isNaN(num)) num = 0;
-    num = Math.max(0, Math.min(100, num));
-
-    const cap = field.charAt(0).toUpperCase() + field.slice(1);
-    const rangeEl = document.getElementById(`eval${cap}Range`);
-    const numEl = document.getElementById(`eval${cap}Num`);
-    if (rangeEl) rangeEl.value = num;
-    if (numEl && document.activeElement !== numEl) numEl.value = num;
-
-    recalcEvalPreview();
-}
-
-function recalcEvalPreview() {
-    const k1 = Math.max(0, Math.min(100, parseInt(document.getElementById('evalKetelitianNum')?.value || '80', 10) || 0));
-    const k2 = Math.max(0, Math.min(100, parseInt(document.getElementById('evalKecepatanNum')?.value || '80', 10) || 0));
-    const k3 = Math.max(0, Math.min(100, parseInt(document.getElementById('evalKomunikasiNum')?.value || '80', 10) || 0));
-
-    const manualAvg = (k1 + k2 + k3) / 3;
-    document.getElementById('evalPreviewManual').textContent = manualAvg.toFixed(1);
-
-    const combined = currentEvalAutoScore !== null
-        ? (currentEvalAutoScore * 0.60) + (manualAvg * 0.40)
-        : manualAvg;
-    document.getElementById('evalPreviewCombined').textContent = combined.toFixed(1);
 }
 
 function formatDateTimeStr(dateStr) {
