@@ -23,3 +23,4 @@ ALTER TABLE `ppepp_cycles`
   ADD INDEX `idx_cycles_prodi` (`prodi_id`, `deleted_at`),
   ADD INDEX `idx_cycles_fakultas` (`fakultas_id`, `level`, `deleted_at`),
   ADD INDEX `idx_cycles_bidang` (`bidang_id`, `sub_bidang_id`);
+

@@ -842,11 +842,12 @@ class GpmController extends Controller {
                                     $fileName = 'GPM_' . $this->fakultasId . '_' . time() . '_' . uniqid() . '.' . $ext;
                                     $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                                     if (move_uploaded_file($tmpName, $targetFile)) {
+                                        $opt = ImageOptimizer::processUploadedFile($targetFile, $origName, 'uploads/documents');
                                         $uploadedFilesList[] = [
-                                            'name' => $origName,
-                                            'path' => 'uploads/documents/' . $fileName,
-                                            'size' => round($size / (1024 * 1024), 2) . ' MB',
-                                            'ext'  => $ext,
+                                            'name' => $opt['orig_name'],
+                                            'path' => $opt['file_path'],
+                                            'size' => $opt['file_size'],
+                                            'ext'  => $opt['file_extension'],
                                             'narasi' => $fNarasi,
                                             'sub_bidang_ids' => $fSubs
                                         ];
@@ -1273,9 +1274,10 @@ class GpmController extends Controller {
                             $fileName = 'GPM_' . $this->fakultasId . '_' . time() . '_' . uniqid() . '.' . $ext;
                             $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                             if (move_uploaded_file($tmpName, $targetFile)) {
+                                $opt = ImageOptimizer::processUploadedFile($targetFile, $origName, 'uploads/documents');
                                 $stmtNewFile->execute([
-                                    $id, $origName, 'uploads/documents/' . $fileName,
-                                    round($size / (1024 * 1024), 2) . ' MB', $ext, $fNarasi, $fSubsJson, $nextSort++,
+                                    $id, $opt['orig_name'], $opt['file_path'],
+                                    $opt['file_size'], $opt['file_extension'], $fNarasi, $fSubsJson, $nextSort++,
                                     $fIsLimVal, $fPLimVal, $fCanDlVal
                                 ]);
                                 $newFileId = (int)$this->db->lastInsertId();

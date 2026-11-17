@@ -116,7 +116,7 @@ class Auth {
         return false;
     }
 
-    public static function attemptGoogleLogin(string $email): bool {
+    public static function attemptGoogleLogin(string $email, ?string $googleName = null, ?string $googleAvatar = null): bool {
         self::startSession();
         $pdo = Database::getInstance()->getConnection();
 
@@ -134,6 +134,21 @@ class Auth {
         $user = $stmt->fetch();
 
         if ($user) {
+            // Sinkronkan nama dan foto profil secara otomatis dari akun email Google yang digunakan login
+            $finalName = !empty($googleName) ? trim($googleName) : $user['name'];
+            $finalAvatar = !empty($googleAvatar) ? trim($googleAvatar) : ($user['avatar'] ?? null);
+
+            if ($finalName !== $user['name'] || $finalAvatar !== ($user['avatar'] ?? null)) {
+                try {
+                    $stmtUp = $pdo->prepare("UPDATE users SET name = ?, avatar = ? WHERE id = ?");
+                    $stmtUp->execute([$finalName, $finalAvatar, $user['id']]);
+                    $user['name'] = $finalName;
+                    $user['avatar'] = $finalAvatar;
+                } catch (\Throwable $e) {
+                    error_log('[attemptGoogleLogin] Auto sync profile error: ' . $e->getMessage());
+                }
+            }
+
             if (session_status() === PHP_SESSION_ACTIVE) {
                 @session_regenerate_id(true);
             }
@@ -141,12 +156,12 @@ class Auth {
             self::$cachedUser = null;
 
             $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['user_real_name'] = $user['name'];
+            $_SESSION['user_name'] = $finalName;
+            $_SESSION['user_real_name'] = $finalName;
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_role'] = $user['role'];
             $_SESSION['user_real_role'] = $user['role'];
-            $_SESSION['user_avatar'] = $user['avatar'] ?? null;
+            $_SESSION['user_avatar'] = $finalAvatar;
             $_SESSION['user_prodi_id'] = $user['prodi_id'];
             $_SESSION['user_prodi_name'] = $user['nama_prodi'] ?? null;
             $_SESSION['user_fakultas_id'] = $user['resolved_fakultas_id'] ?? $user['fakultas_id'] ?? null;
@@ -160,7 +175,7 @@ class Auth {
                 aksi: 'LOGIN',
                 modul: 'Autentikasi',
                 targetId: (string)$user['id'],
-                targetName: $user['name'],
+                targetName: $finalName,
                 newValues: ['email' => $user['email'], 'role' => $user['role'], 'method' => 'Google SSO']
             );
 

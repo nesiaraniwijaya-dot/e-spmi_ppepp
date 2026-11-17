@@ -39,6 +39,9 @@ if (!defined('APP_NAME')) {
     if (!is_dir(LOGO_UPLOAD_PATH)) @mkdir(LOGO_UPLOAD_PATH, 0777, true);
     if (!is_dir(AVATAR_UPLOAD_PATH)) @mkdir(AVATAR_UPLOAD_PATH, 0777, true);
 
+    // Image Optimizer & WebP Converter
+    require_once ROOT_PATH . '/core/ImageOptimizer.php';
+
     // Load env variables if available
     $envConfig = file_exists(__DIR__ . '/env.php') ? (require __DIR__ . '/env.php') : [];
 
@@ -117,6 +120,21 @@ function format_file_size(mixed $bytes): string {
         return number_format($bytes / 1024, 1) . ' KB';
     }
     return $bytes . ' B';
+}
+
+/**
+ * Resolves avatar image URL (supports Google profile picture URL or local uploaded file)
+ */
+function user_avatar_url(?string $avatar): ?string {
+    if (empty($avatar)) return null;
+    $avatar = trim($avatar);
+    if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://')) {
+        return $avatar;
+    }
+    if (file_exists(ROOT_PATH . '/' . $avatar)) {
+        return base_url($avatar);
+    }
+    return null;
 }
 
 function siklus_badge(string $siklus): string {

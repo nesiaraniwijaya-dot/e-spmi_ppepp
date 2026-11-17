@@ -739,11 +739,15 @@ class AdminProdiController extends Controller {
                                     $fCat = !empty($batchFileCats[$fIdx]) ? $batchFileCats[$fIdx] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : (in_array($ext, ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a']) ? 'video' : 'file'));
 
                                     if (move_uploaded_file($tmpName, $targetFile)) {
+                                        $opt = ImageOptimizer::processUploadedFile($targetFile, $origName, 'uploads/documents');
+                                        if ($opt['is_image']) {
+                                            $fCat = 'photo';
+                                        }
                                         $uploadedFilesList[] = [
-                                            'file_name' => $origName,
-                                            'file_path' => 'uploads/documents/' . $fileName,
-                                            'file_size' => round($size / (1024 * 1024), 2) . ' MB',
-                                            'file_extension' => $ext,
+                                            'file_name' => $opt['orig_name'],
+                                            'file_path' => $opt['file_path'],
+                                            'file_size' => $opt['file_size'],
+                                            'file_extension' => $opt['file_extension'],
                                             'folder_name' => $fFolder,
                                             'file_category' => $fCat,
                                             'narasi' => $fNarasi,
@@ -781,13 +785,14 @@ class AdminProdiController extends Controller {
                                     $fileName = 'DOC_' . $this->prodiId . '_' . time() . '_' . uniqid() . '.' . $ext;
                                     $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                                     if (file_put_contents($targetFile, $bin) !== false) {
+                                        $opt = ImageOptimizer::processUploadedFile($targetFile, $origName, 'uploads/documents');
                                         $fFolder = trim($b64Item['folder_name'] ?? ($batchFileFolders[$fIdx] ?? 'Utama')) ?: 'Utama';
-                                        $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) ? 'photo' : (in_array($ext, ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a']) ? 'video' : 'file'));
+                                        $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : ($opt['is_image'] ? 'photo' : (in_array($ext, ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a']) ? 'video' : 'file'));
                                         $uploadedFilesList[] = [
-                                            'file_name' => $origName,
-                                            'file_path' => 'uploads/documents/' . $fileName,
-                                            'file_size' => round($size / (1024 * 1024), 2) . ' MB',
-                                            'file_extension' => $ext,
+                                            'file_name' => $opt['orig_name'],
+                                            'file_path' => $opt['file_path'],
+                                            'file_size' => $opt['file_size'],
+                                            'file_extension' => $opt['file_extension'],
                                             'folder_name' => $fFolder,
                                             'file_category' => $fCat,
                                             'narasi' => $fNarasi,
@@ -1235,11 +1240,12 @@ class AdminProdiController extends Controller {
                             $fileName = 'DOC_' . $this->prodiId . '_' . time() . '_' . uniqid() . '.' . $ext;
                             $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                             if (move_uploaded_file($tmpName, $targetFile)) {
+                                $opt = ImageOptimizer::processUploadedFile($targetFile, $origName, 'uploads/documents');
                                 $uploadedFilesList[] = [
-                                    'file_name' => $origName,
-                                    'file_path' => 'uploads/documents/' . $fileName,
-                                    'file_size' => round($size / (1024 * 1024), 2) . ' MB',
-                                    'file_extension' => $ext,
+                                    'file_name' => $opt['orig_name'],
+                                    'file_path' => $opt['file_path'],
+                                    'file_size' => $opt['file_size'],
+                                    'file_extension' => $opt['file_extension'],
                                     'narasi' => $fNarasi
                                 ];
                             }
@@ -1263,11 +1269,12 @@ class AdminProdiController extends Controller {
                 $fileName = 'DOC_' . $this->prodiId . '_' . time() . '_' . uniqid() . '.' . $ext;
                 $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                 if (move_uploaded_file($tmpName, $targetFile)) {
+                    $opt = ImageOptimizer::processUploadedFile($targetFile, $origName, 'uploads/documents');
                     $uploadedFilesList[] = [
-                        'file_name' => $origName,
-                        'file_path' => 'uploads/documents/' . $fileName,
-                        'file_size' => round($size / (1024 * 1024), 2) . ' MB',
-                        'file_extension' => $ext,
+                        'file_name' => $opt['orig_name'],
+                        'file_path' => $opt['file_path'],
+                        'file_size' => $opt['file_size'],
+                        'file_extension' => $opt['file_extension'],
                         'narasi' => $fNarasi
                     ];
                 }
@@ -1448,9 +1455,13 @@ class AdminProdiController extends Controller {
                             $fileName = 'DOC_' . $this->prodiId . '_' . time() . '_' . uniqid() . '.' . $ext;
                             $targetFile = DOC_UPLOAD_PATH . '/' . $fileName;
                             if (file_put_contents($targetFile, $bin) !== false) {
+                                $opt = ImageOptimizer::processUploadedFile($targetFile, $origName, 'uploads/documents');
+                                if ($opt['is_image']) {
+                                    $fCat = 'photo';
+                                }
                                 $stmtNewFile->execute([
-                                    $id, $origName, 'uploads/documents/' . $fileName,
-                                    round($size / (1024 * 1024), 2) . ' MB', $ext,
+                                    $id, $opt['orig_name'], $opt['file_path'],
+                                    $opt['file_size'], $opt['file_extension'],
                                     $fFolder, $fCat,
                                     $fNarasi, $fSubsJson, $nextSort++,
                                     $fIsLimVal, $fPLimVal, $fCanDlVal

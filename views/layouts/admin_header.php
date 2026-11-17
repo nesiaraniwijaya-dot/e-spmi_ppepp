@@ -389,8 +389,11 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                         style="cursor:pointer;padding:0.35rem 0.5rem;border-radius:var(--radius-sm);transition:background 0.2s ease;"
                         onmouseover="this.style.background='rgba(10,25,47,0.06)'"
                         onmouseout="this.style.background='transparent'">
-                    <?php if (!empty($currentUser['avatar']) && file_exists(ROOT_PATH . '/' . $currentUser['avatar'])): ?>
-                        <img src="<?= base_url($currentUser['avatar']) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle shadow-xs border" style="width:36px;height:36px;object-fit:cover;flex-shrink:0;">
+                    <?php 
+                    $headerAvatarUrl = user_avatar_url($currentUser['avatar'] ?? null);
+                    if ($headerAvatarUrl): 
+                    ?>
+                        <img src="<?= htmlspecialchars($headerAvatarUrl) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle shadow-xs border" style="width:36px;height:36px;object-fit:cover;flex-shrink:0;">
                     <?php else: ?>
                         <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--purple-dark),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.85rem;">
                             <?= strtoupper(substr($currentUser['name'] ?? 'U', 0, 1)) ?>
@@ -418,21 +421,6 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                 <?= htmlspecialchars($headerOfficialTitle) ?>
                             </span>
                         </div>
-                    </li>
-                    <li>
-                        <?php 
-                        $profileLink = match(true) {
-                            Auth::isLpm()      => base_url('admin/profile'),
-                            Auth::isProdi()    => base_url('prodi/profile'),
-                            Auth::isFakultas() => base_url('fakultas/profile'),
-                            Auth::isGpm()      => base_url('gpm/profile'),
-                            Auth::isPengguna() => base_url('profile'),
-                            default            => base_url('admin/profile'),
-                        };
-                        ?>
-                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="<?= $profileLink ?>">
-                            <i class="fas fa-user-gear text-primary"></i> Profil & Foto Saya
-                        </a>
                     </li>
                     <?php if (Auth::canSwitchRole()): ?>
                     <li>

@@ -172,14 +172,16 @@ class AuthController extends Controller {
 
         $userInfo = json_decode($userInfoResponse, true);
         $googleEmail = strtolower(trim($userInfo['email'] ?? ''));
+        $googleName = trim($userInfo['name'] ?? '');
+        $googlePicture = trim($userInfo['picture'] ?? '');
 
         if (empty($googleEmail)) {
             Auth::setFlash('danger', 'Tidak dapat mengambil alamat email dari akun Google Anda.');
             redirect('login');
         }
 
-        // 3. Verifikasi & Login ke Sistem SPMI
-        if (Auth::attemptGoogleLogin($googleEmail)) {
+        // 3. Verifikasi & Login ke Sistem SPMI (Sinkronkan nama dan foto profil dari Google)
+        if (Auth::attemptGoogleLogin($googleEmail, $googleName, $googlePicture)) {
             $multiRoleEmails = ['nesiaraniwijaya@gmail.com', 'ravywhienelda@gmail.com'];
             if (in_array($googleEmail, $multiRoleEmails) || Auth::role() === 'testing' || Auth::role() === 'super_admin') {
                 $_SESSION['is_multi_role_testing'] = true;
@@ -194,12 +196,12 @@ class AuthController extends Controller {
             redirect(Auth::getDashboardRoute());
         } elseif (str_ends_with($googleEmail, '@unika.ac.id') || str_ends_with($googleEmail, '@unica.ac.id') || str_ends_with($googleEmail, '.unika.ac.id') || str_ends_with($googleEmail, '.unica.ac.id')) {
             $_SESSION['user_id'] = 'civitas_' . substr(md5($googleEmail), 0, 10);
-            $_SESSION['user_name'] = $userInfo['name'] ?? explode('@', $googleEmail)[0];
+            $_SESSION['user_name'] = !empty($googleName) ? $googleName : explode('@', $googleEmail)[0];
             $_SESSION['user_real_name'] = $_SESSION['user_name'];
             $_SESSION['user_email'] = $googleEmail;
             $_SESSION['user_role'] = 'civitas_unika';
             $_SESSION['user_real_role'] = 'civitas_unika';
-            $_SESSION['user_avatar'] = $userInfo['picture'] ?? null;
+            $_SESSION['user_avatar'] = !empty($googlePicture) ? $googlePicture : null;
             $_SESSION['is_unika_civitas'] = true;
             $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
 

@@ -21,3 +21,15 @@ database/backups/
 *.zip
 ~$*
 
+# Dependencies & Local Dev Scripts
+node_modules/
+package-lock.json
+package.json
+bypass_login.php
+
+# Redundant Document Drafts
+*_REVISI*.docx
+*_FINAL.docx
+
+
+

@@ -93,8 +93,11 @@ $currentUser = Auth::user();
                                 <button class="btn btn-sm btn-outline-light rounded-pill px-3 py-1.5 dropdown-toggle d-flex align-items-center gap-2"
                                         type="button" data-bs-toggle="dropdown" aria-expanded="false"
                                         style="font-size:0.82rem; border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.08);">
-                                    <?php if (!empty($currentUser['avatar']) && file_exists(ROOT_PATH . '/' . $currentUser['avatar'])): ?>
-                                        <img src="<?= base_url($currentUser['avatar']) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle" style="width: 22px; height: 22px; object-fit: cover;">
+                                    <?php 
+                                    $navAvatarUrl = user_avatar_url($currentUser['avatar'] ?? null);
+                                    if ($navAvatarUrl): 
+                                    ?>
+                                        <img src="<?= htmlspecialchars($navAvatarUrl) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle" style="width: 22px; height: 22px; object-fit: cover;">
                                     <?php else: ?>
                                         <i class="fas fa-circle-user fa-lg text-white-50"></i>
                                     <?php endif; ?>
@@ -146,24 +149,6 @@ $currentUser = Auth::user();
                                         <a class="dropdown-item d-flex align-items-center gap-2 py-2"
                                            href="<?= base_url('dokumen') ?>">
                                             <i class="fas fa-file-shield text-success"></i> Portal Dokumen Mutu
-                                        </a>
-                                    </li>
-                                    <?php endif; ?>
-                                    <?php if (empty($_SESSION['is_unika_civitas']) && Auth::role() !== 'civitas_unika'): ?>
-                                    <li>
-                                        <?php 
-                                        $pubProfileLink = match(true) {
-                                            Auth::isLpm()      => base_url('admin/profile'),
-                                            Auth::isProdi()    => base_url('prodi/profile'),
-                                            Auth::isFakultas() => base_url('fakultas/profile'),
-                                            Auth::isGpm()      => base_url('gpm/profile'),
-                                            Auth::isPengguna() => base_url('profile'),
-                                            default            => base_url('profile'),
-                                        };
-                                        ?>
-                                        <a class="dropdown-item d-flex align-items-center gap-2 py-2"
-                                           href="<?= $pubProfileLink ?>">
-                                            <i class="fas fa-user-gear text-secondary"></i> Profil & Foto Saya
                                         </a>
                                     </li>
                                     <?php endif; ?>

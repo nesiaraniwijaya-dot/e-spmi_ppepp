@@ -220,11 +220,6 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <span class="nav-icon-wrap"><i class="fas fa-users-gear"></i></span>
                     <span>Manajemen Pengguna</span>
                 </a>
-                <a href="<?= base_url('admin/profile') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/profile') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-user-gear"></i></span>
-                    <span>Profil & Foto Saya</span>
-                </a>
             </div>
 
         <?php elseif (Auth::isFakultas()): ?>
@@ -299,18 +294,13 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 </a>
             </div>
 
-            <!-- Dekanat: Pengaturan & Profil -->
+            <!-- Dekanat: Profil Pimpinan Dekanat -->
             <div class="admin-nav-group">
-                <div class="admin-nav-label">Pengaturan & Profil</div>
+                <div class="admin-nav-label">Profil Pimpinan</div>
                 <a href="<?= base_url('fakultas/dekanat') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'fakultas/dekanat') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-users-rectangle"></i></span>
                     <span>Profil Dekanat</span>
-                </a>
-                <a href="<?= base_url('fakultas/profile') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'fakultas/profile') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-user-gear"></i></span>
-                    <span>Profil & Foto Saya</span>
                 </a>
             </div>
 
@@ -386,18 +376,13 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 </a>
             </div>
 
-            <!-- Pimpinan Prodi: Pengaturan -->
+            <!-- Pimpinan Prodi: Profil Pimpinan -->
             <div class="admin-nav-group">
-                <div class="admin-nav-label">Pengaturan & Profil</div>
+                <div class="admin-nav-label">Profil Pimpinan</div>
                 <a href="<?= base_url('prodi/kaprodi') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'prodi/kaprodi') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-user-tie"></i></span>
                     <span>Profil Pimpinan Prodi</span>
-                </a>
-                <a href="<?= base_url('prodi/profile') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'prodi/profile') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-user-gear"></i></span>
-                    <span>Profil & Foto Saya</span>
                 </a>
             </div>
 
@@ -440,16 +425,6 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 </a>
             </div>
 
-            <!-- GPM: Pengaturan Akun -->
-            <div class="admin-nav-group">
-                <div class="admin-nav-label">Pengaturan Akun</div>
-                <a href="<?= base_url('gpm/profile') ?>"
-                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/profile') ?>">
-                    <span class="nav-icon-wrap"><i class="fas fa-user-gear"></i></span>
-                    <span>Profil &amp; Foto Saya</span>
-                </a>
-            </div>
-
         <?php endif; ?>
 
         <!-- Sesi Akun (All Roles) -->
@@ -473,8 +448,11 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
     ?>
     <div class="admin-sidebar-footer">
         <div style="display:flex;align-items:center;gap:10px;">
-            <?php if (!empty($currentUser['avatar']) && file_exists(ROOT_PATH . '/' . $currentUser['avatar'])): ?>
-                <img src="<?= base_url($currentUser['avatar']) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle" style="width:28px;height:28px;object-fit:cover;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.3);">
+            <?php 
+            $sbAvatarUrl = user_avatar_url($currentUser['avatar'] ?? null);
+            if ($sbAvatarUrl): 
+            ?>
+                <img src="<?= htmlspecialchars($sbAvatarUrl) ?>" loading="lazy" decoding="async" alt="Avatar" class="rounded-circle" style="width:28px;height:28px;object-fit:cover;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.3);">
             <?php else: ?>
                 <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;box-shadow:0 0 6px rgba(74,222,128,0.6);"></div>
             <?php endif; ?>

@@ -75,7 +75,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                         <?php endif; ?>
 
                         <!-- Google SSO Primary Button -->
-                        <div class="d-grid mb-3">
+                        <div class="d-grid mb-4">
                             <?php 
                             $googleAuthUrl = base_url('auth/google' . (!empty($returnUrl) ? '?return_url=' . urlencode($returnUrl) : ''));
                             ?>
@@ -90,16 +90,6 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                                 </svg>
                                 <span>Masuk dengan Google Institusi SSO</span>
                             </a>
-                        </div>
-
-                        <!-- Info Card: Single Sign-On Unika Policy -->
-                        <div class="card border-0 rounded-4 p-3 mb-4" style="background: #F8FAFC; border: 1px solid #E2E8F0 !important;">
-                            <div class="d-flex align-items-start gap-2.5">
-                                <i class="fas fa-info-circle text-primary mt-0.5 flex-shrink-0"></i>
-                                <div class="text-muted small" style="font-size: 0.8rem; line-height: 1.55;">
-                                    Gunakan akun email resmi institusi Anda (<strong>@unika.ac.id</strong> atau <strong>@student.unika.ac.id</strong>) yang telah terdaftar di sistem MITRA.
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Footer Navigation -->
