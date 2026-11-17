@@ -27,9 +27,14 @@ package-lock.json
 package.json
 bypass_login.php
 
-# Redundant Document Drafts
+# Redundant Document Drafts & Panduan / Logbook Screenshots
 *_REVISI*.docx
 *_FINAL.docx
+BUKU_PANDUAN_*.pdf
+Buku_Panduan_*.docx
+*.xlsx
+bukti_logbook_*/
+screenshots_panduan/
 
 
 

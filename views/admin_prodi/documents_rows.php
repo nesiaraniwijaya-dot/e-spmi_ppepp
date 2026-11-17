@@ -415,13 +415,13 @@ if (!empty($documents)):
                                         $subBadgesHtml = render_sub_standar_badges($f['sub_bidang_ids'] ?? null);
                                     ?>
                                         <div class="card border rounded-3 p-3.5 bg-white shadow-2xs">
-                                            <div class="d-flex flex-column flex-sm-row sm-align-items-center justify-content-between gap-3">
-                                                <div class="d-flex align-items-start gap-3 me-sm-2">
+                                            <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                                                <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0 me-sm-3">
                                                     <div class="p-2.5 rounded-3 bg-danger bg-opacity-10 text-danger flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
                                                         <i class="fas fa-file-pdf fa-xl"></i>
                                                     </div>
-                                                    <div class="min-w-0">
-                                                        <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; line-height: 1.35; word-break: break-word;">
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <div class="fw-bold text-dark text-break mb-1" style="font-size: 0.92rem; line-height: 1.45; word-break: break-word;">
                                                             <?= htmlspecialchars($f['file_name']) ?>
                                                         </div>
                                                         <div class="text-muted d-flex align-items-center gap-2 flex-wrap small" style="font-size: 0.76rem;">
@@ -476,13 +476,13 @@ if (!empty($documents)):
                                         $subBadgesHtml = render_sub_standar_badges($l['sub_bidang_ids'] ?? null);
                                     ?>
                                         <div class="card border rounded-3 p-3.5 bg-white shadow-2xs">
-                                            <div class="d-flex flex-column flex-sm-row sm-align-items-center justify-content-between gap-3">
-                                                <div class="d-flex align-items-start gap-3 me-sm-2">
+                                            <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                                                <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0 me-sm-3">
                                                     <div class="p-2.5 rounded-3 bg-success bg-opacity-10 text-success flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
                                                         <i class="fab fa-google-drive fa-xl"></i>
                                                     </div>
-                                                    <div class="min-w-0">
-                                                        <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; line-height: 1.35; word-break: break-word;">
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <div class="fw-bold text-dark text-break mb-1" style="font-size: 0.92rem; line-height: 1.45;">
                                                             <?= htmlspecialchars($l['narasi'] ?: ('Tautan Google Drive #' . ($lIdx + 1))) ?>
                                                         </div>
                                                         <div class="text-muted text-break small" style="font-size: 0.76rem;">

@@ -335,6 +335,74 @@ if (!empty($documents)):
                                 </div>
                             </div>
                         <?php endif; ?>
+
+                        <!-- Berkas Lampiran -->
+                        <?php if (!empty($files)): ?>
+                            <div class="p-3.5 p-md-4 rounded-4 bg-light border mb-4">
+                                <div class="d-flex align-items-center justify-content-between pb-2.5 mb-3 border-bottom border-light-subtle">
+                                    <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-2" style="font-size: 0.78rem; letter-spacing: 0.5px;">
+                                        <i class="fas fa-paperclip text-primary"></i> Berkas Lampiran Dokumen (<?= count($files) ?>):
+                                    </span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border px-2.5 py-1 rounded-pill fw-medium" style="font-size: 0.7rem;">Multi-Dokumen Terpadu</span>
+                                </div>
+                                <div class="d-flex flex-column gap-3">
+                                    <?php foreach ($files as $fIdx => $f): 
+                                        $subBadgesHtml = render_sub_standar_badges($f['sub_bidang_ids'] ?? null);
+                                    ?>
+                                        <div class="card border rounded-3 p-3.5 bg-white shadow-2xs">
+                                            <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                                                <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0 me-sm-3">
+                                                    <div class="p-2.5 rounded-3 bg-danger bg-opacity-10 text-danger flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                                                        <i class="fas fa-file-pdf fa-xl"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <div class="fw-bold text-dark text-break mb-1" style="font-size: 0.92rem; line-height: 1.45; word-break: break-word;">
+                                                            <?= htmlspecialchars($f['file_name']) ?>
+                                                        </div>
+                                                        <div class="text-muted d-flex align-items-center gap-2 flex-wrap small" style="font-size: 0.76rem;">
+                                                            <span><i class="fas fa-database me-1 text-secondary opacity-75"></i><?= htmlspecialchars($f['file_size'] ?: 'PDF') ?></span>
+                                                            &bull;
+                                                            <span><i class="far fa-clock me-1 text-secondary opacity-75"></i><?= date('d M Y, H:i', strtotime($f['created_at'] ?? $doc['created_at'])) ?></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-sm-center align-self-end">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#pdfPreviewModal" 
+                                                            data-pdf-url="<?= base_url($f['file_path']) ?>" 
+                                                            data-doc-title="<?= htmlspecialchars($f['file_name']) ?>" 
+                                                            data-doc-narasi="<?= htmlspecialchars($f['narasi'] ?? '') ?>" 
+                                                            data-doc-standar="<?= htmlspecialchars($subBadgesHtml) ?>" 
+                                                            data-public-limit="0" 
+                                                            data-can-download="1"
+                                                            data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
+                                                            style="font-size: 0.78rem;">
+                                                        <i class="fas fa-eye"></i> Pratinjau
+                                                    </button>
+                                                    <a href="<?= base_url($f['file_path']) ?>" target="_blank" download class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold" style="font-size: 0.78rem;">
+                                                        <i class="fas fa-download"></i> Unduh
+                                                    </a>
+                                                </div>
+                                            </div>
+
+                                            <?php if (!empty($subBadgesHtml)): ?>
+                                                <div class="mt-2.5 pt-1 d-flex flex-wrap align-items-center gap-1.5">
+                                                    <?= $subBadgesHtml ?>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($f['narasi'])): ?>
+                                                <div class="mt-2.5 pt-2 border-top border-light-subtle">
+                                                    <span class="small fw-semibold text-muted d-block" style="font-size: 0.72rem;">Keterangan / Narasi Berkas:</span>
+                                                    <div class="small text-dark mt-0.5" style="line-height: 1.45; font-size: 0.8rem;"><?= nl2br(htmlspecialchars($f['narasi'])) ?></div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <div class="modal-footer border-top pt-3">
                         <button type="button" class="btn btn-light rounded-pill px-3.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>

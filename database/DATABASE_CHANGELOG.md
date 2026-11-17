@@ -164,6 +164,13 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
     - **Skrip Migrasi Gabungan Idempoten (`database/migrate_all.php`)**:
       - Menyatukan langkah sinkronisasi skema terbaru (`jenis_upload`, `gpm_evaluations`, 11 indeks performa, dan role LPM) dalam satu perintah aman tanpa menghapus data dokumen yang sudah ada.
 
+17. **Fitur Ganti Nama (Rename) Berkas Dokumen & Smart Mode Upload Tanpa Folder (17 November 2026)**:
+    - **Pemanfaatan Kolom Eksisting**:
+      - Kolom `ppepp_document_files.file_name` kini menampung nama berkas kustom/rename yang diinput pengguna saat pengunggahan (batch/single) maupun saat pengeditan dokumen mutu.
+      - Kolom `ppepp_document_files.folder_name` secara default diisi `'Utama'` ketika pengguna menggunakan *Smart Mode* (1 berkas / unggah langsung tanpa membuat struktur folder tambahan).
+    - **Status Skema Database**:
+      - **TIDAK ADA PERUBAHAN SKEMA BARU**: Perubahan ini sepenuhnya menggunakan skema kolom eksisting yang telah ada di database (`file_name` dan `folder_name` pada tabel `ppepp_document_files`). Rekan kolaborator tidak perlu menjalankan migrasi `ALTER TABLE` tambahan dan struktur data tetap 100% kompatibel antar-pengembang.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:

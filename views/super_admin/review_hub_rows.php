@@ -410,12 +410,12 @@ if (!empty($documents)):
                                     ?>
                                         <div class="p-3 rounded-3 bg-white border border-light-subtle shadow-2xs hover-shadow-sm transition-all">
                                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                                <div class="d-flex align-items-center gap-2.5 min-w-0" style="max-width: 70%;">
+                                                <div class="d-flex align-items-center gap-2.5 flex-grow-1 min-w-0 me-sm-2">
                                                     <div class="p-2 rounded-2 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
                                                         <i class="fas fa-file-pdf fa-lg"></i>
                                                     </div>
-                                                    <div class="min-w-0">
-                                                        <div class="fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($f['file_name']) ?>" style="font-size: 0.85rem;">
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <div class="fw-semibold text-dark text-break" title="<?= htmlspecialchars($f['file_name']) ?>" style="font-size: 0.88rem; line-height: 1.4;">
                                                             <?= htmlspecialchars($f['file_name']) ?>
                                                         </div>
                                                         <div class="text-muted small d-flex align-items-center gap-2" style="font-size: 0.72rem;">

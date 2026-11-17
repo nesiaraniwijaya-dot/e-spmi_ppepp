@@ -706,8 +706,16 @@ class AdminFakultasController extends Controller {
                                         if ($opt['is_image']) {
                                             $fCat = 'photo';
                                         }
+                                        $batchFileCustomNames = !empty($d['file_custom_name']) && is_array($d['file_custom_name']) ? array_values($d['file_custom_name']) : [];
+                                        $customName = trim($batchFileCustomNames[$fIdx] ?? ($d['file_custom_name'][$fIdx] ?? ''));
+                                        if (empty($customName)) $customName = $opt['orig_name'];
+                                        $fileExtLower = strtolower(pathinfo($opt['orig_name'], PATHINFO_EXTENSION));
+                                        if (!empty($fileExtLower) && strtolower(pathinfo($customName, PATHINFO_EXTENSION)) !== $fileExtLower) {
+                                            $customName .= '.' . $fileExtLower;
+                                        }
+
                                         $uploadedFilesList[] = [
-                                            'file_name' => $opt['orig_name'],
+                                            'file_name' => $customName,
                                             'file_path' => $opt['file_path'],
                                             'file_size' => $opt['file_size'],
                                             'file_extension' => $opt['file_extension'],
@@ -751,8 +759,16 @@ class AdminFakultasController extends Controller {
                                         $opt = ImageOptimizer::processUploadedFile($targetFile, $origName, 'uploads/documents');
                                         $fFolder = trim($b64Item['folder_name'] ?? ($batchFileFolders[$fIdx] ?? 'Utama')) ?: 'Utama';
                                         $fCat = !empty($b64Item['file_category']) ? $b64Item['file_category'] : ($opt['is_image'] ? 'photo' : (in_array($ext, ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a']) ? 'video' : 'file'));
+                                        $batchFileCustomNames = !empty($d['file_custom_name']) && is_array($d['file_custom_name']) ? array_values($d['file_custom_name']) : [];
+                                        $customName = trim($batchFileCustomNames[$fIdx] ?? ($d['file_custom_name'][$fIdx] ?? ''));
+                                        if (empty($customName)) $customName = $opt['orig_name'];
+                                        $fileExtLower = strtolower(pathinfo($opt['orig_name'], PATHINFO_EXTENSION));
+                                        if (!empty($fileExtLower) && strtolower(pathinfo($customName, PATHINFO_EXTENSION)) !== $fileExtLower) {
+                                            $customName .= '.' . $fileExtLower;
+                                        }
+
                                         $uploadedFilesList[] = [
-                                            'file_name' => $opt['orig_name'],
+                                            'file_name' => $customName,
                                             'file_path' => $opt['file_path'],
                                             'file_size' => $opt['file_size'],
                                             'file_extension' => $opt['file_extension'],
@@ -1217,6 +1233,21 @@ class AdminFakultasController extends Controller {
 
                     $stmtUpdNarasi->execute([trim($fNarasi), $fFolderVal, $fIsLimVal, $fPLimVal, $fCanDlVal, $fId, $id]);
 
+                    if (!empty($_POST['existing_file_name'][$fId])) {
+                        $newName = trim($_POST['existing_file_name'][$fId]);
+                        $stmtOldF = $this->db->prepare("SELECT file_name, file_extension FROM ppepp_document_files WHERE id = ? AND document_id = ?");
+                        $stmtOldF->execute([$fId, $id]);
+                        $oldFRow = $stmtOldF->fetch();
+                        if ($oldFRow) {
+                            $oldExt = strtolower($oldFRow['file_extension'] ?: pathinfo($oldFRow['file_name'], PATHINFO_EXTENSION));
+                            if (!empty($oldExt) && strtolower(pathinfo($newName, PATHINFO_EXTENSION)) !== $oldExt) {
+                                $newName .= '.' . $oldExt;
+                            }
+                            $stmtUpdName = $this->db->prepare("UPDATE ppepp_document_files SET file_name = ? WHERE id = ? AND document_id = ?");
+                            $stmtUpdName->execute([$newName, $fId, $id]);
+                        }
+                    }
+
                     $fSubArray = !empty($exSubs[$fId]) && is_array($exSubs[$fId])
                         ? array_values(array_filter(array_map('intval', $exSubs[$fId])))
                         : ($subBidangId ? [(int)$subBidangId] : []);
@@ -1266,8 +1297,14 @@ class AdminFakultasController extends Controller {
                                 if ($opt['is_image']) {
                                     $fCat = 'photo';
                                 }
+                                $customName = trim($_POST['new_file_custom_name'][$idx] ?? '');
+                                if (empty($customName)) $customName = $opt['orig_name'];
+                                $fileExtLower = strtolower(pathinfo($opt['orig_name'], PATHINFO_EXTENSION));
+                                if (!empty($fileExtLower) && strtolower(pathinfo($customName, PATHINFO_EXTENSION)) !== $fileExtLower) {
+                                    $customName .= '.' . $fileExtLower;
+                                }
                                 $stmtNewFile->execute([
-                                    $id, $opt['orig_name'], $opt['file_path'],
+                                    $id, $customName, $opt['file_path'],
                                     $opt['file_size'], $opt['file_extension'],
                                     $fFolder, $fCat,
                                     $fNarasi, $fSubsJson, $nextSort++,
@@ -1329,8 +1366,14 @@ class AdminFakultasController extends Controller {
                                 if ($opt['is_image']) {
                                     $fCat = 'photo';
                                 }
+                                $customName = trim($_POST['new_file_custom_name'][$idx] ?? '');
+                                if (empty($customName)) $customName = $opt['orig_name'];
+                                $fileExtLower = strtolower(pathinfo($opt['orig_name'], PATHINFO_EXTENSION));
+                                if (!empty($fileExtLower) && strtolower(pathinfo($customName, PATHINFO_EXTENSION)) !== $fileExtLower) {
+                                    $customName .= '.' . $fileExtLower;
+                                }
                                 $stmtNewFile->execute([
-                                    $id, $opt['orig_name'], $opt['file_path'],
+                                    $id, $customName, $opt['file_path'],
                                     $opt['file_size'], $opt['file_extension'],
                                     $fFolder, $fCat,
                                     $fNarasi, $fSubsJson, $nextSort++,
