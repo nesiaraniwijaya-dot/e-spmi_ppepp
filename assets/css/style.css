@@ -57,6 +57,14 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  zoom: 0.9;
+}
+
+/* Fallback untuk browser legacy yang belum support CSS zoom */
+@supports not (zoom: 1) {
+  html {
+    font-size: 14.4px; /* 16px * 0.9 = 14.4px */
+  }
 }
 
 body {
