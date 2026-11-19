@@ -35,14 +35,18 @@ if (!empty($documents)):
                     Diunggah oleh: <strong><?= htmlspecialchars($doc['uploader_name'] ?: 'Admin Fakultas') ?></strong> pada <?= date('d M Y H:i', strtotime($doc['created_at'])) ?>
                 </div>
             </td>
-            <td>
-                <div class="fw-semibold text-dark mb-0.5">
+            <td style="min-width: 0; max-width: 100%; overflow: hidden;">
+                <div class="fw-semibold text-dark mb-1" style="line-height: 1.35; word-break: break-word;">
                     <?= htmlspecialchars($doc['nama_bidang'] ?: 'Standar Umum') ?>
                 </div>
                 <?php if (!empty($doc['nama_sub_bidang'])): ?>
-                    <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem;">
-                        <i class="fas fa-turn-up fa-rotate-90 text-secondary opacity-50"></i>
-                        <span class="badge bg-light text-secondary border px-1.5 py-0.5"><?= htmlspecialchars($doc['nama_sub_bidang']) ?></span>
+                    <div class="d-flex align-items-start gap-1 w-100 mt-1" style="min-width: 0; max-width: 100%;">
+                        <i class="fas fa-turn-up fa-rotate-90 text-primary opacity-60 flex-shrink-0 mt-1" style="font-size: 0.65rem;"></i>
+                        <span class="badge border px-2 py-1 text-start shadow-2xs d-inline-block w-100" 
+                              style="font-size: 0.7rem; font-weight: 500; line-height: 1.35; white-space: normal !important; word-break: break-word; background: #F8FAFC !important; color: #475569 !important; border-color: #E2E8F0 !important; border-radius: 6px;" 
+                              title="<?= htmlspecialchars($doc['nama_sub_bidang']) ?>">
+                            <?= htmlspecialchars($doc['nama_sub_bidang']) ?>
+                        </span>
                     </div>
                 <?php endif; ?>
             </td>
@@ -325,6 +329,18 @@ if (!empty($documents)):
                                 <span class="small text-muted d-block mb-1">Tahun Akademik:</span>
                                 <div class="fw-semibold text-dark">TA <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></div>
                             </div>
+                            <?php if (!empty($doc['deskripsi'])): ?>
+                                <div class="col-12">
+                                    <div class="p-3 rounded-3 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                                        <div class="small fw-bold text-secondary d-flex align-items-center gap-1.5 mb-1.5" style="font-size: 0.74rem;">
+                                            <i class="fas fa-align-left text-primary"></i> <span>Deskripsi / Narasi Dokumen:</span>
+                                        </div>
+                                        <div class="small text-dark" style="line-height: 1.55; white-space: pre-line; word-break: break-word; font-size: 0.84rem;">
+                                            <?= htmlspecialchars($doc['deskripsi']) ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Catatan Evaluasi GPM (Tier-1) jika ada -->
@@ -420,6 +436,17 @@ if (!empty($documents)):
                                             <?php if (!empty($subBadgesHtml)): ?>
                                                 <div class="mt-2.5 pt-1 d-flex flex-wrap align-items-center gap-1.5">
                                                     <?= $subBadgesHtml ?>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($f['narasi'])): ?>
+                                                <div class="mt-2.5 p-2.5 rounded-2 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                                                    <div class="fw-semibold text-danger d-flex align-items-center gap-1 mb-1" style="font-size: 0.72rem;">
+                                                        <i class="fas fa-quote-left text-danger opacity-75"></i> <span>Catatan / Narasi Berkas:</span>
+                                                    </div>
+                                                    <div class="text-secondary small" style="line-height: 1.45; white-space: pre-line; word-break: break-word; font-size: 0.78rem;">
+                                                        <?= htmlspecialchars($f['narasi']) ?>
+                                                    </div>
                                                 </div>
                                             <?php endif; ?>
                                         </div>

@@ -30,7 +30,7 @@ if (!empty($documents)):
             data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . $doc['nomor_dokumen'] . ' ' . ($doc['nama_bidang'] ?? ''))) ?>"
             style="<?= $isPerluPerbaikan ? 'border-left: 4px solid #DC2626 !important; background: #FFFBFB;' : '' ?>">
             
-            <td class="text-center text-muted fw-bold" style="white-space: nowrap; width: 55px;"><?= $no++ ?></td>
+            <td class="text-center text-muted fw-bold" style="white-space: nowrap; width: 60px; min-width: 60px;"><?= $no++ ?></td>
             
             <td style="overflow: hidden; word-break: break-word;">
                 <div class="fw-bold text-dark-blue mb-1">
@@ -60,15 +60,17 @@ if (!empty($documents)):
                 <?= siklus_badge($doc['siklus']) ?>
             </td>
 
-            <td>
+            <td style="min-width: 0; max-width: 100%; overflow: hidden;">
                 <?php if (!empty($doc['nama_bidang'])): ?>
-                    <div class="fw-semibold text-secondary" style="font-size: 0.78rem;">
+                    <div class="fw-semibold text-secondary mb-1" style="font-size: 0.78rem; line-height: 1.35; word-break: break-word;">
                         <?= htmlspecialchars($doc['nama_bidang']) ?>
                     </div>
                     <?php if (!empty($doc['nama_sub_bidang'])): ?>
-                        <div class="text-muted small d-flex align-items-center gap-1 mt-0.5" style="font-size: 0.7rem;">
-                            <i class="fas fa-turn-up fa-rotate-90 text-primary opacity-60"></i>
-                            <span class="badge bg-light text-secondary border text-truncate" style="max-width: 220px;" title="<?= htmlspecialchars($doc['nama_sub_bidang']) ?>">
+                        <div class="d-flex align-items-start gap-1.5 w-100 mt-1" style="min-width: 0; max-width: 100%;">
+                            <i class="fas fa-turn-up fa-rotate-90 text-primary opacity-60 flex-shrink-0 mt-1" style="font-size: 0.65rem;"></i>
+                            <span class="badge border px-2 py-1 text-start shadow-2xs d-inline-block w-100" 
+                                  style="font-size: 0.7rem; font-weight: 500; line-height: 1.35; white-space: normal !important; word-break: break-word; background: #F8FAFC !important; color: #475569 !important; border-color: #E2E8F0 !important; border-radius: 6px;" 
+                                  title="<?= htmlspecialchars($doc['nama_sub_bidang']) ?>">
                                 <?= htmlspecialchars($doc['nama_sub_bidang']) ?>
                             </span>
                         </div>
@@ -314,6 +316,18 @@ if (!empty($documents)):
                                 <span class="small text-muted d-block mb-1">Tahun Akademik:</span>
                                 <div class="fw-semibold text-dark">TA <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></div>
                             </div>
+                            <?php if (!empty($doc['deskripsi'])): ?>
+                                <div class="col-12">
+                                    <div class="p-3 rounded-3 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                                        <div class="small fw-bold text-secondary d-flex align-items-center gap-1.5 mb-1.5" style="font-size: 0.74rem;">
+                                            <i class="fas fa-align-left text-primary"></i> <span>Deskripsi / Narasi Dokumen:</span>
+                                        </div>
+                                        <div class="small text-dark" style="line-height: 1.55; white-space: pre-line; word-break: break-word; font-size: 0.84rem;">
+                                            <?= htmlspecialchars($doc['deskripsi']) ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Catatan Evaluasi Resmi (Masking LPM sampai Pengesahan Akhir) -->
@@ -393,14 +407,81 @@ if (!empty($documents)):
                                             <?php endif; ?>
 
                                             <?php if (!empty($f['narasi'])): ?>
-                                                <div class="mt-2.5 pt-2 border-top border-light-subtle">
-                                                    <span class="small fw-semibold text-muted d-block" style="font-size: 0.72rem;">Keterangan / Narasi Berkas:</span>
-                                                    <div class="small text-dark mt-0.5" style="line-height: 1.45; font-size: 0.8rem;"><?= nl2br(htmlspecialchars($f['narasi'])) ?></div>
+                                                <div class="mt-2.5 p-2.5 rounded-2 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                                                    <div class="fw-semibold text-danger d-flex align-items-center gap-1 mb-1" style="font-size: 0.72rem;">
+                                                        <i class="fas fa-quote-left text-danger opacity-75"></i> <span>Catatan / Narasi Berkas:</span>
+                                                    </div>
+                                                    <div class="text-secondary small" style="line-height: 1.45; white-space: pre-line; word-break: break-word; font-size: 0.78rem;">
+                                                        <?= htmlspecialchars($f['narasi']) ?>
+                                                    </div>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Google Drive -->
+                        <?php if (!empty($gdriveLinks)): ?>
+                            <div class="p-3.5 p-md-4 rounded-4 bg-light border mb-4">
+                                <div class="d-flex align-items-center justify-content-between pb-2.5 mb-3 border-bottom border-light-subtle">
+                                    <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-2" style="font-size: 0.78rem; letter-spacing: 0.5px;">
+                                        <i class="fab fa-google-drive text-success"></i> Tautan Google Drive Eksternal (<?= count($gdriveLinks) ?>):
+                                    </span>
+                                    <span class="badge bg-success bg-opacity-10 text-success border px-2.5 py-1 rounded-pill fw-medium" style="font-size: 0.7rem;">Cloud Storage</span>
+                                </div>
+                                <div class="d-flex flex-column gap-3">
+                                    <?php foreach ($gdriveLinks as $lIdx => $l): 
+                                        $subBadgesHtml = render_sub_standar_badges($l['sub_bidang_ids'] ?? null);
+                                    ?>
+                                        <div class="card border rounded-3 p-3.5 bg-white shadow-2xs">
+                                            <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                                                <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0 me-sm-3">
+                                                    <div class="p-2.5 rounded-3 bg-success bg-opacity-10 text-success flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                                                        <i class="fab fa-google-drive fa-xl"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <div class="fw-bold text-dark text-break mb-1" style="font-size: 0.92rem; line-height: 1.45;">
+                                                            <?= htmlspecialchars($l['narasi'] ?: ('Tautan Google Drive #' . ($lIdx + 1))) ?>
+                                                        </div>
+                                                        <div class="text-muted text-break small" style="font-size: 0.76rem;">
+                                                            <i class="fas fa-link text-secondary me-1 opacity-75"></i><?= htmlspecialchars($l['url']) ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-sm-center align-self-end">
+                                                    <a href="<?= htmlspecialchars($l['url']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 fw-semibold" style="font-size: 0.78rem;">
+                                                        <i class="fas fa-arrow-up-right-from-square"></i> Buka Link
+                                                    </a>
+                                                </div>
+                                            </div>
+
+                                            <?php if (!empty($subBadgesHtml)): ?>
+                                                <div class="mt-2.5 pt-1 d-flex flex-wrap align-items-center gap-1.5">
+                                                    <?= $subBadgesHtml ?>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($l['narasi'])): ?>
+                                                <div class="mt-2.5 p-2.5 rounded-2 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                                                    <div class="fw-semibold text-success d-flex align-items-center gap-1 mb-1" style="font-size: 0.72rem;">
+                                                        <i class="fas fa-quote-left text-success opacity-75"></i> <span>Catatan / Narasi Tautan:</span>
+                                                    </div>
+                                                    <div class="text-secondary small" style="line-height: 1.45; white-space: pre-line; word-break: break-word; font-size: 0.78rem;">
+                                                        <?= htmlspecialchars($l['narasi']) ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (empty($files) && empty($gdriveLinks)): ?>
+                            <div class="p-3 rounded-3 bg-light border text-center text-muted small mb-3">
+                                <i class="fas fa-circle-info text-secondary me-1"></i> Belum ada berkas fisik maupun tautan yang dilampirkan pada dokumen ini.
                             </div>
                         <?php endif; ?>
                     </div>

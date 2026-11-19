@@ -335,6 +335,18 @@ if (!empty($documents)):
                                         <span class="small text-muted d-block mb-1">Tahun Akademik:</span>
                                         <div class="fw-semibold text-dark">TA <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></div>
                                     </div>
+                                    <?php if (!empty($doc['deskripsi'])): ?>
+                                        <div class="col-12">
+                                            <div class="p-3 rounded-3 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                                                <div class="small fw-bold text-secondary d-flex align-items-center gap-1.5 mb-1.5" style="font-size: 0.74rem;">
+                                                    <i class="fas fa-align-left text-primary"></i> <span>Deskripsi / Narasi Dokumen:</span>
+                                                </div>
+                                                <div class="small text-dark" style="line-height: 1.55; white-space: pre-line; word-break: break-word; font-size: 0.84rem;">
+                                                    <?= htmlspecialchars($doc['deskripsi']) ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
 
                                 <!-- Catatan Evaluasi LPM (Khusus Akses GPM) -->
