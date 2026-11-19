@@ -54,14 +54,14 @@ function formatDurationHours(?int $hours): string {
             <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-warning">
                 <div class="text-muted small fw-semibold">Tertahan di GPM</div>
                 <h3 class="fw-bold text-warning mb-1"><?= number_format($stats['menunggu_gpm']) ?></h3>
-                <span class="text-muted" style="font-size: 0.72rem;">Menunggu telaah GPM</span>
+                <span class="text-muted" style="font-size: 0.72rem;">Menunggu review GPM</span>
             </div>
         </div>
         <div class="col-6 col-md-4 col-xl-2">
             <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-info">
                 <div class="text-muted small fw-semibold">Rata-rata Respon GPM</div>
                 <h3 class="fw-bold text-dark-blue mb-1"><?= number_format($stats['avg_gpm_days'], 1) ?> <span class="fs-6 fw-normal text-muted">Hari</span></h3>
-                <span class="text-muted" style="font-size: 0.72rem;">Upload ke telaah GPM</span>
+                <span class="text-muted" style="font-size: 0.72rem;">Upload ke review GPM</span>
             </div>
         </div>
         <div class="col-6 col-md-4 col-xl-2">

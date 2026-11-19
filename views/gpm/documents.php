@@ -80,7 +80,7 @@ if (!isset($siklusCounts) || !is_array($siklusCounts)) {
                             <?= $pendingGpmCount ?> Dokumen Antrean
                         </div>
                         <div class="text-muted small text-truncate" style="font-size: 0.78rem; line-height: 1.35;">
-                            Siap ditelaah oleh GPM
+                            Siap di-review oleh GPM
                         </div>
                     </div>
                 </div>
@@ -283,7 +283,7 @@ if (!isset($siklusCounts) || !is_array($siklusCounts)) {
                         <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-shield"></i></span>
                         <select name="status_review" id="gpmStatusSelect" class="form-select border-start-0" onchange="onGpmFilterChange(true)">
                             <option value="">Semua Status Review</option>
-                            <option value="menunggu_review_gpm" <?= in_array($statusFilter, ['menunggu_review_gpm', 'belum_direview']) ? 'selected' : '' ?>>Menunggu Telaah GPM</option>
+                            <option value="menunggu_review_gpm" <?= in_array($statusFilter, ['menunggu_review_gpm', 'belum_direview']) ? 'selected' : '' ?>>Menunggu Review GPM</option>
                             <option value="revisi_gpm" <?= $statusFilter === 'revisi_gpm' ? 'selected' : '' ?>>Perlu Revisi (GPM)</option>
                             <option value="menunggu_review_lpm" <?= $statusFilter === 'menunggu_review_lpm' ? 'selected' : '' ?>>Diteruskan ke LPM</option>
                             <option value="revisi_lpm" <?= in_array($statusFilter, ['revisi_lpm', 'perlu_perbaikan']) ? 'selected' : '' ?>>Perlu Revisi (LPM)</option>

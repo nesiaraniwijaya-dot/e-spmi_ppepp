@@ -1318,7 +1318,7 @@ class SuperAdminController extends Controller {
                                             $iconHtml = '<i class="fas fa-clock me-0.5"></i>';
                                         } elseif ($isReviewGpm) {
                                             $badgeClass = 'bg-info bg-opacity-25 text-info-emphasis border border-info border-opacity-50';
-                                            $badgeTitle = $stMeta[1] . ': Menunggu Telaah GPM';
+                                            $badgeTitle = $stMeta[1] . ': Menunggu Review GPM';
                                             $iconHtml = '<i class="fas fa-hourglass-half me-0.5"></i>';
                                         }
                                     ?>

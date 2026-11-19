@@ -42,7 +42,7 @@ $totalDraft = $totalDraft ?? count($documents);
         </div>
         <div class="small flex-grow-1" style="line-height: 1.65; color: #475569;">
             <strong class="text-dark d-block mb-1" style="font-size: 0.92rem;">Tentang Ruang Kerja Draf Dokumen Fakultas:</strong>
-            Dokumen yang tersimpan sebagai draf bersifat internal fakultas dan <strong>belum dapat dilihat oleh publik ataupun Tim Penjaminan Mutu (GPM Fakultas)</strong>. Lengkapi isian formulir dan berkas lampiran, lalu klik <strong>Ajukan ke GPM</strong> untuk mengirimkan dokumen ke antrean telaah mutu tahap pertama.
+            Dokumen yang tersimpan sebagai draf bersifat internal fakultas dan <strong>belum dapat dilihat oleh publik ataupun Tim Penjaminan Mutu (GPM Fakultas)</strong>. Lengkapi isian formulir dan berkas lampiran, lalu klik <strong>Ajukan ke GPM</strong> untuk mengirimkan dokumen ke antrean review mutu tahap pertama (GPM).
         </div>
     </div>
 

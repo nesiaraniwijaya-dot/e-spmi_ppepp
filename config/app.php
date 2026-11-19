@@ -727,16 +727,16 @@ function render_review_status_badge(string $status, string $extraClasses = '', ?
     $isUnitUser = in_array($role, ['admin_prodi', 'admin_fakultas', 'kaprodi', 'sekprodi', 'dekan', 'wadek']);
 
     // Masking privasi alur berjenjang:
-    // Bagi role Prodi/Dekanat, dokumen yang dikembalikan LPM ke GPM tetap berstatus "Sedang Ditelaah GPM"
+    // Bagi role Prodi/Dekanat, dokumen yang dikembalikan LPM ke GPM tetap berstatus "Sedang Direview GPM"
     // sampai GPM secara resmi meneruskan catatan perbaikan ke unit.
     if ($isUnitUser && in_array($status, ['revisi_lpm', 'perlu_perbaikan'])) {
-        return '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Sedang Ditelaah GPM</span>';
+        return '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Sedang Direview GPM</span>';
     }
 
     return match($status) {
         'draft' => '<span class="badge rounded-pill bg-secondary text-white ' . $extraClasses . '" style="font-size:0.75rem;"><i class="fas fa-file-pen me-1"></i> Draf</span>',
-        'menunggu_review_gpm', 'belum_direview' => '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Menunggu Telaah GPM</span>',
-        'sudah_diperbaiki' => '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#E0F2FE; color:#0369A1; border-color:#BAE6FD !important; font-size:0.75rem;"><i class="fas fa-clock-rotate-left text-primary me-1"></i> Sudah Diperbaiki (Telaah GPM)</span>',
+        'menunggu_review_gpm', 'belum_direview' => '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Menunggu Review GPM</span>',
+        'sudah_diperbaiki' => '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#E0F2FE; color:#0369A1; border-color:#BAE6FD !important; font-size:0.75rem;"><i class="fas fa-clock-rotate-left text-primary me-1"></i> Sudah Diperbaiki (Review GPM)</span>',
         'revisi_gpm' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#EF4444; border-color:#DC2626 !important; font-size:0.75rem;"><i class="fas fa-wrench me-1"></i> Perlu Revisi (GPM)</span>',
         'menunggu_review_lpm' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#2563EB; border-color:#1D4ED8 !important; font-size:0.75rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan ke LPM</span>',
         'revisi_lpm', 'perlu_perbaikan' => ($role === 'gpm')
@@ -755,13 +755,13 @@ function get_review_status_label(string $status, ?string $role = null): string {
     $isUnitUser = in_array($role, ['admin_prodi', 'admin_fakultas', 'kaprodi', 'sekprodi', 'dekan', 'wadek']);
 
     if ($isUnitUser && in_array($status, ['revisi_lpm', 'perlu_perbaikan'])) {
-        return 'Sedang Ditelaah GPM';
+        return 'Sedang Direview GPM';
     }
 
     return match($status) {
         'draft' => 'Draf',
-        'menunggu_review_gpm', 'belum_direview' => 'Menunggu Telaah GPM',
-        'sudah_diperbaiki' => 'Sudah Diperbaiki (Telaah GPM)',
+        'menunggu_review_gpm', 'belum_direview' => 'Menunggu Review GPM',
+        'sudah_diperbaiki' => 'Sudah Diperbaiki (Review GPM)',
         'revisi_gpm' => 'Perlu Revisi (GPM)',
         'menunggu_review_lpm' => 'Diteruskan ke LPM',
         'revisi_lpm', 'perlu_perbaikan' => ($role === 'gpm' ? 'Catatan LPM (Perlu Diteruskan)' : 'Dikembalikan ke GPM'),

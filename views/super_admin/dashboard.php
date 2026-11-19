@@ -179,7 +179,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <i class="fas fa-shield-halved"></i>
                 </div>
                 <h6 class="fw-bold text-dark mb-1">Tidak Ada Dokumen Menunggu Review LPM</h6>
-                <p class="text-muted small mb-0">Dokumen mutu fakultas &amp; program studi ditelaah terlebih dahulu oleh GPM Fakultas. Dokumen akan masuk ke antrean LPM setelah disetujui dan diteruskan oleh GPM.</p>
+                <p class="text-muted small mb-0">Dokumen mutu fakultas &amp; program studi di-review terlebih dahulu oleh GPM Fakultas. Dokumen akan masuk ke antrean LPM setelah disetujui dan diteruskan oleh GPM.</p>
             </div>
         <?php else: ?>
             <div class="table-responsive rounded-3 border">

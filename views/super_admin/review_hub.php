@@ -616,7 +616,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div id="approveGpmBox" class="p-3 rounded-3 mb-3 border border-warning d-none" style="background: #FFFBEB; border-left: 4px solid #D97706 !important;">
                         <div class="d-flex align-items-center justify-content-between mb-1.5">
                             <span class="small fw-bold text-uppercase text-warning-emphasis" style="font-size: 0.72rem;">
-                                <i class="fas fa-shield-halved text-warning me-1"></i> Rekomendasi Telaah GPM Fakultas:
+                                <i class="fas fa-shield-halved text-warning me-1"></i> Rekomendasi Review GPM Fakultas:
                             </span>
                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">
                                 Disetujui GPM
@@ -700,7 +700,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     <div id="revGpmBox" class="p-3 rounded-3 mb-3 border border-warning d-none" style="background: #FFFBEB; border-left: 4px solid #D97706 !important;">
                         <div class="d-flex align-items-center justify-content-between mb-1.5">
                             <span class="small fw-bold text-uppercase text-warning-emphasis" style="font-size: 0.72rem;">
-                                <i class="fas fa-shield-halved text-warning me-1"></i> Catatan Telaah GPM Fakultas Sebelumnya:
+                                <i class="fas fa-shield-halved text-warning me-1"></i> Catatan Review GPM Fakultas Sebelumnya:
                             </span>
                             <span class="badge bg-warning bg-opacity-25 text-warning-emphasis border border-warning border-opacity-25 rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">
                                 Catatan GPM
@@ -723,7 +723,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                   placeholder="Tuliskan catatan perbaikan secara spesifik... Contoh: Nomor SK belum tercantum, harap lengkapi tanda tangan pengesahan dari Dekan pada lembar akhir." required></textarea>
                         <div class="d-flex align-items-center gap-2 mt-2.5 p-2.5 rounded-2 bg-light border text-muted" style="font-size: 0.74rem;">
                             <i class="fas fa-circle-info text-primary flex-shrink-0"></i>
-                            <span>Catatan ini hanya dapat dilihat oleh <strong>GPM Fakultas</strong> sebagai bahan telaah sebelum GPM meneruskannya ke Prodi/Dekanat atas nama GPM.</span>
+                            <span>Catatan ini hanya dapat dilihat oleh <strong>GPM Fakultas</strong> sebagai bahan review sebelum GPM meneruskannya ke Prodi/Dekanat atas nama GPM.</span>
                         </div>
                     </div>
                 </div>

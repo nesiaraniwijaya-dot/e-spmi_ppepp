@@ -428,15 +428,15 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 </a>
             </div>
 
-            <!-- GPM: Telaah & Review Dokumen Mutu -->
+            <!-- GPM: Review Dokumen Mutu -->
             <div class="admin-nav-group">
-                <div class="admin-nav-label">Telaah Dokumen Mutu</div>
+                <div class="admin-nav-label">Review Dokumen Mutu</div>
                 <a href="<?= base_url('gpm/dokumen') ?>"
                    class="admin-nav-link <?= (str_contains($currentUri, 'gpm/dokumen') || str_contains($currentUri, 'gpm/review')) ? 'active' : '' ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-clipboard-check text-warning"></i></span>
                     <span>Review Dokumen Mutu</span>
                     <?php if (!empty($sidebarPendingGpmCount) && $sidebarPendingGpmCount > 0): ?>
-                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPendingGpmCount ?> dokumen menunggu telaah GPM">
+                        <span class="ms-auto d-inline-flex align-items-center gap-1.5" title="<?= $sidebarPendingGpmCount ?> dokumen menunggu review GPM">
                             <span class="sidebar-pulse-dot"></span>
                             <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5 fw-bold shadow-xs" style="font-size: 0.68rem; letter-spacing: 0.2px;"><?= $sidebarPendingGpmCount ?></span>
                         </span>

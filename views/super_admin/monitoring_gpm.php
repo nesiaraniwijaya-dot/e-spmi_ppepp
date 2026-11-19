@@ -54,7 +54,7 @@ $predikatStyleMap = [
                 </span>
                 <span class="gpm-kpi-chip" style="background: #ECFDF5; color: #047857; border-color: #A7F3D0;">
                     <i class="fas fa-check-double"></i>
-                    <span><?= (int)($totalReviewedAll ?? 0) ?> Aksi Telaah &amp; Penerusan</span>
+                    <span><?= (int)($totalReviewedAll ?? 0) ?> Aksi Review &amp; Penerusan</span>
                 </span>
                 <span class="gpm-kpi-chip" style="background: #FFFBEB; color: #B45309; border-color: #FDE68A;">
                     <i class="fas fa-hourglass-half"></i>
@@ -268,7 +268,7 @@ $predikatStyleMap = [
                                             <?= $scoreKecepatan !== null ? number_format((float)$scoreKecepatan, 1) : '-' ?>
                                         </div>
                                         <div class="gpm-stat-sub">
-                                            <?= ($avgRelayStr !== '-') ? "Terusan {$avgRelayStr}" : (($avgReviewStr !== '-') ? "Telaah {$avgReviewStr}" : 'Belum ada data') ?>
+                                            <?= ($avgRelayStr !== '-') ? "Terusan {$avgRelayStr}" : (($avgReviewStr !== '-') ? "Review {$avgReviewStr}" : 'Belum ada data') ?>
                                         </div>
                                     </div>
                                 </div>
@@ -324,7 +324,7 @@ $predikatStyleMap = [
                             <!-- Kecepatan Respon & Penerusan -->
                             <div class="gpm-speed-bar d-flex flex-wrap justify-content-between align-items-center gap-2">
                                 <span class="text-muted">
-                                    <i class="fas fa-stopwatch text-primary me-1"></i>Rata-rata Telaah: <strong class="text-dark"><?= $avgReviewStr ?></strong>
+                                    <i class="fas fa-stopwatch text-primary me-1"></i>Rata-rata Review: <strong class="text-dark"><?= $avgReviewStr ?></strong>
                                 </span>
                                 <span class="text-muted d-none d-sm-inline">|</span>
                                 <span class="text-muted">
@@ -339,7 +339,7 @@ $predikatStyleMap = [
                                         data-gpm="<?= $cardPayloadAttr ?>"
                                         onclick="openGpmHistoryFromBtn(this)">
                                     <i class="fas fa-clock-rotate-left"></i>
-                                    <span>More Detail (Riwayat Telaah &amp; Penerusan)</span>
+                                    <span>More Detail (Riwayat Review &amp; Penerusan)</span>
                                 </button>
                             </div>
                         </div>
@@ -350,7 +350,7 @@ $predikatStyleMap = [
     <?php endif; ?>
 </div>
 
-<!-- MODAL: MORE DETAIL RIWAYAT TELAAH & PENERUSAN GPM -->
+<!-- MODAL: MORE DETAIL RIWAYAT REVIEW & PENERUSAN GPM -->
 <div class="modal fade" id="modalGpmHistory" tabindex="-1" aria-labelledby="modalGpmName" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
@@ -375,7 +375,7 @@ $predikatStyleMap = [
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div class="d-inline-flex align-items-center gap-2 fw-bold text-dark-blue" style="font-size: 0.85rem;">
                         <i class="fas fa-list-check text-primary"></i>
-                        <span>Riwayat Telaah &amp; Penerusan</span>
+                        <span>Riwayat Review &amp; Penerusan</span>
                         <span class="badge rounded-pill bg-primary text-white" id="modalHistoryCount">0</span>
                     </div>
                     <div class="text-muted small fw-semibold" id="modalHistoryShowingMeta" style="font-size: 0.75rem;"></div>
@@ -394,7 +394,7 @@ $predikatStyleMap = [
             <div class="modal-body p-3 p-md-4" id="modalGpmHistoryBody" style="background: #F1F5F9; min-height: 320px;">
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary mb-2" role="status" style="width: 2rem; height: 2rem;"></div>
-                    <div class="small text-muted">Memuat data riwayat telaah &amp; penerusan GPM...</div>
+                    <div class="small text-muted">Memuat data riwayat review &amp; penerusan GPM...</div>
                 </div>
             </div>
 
@@ -744,7 +744,7 @@ function openGpmHistoryModal(gpm) {
     body.innerHTML = `
         <div class="text-center py-5">
             <div class="spinner-border text-primary mb-2" role="status" style="width: 2rem; height: 2rem;"></div>
-            <div class="small text-muted">Memuat data riwayat telaah &amp; penerusan GPM...</div>
+            <div class="small text-muted">Memuat data riwayat review &amp; penerusan GPM...</div>
         </div>
     `;
 
@@ -759,7 +759,7 @@ function openGpmHistoryModal(gpm) {
                 body.innerHTML = `
                     <div class="text-center py-5 text-muted">
                         <i class="fas fa-triangle-exclamation text-danger fa-2x mb-2 d-block"></i>
-                        <span>${escapeHtml(data?.message || 'Gagal memuat riwayat telaah.')}</span>
+                        <span>${escapeHtml(data?.message || 'Gagal memuat riwayat review.')}</span>
                     </div>
                 `;
             }
@@ -769,7 +769,7 @@ function openGpmHistoryModal(gpm) {
             body.innerHTML = `
                 <div class="text-center py-5 text-muted">
                     <i class="fas fa-triangle-exclamation text-danger fa-2x mb-2 d-block"></i>
-                    <span>Terjadi kesalahan saat memuat data riwayat telaah GPM.</span>
+                    <span>Terjadi kesalahan saat memuat data riwayat review GPM.</span>
                 </div>
             `;
         });
@@ -823,7 +823,7 @@ function renderModalHistoryList(list) {
             <div class="text-center py-5 text-muted bg-white rounded-4 border p-4">
                 <i class="fas fa-folder-open fa-2x text-secondary opacity-50 mb-2 d-block"></i>
                 <h6 class="fw-bold text-dark mb-1">Belum Ada Data di Kategori Ini</h6>
-                <p class="small text-muted mb-0">Tidak ditemukan log aktivitas telaah, penerusan catatan LPM, atau pengembalian pada filter yang dipilih.</p>
+                <p class="small text-muted mb-0">Tidak ditemukan log aktivitas review, penerusan catatan LPM, atau pengembalian pada filter yang dipilih.</p>
             </div>
         `;
         return;

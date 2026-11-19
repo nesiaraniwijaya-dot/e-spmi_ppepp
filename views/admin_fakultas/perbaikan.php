@@ -54,14 +54,14 @@ $totalDocs = count($documents);
                         <span class="saas-stat-number text-danger"><?= $perluCount ?></span>
                         <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2.5 py-0.5" style="font-size: 0.72rem;">Wajib Revisi</span>
                     </div>
-                    <div class="saas-stat-help">Wajib diperbaiki sesuai arahan telaah GPM Fakultas</div>
+                    <div class="saas-stat-help">Wajib diperbaiki sesuai arahan review GPM Fakultas</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="saas-stat-card" style="border-top: 4px solid #2563EB !important;">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="saas-stat-label text-primary">Menunggu Telaah Hasil Perbaikan (GPM)</span>
+                    <span class="saas-stat-label text-primary">Menunggu Review Hasil Perbaikan (GPM)</span>
                     <div class="saas-stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;">
                         <i class="fas fa-clock-rotate-left"></i>
                     </div>
@@ -111,7 +111,7 @@ $totalDocs = count($documents);
                     </button>
                     <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
                         <i class="fas fa-clock-rotate-left text-primary"></i>
-                        <span>Menunggu Telaah GPM</span>
+                        <span>Menunggu Review GPM</span>
                         <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= $sudahCount ?></span>
                     </button>
                 </div>
@@ -373,7 +373,7 @@ $totalDocs = count($documents);
                                         $sRevLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
                                         $sRevDate = !empty($sDoc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($sDoc['gpm_reviewed_at'])) . ' WIB' : (!empty($sDoc['reviewed_at']) ? date('d M Y, H:i', strtotime($sDoc['reviewed_at'])) . ' WIB' : '-');
                                         $sNote = (($sDoc['status_review'] ?? '') === 'revisi_lpm')
-                                            ? 'Sedang dalam proses telaah & evaluasi lanjutan oleh GPM Fakultas.'
+                                            ? 'Sedang dalam proses review & evaluasi lanjutan oleh GPM Fakultas.'
                                             : trim($sDoc['gpm_catatan'] ?: ($sDoc['catatan_review'] ?? 'Menunggu review ulang.'));
                                     } else {
                                         $sRevLabel = 'Pusat Penjaminan Mutu LPM';
@@ -516,7 +516,7 @@ $totalDocs = count($documents);
                                         $revLabel = 'Gugus Penjaminan Mutu (GPM) Fakultas';
                                         $revDate = !empty($doc['gpm_reviewed_at']) ? date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'])) . ' WIB' : (!empty($doc['reviewed_at']) ? date('d M Y, H:i', strtotime($doc['reviewed_at'])) . ' WIB' : '-');
                                         $noteExcerpt = (($doc['status_review'] ?? '') === 'revisi_lpm')
-                                            ? 'Sedang dalam proses telaah & evaluasi lanjutan oleh GPM Fakultas.'
+                                            ? 'Sedang dalam proses review & evaluasi lanjutan oleh GPM Fakultas.'
                                             : trim($doc['gpm_catatan'] ?: ($doc['catatan_review'] ?? ($isPerlu ? 'Silakan sesuaikan isi dokumen sesuai arahan.' : 'Menunggu review ulang.')));
                                     } else {
                                         $revLabel = 'Pusat Penjaminan Mutu LPM';

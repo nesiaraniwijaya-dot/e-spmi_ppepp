@@ -233,7 +233,7 @@ if (!empty($documents)):
 
                                         <!-- Review Button -->
                                         <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])): ?>
-                                            <button type="button" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs text-white" title="Telaah & Review Dokumen Ini" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.78rem; font-weight: 600;">
+                                            <button type="button" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs text-white" title="Review Dokumen Ini" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.78rem; font-weight: 600;">
                                                 <i class="fas fa-clipboard-check"></i> Review
                                             </button>
                                         <?php elseif ($doc['status_review'] === 'menunggu_review_lpm'): ?>

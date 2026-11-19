@@ -1489,7 +1489,7 @@ class AdminFakultasController extends Controller {
                 $stmtRevLog = $this->db->prepare("
                     INSERT INTO ppepp_document_reviews 
                     (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
-                    VALUES (?, ?, 'admin_fakultas', ?, 'resubmission', ?, 'sudah_diperbaiki', 'Dokumen hasil revisi telah diunggah oleh Dekanat Fakultas dan diajukan kembali ke GPM untuk ditelaah.', NOW())
+                    VALUES (?, ?, 'admin_fakultas', ?, 'resubmission', ?, 'sudah_diperbaiki', 'Dokumen hasil revisi telah diunggah oleh Dekanat Fakultas dan diajukan kembali ke GPM untuk di-review.', NOW())
                 ");
                 $stmtRevLog->execute([
                     $id,

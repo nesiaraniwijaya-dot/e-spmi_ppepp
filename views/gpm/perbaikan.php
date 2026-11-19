@@ -113,7 +113,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
             </div>
             <h3 class="fw-bold text-dark-blue mb-1" style="letter-spacing: -0.3px;">Monitoring Revisi Dokumen Mutu</h3>
             <p class="text-muted small mb-0" style="line-height: 1.5;">
-                Kelola tindak lanjut catatan evaluasi mutu berjenjang untuk <strong>Fakultas</strong> dan seluruh <strong>Program Studi</strong> di bawah <strong><?= htmlspecialchars($fakultas['nama_fakultas'] ?? '') ?></strong>. Catatan evaluasi dari LPM ditelaah oleh GPM sebelum dirumuskan resmi ke unit sasaran.
+                Kelola tindak lanjut catatan evaluasi mutu berjenjang untuk <strong>Fakultas</strong> dan seluruh <strong>Program Studi</strong> di bawah <strong><?= htmlspecialchars($fakultas['nama_fakultas'] ?? '') ?></strong>. Catatan evaluasi dari LPM di-review oleh GPM sebelum dirumuskan resmi ke unit sasaran.
             </p>
         </div>
         <div class="d-flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                 <div>
                     <div class="d-flex align-items-baseline gap-2 mb-1">
                         <span class="saas-stat-number text-primary"><?= $totalSudah ?></span>
-                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">Siap Telaah Ulang</span>
+                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">Siap Review Ulang</span>
                     </div>
                     <div class="saas-stat-help">Telah diperbaiki unit &amp; siap diajukan kembali ke LPM</div>
                 </div>
@@ -279,7 +279,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                     </button>
                     <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 <?= $activeTab === 'tab-sudah' ? 'active' : '' ?>" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
                         <i class="fas fa-clock-rotate-left text-primary"></i>
-                        <span>Hasil Perbaikan (Siap Telaah GPM)</span>
+                        <span>Hasil Perbaikan (Siap Review GPM)</span>
                         <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($sudahDocs) ?></span>
                     </button>
                     <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 <?= $activeTab === 'tab-all' ? 'active' : '' ?>" id="tab-all-btn" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" style="font-size: 0.84rem;">
@@ -720,7 +720,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                         <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px; font-size: 2rem;">
                             <i class="fas fa-inbox text-secondary"></i>
                         </div>
-                        <h5 class="fw-bold text-dark mb-1">Tidak Ada Dokumen yang Menunggu Telaah Ulang</h5>
+                        <h5 class="fw-bold text-dark mb-1">Tidak Ada Dokumen yang Menunggu Review Ulang</h5>
                         <p class="text-muted small mx-auto mb-0" style="max-width: 480px; line-height: 1.5;">
                             Dokumen yang telah diperbaiki oleh unit kerja akan muncul di sini untuk diperiksa ulang GPM sebelum diteruskan ke LPM.
                         </p>
@@ -731,7 +731,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                     <div class="p-3.5 px-4 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3" style="background: #EFF6FF; border-color: #BFDBFE !important;">
                         <div class="d-flex align-items-center gap-2.5">
                             <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #2563EB; color: #FFFFFF; font-size: 0.8rem;">
-                                <i class="fas fa-clock-rotate-left"></i> <strong><?= count($sudahDocs) ?> Dokumen Siap Telaah Ulang GPM</strong>
+                                <i class="fas fa-clock-rotate-left"></i> <strong><?= count($sudahDocs) ?> Dokumen Siap Review Ulang GPM</strong>
                             </span>
                             <span class="text-dark small">Periksa hasil perbaikan unit sasaran. Jika telah memenuhi standar, teruskan kembali ke LPM.</span>
                         </div>
@@ -748,7 +748,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                                     <th style="min-width: 145px; width: 14%;">Bidang</th>
                                     <th style="min-width: 270px; width: 27%;">Catatan Arahan Sebelumnya</th>
                                     <th class="text-center text-nowrap" style="width: 105px;">Lampiran Baru</th>
-                                    <th class="pe-4 text-center text-nowrap" style="width: 165px;">Aksi Telaah</th>
+                                    <th class="pe-4 text-center text-nowrap" style="width: 165px;">Aksi Review</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -877,7 +877,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                                         <td class="pe-4 py-3 text-center">
                                             <div class="d-inline-flex align-items-center gap-1.5 text-nowrap">
                                                 <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1 fw-semibold shadow-2xs d-inline-flex align-items-center gap-1 text-white" style="font-size: 0.78rem;">
-                                                    <i class="fas fa-clipboard-check"></i> Telaah &amp; Putuskan
+                                                    <i class="fas fa-clipboard-check"></i> Review &amp; Putuskan
                                                 </a>
                                                 <button type="button" class="btn btn-xs btn-outline-secondary rounded-circle p-0 btn-review-history d-inline-flex align-items-center justify-content-center shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="width: 32px; height: 32px; font-size: 0.76rem;">
                                                     <i class="fas fa-history text-secondary"></i>
@@ -1234,7 +1234,7 @@ $activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-u
                     <div class="p-3.5 rounded-3 bg-white border text-dark" id="evalModalCatatan" style="border-color: #FDE68A !important; font-size: 0.88rem; line-height: 1.7; max-height: 280px; overflow-y: auto; white-space: pre-wrap;">-</div>
                     <div class="d-flex align-items-center gap-1.5 mt-2 small text-warning-emphasis" id="evalModalPrivacyNote" style="font-size: 0.73rem;">
                         <i class="fas fa-eye-slash"></i>
-                        <span>Catatan ini khusus untuk ditelaah oleh GPM sebelum diteruskan resmi ke unit pengunggah.</span>
+                        <span>Catatan ini khusus untuk di-review oleh GPM sebelum diteruskan resmi ke unit pengunggah.</span>
                     </div>
                 </div>
             </div>

@@ -48,11 +48,11 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                 </div>
                 <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Antrean Telaah GPM</span>
+                        <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Antrean Review GPM</span>
                         <span class="text-dark fw-bold small">&bull; <?= $pendingGpmCount ?> Dokumen Menunggu Review</span>
                     </div>
                     <h6 class="fw-bold text-dark-blue mb-1" style="font-size: 1.02rem;">
-                        Terdapat <?= $pendingGpmCount ?> dokumen mutu binaan yang siap ditelaah oleh GPM!
+                        Terdapat <?= $pendingGpmCount ?> dokumen mutu binaan yang siap di-review oleh GPM!
                     </h6>
                     <p class="text-secondary small mb-0" style="font-size: 0.82rem;">
                         Silakan periksa kesesuaian berkas dokumen dari Dekanat dan Program Studi. Dokumen yang disetujui akan diteruskan ke LPM untuk review akhir.
@@ -62,7 +62,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <div class="d-flex align-items-center gap-2 flex-shrink-0 align-self-end align-self-md-center">
                 <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-4 py-2.5 fw-bold shadow-xs d-inline-flex align-items-center gap-2 text-nowrap" style="font-size: 0.84rem;">
                     <i class="fas fa-clipboard-list"></i>
-                    <span>Telaah Sekarang</span>
+                    <span>Review Sekarang</span>
                     <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
@@ -345,7 +345,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <?php endif; ?>
                         </div>
                         <p class="text-secondary small mb-0" style="font-size: 0.84rem; line-height: 1.45;">
-                            Daftar dokumen mutu unit binaan yang memerlukan tindak lanjut perbaikan berdasarkan catatan telaah evaluasi LPM / GPM.
+                            Daftar dokumen mutu unit binaan yang memerlukan tindak lanjut perbaikan berdasarkan catatan review evaluasi LPM / GPM.
                         </p>
                     </div>
                 </div>

@@ -44,7 +44,7 @@ $totalDraft = $totalDraft ?? count($documents);
         </div>
         <div class="small flex-grow-1" style="line-height: 1.65; color: #475569;">
             <strong class="text-dark d-block mb-1" style="font-size: 0.92rem;">Tentang Ruang Kerja Draf Dokumen:</strong>
-            Dokumen yang tersimpan sebagai draf bersifat rahasia internal program studi dan <strong>belum dapat dilihat oleh pengunjung umum ataupun Tim Penjaminan Mutu (GPM Fakultas)</strong>. Anda dapat mencicil isian formulir serta melengkapi berkas lampiran kapan saja, lalu menekan tombol <strong>Ajukan ke GPM</strong> saat berkas telah lengkap dan siap ditelaah.
+            Dokumen yang tersimpan sebagai draf bersifat rahasia internal program studi dan <strong>belum dapat dilihat oleh pengunjung umum ataupun Tim Penjaminan Mutu (GPM Fakultas)</strong>. Anda dapat mencicil isian formulir serta melengkapi berkas lampiran kapan saja, lalu menekan tombol <strong>Ajukan ke GPM</strong> saat berkas telah lengkap dan siap di-review GPM.
         </div>
     </div>
 

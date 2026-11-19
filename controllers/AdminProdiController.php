@@ -1625,7 +1625,7 @@ class AdminProdiController extends Controller {
                 $stmtRevLog = $this->db->prepare("
                     INSERT INTO ppepp_document_reviews 
                     (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
-                    VALUES (?, ?, 'admin_prodi', ?, 'resubmission', ?, 'sudah_diperbaiki', 'Dokumen hasil revisi telah diunggah oleh Program Studi dan diajukan kembali ke GPM Fakultas untuk ditelaah.', NOW())
+                    VALUES (?, ?, 'admin_prodi', ?, 'resubmission', ?, 'sudah_diperbaiki', 'Dokumen hasil revisi telah diunggah oleh Program Studi dan diajukan kembali ke GPM Fakultas untuk di-review.', NOW())
                 ");
                 $stmtRevLog->execute([
                     $id,
