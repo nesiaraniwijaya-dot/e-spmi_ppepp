@@ -17,9 +17,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <p class="text-muted small mb-0">Kelola hierarki kriteria bidang PPEPP beserta standar mutu yang menjadi acuan pengunggahan dokumen oleh Admin Program Studi.</p>
         </div>
         <div class="d-flex gap-2">
+            <?php if (Auth::canActionLpmMenu('master_bidang')): ?>
             <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm bg-scu-blue border-0 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalBidang" onclick="resetBidangForm()">
                 <i class="fas fa-plus me-1"></i> Tambah Bidang
             </button>
+            <?php else: ?>
+            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill"><i class="fas fa-eye me-1"></i> Mode Lihat Saja</span>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -79,6 +83,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <span class="badge bg-light text-dark border"><?= $b['total_dokumen'] ?></span>
                                 </td>
                                 <td class="text-center">
+                                    <?php if (Auth::canActionLpmMenu('master_bidang')): ?>
                                     <div class="d-flex justify-content-center gap-1">
                                         <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-2.5" 
                                                 data-bs-toggle="modal" 
@@ -95,6 +100,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             </button>
                                         </form>
                                     </div>
+                                    <?php else: ?>
+                                    <span class="text-muted small">-</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
 
@@ -115,11 +123,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                     <small class="text-muted">Total terdaftar: <?= $b['total_sub'] ?> standar mutu</small>
                                                 </div>
                                             </div>
+                                            <?php if (Auth::canActionLpmMenu('master_bidang')): ?>
                                             <button type="button" 
                                                     class="btn btn-primary btn-sm rounded-pill px-3 bg-scu-blue border-0 shadow-xs" 
                                                     onclick="openAddSubBidang(<?= $b['id'] ?>, '<?= htmlspecialchars(addslashes($b['nama_bidang'])) ?>')">
                                                 <i class="fas fa-plus me-1"></i> Tambah Standar
                                             </button>
+                                            <?php endif; ?>
                                         </div>
 
                                         <!-- Sub Table -->
@@ -172,6 +182,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                     <span class="badge bg-light text-secondary border small"><?= $sub['total_dokumen'] ?></span>
                                                                 </td>
                                                                 <td class="text-center">
+                                                                    <?php if (Auth::canActionLpmMenu('master_bidang')): ?>
                                                                     <div class="d-flex justify-content-center gap-1">
                                                                         <button type="button" class="btn btn-xs btn-outline-warning rounded-pill px-2" 
                                                                                 title="Ubah Standar" 
@@ -187,6 +198,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                             </button>
                                                                         </form>
                                                                     </div>
+                                                                    <?php else: ?>
+                                                                    <span class="text-muted small">-</span>
+                                                                    <?php endif; ?>
                                                                 </td>
                                                             </tr>
                                                         <?php endforeach; ?>

@@ -13,9 +13,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <h3 class="fw-bold text-dark-blue mb-1">Master Program Studi</h3>
             <p class="text-muted small mb-0">Kelola pemetaan program studi terhadap fakultas dan ketua prodi.</p>
         </div>
+        <?php if (Auth::canActionLpmMenu('master_prodi')): ?>
         <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm bg-scu-blue border-0" data-bs-toggle="modal" data-bs-target="#modalProdi" onclick="resetProdiForm()">
             <i class="fas fa-plus me-1"></i> Tambah Program Studi Baru
         </button>
+        <?php else: ?>
+        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill"><i class="fas fa-eye me-1"></i> Mode Lihat Saja</span>
+        <?php endif; ?>
     </div>
 
     <!-- Table Card -->
@@ -78,20 +82,24 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-1">
+                                        <?php if (Auth::canActionLpmMenu('master_prodi')): ?>
                                         <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-2.5" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#modalProdi"
                                                 onclick="editProdi(<?= htmlspecialchars(json_encode($p)) ?>)">
                                             <i class="fas fa-edit"></i>
                                         </button>
+                                        <?php endif; ?>
                                         <a href="<?= base_url('prodi/' . $p['id']) ?>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2.5" title="Lihat Dashboard Publik">
                                             <i class="fas fa-external-link-alt"></i>
                                         </a>
+                                        <?php if (Auth::canActionLpmMenu('master_prodi')): ?>
                                         <form action="<?= base_url('admin/prodi/delete/' . $p['id']) ?>" method="POST" class="d-inline">
                                             <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 btn-delete-confirm" data-name="<?= htmlspecialchars($p['nama_prodi']) ?>">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

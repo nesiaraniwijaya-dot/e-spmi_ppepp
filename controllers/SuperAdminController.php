@@ -19,6 +19,17 @@ class SuperAdminController extends Controller {
      * Dashboard Super Admin
      */
     public function dashboard(): void {
+        if (!Auth::canViewLpmMenu('dashboard')) {
+            if (Auth::canViewLpmMenu('review_dokumen')) redirect('admin/review');
+            if (Auth::canViewLpmMenu('monitoring_berkas')) redirect('admin/monitoring-berkas');
+            if (Auth::canViewLpmMenu('monitoring_gpm')) redirect('admin/monitoring-gpm');
+            if (Auth::canViewLpmMenu('upload_access')) redirect('admin/upload-access');
+            if (Auth::canViewLpmMenu('master_fakultas')) redirect('admin/fakultas');
+            if (Auth::canViewLpmMenu('master_prodi')) redirect('admin/prodi');
+            if (Auth::canViewLpmMenu('master_bidang')) redirect('admin/bidang');
+            redirect('dokumen');
+            return;
+        }
         $totalFakultas = $this->db->query("SELECT COUNT(*) FROM fakultas")->fetchColumn();
         $totalProdi = $this->db->query("SELECT COUNT(*) FROM prodis")->fetchColumn();
         $totalUsers = $this->db->query("SELECT COUNT(*) FROM users")->fetchColumn();
@@ -146,6 +157,12 @@ class SuperAdminController extends Controller {
      * Master Fakultas
      */
     public function fakultas(): void {
+        if (!Auth::canViewLpmMenu('master_fakultas')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Master Fakultas.');
+            redirect('admin/dashboard');
+            return;
+        }
+
         $stmt = $this->db->query("
             SELECT f.*, COUNT(p.id) as total_prodi 
             FROM fakultas f 
@@ -162,6 +179,12 @@ class SuperAdminController extends Controller {
     }
 
     public function saveFakultas(): void {
+        if (!Auth::canActionLpmMenu('master_fakultas')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Master Fakultas.');
+            redirect('admin/fakultas');
+            return;
+        }
+
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $kode = strtoupper(trim($_POST['kode_fakultas'] ?? ''));
         $nama = trim($_POST['nama_fakultas'] ?? '');
@@ -197,6 +220,12 @@ class SuperAdminController extends Controller {
     }
 
     public function deleteFakultas(string $id): void {
+        if (!Auth::canActionLpmMenu('master_fakultas')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Master Fakultas.');
+            redirect('admin/fakultas');
+            return;
+        }
+
         $stmtOld = $this->db->prepare("SELECT * FROM fakultas WHERE id = ?");
         $stmtOld->execute([$id]);
         $fak = $stmtOld->fetch();
@@ -216,6 +245,12 @@ class SuperAdminController extends Controller {
      * Master Program Studi (Prodi)
      */
     public function prodi(): void {
+        if (!Auth::canViewLpmMenu('master_prodi')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Master Program Studi.');
+            redirect('admin/dashboard');
+            return;
+        }
+
         $fakultasList = $this->db->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas ORDER BY nama_fakultas ASC")->fetchAll();
 
         $stmt = $this->db->query("
@@ -239,6 +274,12 @@ class SuperAdminController extends Controller {
     }
 
     public function saveProdi(): void {
+        if (!Auth::canActionLpmMenu('master_prodi')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Master Program Studi.');
+            redirect('admin/prodi');
+            return;
+        }
+
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $fakultasId = (int)($_POST['fakultas_id'] ?? 0);
         $kodeProdi = trim($_POST['kode_prodi'] ?? '');
@@ -277,6 +318,12 @@ class SuperAdminController extends Controller {
     }
 
     public function deleteProdi(string $id): void {
+        if (!Auth::canActionLpmMenu('master_prodi')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Master Program Studi.');
+            redirect('admin/prodi');
+            return;
+        }
+
         $stmtOld = $this->db->prepare("SELECT * FROM prodis WHERE id = ?");
         $stmtOld->execute([$id]);
         $p = $stmtOld->fetch();
@@ -296,6 +343,12 @@ class SuperAdminController extends Controller {
      * Master Bidang Standar Dokumen Kustom (Permintaan User: Dapat dikustomisasi Admin LPM)
      */
     public function bidang(): void {
+        if (!Auth::canViewLpmMenu('master_bidang')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Master Standar Mutu.');
+            redirect('admin/dashboard');
+            return;
+        }
+
         $stmt = $this->db->query("
             SELECT b.*, COUNT(d.id) as total_dokumen
             FROM bidang_standar b
@@ -333,6 +386,12 @@ class SuperAdminController extends Controller {
     }
 
     public function saveBidang(): void {
+        if (!Auth::canActionLpmMenu('master_bidang')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Master Standar Mutu.');
+            redirect('admin/bidang');
+            return;
+        }
+
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $kode = trim($_POST['kode_bidang'] ?? '');
         $nama = trim($_POST['nama_bidang'] ?? '');
@@ -367,6 +426,12 @@ class SuperAdminController extends Controller {
     }
 
     public function deleteBidang(string $id): void {
+        if (!Auth::canActionLpmMenu('master_bidang')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Master Standar Mutu.');
+            redirect('admin/bidang');
+            return;
+        }
+
         $stmtOld = $this->db->prepare("SELECT * FROM bidang_standar WHERE id = ?");
         $stmtOld->execute([$id]);
         $b = $stmtOld->fetch();
@@ -395,6 +460,12 @@ class SuperAdminController extends Controller {
      * Master Sub-Bidang Standar Mutu CRUD
      */
     public function saveSubBidang(): void {
+        if (!Auth::canActionLpmMenu('master_bidang')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Master Standar Mutu.');
+            redirect('admin/bidang');
+            return;
+        }
+
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $bidangId = !empty($_POST['bidang_id']) ? (int)$_POST['bidang_id'] : null;
         $kode = trim($_POST['kode_sub_bidang'] ?? '');
@@ -435,6 +506,12 @@ class SuperAdminController extends Controller {
     }
 
     public function deleteSubBidang(string $id): void {
+        if (!Auth::canActionLpmMenu('master_bidang')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Master Standar Mutu.');
+            redirect('admin/bidang');
+            return;
+        }
+
         $stmtOld = $this->db->prepare("SELECT s.*, b.nama_bidang FROM sub_bidang_standar s JOIN bidang_standar b ON s.bidang_id = b.id WHERE s.id = ?");
         $stmtOld->execute([$id]);
         $sub = $stmtOld->fetch();
@@ -466,6 +543,12 @@ class SuperAdminController extends Controller {
      * Manajemen Pengguna (Users & Roles)
      */
     public function users(): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Menu Manajemen Pengguna khusus diperuntukkan bagi Admin.');
+            redirect('admin/dashboard');
+            return;
+        }
+
         $fakultasList = $this->db->query("SELECT id, kode_fakultas, nama_fakultas FROM fakultas ORDER BY nama_fakultas ASC")->fetchAll();
         $prodiList = $this->db->query("SELECT p.id, p.nama_prodi, p.jenjang, f.nama_fakultas FROM prodis p JOIN fakultas f ON p.fakultas_id = f.id ORDER BY p.nama_prodi ASC")->fetchAll();
 
@@ -490,6 +573,12 @@ class SuperAdminController extends Controller {
     }
 
     public function saveUser(): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Hanya Admin yang berhak mengelola data pengguna.');
+            redirect('admin/dashboard');
+            return;
+        }
+
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
@@ -547,6 +636,12 @@ class SuperAdminController extends Controller {
     }
 
     public function deleteUser(string $id): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Hanya Admin yang berhak menghapus akun pengguna.');
+            redirect('admin/dashboard');
+            return;
+        }
+
         if ((int)$id === Auth::id()) {
             Auth::setFlash('danger', 'Anda tidak dapat menghapus akun Anda sendiri.');
             redirect('admin/users');
@@ -704,6 +799,12 @@ class SuperAdminController extends Controller {
      * Pusat Review Dokumen Mutu Terpusat (Admin LPM / Super Admin)
      */
     public function reviewHub(): void {
+        if (!Auth::canViewLpmMenu('review_dokumen')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Pusat Review Dokumen.');
+            redirect('admin/dashboard');
+            return;
+        }
+
         // Parameter pagination & filter
         $statusFilter  = trim($_GET['status'] ?? 'perlu_tindakan');
         $fakultasId    = !empty($_GET['fakultas_id']) ? (int)$_GET['fakultas_id'] : 0;
@@ -1242,6 +1343,11 @@ class SuperAdminController extends Controller {
      * Halaman Review Dokumen Mutu per Program Studi (LPM)
      */
     public function reviewProdi(string $prodiId): void {
+        if (!Auth::canViewLpmMenu('review_dokumen')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Pusat Review Dokumen.');
+            redirect('admin/dashboard');
+            return;
+        }
         $id = (int)$prodiId;
         $stmtProdi = $this->db->prepare("
             SELECT p.*, f.nama_fakultas, f.kode_fakultas 
@@ -1445,6 +1551,11 @@ class SuperAdminController extends Controller {
      * Halaman Review Dokumen Mutu per Fakultas (LPM)
      */
     public function reviewFakultas(string $fakultasId): void {
+        if (!Auth::canViewLpmMenu('review_dokumen')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Pusat Review Dokumen.');
+            redirect('admin/dashboard');
+            return;
+        }
         $id = (int)$fakultasId;
         $stmtFak = $this->db->prepare("SELECT * FROM fakultas WHERE id = ?");
         $stmtFak->execute([$id]);
@@ -1644,6 +1755,11 @@ class SuperAdminController extends Controller {
      * Submit Review Dokumen (Setujui / Minta Revisi dengan Catatan)
      */
     public function submitReview(): void {
+        if (!Auth::canActionLpmMenu('review_dokumen')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Pusat Review Dokumen.']);
+            exit;
+        }
         $docId = !empty($_POST['document_id']) ? (int)$_POST['document_id'] : 0;
         $statusReview = trim($_POST['status_review'] ?? '');
         $catatanReview = trim($_POST['catatan_review'] ?? '');
@@ -1949,6 +2065,11 @@ class SuperAdminController extends Controller {
      * Halaman Kelola Konten Beranda Publik & Footer
      */
     public function landingSettings(): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Menu Kelola Beranda & Footer khusus diperuntukkan bagi Admin.');
+            redirect('admin/dashboard');
+            return;
+        }
         $stmt = $this->db->query("SELECT setting_key, setting_value, setting_group FROM landing_settings");
         $allRows = $stmt->fetchAll();
         
@@ -1977,6 +2098,11 @@ class SuperAdminController extends Controller {
      * Simpan Pengaturan Konten Beranda Publik & Footer
      */
     public function saveLandingSettings(): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Hanya Admin yang berhak mengubah konten beranda & footer.');
+            redirect('admin/dashboard');
+            return;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('admin/landing-settings');
             return;
@@ -2025,6 +2151,11 @@ class SuperAdminController extends Controller {
      * Reset Pengaturan Beranda Publik ke Standar Pabrik
      */
     public function resetLandingSettings(): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Hanya Admin yang berhak mereset konten beranda & footer.');
+            redirect('admin/dashboard');
+            return;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('admin/landing-settings');
             return;
@@ -2205,6 +2336,11 @@ class SuperAdminController extends Controller {
      * serta unit yang belum mengunggah dokumen.
      */
     public function monitoringBerkas(): void {
+        if (!Auth::canViewLpmMenu('monitoring_berkas')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Monitoring Dokumen.');
+            redirect('admin/dashboard');
+            return;
+        }
         $tahunList = $this->db->query("SELECT tahun_akademik, is_open FROM tahun_akademik_settings ORDER BY tahun_akademik DESC")->fetchAll();
         $defaultTA = '';
         foreach ($tahunList as $t) {
@@ -2436,6 +2572,11 @@ class SuperAdminController extends Controller {
      * Berbasis Akurasi Lolos LPM (50%), Ketuntasan Antrean & Relay (30%), dan Kecepatan Respon (20%).
      */
     public function monitoringGpm(): void {
+        if (!Auth::canViewLpmMenu('monitoring_gpm')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Monitoring Kinerja GPM.');
+            redirect('admin/dashboard');
+            return;
+        }
         $gpmMembersRaw = $this->db->query("
             SELECT u.id, u.name, u.email, u.avatar, u.fakultas_id, u.created_at as member_since,
                    f.nama_fakultas, f.kode_fakultas
@@ -2900,6 +3041,12 @@ class SuperAdminController extends Controller {
      * Manajemen Terpadu Tahun Akademik, Akses Unggah, & Tenggat Waktu (LPM)
      */
     public function uploadAccess(): void {
+        if (!Auth::canViewLpmMenu('upload_access')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin untuk melihat Akses Upload & Kalender Akademik.');
+            redirect('admin/dashboard');
+            return;
+        }
+
         $this->ensureUploadAccessTables();
 
         // Otomatis sinkronkan rekaman antara academic_year_deadlines dan tahun_akademik_settings
@@ -3023,6 +3170,12 @@ class SuperAdminController extends Controller {
      * Simpan / Perbarui Tenggat Waktu & Tahun Akademik (LPM)
      */
     public function saveAcademicDeadline(): void {
+        if (!Auth::canActionLpmMenu('upload_access')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Akses Upload & Kalender Akademik.');
+            redirect('admin/upload-access#tab-deadlines');
+            return;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('admin/upload-access#tab-deadlines');
             return;
@@ -3194,6 +3347,12 @@ class SuperAdminController extends Controller {
      * Proses Persetujuan / Penolakan Permohonan Akses Upload dari Unit (LPM)
      */
     public function processAccessRequest(): void {
+        if (!Auth::canActionLpmMenu('upload_access')) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Akses Upload & Kalender Akademik.');
+            redirect('admin/upload-access#tab-requests');
+            return;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('admin/upload-access');
             return;
@@ -3263,5 +3422,237 @@ class SuperAdminController extends Controller {
         }
 
         redirect('admin/upload-access');
+    }
+
+    /**
+     * Halaman Pengaturan Hak Akses & Visibilitas Menu LPM (RBAC Dinamis)
+     * Khusus diperuntukkan bagi Root Administrator (tu.lpm@unika.ac.id)
+     */
+    public function menuPermissions(): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Pengaturan Hak Akses Menu LPM khusus diperuntukkan bagi Admin.');
+            redirect('admin/dashboard');
+            return;
+        }
+
+        $lpmRoles = [
+            'kepala_lpm' => [
+                'label'      => 'Kepala LPM',
+                'full_title' => 'Kepala Lembaga Penjaminan Mutu',
+                'email'      => 'lpm@unika.ac.id',
+                'icon'       => 'fas fa-user-tie',
+                'badge'      => 'bg-warning text-dark',
+            ],
+            'sekretaris_lpm' => [
+                'label'      => 'Sekretaris LPM',
+                'full_title' => 'Sekretaris Lembaga Penjaminan Mutu',
+                'email'      => 'lpm.sekretaris@unika.ac.id',
+                'icon'       => 'fas fa-user-check',
+                'badge'      => 'text-white" style="background:#2563EB;"',
+            ],
+            'ketua_pusat_spm' => [
+                'label'      => 'Ketua Pusat SPM',
+                'full_title' => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
+                'email'      => 'lpm.spm@unika.ac.id',
+                'icon'       => 'fas fa-award',
+                'badge'      => 'text-white" style="background:#4338CA;"',
+            ],
+            'ketua_pusat_ami' => [
+                'label'      => 'Ketua Pusat AMI',
+                'full_title' => 'Ketua Pusat Audit Mutu Internal',
+                'email'      => 'lpm.ami@unika.ac.id',
+                'icon'       => 'fas fa-clipboard-check',
+                'badge'      => 'text-white" style="background:#0F766E;"',
+            ],
+            'ketua_pusat_pemeringkatan' => [
+                'label'      => 'Ketua Pemeringkatan',
+                'full_title' => 'Ketua Pusat Pemeringkatan',
+                'email'      => 'lpm.pemeringkatan@unika.ac.id',
+                'icon'       => 'fas fa-medal',
+                'badge'      => 'text-white" style="background:#7C3AED;"',
+            ],
+        ];
+
+        $menuList = [
+            'dashboard' => [
+                'title'      => 'Dashboard Utama',
+                'desc'       => 'Statistik PPEPP, grafik mutu institusi, dan ringkasan antrean verifikasi',
+                'path'       => 'admin/dashboard',
+                'icon'       => 'fas fa-gauge',
+                'category'   => 'Menu Utama LPM',
+                'has_action' => false,
+            ],
+            'review_dokumen' => [
+                'title'      => 'Pusat Review Dokumen',
+                'desc'       => 'Pemeriksaan kesesuaian dokumen SPMI, persetujuan mutu, dan catatan perbaikan/revisi',
+                'path'       => 'admin/review',
+                'icon'       => 'fas fa-clipboard-check',
+                'category'   => 'Menu Utama LPM',
+                'has_action' => true,
+                'action_label' => 'Beri Keputusan Sesuai / Revisi LPM',
+            ],
+            'monitoring_berkas' => [
+                'title'      => 'Monitoring Dokumen',
+                'desc'       => 'Pemantauan alur berkas, status telaah, dan log riwayat lalulintas dokumen institusi',
+                'path'       => 'admin/monitoring-berkas',
+                'icon'       => 'fas fa-file-waveform',
+                'category'   => 'Menu Utama LPM',
+                'has_action' => false,
+            ],
+            'monitoring_gpm' => [
+                'title'      => 'Monitoring Kinerja GPM',
+                'desc'       => 'Pemantauan kecepatan verifikasi, ketelitian, dan evaluasi berkala kinerja GPM Fakultas',
+                'path'       => 'admin/monitoring-gpm',
+                'icon'       => 'fas fa-users-viewfinder',
+                'category'   => 'Menu Utama LPM',
+                'has_action' => true,
+                'action_label' => 'Input Skor & Evaluasi Kinerja GPM',
+            ],
+            'upload_access' => [
+                'title'      => 'Tahun Akademik & Akses Upload',
+                'desc'       => 'Jadwal kalender akademik, buka/tutup jatah unggah unit, dan persetujuan permohonan akses',
+                'path'       => 'admin/upload-access',
+                'icon'       => 'fas fa-calendar-check',
+                'category'   => 'Data Master & Kalender',
+                'has_action' => true,
+                'action_label' => 'Buka/Tutup Akses & Proses Permohonan',
+            ],
+            'master_fakultas' => [
+                'title'      => 'Master Fakultas',
+                'desc'       => 'Data induk fakultas, kode unit, dan pimpinan dekanat',
+                'path'       => 'admin/fakultas',
+                'icon'       => 'fas fa-landmark',
+                'category'   => 'Data Master & Kalender',
+                'has_action' => true,
+                'action_label' => 'Tambah / Edit / Hapus Fakultas',
+            ],
+            'master_prodi' => [
+                'title'      => 'Master Program Studi',
+                'desc'       => 'Data induk program studi, kode prodi, jenjang akreditasi, dan kaprodi',
+                'path'       => 'admin/prodi',
+                'icon'       => 'fas fa-graduation-cap',
+                'category'   => 'Data Master & Kalender',
+                'has_action' => true,
+                'action_label' => 'Tambah / Edit / Hapus Prodi',
+            ],
+            'master_bidang' => [
+                'title'      => 'Master Bidang Mutu',
+                'desc'       => 'Standar mutu institusi PPEPP, kode standar, kriteria, dan sub-bidang standar mutu',
+                'path'       => 'admin/bidang',
+                'icon'       => 'fas fa-layer-group',
+                'category'   => 'Data Master & Kalender',
+                'has_action' => true,
+                'action_label' => 'Tambah / Edit / Hapus Standar Mutu',
+            ],
+        ];
+
+        // Ambil data permission yang tersimpan di database
+        $permissions = [];
+        try {
+            $stmt = $this->db->query("SELECT role, menu_key, can_view, can_action FROM lpm_menu_permissions");
+            while ($row = $stmt->fetch()) {
+                $permissions[$row['role']][$row['menu_key']] = [
+                    'can_view'   => (int)$row['can_view'],
+                    'can_action' => (int)$row['can_action'],
+                ];
+            }
+        } catch (\Throwable $e) {
+            $permissions = [];
+        }
+
+        $this->render('super_admin/menu_permissions', [
+            'pageTitle'   => 'Pengaturan Hak Akses Menu LPM',
+            'activeNav'   => 'menu_permissions',
+            'lpmRoles'    => $lpmRoles,
+            'menuList'    => $menuList,
+            'permissions' => $permissions,
+        ]);
+    }
+
+    /**
+     * Simpan Pengaturan Hak Akses Menu LPM
+     */
+    public function saveMenuPermissions(): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Hanya Admin yang berhak mengubah hak akses menu.');
+            redirect('admin/dashboard');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('admin/menu-permissions');
+            return;
+        }
+
+        $postedPerms = $_POST['permissions'] ?? [];
+
+        $lpmRoles = [
+            'kepala_lpm',
+            'sekretaris_lpm',
+            'ketua_pusat_spm',
+            'ketua_pusat_ami',
+            'ketua_pusat_pemeringkatan',
+        ];
+
+        $configurableMenus = [
+            'dashboard',
+            'review_dokumen',
+            'monitoring_berkas',
+            'monitoring_gpm',
+            'upload_access',
+            'master_fakultas',
+            'master_prodi',
+            'master_bidang',
+        ];
+
+        try {
+            $stmtUpsert = $this->db->prepare("
+                INSERT INTO lpm_menu_permissions (role, menu_key, can_view, can_action)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE can_view = VALUES(can_view), can_action = VALUES(can_action), updated_at = NOW()
+            ");
+
+            foreach ($lpmRoles as $r) {
+                foreach ($configurableMenus as $m) {
+                    $canView = !empty($postedPerms[$r][$m]['can_view']) ? 1 : 0;
+                    // Jika canView = 0, otomatis canAction = 0
+                    $canAction = ($canView === 1 && !empty($postedPerms[$r][$m]['can_action'])) ? 1 : 0;
+
+                    $stmtUpsert->execute([$r, $m, $canView, $canAction]);
+                }
+            }
+
+            Auth::clearPermissionCache();
+
+            AuditLogger::log('UPDATE', 'Hak Akses Menu LPM', 'matrix', 'Pembaruan matriks hak akses menu LPM institusi');
+            Auth::setFlash('success', 'Hak akses dan visibilitas menu LPM berhasil diperbarui dan diterapkan!');
+        } catch (\Throwable $e) {
+            Auth::setFlash('danger', 'Gagal memperbarui hak akses menu: ' . $e->getMessage());
+        }
+
+        redirect('admin/menu-permissions');
+    }
+
+    /**
+     * Reset Pengaturan Hak Akses Menu LPM ke Pengaturan Awal (Semua Aktif)
+     */
+    public function resetMenuPermissions(): void {
+        if (!Auth::isRootAdmin()) {
+            Auth::setFlash('danger', 'Akses ditolak: Hanya Admin yang berhak mereset hak akses menu.');
+            redirect('admin/dashboard');
+            return;
+        }
+
+        try {
+            $this->db->exec("UPDATE lpm_menu_permissions SET can_view = 1, can_action = 1, updated_at = NOW()");
+            Auth::clearPermissionCache();
+
+            AuditLogger::log('RESET', 'Hak Akses Menu LPM', 'matrix', 'Reset seluruh hak akses menu LPM ke default institusi');
+            Auth::setFlash('success', 'Seluruh hak akses menu LPM berhasil dikembalikan ke pengaturan awal (akses penuh)!');
+        } catch (\Throwable $e) {
+            Auth::setFlash('danger', 'Gagal mereset hak akses menu: ' . $e->getMessage());
+        }
+
+        redirect('admin/menu-permissions');
     }
 }

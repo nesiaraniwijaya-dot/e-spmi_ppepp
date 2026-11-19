@@ -21,24 +21,24 @@ class Auth {
     ];
 
     public const LPM_ROLE_LABELS = [
+        'super_admin'               => 'Admin',
         'kepala_lpm'                => 'Kepala Lembaga Penjaminan Mutu',
         'sekretaris_lpm'            => 'Sekretaris Lembaga Penjaminan Mutu',
         'ketua_pusat_spm'           => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
         'ketua_pusat_ami'           => 'Ketua Pusat Audit Mutu Internal',
         'ketua_pusat_pemeringkatan' => 'Ketua Pusat Pemeringkatan',
         'tu_lpm'                    => 'TU Lembaga Penjaminan Mutu',
-        'super_admin'               => 'Admin LPM (Super Admin)',
     ];
 
     public static function getRoleLabel(string $role): string {
         return match ($role) {
+            'super_admin', 'admin_lpm'  => 'Admin',
             'kepala_lpm'                => 'Kepala Lembaga Penjaminan Mutu',
             'sekretaris_lpm'            => 'Sekretaris Lembaga Penjaminan Mutu',
             'ketua_pusat_spm'           => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
             'ketua_pusat_ami'           => 'Ketua Pusat Audit Mutu Internal',
             'ketua_pusat_pemeringkatan' => 'Ketua Pusat Pemeringkatan',
             'tu_lpm'                    => 'TU Lembaga Penjaminan Mutu',
-            'super_admin', 'admin_lpm'  => 'Admin LPM (Super Admin)',
             'kepala_pusat_mutu'         => 'Ketua Pusat Penjaminan Mutu',
             default                     => ucwords(str_replace('_', ' ', $role)),
         };
@@ -304,6 +304,109 @@ class Auth {
         return self::role() === 'super_admin';
     }
 
+    /**
+     * Memeriksa apakah pengguna aktif adalah Root Admin (Super Admin)
+     * Akun resmi: tu.lpm@unika.ac.id atau role super_admin.
+     */
+    public static function isRootAdmin(): bool {
+        self::startSession();
+        if (!self::check()) return false;
+        $user = self::user();
+        $email = strtolower(trim((string)($user['email'] ?? '')));
+        $role = $user['role'] ?? '';
+
+        // Mode testing multi-role: hanya jika peran yang dipilih adalah super_admin
+        if (!empty($_SESSION['is_multi_role_testing'])) {
+            return ($role === 'super_admin');
+        }
+
+        return $email === 'tu.lpm@unika.ac.id' || $role === 'super_admin';
+    }
+
+    private static ?array $cachedLpmPermissions = null;
+
+    public static function clearPermissionCache(): void {
+        self::$cachedLpmPermissions = null;
+    }
+
+    public static function getLpmPermissions(): array {
+        if (self::$cachedLpmPermissions !== null) {
+            return self::$cachedLpmPermissions;
+        }
+
+        self::$cachedLpmPermissions = [];
+        try {
+            $pdo = Database::getInstance()->getConnection();
+            $stmt = $pdo->query("SELECT role, menu_key, can_view, can_action FROM lpm_menu_permissions");
+            while ($row = $stmt->fetch()) {
+                $r = $row['role'];
+                $k = $row['menu_key'];
+                self::$cachedLpmPermissions[$r][$k] = [
+                    'can_view'   => (int)$row['can_view'] === 1,
+                    'can_action' => (int)$row['can_action'] === 1,
+                ];
+            }
+        } catch (\Throwable $e) {
+            // Fail silently jika tabel belum dimigrasikan
+        }
+
+        return self::$cachedLpmPermissions;
+    }
+
+    /**
+     * Mengecek apakah role LPM aktif berhak melihat menu tertentu di navigasi/halaman
+     */
+    public static function canViewLpmMenu(string $menuKey): bool {
+        if (!self::isLpm()) {
+            return false;
+        }
+
+        // Root Admin memiliki akses penuh tanpa terkecuali
+        if (self::isRootAdmin()) {
+            return true;
+        }
+
+        // Menu khusus eksklusif untuk Admin saja
+        if (in_array($menuKey, ['landing_settings', 'users', 'menu_permissions'], true)) {
+            return false;
+        }
+
+        $role = self::role();
+        $perms = self::getLpmPermissions();
+        if (isset($perms[$role][$menuKey])) {
+            return (bool)$perms[$role][$menuKey]['can_view'];
+        }
+
+        return true; // Default fallback true
+    }
+
+    /**
+     * Mengecek apakah role LPM aktif berhak melakukan aksi (tambah/edit/hapus/review) pada menu tersebut
+     */
+    public static function canActionLpmMenu(string $menuKey): bool {
+        if (!self::isLpm()) {
+            return false;
+        }
+
+        // Root Admin memiliki hak aksi penuh
+        if (self::isRootAdmin()) {
+            return true;
+        }
+
+        // Menu khusus eksklusif untuk Admin saja
+        if (in_array($menuKey, ['landing_settings', 'users', 'menu_permissions'], true)) {
+            return false;
+        }
+
+        $role = self::role();
+        $perms = self::getLpmPermissions();
+        if (isset($perms[$role][$menuKey])) {
+            return (bool)($perms[$role][$menuKey]['can_view'] && $perms[$role][$menuKey]['can_action']);
+        }
+
+        return true;
+    }
+
     public static function isFakultas(): bool {
         return in_array(self::role(), ['dekan', 'wadek']);
     }
@@ -360,7 +463,7 @@ class Auth {
             'ketua_pusat_pemeringkatan' => 'Ketua Pusat Pemeringkatan',
             'tu_lpm'                    => 'TU Lembaga Penjaminan Mutu',
             'kepala_pusat_mutu'         => 'Ketua Pusat Penjaminan Mutu',
-            'super_admin', 'admin_lpm'  => 'Admin Lembaga Penjaminan Mutu (Super Admin)',
+            'super_admin', 'admin_lpm'  => 'Admin',
             'dekan'                     => 'Dekan ' . $fakultasName,
             'wadek'                     => 'Wakil Dekan ' . $fakultasName,
             'gpm'                       => 'GPM ' . $fakultasName,

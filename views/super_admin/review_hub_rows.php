@@ -241,6 +241,7 @@ if (!empty($documents)):
             <!-- Aksi Cepat (Quick Review Icon Group) -->
             <td class="text-center pe-3">
                 <div class="d-inline-flex align-items-center justify-content-center gap-1">
+                    <?php if (Auth::canActionLpmMenu('review_dokumen')): ?>
                     <!-- Tombol Setujui Langsung -->
                     <button type="button" 
                             class="btn btn-sm btn-success rounded-circle shadow-2xs d-inline-flex align-items-center justify-content-center" 
@@ -273,6 +274,11 @@ if (!empty($documents)):
                             title="Minta Revisi Unit">
                         <i class="fas fa-pen-to-square" style="font-size: 0.72rem;"></i>
                     </button>
+                    <?php else: ?>
+                    <span class="badge bg-light text-muted border px-1.5 py-1" style="font-size: 0.65rem;" title="Mode Lihat Saja (Akses review dibatasi oleh Admin)">
+                        <i class="fas fa-eye me-0.5"></i> Lihat Saja
+                    </span>
+                    <?php endif; ?>
 
                     <!-- Tombol Riwayat Revisi -->
                     <button type="button" 

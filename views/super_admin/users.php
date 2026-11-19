@@ -55,8 +55,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         'ketua_pusat_ami'           => '<span class="badge text-white" style="background:#0F766E;"><i class="fas fa-clipboard-check me-1"></i>Ketua Pusat AMI</span>',
                                         'ketua_pusat_pemeringkatan' => '<span class="badge text-white" style="background:#7C3AED;"><i class="fas fa-medal me-1"></i>Ketua Pusat Pemeringkatan</span>',
                                         'tu_lpm'                    => '<span class="badge bg-info text-dark"><i class="fas fa-briefcase me-1"></i>TU LPM</span>',
-                                        'super_admin'               => '<span class="badge bg-danger"><i class="fas fa-user-shield me-1"></i>Super Admin (Multi-Role)</span>',
-                                        'admin_lpm'                 => '<span class="badge bg-danger"><i class="fas fa-user-shield me-1"></i>Admin LPM</span>',
+                                        'super_admin'               => '<span class="badge bg-danger"><i class="fas fa-user-shield me-1"></i>Admin</span>',
+                                        'admin_lpm'                 => '<span class="badge bg-danger"><i class="fas fa-user-shield me-1"></i>Admin</span>',
                                         'kepala_pusat_mutu'         => '<span class="badge text-white" style="background:#4338CA;"><i class="fas fa-award me-1"></i>Ketua Pusat Mutu</span>',
                                         'dekan'                     => '<span class="badge bg-primary"><i class="fas fa-landmark me-1"></i>Dekan</span>',
                                         'wadek'             => '<span class="badge text-white" style="background:#0284C7;"><i class="fas fa-user-tie me-1"></i>Wakil Dekan</span>',
@@ -175,7 +175,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <option value="ketua_pusat_ami">Ketua Pusat Audit Mutu Internal</option>
                                 <option value="ketua_pusat_pemeringkatan">Ketua Pusat Pemeringkatan</option>
                                 <option value="tu_lpm">TU Lembaga Penjaminan Mutu</option>
-                                <option value="super_admin">Super Admin (Multi-Role)</option>
+                                <option value="super_admin">Admin (Super Admin - Akses Penuh)</option>
                             </optgroup>
                             <optgroup label="Tingkat Fakultas">
                                 <option value="dekan">Dekan Fakultas</option>

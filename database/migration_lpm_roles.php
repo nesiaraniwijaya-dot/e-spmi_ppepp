@@ -7,7 +7,7 @@
  *   3. ketua_pusat_spm           -> lpm.spm@unika.ac.id
  *   4. ketua_pusat_ami           -> lpm.ami@unika.ac.id
  *   5. ketua_pusat_pemeringkatan -> lpm.pemeringkatan@unika.ac.id
- *   6. tu_lpm                    -> tu.lpm@unika.ac.id
+ *   6. super_admin (Admin)       -> tu.lpm@unika.ac.id
  * Mempertahankan `super_admin` untuk akun multi-role/testing.
  */
 
@@ -112,9 +112,9 @@ try {
             'role'  => 'ketua_pusat_pemeringkatan',
         ],
         [
-            'name'  => 'TU Lembaga Penjaminan Mutu',
+            'name'  => 'Admin',
             'email' => 'tu.lpm@unika.ac.id',
-            'role'  => 'tu_lpm',
+            'role'  => 'super_admin',
         ],
     ];
 

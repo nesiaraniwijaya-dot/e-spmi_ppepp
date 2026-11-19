@@ -87,6 +87,11 @@ $router->post('admin/upload-access/save-deadline', ['SuperAdminController', 'sav
 $router->post('admin/upload-access/toggle-active', ['SuperAdminController', 'toggleActiveAcademicYear']);
 $router->post('admin/upload-access/process-request', ['SuperAdminController', 'processAccessRequest']);
 
+// Manajemen Hak Akses Menu LPM (Khusus Root Admin tu.lpm@unika.ac.id)
+$router->get('admin/menu-permissions', ['SuperAdminController', 'menuPermissions']);
+$router->post('admin/menu-permissions/save', ['SuperAdminController', 'saveMenuPermissions']);
+$router->post('admin/menu-permissions/reset', ['SuperAdminController', 'resetMenuPermissions']);
+
 // Manajemen Pengguna & Hak Akses
 $router->get('admin/users', ['SuperAdminController', 'users']);
 $router->post('admin/users/save', ['SuperAdminController', 'saveUser']);

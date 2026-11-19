@@ -151,14 +151,18 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
 
         <?php if (Auth::isLpm()): ?>
 
-            <!-- Super Admin: Menu Utama -->
+            <!-- Super Admin: Menu Utama LPM -->
+            <?php if (Auth::canViewLpmMenu('dashboard') || Auth::canViewLpmMenu('review_dokumen') || Auth::canViewLpmMenu('monitoring_berkas') || Auth::canViewLpmMenu('monitoring_gpm')): ?>
             <div class="admin-nav-group">
                 <div class="admin-nav-label">Menu Utama LPM</div>
+                <?php if (Auth::canViewLpmMenu('dashboard')): ?>
                 <a href="<?= base_url('admin/dashboard') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/dashboard') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-gauge"></i></span>
                     <span>Dashboard Utama</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Auth::canViewLpmMenu('review_dokumen')): ?>
                 <a href="<?= base_url('admin/review') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, ['admin/review', 'admin/review-dokumen', 'admin/review-prodi', 'admin/review-fakultas', 'admin/monitoring-dokumen']) ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-clipboard-check"></i></span>
@@ -167,21 +171,29 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                         <span class="badge bg-danger rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingReviewCount ?> dokumen menunggu verifikasi"><?= $sidebarPendingReviewCount ?></span>
                     <?php endif; ?>
                 </a>
+                <?php endif; ?>
+                <?php if (Auth::canViewLpmMenu('monitoring_berkas')): ?>
                 <a href="<?= base_url('admin/monitoring-berkas') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, ['admin/monitoring-berkas', 'admin/monitoring-lalulintas']) ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-file-waveform"></i></span>
                     <span>Monitoring Dokumen</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Auth::canViewLpmMenu('monitoring_gpm')): ?>
                 <a href="<?= base_url('admin/monitoring-gpm') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-gpm') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-users-viewfinder"></i></span>
                     <span>Monitoring Kinerja GPM</span>
                 </a>
+                <?php endif; ?>
             </div>
+            <?php endif; ?>
 
             <!-- Super Admin: Data Master Institusi -->
+            <?php if (Auth::canViewLpmMenu('upload_access') || Auth::canViewLpmMenu('master_fakultas') || Auth::canViewLpmMenu('master_prodi') || Auth::canViewLpmMenu('master_bidang')): ?>
             <div class="admin-nav-group">
                 <div class="admin-nav-label">Data Master &amp; Kalender</div>
+                <?php if (Auth::canViewLpmMenu('upload_access')): ?>
                 <a href="<?= base_url('admin/upload-access') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, ['admin/upload-access', 'admin/tahun-akademik']) ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-calendar-check"></i></span>
@@ -190,26 +202,40 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                         <span class="badge bg-danger rounded-pill ms-auto px-2 py-0.5 fw-bold" style="font-size: 0.7rem;" title="<?= $sidebarPendingReqCount ?> permohonan izin buka akses"><?= $sidebarPendingReqCount ?></span>
                     <?php endif; ?>
                 </a>
+                <?php endif; ?>
+                <?php if (Auth::canViewLpmMenu('master_fakultas')): ?>
                 <a href="<?= base_url('admin/fakultas') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/fakultas') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-landmark"></i></span>
                     <span>Master Fakultas</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Auth::canViewLpmMenu('master_prodi')): ?>
                 <a href="<?= base_url('admin/prodi') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/prodi') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-graduation-cap"></i></span>
                     <span>Master Program Studi</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Auth::canViewLpmMenu('master_bidang')): ?>
                 <a href="<?= base_url('admin/bidang') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/bidang') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-layer-group"></i></span>
                     <span>Master Bidang Mutu</span>
                 </a>
+                <?php endif; ?>
             </div>
+            <?php endif; ?>
 
-            <!-- Super Admin: Manajemen Sistem -->
+            <!-- Super Admin: Manajemen Sistem Khusus Admin (tu.lpm@unika.ac.id) -->
+            <?php if (Auth::isRootAdmin()): ?>
             <div class="admin-nav-group">
-                <div class="admin-nav-label">Manajemen Sistem</div>
+                <div class="admin-nav-label">Manajemen Sistem &amp; Akses</div>
+                <a href="<?= base_url('admin/menu-permissions') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/menu-permissions') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-shield-halved"></i></span>
+                    <span>Hak Akses Menu LPM</span>
+                </a>
                 <a href="<?= base_url('admin/landing-settings') ?>"
                    class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/landing-settings') ?>">
                     <span class="nav-icon-wrap"><i class="fas fa-sliders"></i></span>
@@ -221,6 +247,7 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <span>Manajemen Pengguna</span>
                 </a>
             </div>
+            <?php endif; ?>
 
         <?php elseif (Auth::isFakultas()): ?>
 

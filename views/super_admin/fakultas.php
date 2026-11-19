@@ -13,9 +13,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <h3 class="fw-bold text-dark-blue mb-1">Master Data Fakultas</h3>
             <p class="text-muted small mb-0">Kelola daftar fakultas di lingkungan <?= INSTITUTION_NAME ?>.</p>
         </div>
+        <?php if (Auth::canActionLpmMenu('master_fakultas')): ?>
         <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm bg-scu-blue border-0" data-bs-toggle="modal" data-bs-target="#modalFakultas" onclick="resetFakultasForm()">
             <i class="fas fa-plus me-1"></i> Tambah Fakultas Baru
         </button>
+        <?php else: ?>
+        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill"><i class="fas fa-eye me-1"></i> Mode Lihat Saja</span>
+        <?php endif; ?>
     </div>
 
     <!-- Table Card -->
@@ -46,6 +50,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <span class="badge bg-info-subtle text-info border px-2.5 py-1 fw-bold"><?= $fak['total_prodi'] ?> Program Studi</span>
                                 </td>
                                 <td class="text-center">
+                                    <?php if (Auth::canActionLpmMenu('master_fakultas')): ?>
                                     <div class="d-flex justify-content-center gap-1">
                                         <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-2.5" 
                                                 data-bs-toggle="modal" 
@@ -59,6 +64,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             </button>
                                         </form>
                                     </div>
+                                    <?php else: ?>
+                                    <span class="badge bg-light text-muted border px-2 py-1"><i class="fas fa-eye me-1"></i>Lihat</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

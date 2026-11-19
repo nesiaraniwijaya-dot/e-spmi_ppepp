@@ -23,9 +23,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <p class="text-muted small mb-0">Portal terpadu LPM untuk mengontrol tahun ajaran aktif, siklus kalender (1 Sept s/d 31 Agt), batas tenggat (deadline), serta verifikasi permohonan dispensasi akses unit.</p>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
+            <?php if (Auth::canActionLpmMenu('upload_access')): ?>
             <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-2xs fw-semibold" onclick="openCreateYearModal()">
                 <i class="fas fa-plus me-1"></i> Tambah Tahun Akademik
             </button>
+            <?php else: ?>
+            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill"><i class="fas fa-eye me-1"></i> Mode Lihat Saja</span>
+            <?php endif; ?>
             <a href="<?= base_url('admin/monitoring-lalulintas') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-2xs">
                 <i class="fas fa-traffic-light me-1 text-primary"></i> Lalu Lintas &amp; SLA
             </a>

@@ -228,6 +228,7 @@ if (!empty($documents)):
             </td>
             <td class="text-center">
                 <div class="d-flex flex-column gap-1.5 align-items-center justify-content-center">
+                    <?php if (Auth::canActionLpmMenu('review_dokumen')): ?>
                     <div class="btn-group w-100 shadow-2xs rounded-pill overflow-hidden" role="group">
                         <form action="<?= base_url('admin/review-dokumen/submit') ?>" method="POST" class="d-inline flex-fill m-0">
                             <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
@@ -246,6 +247,11 @@ if (!empty($documents)):
                             <i class="fas fa-pen-to-square"></i> Revisi
                         </button>
                     </div>
+                    <?php else: ?>
+                    <span class="badge bg-light text-muted border px-2 py-1 w-100 rounded-pill" style="font-size: 0.68rem;" title="Mode Lihat Saja (Akses review dibatasi oleh Admin)">
+                        <i class="fas fa-eye me-1"></i> Lihat Saja
+                    </span>
+                    <?php endif; ?>
 
                     <!-- Tombol Lihat Rincian -->
                     <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1 w-100 fw-semibold shadow-2xs d-flex align-items-center justify-content-center gap-1 text-primary" 

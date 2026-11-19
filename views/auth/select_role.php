@@ -84,23 +84,12 @@ $rolesOptions = [
         'color' => '#7C3AED'
     ],
     [
-        'role' => 'tu_lpm',
-        'scope' => 'lpm',
-        'title' => 'TU Lembaga Penjaminan Mutu',
-        'subtitle' => 'tu.lpm@unika.ac.id · Tata Usaha LPM',
-        'desc' => 'Pengelolaan master data, administrasi berkas PPEPP, manajemen pengguna, dan dukungan operasional LPM.',
-        'badge' => 'TU LPM',
-        'badge_bg' => 'bg-secondary',
-        'icon' => 'fas fa-briefcase',
-        'color' => '#475569'
-    ],
-    [
         'role' => 'super_admin',
         'scope' => 'lpm',
-        'title' => 'Super Admin (Multi-Role LPM)',
-        'subtitle' => 'Akses Administrator Pusat LPM',
-        'desc' => 'Akses penuh ke seluruh master data, verifikasi dokumen, manajemen pengguna, dan audit trail.',
-        'badge' => 'Super Admin',
+        'title' => 'Admin (Super Admin LPM)',
+        'subtitle' => 'tu.lpm@unika.ac.id · Administrator Utama LPM',
+        'desc' => 'Akses penuh ke seluruh sistem: master data, review dokumen, manajemen pengguna, kelola beranda & footer, serta hak akses menu LPM.',
+        'badge' => 'Admin',
         'badge_bg' => 'bg-danger',
         'icon' => 'fas fa-user-shield',
         'color' => '#DC2626'

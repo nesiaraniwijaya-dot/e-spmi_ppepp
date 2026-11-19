@@ -171,6 +171,18 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
     - **Status Skema Database**:
       - **TIDAK ADA PERUBAHAN SKEMA BARU**: Perubahan ini sepenuhnya menggunakan skema kolom eksisting yang telah ada di database (`file_name` dan `folder_name` pada tabel `ppepp_document_files`). Rekan kolaborator tidak perlu menjalankan migrasi `ALTER TABLE` tambahan dan struktur data tetap 100% kompatibel antar-pengembang.
 
+18. **Tabel Hak Akses Menu LPM (`lpm_menu_permissions`) & Akun Admin `tu.lpm@unika.ac.id` (19 November 2026)**:
+    - **Pembaruan Akun Admin LPM**:
+      - Akun `tu.lpm@unika.ac.id` yang sebelumnya berlabel TU LPM diperbarui menjadi role `super_admin` dengan nama/label `Admin`.
+      - Memiliki hak akses penuh sebagai Root Administrator, termasuk kontrol eksklusif atas menu *Kelola Beranda & Footer* (`admin/landing-settings`), *Manajemen Pengguna* (`admin/users`), dan *Hak Akses Menu LPM* (`admin/menu-permissions`).
+    - **Tabel Baru `lpm_menu_permissions`**:
+      - Kolom: `id` (int PK auto_increment), `role` (`varchar(50)`), `menu_key` (`varchar(50)`), `can_view` (`tinyint(1)` default 1), `can_action` (`tinyint(1)` default 1), `created_at`, `updated_at`.
+      - Unique Key: `uk_role_menu` (`role`, `menu_key`).
+      - Menyimpan konfigurasi hak akses granular untuk 5 role struktural LPM (`kepala_lpm`, `sekretaris_lpm`, `ketua_pusat_spm`, `ketua_pusat_ami`, `ketua_pusat_pemeringkatan`) atas 8 menu institusional.
+      - Tingkat akses membedakan: Visibilitas (`can_view`) dan Otoritas Aksi (`can_action` - jika 0 menjadi *Read-Only*).
+    - **Skrip Migrasi**:
+      - `database/migration_lpm_menu_permissions.php` (idempoten dan otomatis diintegrasikan ke `database/migrate_all.php`).
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
@@ -184,6 +196,7 @@ php database/migration_multi_upload_kombinasi.php
 php database/migration_gpm_evaluations.php
 php database/apply_performance_indexes.php
 php database/migration_lpm_roles.php
+php database/migration_lpm_menu_permissions.php
 ```
 atau jalankan kueri SQL `database/migration_performance_indexes.sql` di phpMyAdmin / MySQL CLI, serta impor berkas master bila mulai dari awal:
 ```bash

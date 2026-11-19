@@ -16,6 +16,7 @@ $steps = [
     'Pastikan tabel gpm_evaluations tersedia'                         => __DIR__ . '/migration_gpm_evaluations.php',
     'Terapkan 11 indeks performa query'                               => __DIR__ . '/apply_performance_indexes.php',
     'Sinkronisasi 6 role resmi LPM pada users'                        => __DIR__ . '/migration_lpm_roles.php',
+    'Tabel hak akses menu LPM & akun Admin (tu.lpm@unika.ac.id)'     => __DIR__ . '/migration_lpm_menu_permissions.php',
 ];
 
 $phpBin = PHP_BINARY ?: 'php';
