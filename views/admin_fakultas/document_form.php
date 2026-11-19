@@ -1168,6 +1168,98 @@ window.escapeHtml = function(str) {
 };
 var escapeHtml = window.escapeHtml;
 
+if (typeof window.handleSubStandarToggleClick !== 'function') {
+    window.handleSubStandarToggleClick = function(uniqueKey, e) {
+        const wrap = document.getElementById(`picker_wrap_${uniqueKey}`);
+        if (!wrap) return;
+
+        const curBidang = wrap.getAttribute('data-current-bidang');
+        if (!curBidang || parseInt(curBidang) <= 0) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+            }
+
+            let bidangSelect = null;
+            const card = wrap.closest('.doc-batch-card');
+            if (card) {
+                bidangSelect = card.querySelector('select[name*="[bidang_id]"]') || card.querySelector('.input-bidang-select');
+                if (typeof window.openCardIfCollapsed === 'function') {
+                    window.openCardIfCollapsed(card);
+                }
+            } else {
+                const form = wrap.closest('form') || document;
+                bidangSelect = form.querySelector('#bidang_id') || form.querySelector('select[name="bidang_id"]');
+            }
+
+            const alertText = 'Silakan pilih Bidang Standar Mutu pada formulir dokumen terlebih dahulu sebelum memilih standar mutu berkas ini.';
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Pilih Bidang Terlebih Dahulu',
+                    text: alertText,
+                    confirmButtonText: '<i class="fas fa-check me-1.5"></i> Mengerti, Pilih Bidang',
+                    confirmButtonColor: '#2563EB',
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg border-0',
+                        confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
+                    }
+                }).then(() => {
+                    if (bidangSelect) {
+                        bidangSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        bidangSelect.focus();
+                        if (typeof window.highlightBidangField === 'function') {
+                            window.highlightBidangField(bidangSelect);
+                        }
+                    }
+                });
+            } else {
+                alert(alertText);
+                if (bidangSelect) {
+                    bidangSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    bidangSelect.focus();
+                    if (typeof window.highlightBidangField === 'function') {
+                        window.highlightBidangField(bidangSelect);
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        const toggleBtn = document.getElementById(`btn_toggle_${uniqueKey}`);
+        if (toggleBtn && !toggleBtn.hasAttribute('data-bs-toggle')) {
+            toggleBtn.setAttribute('data-bs-toggle', 'dropdown');
+            toggleBtn.setAttribute('data-bs-auto-close', 'outside');
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownInstance = bootstrap.Dropdown.getOrCreateInstance(toggleBtn);
+                dropdownInstance.toggle();
+            }
+        }
+    };
+}
+
+if (typeof window.highlightBidangField !== 'function') {
+    window.highlightBidangField = function(el) {
+        if (!el) return;
+        const origBorder = el.style.border;
+        const origBoxShadow = el.style.boxShadow;
+        const origTransition = el.style.transition;
+
+        el.style.transition = 'all 0.3s ease';
+        el.style.border = '2px solid #EF4444';
+        el.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.25)';
+
+        setTimeout(() => {
+            el.style.transition = origTransition;
+            el.style.border = origBorder;
+            el.style.boxShadow = origBoxShadow;
+        }, 2800);
+    };
+}
+
 if (typeof renderSubStandarPicker !== 'function') {
     window.renderSubStandarPicker = function(inputName, selectedSubIds = [], uniqueKey = '', currentBidangId = null) {
         if (!uniqueKey) uniqueKey = 'picker_' + Math.random().toString(36).substring(2, 9);
@@ -1246,7 +1338,11 @@ if (typeof renderSubStandarPicker !== 'function') {
         const noSubPlaceholder = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';
         const buttonLabel = parsedBidangId
             ? '<i class="fas fa-plus-circle text-primary me-1.5"></i> Pilih / Tambah Standar...'
-            : '<i class="fas fa-info-circle text-muted me-1.5"></i> Pilih Bidang terlebih dahulu...';
+            : '<i class="fas fa-lock text-secondary me-1.5"></i> Silakan pilih Bidang pada dokumen terlebih dahulu';
+
+        const toggleAttrs = parsedBidangId
+            ? 'data-bs-toggle="dropdown" data-bs-auto-close="outside" style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px; cursor: pointer; background-color: #ffffff;"'
+            : 'style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px; cursor: not-allowed; background-color: #f8fafc; opacity: 0.85;"';
 
         return `
             <div class="sub-standar-picker-wrap p-3 rounded-3 bg-white border shadow-2xs mt-2" 
@@ -1267,8 +1363,9 @@ if (typeof renderSubStandarPicker !== 'function') {
                 <div class="dropdown">
                     <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 dropdown-toggle-custom" 
                             id="btn_toggle_${uniqueKey}"
-                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px;">
-                        <span class="text-truncate text-secondary dropdown-label-text">
+                            onclick="handleSubStandarToggleClick('${uniqueKey}', event)"
+                            ${toggleAttrs} aria-expanded="false">
+                        <span class="text-truncate ${parsedBidangId ? 'text-secondary' : 'text-muted'} dropdown-label-text">
                             ${buttonLabel}
                         </span>
                         <i class="fas fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;"></i>
@@ -1318,8 +1415,21 @@ if (typeof renderSubStandarPicker !== 'function') {
 
         let newOptionsHtml = '';
         if (!parsedBidangId) {
-            newOptionsHtml = '<div class="px-3 py-3 text-center text-muted small fst-italic no-bidang-notice"><i class="fas fa-arrow-left text-primary me-1"></i> Silakan pilih Bidang pada dokumen terlebih dahulu</div>';
-            if (labelSpan) labelSpan.innerHTML = '<i class="fas fa-info-circle text-muted me-1.5"></i> Pilih Bidang terlebih dahulu...';
+            newOptionsHtml = '<div class="px-3 py-3 text-center text-muted small fst-italic no-bidang-notice"><i class="fas fa-lock text-secondary me-1"></i> Silakan pilih Bidang pada dokumen terlebih dahulu</div>';
+            if (labelSpan) {
+                labelSpan.innerHTML = '<i class="fas fa-lock text-secondary me-1.5"></i> Silakan pilih Bidang pada dokumen terlebih dahulu';
+                labelSpan.className = 'text-truncate text-muted dropdown-label-text';
+            }
+            if (toggleBtn) {
+                toggleBtn.removeAttribute('data-bs-toggle');
+                toggleBtn.style.cursor = 'not-allowed';
+                toggleBtn.style.backgroundColor = '#f8fafc';
+                toggleBtn.style.opacity = '0.85';
+                if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                    const bsDrop = bootstrap.Dropdown.getInstance(toggleBtn);
+                    if (bsDrop) bsDrop.hide();
+                }
+            }
         } else {
             const curBidang = bData.find(b => parseInt(b.id) === parsedBidangId);
             const bName = curBidang ? curBidang.nama_bidang : 'Bidang Terpilih';
@@ -1336,8 +1446,8 @@ if (typeof renderSubStandarPicker !== 'function') {
                     const searchStr = `${sb.nama_sub_bidang || ''} ${bName}`.toLowerCase();
                     newOptionsHtml += `
                         <label class="dropdown-item d-flex align-items-start gap-2 py-2 px-2.5 rounded cursor-pointer sub-option-item" 
-                               style="font-size: 0.8rem; white-space: normal;" 
-                               data-search-text="${escapeHtml(searchStr)}">
+                                style="font-size: 0.8rem; white-space: normal;" 
+                                data-search-text="${escapeHtml(searchStr)}">
                             <input type="checkbox" class="form-check-input flex-shrink-0 mt-0.5 sub-check-input" 
                                    name="${inputName}" value="${sb.id}" 
                                    onchange="handleSubStandarCheckChange('${uniqueKey}', this, ${sb.id}, '', '${escapeHtml(sb.nama_sub_bidang)}')">
@@ -1348,7 +1458,17 @@ if (typeof renderSubStandarPicker !== 'function') {
             } else {
                 newOptionsHtml = '<div class="px-3 py-3 text-center text-muted small fst-italic">Belum ada standar mutu yang terdaftar untuk bidang ini.</div>';
             }
-            if (labelSpan) labelSpan.innerHTML = '<i class="fas fa-plus-circle text-primary me-1.5"></i> Pilih / Tambah Standar...';
+            if (labelSpan) {
+                labelSpan.innerHTML = '<i class="fas fa-plus-circle text-primary me-1.5"></i> Pilih / Tambah Standar...';
+                labelSpan.className = 'text-truncate text-secondary dropdown-label-text';
+            }
+            if (toggleBtn) {
+                toggleBtn.setAttribute('data-bs-toggle', 'dropdown');
+                toggleBtn.setAttribute('data-bs-auto-close', 'outside');
+                toggleBtn.style.cursor = 'pointer';
+                toggleBtn.style.backgroundColor = '#ffffff';
+                toggleBtn.style.opacity = '1';
+            }
         }
         if (optionsContainer) optionsContainer.innerHTML = newOptionsHtml;
     };

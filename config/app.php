@@ -670,9 +670,14 @@ function render_sub_standar_picker_html(string $inputName, array $selectedIds = 
     }
 
     $noSubPlaceholder = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';
-    $buttonLabel = !empty($currentBidangId)
+    $hasBidang = !empty($currentBidangId) && (int)$currentBidangId > 0;
+    $buttonLabel = $hasBidang
         ? '<i class="fas fa-plus-circle text-primary me-1.5"></i> Pilih / Tambah Standar...'
-        : '<i class="fas fa-info-circle text-muted me-1.5"></i> Pilih Bidang terlebih dahulu...';
+        : '<i class="fas fa-lock text-secondary me-1.5"></i> Silakan pilih Bidang pada dokumen terlebih dahulu';
+
+    $toggleAttrs = $hasBidang
+        ? 'data-bs-toggle="dropdown" data-bs-auto-close="outside" style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px; cursor: pointer; background-color: #ffffff;"'
+        : 'style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px; cursor: not-allowed; background-color: #f8fafc; opacity: 0.85;"';
 
     return '
         <div class="sub-standar-picker-wrap p-3 rounded-3 bg-white border shadow-2xs mt-2" 
@@ -697,8 +702,9 @@ function render_sub_standar_picker_html(string $inputName, array $selectedIds = 
             <div class="dropdown">
                 <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 dropdown-toggle-custom" 
                         id="btn_toggle_' . $uniqueKey . '"
-                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px;">
-                    <span class="text-truncate text-secondary dropdown-label-text">
+                        onclick="handleSubStandarToggleClick(\'' . $uniqueKey . '\', event)"
+                        ' . $toggleAttrs . ' aria-expanded="false">
+                    <span class="text-truncate ' . ($hasBidang ? 'text-secondary' : 'text-muted') . ' dropdown-label-text">
                         ' . $buttonLabel . '
                     </span>
                     <i class="fas fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;"></i>

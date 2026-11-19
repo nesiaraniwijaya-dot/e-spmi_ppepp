@@ -97,7 +97,11 @@ function renderSubStandarPicker(inputName, selectedSubIds = [], uniqueKey = '', 
     const noSubPlaceholder = '<span class="text-muted fst-italic no-sub-placeholder" style="font-size: 0.78rem;">Belum ada standar dipilih (Bisa pilih 1 atau lebih)</span>';
     const buttonLabel = parsedBidangId
         ? '<i class="fas fa-plus-circle text-primary me-1.5"></i> Pilih / Tambah Standar...'
-        : '<i class="fas fa-info-circle text-muted me-1.5"></i> Pilih Bidang terlebih dahulu...';
+        : '<i class="fas fa-lock text-secondary me-1.5"></i> Silakan pilih Bidang pada dokumen terlebih dahulu';
+
+    const toggleAttrs = parsedBidangId
+        ? 'data-bs-toggle="dropdown" data-bs-auto-close="outside" style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px; cursor: pointer; background-color: #ffffff;"'
+        : 'style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px; cursor: not-allowed; background-color: #f8fafc; opacity: 0.85;"';
 
     return `
         <div class="sub-standar-picker-wrap p-3 rounded-3 bg-white border shadow-2xs mt-2" 
@@ -122,8 +126,9 @@ function renderSubStandarPicker(inputName, selectedSubIds = [], uniqueKey = '', 
             <div class="dropdown">
                 <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 dropdown-toggle-custom" 
                         id="btn_toggle_${uniqueKey}"
-                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="font-size: 0.82rem; border-style: dashed; border-width: 1.5px;">
-                    <span class="text-truncate text-secondary dropdown-label-text">
+                        onclick="handleSubStandarToggleClick('${uniqueKey}', event)"
+                        ${toggleAttrs} aria-expanded="false">
+                    <span class="text-truncate ${parsedBidangId ? 'text-secondary' : 'text-muted'} dropdown-label-text">
                         ${buttonLabel}
                     </span>
                     <i class="fas fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;"></i>
@@ -143,6 +148,99 @@ function renderSubStandarPicker(inputName, selectedSubIds = [], uniqueKey = '', 
         </div>
     `;
 }
+
+/**
+ * Tangani klik pada tombol standar mutu: jika belum memilih bidang, cegah dropdown & beri alert
+ */
+window.handleSubStandarToggleClick = function(uniqueKey, e) {
+    const wrap = document.getElementById(`picker_wrap_${uniqueKey}`);
+    if (!wrap) return;
+
+    const curBidang = wrap.getAttribute('data-current-bidang');
+    if (!curBidang || parseInt(curBidang) <= 0) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        }
+
+        // Cari elemen select bidang terkait
+        let bidangSelect = null;
+        const card = wrap.closest('.doc-batch-card');
+        if (card) {
+            bidangSelect = card.querySelector('select[name*="[bidang_id]"]') || card.querySelector('.input-bidang-select');
+            if (typeof window.openCardIfCollapsed === 'function') {
+                window.openCardIfCollapsed(card);
+            }
+        } else {
+            const form = wrap.closest('form') || document;
+            bidangSelect = form.querySelector('#bidang_id') || form.querySelector('select[name="bidang_id"]');
+        }
+
+        const alertText = 'Silakan pilih Bidang Standar Mutu pada formulir dokumen terlebih dahulu sebelum memilih standar mutu berkas ini.';
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Pilih Bidang Terlebih Dahulu',
+                text: alertText,
+                confirmButtonText: '<i class="fas fa-check me-1.5"></i> Mengerti, Pilih Bidang',
+                confirmButtonColor: '#2563EB',
+                customClass: {
+                    popup: 'rounded-4 shadow-lg border-0',
+                    confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
+                }
+            }).then(() => {
+                if (bidangSelect) {
+                    bidangSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    bidangSelect.focus();
+                    if (typeof window.highlightBidangField === 'function') {
+                        window.highlightBidangField(bidangSelect);
+                    }
+                }
+            });
+        } else {
+            alert(alertText);
+            if (bidangSelect) {
+                bidangSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                bidangSelect.focus();
+                if (typeof window.highlightBidangField === 'function') {
+                    window.highlightBidangField(bidangSelect);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // Jika sudah ada bidang, pastikan tombol memiliki data-bs-toggle="dropdown"
+    const toggleBtn = document.getElementById(`btn_toggle_${uniqueKey}`);
+    if (toggleBtn && !toggleBtn.hasAttribute('data-bs-toggle')) {
+        toggleBtn.setAttribute('data-bs-toggle', 'dropdown');
+        toggleBtn.setAttribute('data-bs-auto-close', 'outside');
+        if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+            const dropdownInstance = bootstrap.Dropdown.getOrCreateInstance(toggleBtn);
+            dropdownInstance.toggle();
+        }
+    }
+};
+
+window.highlightBidangField = function(el) {
+    if (!el) return;
+    const origBorder = el.style.border;
+    const origBoxShadow = el.style.boxShadow;
+    const origTransition = el.style.transition;
+
+    el.style.transition = 'all 0.3s ease';
+    el.style.border = '2px solid #EF4444';
+    el.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.25)';
+
+    setTimeout(() => {
+        el.style.transition = origTransition;
+        el.style.border = origBorder;
+        el.style.boxShadow = origBoxShadow;
+    }, 2800);
+};
 
 /**
  * Update opsi dan pilihan standar mutu pada suatu picker secara dinamis ketika Bidang berubah
@@ -192,11 +290,22 @@ function updateSubStandarPickerOptions(uniqueKey, newBidangId, inputName) {
     if (!parsedBidangId) {
         newOptionsHtml = `
             <div class="px-3 py-3 text-center text-muted small fst-italic no-bidang-notice">
-                <i class="fas fa-arrow-left text-primary me-1"></i> Silakan pilih Bidang pada dokumen terlebih dahulu
+                <i class="fas fa-lock text-secondary me-1"></i> Silakan pilih Bidang pada dokumen terlebih dahulu
             </div>
         `;
         if (labelSpan) {
-            labelSpan.innerHTML = '<i class="fas fa-info-circle text-muted me-1.5"></i> Pilih Bidang terlebih dahulu...';
+            labelSpan.innerHTML = '<i class="fas fa-lock text-secondary me-1.5"></i> Silakan pilih Bidang pada dokumen terlebih dahulu';
+            labelSpan.className = 'text-truncate text-muted dropdown-label-text';
+        }
+        if (toggleBtn) {
+            toggleBtn.removeAttribute('data-bs-toggle');
+            toggleBtn.style.cursor = 'not-allowed';
+            toggleBtn.style.backgroundColor = '#f8fafc';
+            toggleBtn.style.opacity = '0.85';
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const bsDrop = bootstrap.Dropdown.getInstance(toggleBtn);
+                if (bsDrop) bsDrop.hide();
+            }
         }
     } else {
         const curBidang = bData.find(b => parseInt(b.id) === parsedBidangId);
@@ -233,6 +342,14 @@ function updateSubStandarPickerOptions(uniqueKey, newBidangId, inputName) {
 
         if (labelSpan) {
             labelSpan.innerHTML = '<i class="fas fa-plus-circle text-primary me-1.5"></i> Pilih / Tambah Standar...';
+            labelSpan.className = 'text-truncate text-secondary dropdown-label-text';
+        }
+        if (toggleBtn) {
+            toggleBtn.setAttribute('data-bs-toggle', 'dropdown');
+            toggleBtn.setAttribute('data-bs-auto-close', 'outside');
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.style.backgroundColor = '#ffffff';
+            toggleBtn.style.opacity = '1';
         }
     }
 
