@@ -230,41 +230,99 @@ if (!empty($documents)):
                     <?php endif; ?>
                 </div>
             </td>
-            <td class="text-center">
-                <div class="d-flex flex-column gap-1.5 align-items-center justify-content-center">
-                    <?php if (Auth::canActionLpmMenu('review_dokumen')): ?>
-                    <div class="btn-group w-100 shadow-2xs rounded-pill overflow-hidden" role="group">
-                        <form action="<?= base_url('admin/review-dokumen/submit') ?>" method="POST" class="d-inline flex-fill m-0">
-                            <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
-                            <input type="hidden" name="status_review" value="sesuai">
-                            <button type="submit" class="btn btn-sm btn-success w-100 py-1 px-2 d-flex align-items-center justify-content-center gap-1" style="font-size: 0.75rem; border-top-right-radius: 0; border-bottom-right-radius: 0;" title="Setujui Dokumen (Sesuai)">
-                                <i class="fas fa-check"></i> Sesuai
-                            </button>
-                        </form>
-                        <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 d-flex align-items-center justify-content-center gap-1 flex-fill" style="font-size: 0.75rem; border-top-left-radius: 0; border-bottom-left-radius: 0;"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#revisionModal" 
-                                data-id="<?= $doc['id'] ?>" 
-                                data-title="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
-                                data-notes="<?= htmlspecialchars($doc['catatan_review'] ?? '', ENT_QUOTES) ?>"
-                                title="Minta Revisi Dokumen">
-                            <i class="fas fa-pen-to-square"></i> Revisi
-                        </button>
-                    </div>
-                    <?php else: ?>
-                    <span class="badge bg-light text-muted border px-2 py-1 w-100 rounded-pill" style="font-size: 0.68rem;" title="Mode Lihat Saja (Akses review dibatasi oleh Admin)">
-                        <i class="fas fa-eye me-1"></i> Lihat Saja
-                    </span>
-                    <?php endif; ?>
+            <td class="text-center align-middle">
+                <?php
+                $firstFile = !empty($files) ? $files[0] : (!empty($doc['file_path']) ? ['file_name' => $doc['nama_dokumen'], 'file_path' => $doc['file_path'], 'file_size' => $doc['file_size'] ?? '', 'narasi' => '', 'sub_bidang_ids' => null] : null);
+                $firstLink = !empty($gdriveLinks) ? $gdriveLinks[0] : null;
 
-                    <!-- Tombol Lihat Rincian -->
-                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1 w-100 fw-semibold shadow-2xs d-flex align-items-center justify-content-center gap-1 text-primary" 
-                            style="font-size: 0.75rem;" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#docModal<?= $doc['id'] ?>" 
-                            title="Lihat Rincian Dokumen">
-                        <i class="fas fa-eye"></i> Rincian
-                    </button>
+                $allFilesData = [];
+                if (!empty($files)) {
+                    foreach ($files as $fIdx => $f) {
+                        $allFilesData[] = [
+                            'type' => 'file',
+                            'name' => $f['file_name'] ?? 'Berkas ' . ($fIdx + 1),
+                            'url' => base_url($f['file_path']),
+                            'narasi' => $f['narasi'] ?? '',
+                            'standar' => render_sub_standar_badges($f['sub_bidang_ids'] ?? null),
+                            'size' => $f['file_size'] ?? ''
+                        ];
+                    }
+                } elseif (!empty($doc['file_path'])) {
+                    $allFilesData[] = [
+                        'type' => 'file',
+                        'name' => $doc['nama_dokumen'],
+                        'url' => base_url($doc['file_path']),
+                        'narasi' => '',
+                        'standar' => '',
+                        'size' => $doc['file_size'] ?? ''
+                    ];
+                }
+                if (!empty($gdriveLinks)) {
+                    foreach ($gdriveLinks as $lIdx => $l) {
+                        $allFilesData[] = [
+                            'type' => 'link',
+                            'name' => !empty($l['narasi']) ? $l['narasi'] : ('Tautan GDrive ' . ($lIdx + 1)),
+                            'url' => $l['url'],
+                            'narasi' => $l['narasi'] ?? '',
+                            'standar' => render_sub_standar_badges($l['sub_bidang_ids'] ?? null),
+                            'size' => ''
+                        ];
+                    }
+                }
+
+                $isFirstLink = !$firstFile && $firstLink;
+                $previewPdfUrl = $firstFile ? base_url($firstFile['file_path']) : '';
+                $previewLinkUrl = $firstLink ? htmlspecialchars($firstLink['url'], ENT_QUOTES) : '';
+                $previewDocTitle = $firstFile ? $firstFile['file_name'] : ($firstLink ? $doc['nama_dokumen'] : $doc['nama_dokumen']);
+                $previewNarasi = $firstFile ? ($firstFile['narasi'] ?? '') : ($firstLink ? ($firstLink['narasi'] ?? '') : '');
+                $previewStandar = render_sub_standar_badges($firstFile ? ($firstFile['sub_bidang_ids'] ?? null) : ($firstLink ? ($firstLink['sub_bidang_ids'] ?? null) : null));
+                ?>
+                <div class="d-flex flex-column gap-1.5 align-items-center justify-content-center">
+                    <?php if (Auth::canActionLpmMenu('review_dokumen') && $status !== 'sesuai'): ?>
+                        <button type="button" 
+                                class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1.5 w-100 d-inline-flex align-items-center justify-content-center gap-1.5 shadow-2xs text-white" 
+                                title="Review Dokumen Ini"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#pdfPreviewModal"
+                                data-is-review="1"
+                                data-review-role="lpm"
+                                data-review-source="#lpmReviewTemplate_<?= $doc['id'] ?>"
+                                data-pdf-url="<?= $previewPdfUrl ?>"
+                                data-gdrive-url="<?= $previewLinkUrl ?>"
+                                data-is-link="<?= $isFirstLink ? '1' : '0' ?>"
+                                data-doc-title="<?= htmlspecialchars($previewDocTitle, ENT_QUOTES) ?>"
+                                data-doc-narasi="<?= htmlspecialchars($previewNarasi, ENT_QUOTES) ?>"
+                                data-doc-standar="<?= htmlspecialchars($previewStandar, ENT_QUOTES) ?>"
+                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '', ENT_QUOTES) ?>"
+                                data-public-limit="0"
+                                data-can-download="1"
+                                data-all-files="<?= htmlspecialchars(json_encode($allFilesData), ENT_QUOTES, 'UTF-8') ?>"
+                                style="font-size: 0.78rem; font-weight: 600;">
+                            <i class="fas fa-clipboard-check"></i> Review
+                        </button>
+                    <?php else: ?>
+                        <button type="button" 
+                                class="btn btn-sm btn-light border rounded-pill px-3 py-1.5 w-100 d-inline-flex align-items-center justify-content-center gap-1.5 shadow-2xs text-primary" 
+                                title="Tinjau Berkas & Hasil Review"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#pdfPreviewModal"
+                                data-is-review="1"
+                                data-review-role="lpm"
+                                data-review-source="#lpmReviewTemplate_<?= $doc['id'] ?>"
+                                data-pdf-url="<?= $previewPdfUrl ?>"
+                                data-gdrive-url="<?= $previewLinkUrl ?>"
+                                data-is-link="<?= $isFirstLink ? '1' : '0' ?>"
+                                data-doc-title="<?= htmlspecialchars($previewDocTitle, ENT_QUOTES) ?>"
+                                data-doc-narasi="<?= htmlspecialchars($previewNarasi, ENT_QUOTES) ?>"
+                                data-doc-standar="<?= htmlspecialchars($previewStandar, ENT_QUOTES) ?>"
+                                data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '', ENT_QUOTES) ?>"
+                                data-public-limit="0"
+                                data-can-download="1"
+                                data-all-files="<?= htmlspecialchars(json_encode($allFilesData), ENT_QUOTES, 'UTF-8') ?>"
+                                style="font-size: 0.78rem; font-weight: 600;">
+                            <i class="fas fa-clipboard-list"></i> Tinjau
+                        </button>
+                    <?php endif; ?>
 
                     <!-- Tombol Riwayat Review -->
                     <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 w-100 btn-review-history d-inline-flex align-items-center justify-content-center gap-1 shadow-2xs" 
@@ -277,6 +335,104 @@ if (!empty($documents)):
                 </div>
             </td>
         </tr>
+
+        <!-- TEMPLATE REVIEW LPM UNTUK PDF VIEWER MODAL -->
+        <div id="lpmReviewTemplate_<?= $doc['id'] ?>" class="d-none">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-2 text-start">
+                <div class="card-header bg-dark text-white px-3.5 py-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: linear-gradient(135deg, #0A192F 0%, #1E3E62 100%) !important;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-warning text-dark px-2.5 py-1 rounded-pill fw-bold" style="font-size:0.72rem;">LEMBAGA PENJAMINAN MUTU (LPM)</span>
+                        <span class="fw-bold small text-white text-truncate" style="max-width: 320px;"><?= htmlspecialchars($doc['nama_dokumen']) ?></span>
+                    </div>
+                    <span class="badge bg-white bg-opacity-20 text-white rounded-pill px-2.5 py-1 small"><?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?></span>
+                </div>
+                <div class="card-body p-3.5">
+                    <?php if (Auth::canActionLpmMenu('review_dokumen') && $status !== 'sesuai'): ?>
+                        <form action="<?= base_url('admin/review-dokumen/submit') ?>" method="POST" class="m-0 review-action-form">
+                            <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
+
+                            <?php if (!empty($doc['gpm_catatan'])): ?>
+                                <div class="p-2.5 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 mb-3 small">
+                                    <div class="fw-bold text-warning-emphasis mb-1 d-flex align-items-center gap-1.5">
+                                        <i class="fas fa-user-check"></i> Catatan Rekomendasi GPM Fakultas:
+                                    </div>
+                                    <div class="text-secondary" style="line-height: 1.45;"><?= nl2br(htmlspecialchars($doc['gpm_catatan'])) ?></div>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-dark text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                    Keputusan Evaluasi LPM: <span class="text-danger">*</span>
+                                </label>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="card h-100 p-2.5 border rounded-3 cursor-pointer position-relative hover-shadow-sm review-choice-label" style="border-color: #A7F3D0 !important; background: #ECFDF5;">
+                                            <div class="d-flex align-items-start gap-2">
+                                                <input type="radio" name="status_review" value="sesuai" class="form-check-input mt-1" checked required>
+                                                <div>
+                                                    <div class="fw-bold text-success small mb-0.5"><i class="fas fa-circle-check me-1"></i> Disetujui (Sesuai)</div>
+                                                    <div class="text-muted" style="font-size: 0.72rem; line-height: 1.35;">Dokumen telah memenuhi standar mutu dan siklus dinyatakan selesai/sah.</div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="card h-100 p-2.5 border rounded-3 cursor-pointer position-relative hover-shadow-sm review-choice-label" style="border-color: #FECACA !important; background: #FEF2F2;">
+                                            <div class="d-flex align-items-start gap-2">
+                                                <input type="radio" name="status_review" value="perlu_perbaikan" class="form-check-input mt-1" required>
+                                                <div>
+                                                    <div class="fw-bold text-danger small mb-0.5"><i class="fas fa-circle-exclamation me-1"></i> Minta Revisi / Dikembalikan</div>
+                                                    <div class="text-muted" style="font-size: 0.72rem; line-height: 1.35;">Dokumen belum sesuai. Kembalikan ke unit / GPM untuk diperbaiki.</div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-dark text-uppercase d-flex align-items-center justify-content-between" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                    <span>Catatan / Uraian Evaluasi LPM:</span>
+                                    <span class="text-muted fw-normal text-none" style="font-size: 0.68rem;">(Wajib diisi jika minta revisi)</span>
+                                </label>
+                                <textarea name="catatan_review" class="form-control form-control-sm rounded-3" rows="3" placeholder="Tuliskan apresiasi atau poin-poin yang wajib diperbaiki oleh unit..."><?= htmlspecialchars($doc['catatan_review'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between pt-2 border-top flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 btn-sm btn-review-history d-inline-flex align-items-center gap-1.5" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>">
+                                    <i class="fas fa-history"></i> Buka Riwayat Lengkap
+                                </button>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-light rounded-pill px-3 py-1.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
+                                    <button type="submit" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 py-1.5 btn-sm fw-semibold shadow-xs">
+                                        <i class="fas fa-paper-plane me-1.5"></i> Simpan Keputusan LPM
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    <?php else: ?>
+                        <!-- Status jika sudah Sesuai atau user hanya bisa lihat -->
+                        <div class="alert alert-success border-success border-opacity-25 rounded-3 mb-3">
+                            <div class="fw-bold text-success small mb-1"><i class="fas fa-circle-check me-1"></i> Status: Dokumen Telah Disetujui (Sesuai Standar Mutu)</div>
+                            <p class="small text-muted mb-0" style="line-height: 1.5; font-size: 0.78rem;">
+                                Dokumen ini telah divalidasi dan disetujui oleh Lembaga Penjaminan Mutu (LPM).
+                            </p>
+                            <?php if (!empty($doc['catatan_review'])): ?>
+                                <div class="mt-2 p-2 bg-white rounded border border-success border-opacity-25 small text-secondary">
+                                    <strong>Catatan LPM:</strong> <?= nl2br(htmlspecialchars($doc['catatan_review'])) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between pt-2 border-top flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 btn-sm btn-review-history d-inline-flex align-items-center gap-1.5" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>">
+                                <i class="fas fa-history"></i> Buka Riwayat Lengkap
+                            </button>
+                            <button type="button" class="btn btn-light rounded-pill px-3 py-1.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
 
         <!-- Modal Detail Dokumen (Rincian Dokumen Mutu) -->
         <div class="modal fade" id="docModal<?= $doc['id'] ?>" tabindex="-1" aria-hidden="true">

@@ -81,6 +81,30 @@
                     </div>
                 </div>
 
+                <!-- Multi-files Switcher Bar (Jika dokumen memiliki > 1 berkas / tautan) -->
+                <div id="pdfMultiFilesWrap" class="px-3 py-2 border-bottom border-secondary border-opacity-25 bg-dark" style="display:none;">
+                    <div class="d-flex align-items-center gap-2 overflow-auto py-0.5" id="pdfMultiFilesContainer">
+                        <!-- Injected dynamically via JS: Tombol-tombol berkas -->
+                    </div>
+                </div>
+
+                <!-- Review Sticky Bar (Shortcut & Info di Halaman Atas untuk Mode Review) -->
+                <div id="pdfReviewStickyBar" class="px-3 py-2 d-flex align-items-center justify-content-between border-bottom" style="display:none; background:#0F172A; border-color:rgba(255,255,255,0.1) !important;">
+                    <div class="d-flex align-items-center gap-2 small">
+                        <span class="badge bg-primary px-2.5 py-1 rounded-pill fw-bold" id="pdfReviewRoleBadge">
+                            <i class="fas fa-clipboard-check me-1"></i> Mode Review
+                        </span>
+                        <span id="pdfReviewStatusHint" class="text-white-50 small">
+                            Silakan baca berkas dokumen hingga halaman terakhir untuk mengisi keputusan review.
+                        </span>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 shadow-2xs" id="pdfJumpToReviewBtn" style="font-size:0.75rem;">
+                            <i class="fas fa-arrow-down me-1"></i> Ke Halaman Akhir &amp; Review
+                        </button>
+                    </div>
+                </div>
+
                 <!-- PDF Viewer Canvas Container -->
                 <div class="modal-body p-0 position-relative" id="pdfViewerScrollArea" style="background:#525659; overflow:auto; height:calc(100% - 110px);">
                     <!-- Loading Spinner -->
@@ -98,6 +122,20 @@
                     <!-- Iframe Container (Google Drive / Cloud Link Documents) -->
                     <div id="pdfIframeWrap" class="w-100 h-100" style="display:none; min-height:70vh;">
                         <iframe id="pdfModalIframe" src="" class="w-100 h-100 border-0" allow="autoplay" allowfullscreen style="min-height:70vh;"></iframe>
+                    </div>
+
+                    <!-- Fallback Notice jika dokumen tidak memiliki file/link -->
+                    <div id="pdfNoFilesNotice" class="p-4 mx-auto my-4 text-center rounded-4 shadow-sm bg-white" style="display:none; max-width:680px; border:1px dashed #CBD5E1;">
+                        <div class="rounded-circle bg-warning bg-opacity-10 text-warning mx-auto mb-3 d-inline-flex align-items-center justify-content-center" style="width:60px; height:60px;">
+                            <i class="fas fa-folder-open fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Belum Ada Berkas Lampiran</h5>
+                        <p class="text-muted small mb-0">Dokumen mutu ini belum mengunggah berkas fisik maupun menautkan Google Drive.</p>
+                    </div>
+
+                    <!-- Review Decision Action Box (Khusus Mode Review GPM & LPM pada Halaman Terakhir) -->
+                    <div id="pdfReviewActionBox" class="w-100 p-4 border-top" style="display:none; background:#F8FAFC; border-color:#E2E8F0 !important;">
+                        <!-- Injected dynamically via JS dari template review baris dokumen -->
                     </div>
 
                     <!-- Locked Preview Banner (Appears if access is restricted) -->

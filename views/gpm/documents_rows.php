@@ -223,25 +223,113 @@ if (!empty($documents)):
                                     </div>
                                 </td>
 
-                                <!-- Aksi -->
+                                <!-- Aksi (Satu Tombol: Review / Tinjau Langsung Menampilkan Berkas & Form di Halaman Akhir) -->
                                 <td class="pe-3 align-top text-end py-3">
-                                    <div class="d-inline-flex align-items-center gap-1.5">
-                                        <!-- Detail Modal Trigger -->
-                                        <button type="button" class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" style="width: 36px; height: 36px;" title="Lihat Rincian Dokumen" data-bs-toggle="modal" data-bs-target="#docModal<?= $doc['id'] ?>">
-                                            <i class="fas fa-eye text-primary" style="font-size: 0.85rem;"></i>
-                                        </button>
+                                    <?php
+                                    $firstFile = !empty($files) ? $files[0] : null;
+                                    $firstLink = !empty($links) ? $links[0] : null;
 
-                                        <!-- Review Button -->
+                                    $allFilesData = [];
+                                    if (!empty($files)) {
+                                        foreach ($files as $fIdx => $f) {
+                                            $allFilesData[] = [
+                                                'type' => 'file',
+                                                'name' => $f['file_name'] ?? 'Berkas ' . ($fIdx + 1),
+                                                'url' => base_url($f['file_path']),
+                                                'narasi' => $f['narasi'] ?? '',
+                                                'standar' => render_sub_standar_badges($f['sub_bidang_ids'] ?? null),
+                                                'size' => $f['file_size'] ?? ''
+                                            ];
+                                        }
+                                    }
+                                    if (!empty($links)) {
+                                        foreach ($links as $lIdx => $l) {
+                                            $allFilesData[] = [
+                                                'type' => 'link',
+                                                'name' => 'Tautan GDrive ' . ($lIdx + 1),
+                                                'url' => $l['url'],
+                                                'narasi' => $l['narasi'] ?? '',
+                                                'standar' => render_sub_standar_badges($l['sub_bidang_ids'] ?? null),
+                                                'size' => ''
+                                            ];
+                                        }
+                                    }
+
+                                    $isFirstLink = !$firstFile && $firstLink;
+                                    $previewPdfUrl = $firstFile ? base_url($firstFile['file_path']) : '';
+                                    $previewLinkUrl = $firstLink ? htmlspecialchars($firstLink['url'], ENT_QUOTES) : '';
+                                    $previewDocTitle = $firstFile ? $firstFile['file_name'] : ($firstLink ? $doc['nama_dokumen'] : $doc['nama_dokumen']);
+                                    $previewNarasi = $firstFile ? ($firstFile['narasi'] ?? '') : ($firstLink ? ($firstLink['narasi'] ?? '') : '');
+                                    $previewStandar = render_sub_standar_badges($firstFile ? ($firstFile['sub_bidang_ids'] ?? null) : ($firstLink ? ($firstLink['sub_bidang_ids'] ?? null) : null));
+                                    ?>
+                                    <div class="d-inline-flex align-items-center gap-1.5">
                                         <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])): ?>
-                                            <button type="button" class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs text-white" title="Review Dokumen Ini" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.78rem; font-weight: 600;">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs text-white fw-bold" 
+                                                    title="Buka Berkas & Review Dokumen Ini" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#pdfPreviewModal"
+                                                    data-is-review="1"
+                                                    data-review-role="gpm"
+                                                    data-doc-id="<?= $doc['id'] ?>"
+                                                    data-doc-title="<?= htmlspecialchars($previewDocTitle, ENT_QUOTES) ?>"
+                                                    data-pdf-url="<?= $previewPdfUrl ?>"
+                                                    data-is-link="<?= $isFirstLink ? '1' : '0' ?>"
+                                                    data-link-url="<?= $previewLinkUrl ?>"
+                                                    data-doc-narasi="<?= htmlspecialchars($previewNarasi, ENT_QUOTES) ?>"
+                                                    data-doc-standar="<?= htmlspecialchars($previewStandar, ENT_QUOTES) ?>"
+                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
+                                                    data-all-files="<?= htmlspecialchars(json_encode($allFilesData), ENT_QUOTES) ?>"
+                                                    data-review-source="#gpmReviewTemplate_<?= $doc['id'] ?>"
+                                                    data-can-download="1"
+                                                    data-can-access="1"
+                                                    style="font-size: 0.8rem;">
                                                 <i class="fas fa-clipboard-check"></i> Review
                                             </button>
                                         <?php elseif ($doc['status_review'] === 'menunggu_review_lpm'): ?>
-                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1 shadow-2xs" title="Tinjau Status di Antrean LPM" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.75rem;">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs fw-semibold" 
+                                                    title="Buka Berkas & Tinjau Status Antrean LPM" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#pdfPreviewModal"
+                                                    data-is-review="1"
+                                                    data-review-role="gpm"
+                                                    data-doc-id="<?= $doc['id'] ?>"
+                                                    data-doc-title="<?= htmlspecialchars($previewDocTitle, ENT_QUOTES) ?>"
+                                                    data-pdf-url="<?= $previewPdfUrl ?>"
+                                                    data-is-link="<?= $isFirstLink ? '1' : '0' ?>"
+                                                    data-link-url="<?= $previewLinkUrl ?>"
+                                                    data-doc-narasi="<?= htmlspecialchars($previewNarasi, ENT_QUOTES) ?>"
+                                                    data-doc-standar="<?= htmlspecialchars($previewStandar, ENT_QUOTES) ?>"
+                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
+                                                    data-all-files="<?= htmlspecialchars(json_encode($allFilesData), ENT_QUOTES) ?>"
+                                                    data-review-source="#gpmReviewTemplate_<?= $doc['id'] ?>"
+                                                    data-can-download="1"
+                                                    data-can-access="1"
+                                                    style="font-size: 0.78rem;">
                                                 <i class="fas fa-clipboard-list text-primary"></i> Tinjau
                                             </button>
                                         <?php else: ?>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1 text-muted" title="Buka Detail Review" data-bs-toggle="modal" data-bs-target="#gpmReviewModal<?= $doc['id'] ?>" style="font-size: 0.75rem;">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 text-muted shadow-2xs fw-semibold" 
+                                                    title="Buka Berkas & Detail Review Dokumen" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#pdfPreviewModal"
+                                                    data-is-review="1"
+                                                    data-review-role="gpm"
+                                                    data-doc-id="<?= $doc['id'] ?>"
+                                                    data-doc-title="<?= htmlspecialchars($previewDocTitle, ENT_QUOTES) ?>"
+                                                    data-pdf-url="<?= $previewPdfUrl ?>"
+                                                    data-is-link="<?= $isFirstLink ? '1' : '0' ?>"
+                                                    data-link-url="<?= $previewLinkUrl ?>"
+                                                    data-doc-narasi="<?= htmlspecialchars($previewNarasi, ENT_QUOTES) ?>"
+                                                    data-doc-standar="<?= htmlspecialchars($previewStandar, ENT_QUOTES) ?>"
+                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
+                                                    data-all-files="<?= htmlspecialchars(json_encode($allFilesData), ENT_QUOTES) ?>"
+                                                    data-review-source="#gpmReviewTemplate_<?= $doc['id'] ?>"
+                                                    data-can-download="1"
+                                                    data-can-access="1"
+                                                    style="font-size: 0.78rem;">
                                                 <i class="fas fa-clipboard-list"></i> Tinjau
                                             </button>
                                         <?php endif; ?>
@@ -519,7 +607,222 @@ if (!empty($documents)):
                     </div>
                 </div>
 
-                <!-- Modal Review Dokumen oleh GPM -->
+                <!-- Template Review Terpadu GPM (Disematkan di halaman akhir PDF Preview) -->
+                <div id="gpmReviewTemplate_<?= $doc['id'] ?>" class="d-none">
+                    <div class="card border-0 rounded-4 p-3.5 p-md-4 bg-white shadow-sm" style="max-width: 920px; margin: 0 auto;">
+                        <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2.5">
+                                <div class="p-2.5 rounded-3 bg-scu-blue text-white d-flex align-items-center justify-content-center shadow-2xs">
+                                    <i class="fas fa-clipboard-check fa-lg"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-dark-blue mb-0" style="font-size: 1.05rem;">
+                                        <?= in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm']) ? 'Keputusan Hasil Review Dokumen (GPM Fakultas)' : 'Status & Catatan Review Dokumen' ?>
+                                    </h6>
+                                    <div class="text-muted small" style="font-size: 0.75rem;">Gugus Penjaminan Mutu &bull; Penilaian Tingkat Fakultas</div>
+                                </div>
+                            </div>
+                            <div>
+                                <?= render_review_status_badge($doc['status_review'], $doc['tahap_review'] ?? null) ?>
+                            </div>
+                        </div>
+
+                        <!-- Metadata Dokumen Ringkas -->
+                        <div class="p-3 rounded-3 bg-light border mb-3">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                                <span class="badge rounded-pill px-2.5 py-1 fw-semibold <?= $doc['level'] === 'fakultas' ? 'bg-primary text-white' : 'bg-info text-white' ?>" style="font-size: 0.7rem;">
+                                    <i class="fas <?= $doc['level'] === 'fakultas' ? 'fa-building-columns' : 'fa-graduation-cap' ?> me-1"></i>
+                                    <?= $doc['level'] === 'fakultas' ? 'Fakultas ' . htmlspecialchars($fakultas['nama_fakultas'] ?? '') : htmlspecialchars(($doc['jenjang'] ?? 'S1') . ' ' . ($doc['nama_prodi'] ?? '')) ?>
+                                </span>
+                            </div>
+                            <h6 class="fw-bold text-dark-blue mb-1" style="line-height: 1.4;"><?= htmlspecialchars($doc['nama_dokumen']) ?></h6>
+                            <div class="text-muted small" style="font-size: 0.75rem;">
+                                <span><i class="fas fa-folder me-1"></i><?= htmlspecialchars($doc['nama_bidang'] ?? 'Standar Mutu') ?></span>
+                                <span class="mx-1">&bull;</span>
+                                <span><i class="far fa-calendar me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></span>
+                                <span class="mx-1">&bull;</span>
+                                <span><i class="fas fa-arrows-spin me-1"></i><?= strtoupper($doc['siklus']) ?></span>
+                            </div>
+                        </div>
+
+                        <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])): ?>
+                            <!-- FORM TELAAH AKTIF OLEH GPM -->
+                            <?php if ($doc['status_review'] === 'sudah_diperbaiki'): ?>
+                                <div class="alert alert-info border-info border-opacity-25 rounded-3 mb-3 d-flex align-items-start gap-2.5">
+                                    <i class="fas fa-clock-rotate-left text-primary mt-1"></i>
+                                    <div class="small">
+                                        <strong>Dokumen Telah Diperbaiki oleh Unit Sasaran:</strong>
+                                        <div class="text-muted mt-0.5">Unit telah mengunggah revisi terbaru. Silakan berikan keputusan review untuk diteruskan ke LPM atau meminta perbaikan lanjutan.</div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Catatan Evaluasi Internal LPM (Khusus Akses GPM) jika ada -->
+                            <?php if (!empty($doc['lpm_catatan'])): ?>
+                                <div class="p-3 rounded-3 mb-3 border border-warning-subtle" style="background: #FFFBEB;">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1.5">
+                                        <span class="small fw-bold text-warning-emphasis text-uppercase d-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
+                                            <i class="fas fa-lock text-warning"></i> Catatan Evaluasi Internal dari Tim LPM (Khusus GPM):
+                                        </span>
+                                        <?php if (!empty($doc['lpm_reviewed_at'])): ?>
+                                            <span class="badge bg-white text-secondary border px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                                <i class="far fa-clock me-1 text-secondary opacity-75"></i><?= date('d M Y, H:i', strtotime($doc['lpm_reviewed_at'])) ?> WIB
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-3 border border-warning border-opacity-25 small text-dark" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($doc['lpm_catatan']) ?></div>
+                                    <div class="text-muted small mt-1" style="font-size: 0.71rem;">
+                                        <i class="fas fa-info-circle text-primary me-1"></i> Catatan asli dari LPM ini <strong>tidak akan diperlihatkan</strong> kepada Program Studi / Dekanat.
+                                    </div>
+                                </div>
+                            <?php elseif (!empty($doc['catatan_review'])): ?>
+                                <div class="p-3 rounded-3 mb-3 border border-warning-subtle bg-warning bg-opacity-10">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1.5">
+                                        <span class="small fw-bold text-dark text-uppercase d-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
+                                            <i class="fas fa-comment-dots text-warning"></i> Catatan Evaluasi Sebelumnya:
+                                        </span>
+                                        <?php if (!empty($doc['gpm_reviewed_at']) || !empty($doc['reviewed_at'])): ?>
+                                            <span class="badge bg-white text-secondary border px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                                <i class="far fa-clock me-1 text-secondary opacity-75"></i><?= date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'] ?? $doc['reviewed_at'])) ?> WIB
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-3 border border-warning border-opacity-25 small text-dark" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($doc['catatan_review']) ?></div>
+                                </div>
+                            <?php endif; ?>
+
+                            <form action="<?= base_url('gpm/review/submit') ?>" method="POST">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
+                                <input type="hidden" name="id" value="<?= $doc['id'] ?>">
+                                <input type="hidden" name="redirect_to" value="gpm/dokumen">
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small mb-2">
+                                        Keputusan Hasil Review GPM <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
+                                                <input type="radio" name="status_review" value="menunggu_review_lpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= (!in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan', 'revisi_lpm'])) ? 'checked' : '' ?> required>
+                                                <div class="d-flex align-items-center gap-2.5 mb-1.5">
+                                                    <div class="rounded-circle p-2 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                        <i class="fas fa-check"></i>
+                                                    </div>
+                                                    <span class="fw-bold text-dark" style="font-size: 0.88rem;">Disetujui GPM</span>
+                                                </div>
+                                                <div class="text-muted small" style="font-size: 0.75rem; line-height: 1.4;">
+                                                    Dokumen dinyatakan sesuai kriteria mutu fakultas dan <strong>diteruskan ke antrean review LPM</strong>.
+                                                </div>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
+                                                <input type="radio" name="status_review" value="revisi_gpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan', 'revisi_lpm']) ? 'checked' : '' ?> required>
+                                                <div class="d-flex align-items-center gap-2.5 mb-1.5">
+                                                    <div class="rounded-circle p-2 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                        <i class="fas fa-triangle-exclamation"></i>
+                                                    </div>
+                                                    <span class="fw-bold text-dark" style="font-size: 0.88rem;">Perlu Revisi</span>
+                                                </div>
+                                                <div class="text-muted small" style="font-size: 0.75rem; line-height: 1.4;">
+                                                    Dokumen belum sesuai. Dikembalikan ke unit sasaran untuk <strong>diperbaiki sesuai catatan review</strong>.
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <?php
+                                    $isLpmReturn = in_array($doc['status_review'] ?? '', ['revisi_lpm', 'perlu_perbaikan']);
+                                    $hasFreshGpmText = !empty($doc['gpm_catatan']) && (
+                                        !$isLpmReturn
+                                        || (!empty($doc['gpm_reviewed_at']) && !empty($doc['lpm_reviewed_at']) && strtotime($doc['gpm_reviewed_at']) > strtotime($doc['lpm_reviewed_at']))
+                                    );
+                                    $prefillGpmText = $hasFreshGpmText ? $doc['gpm_catatan'] : '';
+                                    $cleanLpmRef = trim(preg_replace('/^\[CATATAN\s+INTERNAL\s+LPM[^\]]*\]\s*/i', '', (string)($doc['lpm_catatan'] ?? '')));
+                                ?>
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                        <label class="form-label fw-bold text-dark small mb-0">
+                                            <?= $isLpmReturn ? 'Arahan Perbaikan Resmi GPM ke Unit' : 'Catatan Evaluasi / Rekomendasi GPM' ?>
+                                        </label>
+                                        <?php if ($isLpmReturn && !empty($cleanLpmRef)): ?>
+                                            <button type="button" class="btn btn-xs btn-outline-warning text-dark bg-white rounded-pill px-2.5 py-0.5 fw-semibold" style="font-size: 0.7rem;"
+                                                    data-copy-text="<?= htmlspecialchars($cleanLpmRef, ENT_QUOTES) ?>"
+                                                    onclick="const ta=this.closest('form').querySelector('textarea[name=\'catatan_review\']'); if(ta){ta.value=this.getAttribute('data-copy-text')||''; ta.focus();}">
+                                                <i class="fas fa-copy text-warning me-1"></i>Salin Catatan LPM
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                    <textarea name="catatan_review" rows="3" class="form-control rounded-3" placeholder="Tuliskan arahan resmi GPM atau detail evaluasi perbaikan untuk unit..."><?= htmlspecialchars($prefillGpmText) ?></textarea>
+                                    <div class="form-text small" style="font-size: 0.72rem;">
+                                        <i class="fas fa-info-circle text-primary me-1"></i> Wajib diisi bila memilih opsi "Perlu Revisi". <?= $isLpmReturn ? 'Unit hanya akan menerima arahan resmi ini atas nama GPM (catatan LPM tetap tersembunyi).' : 'Catatan ini akan terbaca oleh unit sasaran dan reviewer LPM.' ?>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center justify-content-between pt-3 border-top flex-wrap gap-2">
+                                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 btn-sm btn-review-history d-inline-flex align-items-center gap-1.5" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>">
+                                        <i class="fas fa-history"></i> Riwayat Catatan
+                                    </button>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-light rounded-pill px-3.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
+                                        <button type="submit" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs">
+                                            <i class="fas fa-paper-plane me-1.5"></i> Simpan Keputusan Review
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                        <?php elseif ($doc['status_review'] === 'menunggu_review_lpm'): ?>
+                            <!-- TAMPILAN DOKUMEN DALAM ANTREAN LPM -->
+                            <div class="p-3.5 rounded-3 mb-3 border border-primary-subtle bg-primary bg-opacity-10">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                    <span class="small fw-bold text-primary text-uppercase d-flex align-items-center gap-1.5">
+                                        <i class="fas fa-paper-plane"></i> Telah Disetujui GPM &bull; Dalam Antrean Review LPM
+                                    </span>
+                                    <span class="badge bg-primary text-white px-2.5 py-1 rounded-pill" style="font-size: 0.72rem;">
+                                        Sedang Ditinjau LPM
+                                    </span>
+                                </div>
+                                <p class="small text-dark mb-2" style="line-height: 1.5;">
+                                    Dokumen ini telah disetujui oleh GPM Fakultas dan saat ini sedang menunggu telaah akhir / verifikasi oleh tim Pusat Penjaminan Mutu LPM Universitas.
+                                </p>
+                                <?php if (!empty($doc['gpm_catatan'])): ?>
+                                    <div class="bg-white p-2.5 rounded-2 border border-primary border-opacity-25 small text-secondary">
+                                        <strong>Catatan / Rekomendasi GPM:</strong><br>
+                                        <?= htmlspecialchars($doc['gpm_catatan']) ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between pt-3 border-top flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 btn-sm btn-review-history d-inline-flex align-items-center gap-1.5" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>">
+                                    <i class="fas fa-history"></i> Buka Riwayat Review Lengkap
+                                </button>
+                                <button type="button" class="btn btn-light rounded-pill px-4 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
+                            </div>
+
+                        <?php else: ?>
+                            <!-- DOKUMEN SESUAI -->
+                            <div class="alert alert-success border-success border-opacity-25 rounded-3 mb-3">
+                                <div class="fw-bold text-success small mb-1"><i class="fas fa-circle-check me-1"></i> Status: Dokumen Telah Disetujui (Sesuai Standar Mutu)</div>
+                                <p class="small text-muted mb-0" style="line-height: 1.5; font-size: 0.78rem;">
+                                    Dokumen telah divalidasi dan disetujui oleh Lembaga Penjaminan Mutu (LPM). Siklus mutu pada dokumen ini telah terpenuhi.
+                                </p>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between pt-3 border-top flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 btn-sm btn-review-history d-inline-flex align-items-center gap-1.5" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>">
+                                    <i class="fas fa-history"></i> Buka Riwayat Review Lengkap
+                                </button>
+                                <button type="button" class="btn btn-light rounded-pill px-4 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Modal Review Dokumen oleh GPM (Fallback backward compatibility) -->
                 <div class="modal fade" id="gpmReviewModal<?= $doc['id'] ?>" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content rounded-4 border-0 shadow-lg">

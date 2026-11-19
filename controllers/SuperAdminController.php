@@ -1814,8 +1814,15 @@ class SuperAdminController extends Controller {
         $statusReview = trim($_POST['status_review'] ?? '');
         $catatanReview = trim($_POST['catatan_review'] ?? '');
         $customRedirect = trim($_POST['redirect_to'] ?? '');
-        $allowedRedirects = ['admin/review', 'admin/dashboard', 'admin/review-dokumen'];
-        $fallbackRedirect = ($customRedirect && in_array($customRedirect, $allowedRedirects)) ? $customRedirect : 'admin/dashboard';
+        $allowedRedirects = ['admin/review', 'admin/dashboard', 'admin/review-dokumen', 'admin/review-prodi', 'admin/review-fakultas'];
+        $isAllowedRedirect = false;
+        foreach ($allowedRedirects as $ar) {
+            if ($customRedirect === $ar || str_starts_with($customRedirect, $ar . '/')) {
+                $isAllowedRedirect = true;
+                break;
+            }
+        }
+        $fallbackRedirect = ($customRedirect && $isAllowedRedirect) ? $customRedirect : 'admin/dashboard';
 
         $allowedStatuses = ['sesuai', 'perlu_perbaikan'];
         if (!$docId || !in_array($statusReview, $allowedStatuses)) {
@@ -1852,7 +1859,7 @@ class SuperAdminController extends Controller {
         $isFakultasDoc = ($doc['level'] === 'fakultas' || empty($doc['prodi_id']));
         $redirectUrl = $isFakultasDoc ? "admin/review-fakultas/{$doc['fakultas_id']}" : "admin/review-prodi/{$doc['prodi_id']}";
 
-        if ($customRedirect && in_array($customRedirect, $allowedRedirects)) {
+        if ($customRedirect && $isAllowedRedirect) {
             $redirectUrl = $customRedirect;
         }
 

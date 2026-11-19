@@ -103,8 +103,95 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (pdfModal) {
-        pdfModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
+        window._currentPdfIsReviewMode = false;
+
+        function initCopiedReviewForm(container, role) {
+            if (!container) return;
+            const form = container.querySelector('form');
+            if (!form) return;
+
+            form.addEventListener('submit', function(e) {
+                if (role === 'gpm') {
+                    const checkedStatus = form.querySelector('input[name="status_review"]:checked');
+                    const catatan = form.querySelector('textarea[name="catatan_review"]');
+                    if (checkedStatus && checkedStatus.value === 'revisi_gpm') {
+                        if (!catatan || !catatan.value.trim()) {
+                            e.preventDefault();
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Catatan Review Wajib Diisi',
+                                    text: 'Silakan tuliskan catatan atau arahan perbaikan untuk unit pengunggah sebelum menyimpan keputusan Perlu Revisi.',
+                                    confirmButtonColor: '#2563EB'
+                                }).then(() => {
+                                    if (catatan) catatan.focus();
+                                });
+                            } else {
+                                alert('Catatan review wajib diisi bila memilih opsi Perlu Revisi.');
+                                if (catatan) catatan.focus();
+                            }
+                            return false;
+                        }
+                    }
+                } else if (role === 'lpm') {
+                    const checkedStatus = form.querySelector('input[name="status_review"]:checked');
+                    const catatan = form.querySelector('textarea[name="catatan_review"]');
+                    if (checkedStatus && checkedStatus.value === 'perlu_perbaikan') {
+                        if (!catatan || !catatan.value.trim()) {
+                            e.preventDefault();
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Catatan Perbaikan Wajib Diisi',
+                                    text: 'Silakan tuliskan poin-poin catatan evaluasi perbaikan sebelum mengembalikan dokumen ke unit.',
+                                    confirmButtonColor: '#2563EB'
+                                }).then(() => {
+                                    if (catatan) catatan.focus();
+                                });
+                            } else {
+                                alert('Catatan evaluasi wajib diisi bila meminta perbaikan/revisi.');
+                                if (catatan) catatan.focus();
+                            }
+                            return false;
+                        }
+                    }
+                }
+            });
+        }
+
+        const scrollArea = document.getElementById('pdfViewerScrollArea');
+        if (scrollArea) {
+            scrollArea.addEventListener('scroll', function() {
+                if (window._currentPdfIsReviewMode) {
+                    const threshold = 280;
+                    if (scrollArea.scrollHeight - (scrollArea.scrollTop + scrollArea.clientHeight) <= threshold) {
+                        const reviewBox = document.getElementById('pdfReviewActionBox');
+                        if (reviewBox && reviewBox.style.display === 'none') {
+                            reviewBox.style.display = 'block';
+                            const hint = document.getElementById('pdfReviewStatusHint');
+                            if (hint) {
+                                hint.innerHTML = '<strong class="text-info"><i class="fas fa-check-circle me-1"></i> Halaman terakhir tercapai.</strong> Silakan berikan keputusan review di bawah.';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const jumpToReviewBtn = document.getElementById('pdfJumpToReviewBtn');
+        if (jumpToReviewBtn) {
+            jumpToReviewBtn.addEventListener('click', function() {
+                const reviewBox = document.getElementById('pdfReviewActionBox');
+                if (reviewBox) {
+                    reviewBox.style.display = 'block';
+                    reviewBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const firstInp = reviewBox.querySelector('input[type="radio"]:checked, input[type="radio"], textarea');
+                    if (firstInp) setTimeout(() => firstInp.focus(), 350);
+                }
+            });
+        }
+
+        function loadPdfModalContent(button) {
             if (!button) return;
 
             const isLinkDoc = button.getAttribute('data-is-link') === '1';
@@ -117,6 +204,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const canDownload = parseInt(button.getAttribute('data-can-download') || '0', 10);
             const canAccess = parseInt(button.getAttribute('data-can-access') || '1', 10);
             const docTa = button.getAttribute('data-doc-ta') || '';
+
+            const isReviewMode = button.getAttribute('data-is-review') === '1';
+            const reviewRole = button.getAttribute('data-review-role') || '';
+            const reviewSourceSelector = button.getAttribute('data-review-source') || '';
+            const allFilesJson = button.getAttribute('data-all-files') || '';
+
+            window._currentPdfIsReviewMode = isReviewMode;
 
             const modalTitle = pdfModal.querySelector('.modal-title');
             const downloadContainer = document.getElementById('pdfDownloadBtnContainer');
@@ -135,6 +229,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const narasiText = document.getElementById('pdfModalNarasiText');
             const standarWrap = document.getElementById('pdfModalStandarWrap');
             const headerIcon = document.getElementById('pdfModalHeaderIcon');
+
+            const reviewStickyBar = document.getElementById('pdfReviewStickyBar');
+            const reviewActionBox = document.getElementById('pdfReviewActionBox');
+            const reviewRoleBadge = document.getElementById('pdfReviewRoleBadge');
+            const reviewStatusHint = document.getElementById('pdfReviewStatusHint');
+            const multiFilesWrap = document.getElementById('pdfMultiFilesWrap');
+            const multiFilesContainer = document.getElementById('pdfMultiFilesContainer');
+            const noFilesNotice = document.getElementById('pdfNoFilesNotice');
 
             currentRenderTaskId++; // Cancel any previous rendering tasks
 
@@ -166,6 +268,116 @@ document.addEventListener('DOMContentLoaded', function () {
             if (loadingIndicator) loadingIndicator.style.display = 'block';
             if (zoomDisplay) zoomDisplay.textContent = '125%';
             currentScale = 1.25;
+
+            // Configure Review Mode Elements
+            if (isReviewMode) {
+                if (reviewStickyBar) reviewStickyBar.style.display = 'flex';
+                if (reviewRoleBadge) {
+                    reviewRoleBadge.innerHTML = reviewRole === 'gpm' 
+                        ? '<i class="fas fa-clipboard-check me-1"></i> Mode Review GPM' 
+                        : '<i class="fas fa-clipboard-check me-1"></i> Mode Review LPM';
+                }
+                if (reviewStatusHint) {
+                    reviewStatusHint.innerHTML = 'Silakan baca berkas dokumen hingga halaman terakhir untuk mengisi keputusan review.';
+                }
+
+                if (reviewSourceSelector && reviewActionBox) {
+                    const srcEl = document.querySelector(reviewSourceSelector);
+                    if (srcEl) {
+                        reviewActionBox.innerHTML = srcEl.innerHTML;
+                        reviewActionBox.style.display = 'none'; // Awalnya sembunyi, tampil di halaman akhir
+                        initCopiedReviewForm(reviewActionBox, reviewRole);
+                    }
+                }
+
+                // Handle Multiple Files Switcher
+                if (allFilesJson && multiFilesWrap && multiFilesContainer) {
+                    try {
+                        const filesList = JSON.parse(allFilesJson);
+                        if (Array.isArray(filesList) && filesList.length > 1) {
+                            multiFilesWrap.style.display = 'block';
+                            let multiBtns = '<span class="text-white-50 small flex-shrink-0 me-1"><i class="fas fa-layer-group text-info me-1"></i> Berkas Dokumen (' + filesList.length + '):</span>';
+                            filesList.forEach((fl, fIdx) => {
+                                const isActive = (fIdx === 0);
+                                const btnClass = isActive ? 'btn-primary text-white fw-bold active-file-btn' : 'btn-outline-light text-white';
+                                const iconClass = fl.type === 'link' ? 'fab fa-google-drive' : 'fas fa-file-pdf';
+                                multiBtns += `
+                                    <button type="button" class="btn btn-xs rounded-pill px-3 py-1 text-truncate multi-file-switch-btn ${btnClass}" 
+                                            style="max-width: 200px; font-size: 0.75rem;" 
+                                            data-file-index="${fIdx}"
+                                            title="${fl.name}">
+                                        <i class="${iconClass} me-1"></i> ${fl.name}
+                                    </button>
+                                `;
+                            });
+                            multiFilesContainer.innerHTML = multiBtns;
+
+                            multiFilesContainer.querySelectorAll('.multi-file-switch-btn').forEach(swBtn => {
+                                swBtn.onclick = function() {
+                                    const targetIdx = parseInt(this.getAttribute('data-file-index'), 10);
+                                    const fileObj = filesList[targetIdx];
+                                    if (!fileObj) return;
+
+                                    multiFilesContainer.querySelectorAll('.multi-file-switch-btn').forEach(b => {
+                                        b.className = 'btn btn-xs rounded-pill px-3 py-1 text-truncate multi-file-switch-btn btn-outline-light text-white';
+                                    });
+                                    this.className = 'btn btn-xs rounded-pill px-3 py-1 text-truncate multi-file-switch-btn btn-primary text-white fw-bold active-file-btn';
+
+                                    const mockBtn = document.createElement('button');
+                                    mockBtn.setAttribute('data-doc-title', fileObj.name || docTitle);
+                                    mockBtn.setAttribute('data-doc-narasi', fileObj.narasi || '');
+                                    mockBtn.setAttribute('data-doc-standar', fileObj.standar || '');
+                                    mockBtn.setAttribute('data-can-download', canDownload);
+                                    mockBtn.setAttribute('data-can-access', canAccess);
+                                    mockBtn.setAttribute('data-public-limit', publicLimit);
+                                    mockBtn.setAttribute('data-doc-ta', docTa);
+                                    mockBtn.setAttribute('data-is-review', '1');
+                                    mockBtn.setAttribute('data-review-role', reviewRole);
+                                    mockBtn.setAttribute('data-review-source', reviewSourceSelector);
+
+                                    if (fileObj.type === 'link') {
+                                        mockBtn.setAttribute('data-is-link', '1');
+                                        mockBtn.setAttribute('data-link-url', fileObj.url);
+                                    } else {
+                                        mockBtn.setAttribute('data-is-link', '0');
+                                        mockBtn.setAttribute('data-pdf-url', fileObj.url);
+                                    }
+
+                                    loadPdfModalContent(mockBtn);
+                                };
+                            });
+                        } else {
+                            multiFilesWrap.style.display = 'none';
+                            multiFilesContainer.innerHTML = '';
+                        }
+                    } catch (e) {
+                        console.warn('Error parsing all-files:', e);
+                        multiFilesWrap.style.display = 'none';
+                    }
+                }
+            } else {
+                if (reviewStickyBar) reviewStickyBar.style.display = 'none';
+                if (reviewActionBox) {
+                    reviewActionBox.style.display = 'none';
+                    reviewActionBox.innerHTML = '';
+                }
+                if (multiFilesWrap) multiFilesWrap.style.display = 'none';
+                if (noFilesNotice) noFilesNotice.style.display = 'none';
+            }
+
+            // Jika dokumen sama sekali tidak memiliki berkas maupun tautan
+            if (!pdfUrl && !linkUrl) {
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+                if (toolbar) toolbar.style.display = 'none';
+                if (pagesContainer) pagesContainer.style.display = 'none';
+                if (iframeWrap) iframeWrap.style.display = 'none';
+                if (noFilesNotice) noFilesNotice.style.display = 'block';
+                if (reviewActionBox) reviewActionBox.style.display = 'block';
+                if (reviewStatusHint) reviewStatusHint.textContent = 'Dokumen belum melampirkan berkas. Silakan berikan catatan evaluasi perbaikan untuk unit.';
+                return;
+            } else {
+                if (noFilesNotice) noFilesNotice.style.display = 'none';
+            }
 
             // Configure Standar & Narasi display
             let hasRibbon = false;
@@ -249,6 +461,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         setTimeout(() => {
                             if (loadingIndicator) loadingIndicator.style.display = 'none';
                         }, 1200);
+
+                        if (isReviewMode && reviewActionBox) {
+                            reviewActionBox.style.display = 'block';
+                            if (reviewStatusHint) reviewStatusHint.innerHTML = '<strong class="text-info"><i class="fas fa-check-circle me-1"></i> Tautan Cloud Siap.</strong> Silakan lengkapi keputusan review di bawah.';
+                        }
                     }
                 } else {
                     // Guest user attempting to access a locked link document
@@ -376,6 +593,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                  style="max-width: 95%; max-height: 82vh; object-fit: contain; transition: transform 0.2s ease; border: 1px solid rgba(255,255,255,0.2);" />
                         </div>
                     `;
+                }
+
+                if (isReviewMode && reviewActionBox) {
+                    reviewActionBox.style.display = 'block';
+                    if (reviewStatusHint) reviewStatusHint.innerHTML = '<strong class="text-info"><i class="fas fa-check-circle me-1"></i> Foto Siap.</strong> Silakan lengkapi keputusan review di bawah.';
                 }
             }
 
@@ -610,10 +832,19 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 : 'Dokumen Microsoft Word (Kertas Portrait / Tegak)';
                                         }
                                     }
+
+                                    if (isReviewMode && reviewActionBox) {
+                                        reviewActionBox.style.display = 'block';
+                                        if (reviewStatusHint) reviewStatusHint.innerHTML = '<strong class="text-info"><i class="fas fa-check-circle me-1"></i> Berkas Word Siap.</strong> Silakan lengkapi keputusan review di bawah.';
+                                    }
                                 }).catch(err => {
                                     console.warn('docx preview render error:', err);
                                     renderWordFallback(pagesContainer);
                                 });
+                                if (isReviewMode && reviewActionBox) {
+                                    reviewActionBox.style.display = 'block';
+                                    if (reviewStatusHint) reviewStatusHint.innerHTML = '<strong class="text-info"><i class="fas fa-check-circle me-1"></i> Spreadsheet Siap.</strong> Silakan lengkapi keputusan review di bawah.';
+                                }
                             }
                         })
                         .catch(err => {
@@ -769,6 +1000,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                 };
 
                                 window.switchExcelSheet(sheetNames[0], null);
+                                if (isReviewMode && reviewActionBox) {
+                                    reviewActionBox.style.display = 'block';
+                                    if (reviewStatusHint) reviewStatusHint.innerHTML = '<strong class="text-info"><i class="fas fa-check-circle me-1"></i> Spreadsheet Siap.</strong> Silakan lengkapi keputusan review di bawah.';
+                                }
                             }
                         })
                         .catch(err => {
@@ -891,9 +1126,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
                 testImg.src = pdfUrl;
             });
+        }
+
+        pdfModal.addEventListener('show.bs.modal', function (event) {
+            loadPdfModalContent(event.relatedTarget);
         });
-pdfModal.addEventListener('hidden.bs.modal', function () {
+
+        pdfModal.addEventListener('hidden.bs.modal', function () {
             currentRenderTaskId++; // Cancel any running page renders
+            window._currentPdfIsReviewMode = false;
+
             const activeVideo = pagesContainer ? pagesContainer.querySelector('video') : null;
             if (activeVideo) {
                 try {
@@ -918,6 +1160,21 @@ pdfModal.addEventListener('hidden.bs.modal', function () {
             const narasiText = document.getElementById('pdfModalNarasiText');
             if (narasiWrap) narasiWrap.style.display = 'none';
             if (narasiText) narasiText.textContent = '';
+
+            const reviewStickyBar = document.getElementById('pdfReviewStickyBar');
+            if (reviewStickyBar) reviewStickyBar.style.display = 'none';
+            const reviewActionBox = document.getElementById('pdfReviewActionBox');
+            if (reviewActionBox) {
+                reviewActionBox.style.display = 'none';
+                reviewActionBox.innerHTML = '';
+            }
+            const multiFilesWrap = document.getElementById('pdfMultiFilesWrap');
+            if (multiFilesWrap) multiFilesWrap.style.display = 'none';
+            const multiFilesContainer = document.getElementById('pdfMultiFilesContainer');
+            if (multiFilesContainer) multiFilesContainer.innerHTML = '';
+            const noFilesNotice = document.getElementById('pdfNoFilesNotice');
+            if (noFilesNotice) noFilesNotice.style.display = 'none';
+
             currentPdfDoc = null;
             pdfModal.style.zIndex = '';
 
@@ -1092,6 +1349,15 @@ pdfModal.addEventListener('hidden.bs.modal', function () {
                     }
                 } else if (lockedBanner) {
                     lockedBanner.style.display = 'none';
+                }
+
+                if (window._currentPdfIsReviewMode) {
+                    const reviewBox = document.getElementById('pdfReviewActionBox');
+                    if (reviewBox) reviewBox.style.display = 'block';
+                    const hint = document.getElementById('pdfReviewStatusHint');
+                    if (hint) {
+                        hint.innerHTML = '<strong class="text-info"><i class="fas fa-check-circle me-1"></i> Halaman terakhir tercapai.</strong> Silakan lengkapi keputusan review di bawah.';
+                    }
                 }
             });
         }).catch(err => {
