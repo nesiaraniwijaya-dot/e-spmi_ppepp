@@ -222,13 +222,13 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
             <table class="table table-hover align-middle mb-0" id="prodiDocumentsTable" style="table-layout: fixed; width: 100%; font-size: 0.82rem;">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 4%;" class="text-center">No</th>
-                        <th style="width: 27%;">Nama & Nomor Dokumen</th>
-                        <th style="width: 12%;">Siklus PPEPP</th>
-                        <th style="width: 17%;">Bidang &amp; Standar</th>
-                        <th style="width: 15%;">Berkas</th>
-                        <th style="width: 15%;">Status Review LPM</th>
-                        <th style="width: 10%;" class="text-center text-nowrap">Aksi</th>
+                        <th style="width: 55px; min-width: 55px;" class="text-center">No</th>
+                        <th style="width: 26%;">Nama &amp; Nomor Dokumen</th>
+                        <th style="width: 120px; min-width: 110px;">Siklus PPEPP</th>
+                        <th style="width: 16%;">Bidang &amp; Standar</th>
+                        <th style="width: 17%;">Berkas</th>
+                        <th style="width: 17%;">Status Review LPM</th>
+                        <th style="width: 110px; min-width: 110px;" class="text-center text-nowrap">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="prodiDocTableBody">

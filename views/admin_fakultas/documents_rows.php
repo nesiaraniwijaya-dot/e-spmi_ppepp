@@ -30,9 +30,9 @@ if (!empty($documents)):
             data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . $doc['nomor_dokumen'] . ' ' . ($doc['nama_bidang'] ?? ''))) ?>"
             style="<?= $isPerluPerbaikan ? 'border-left: 4px solid #DC2626 !important; background: #FFFBFB;' : '' ?>">
             
-            <td class="text-center text-muted fw-bold"><?= $no++ ?></td>
+            <td class="text-center text-muted fw-bold" style="white-space: nowrap; width: 55px;"><?= $no++ ?></td>
             
-            <td>
+            <td style="overflow: hidden; word-break: break-word;">
                 <div class="fw-bold text-dark-blue mb-1">
                     <?= htmlspecialchars($doc['nama_dokumen']) ?>
                 </div>
@@ -79,13 +79,13 @@ if (!empty($documents)):
             </td>
 
             <!-- Berkas & Narasi Column -->
-            <td>
+            <td style="overflow: hidden; min-width: 0;">
                 <?php 
                 $hasFiles = ($fileCount > 0 || (!empty($doc['file_path']) && $doc['jenis_upload'] !== 'link'));
                 $hasLinks = ($linkCount > 0);
                 $isKombinasi = ($doc['jenis_upload'] === 'kombinasi') || ($hasFiles && $hasLinks);
                 ?>
-                <div class="d-flex flex-column align-items-start gap-1.5">
+                <div class="d-flex flex-column align-items-start gap-1.5 w-100" style="min-width: 0; max-width: 100%; overflow: hidden;">
                     <?php if ($isKombinasi): ?>
                         <span class="badge rounded-pill px-2 py-0.5" style="background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE; font-size: 0.67rem; font-weight: 600;">
                             <i class="fas fa-layer-group me-1"></i>Kombinasi
@@ -205,8 +205,8 @@ if (!empty($documents)):
             </td>
 
             <!-- Status Review Column -->
-            <td>
-                <div class="d-flex flex-column align-items-start gap-1">
+            <td style="overflow: hidden; min-width: 0;">
+                <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0; max-width: 100%; overflow: hidden;">
                     <?= render_review_status_badge($reviewStatus) ?>
                     
                     <?php if ($isPerluPerbaikan): ?>
@@ -232,7 +232,7 @@ if (!empty($documents)):
             </td>
 
             <!-- Aksi Column -->
-            <td class="text-center text-nowrap" style="width: 10%;">
+            <td class="text-center text-nowrap" style="width: 110px; min-width: 110px;">
                 <div class="d-inline-flex align-items-center justify-content-center gap-1">
                     <button type="button" 
                             class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" 

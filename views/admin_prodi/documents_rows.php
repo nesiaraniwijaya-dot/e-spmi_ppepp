@@ -26,8 +26,8 @@ if (!empty($documents)):
             data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
             data-status-review="<?= $status ?>"
             style="<?= $isPerluPerbaikan ? 'border-left: 4px solid #DC2626 !important; background: #FFFBFB;' : '' ?>">
-            <td class="text-center fw-semibold text-muted"><?= $no++ ?></td>
-            <td>
+            <td class="text-center fw-semibold text-muted" style="white-space: nowrap; width: 55px;"><?= $no++ ?></td>
+            <td style="overflow: hidden; word-break: break-word;">
                 <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen']) ?></div>
                 <?php if ($doc['nomor_dokumen']): ?>
                     <div class="small text-muted" style="font-size: 0.72rem;"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
@@ -50,7 +50,7 @@ if (!empty($documents)):
                     </div>
                 <?php endif; ?>
             </td>
-            <td>
+            <td style="overflow: hidden; min-width: 0;">
                 <?php 
                 $files = $doc['files'] ?? [];
                 $filesCount = count($files);
@@ -60,7 +60,7 @@ if (!empty($documents)):
                 $hasLinks = ($linkCount > 0);
                 $isKombinasi = ($doc['jenis_upload'] === 'kombinasi') || ($hasFiles && $hasLinks);
                 ?>
-                <div class="d-flex flex-column align-items-start gap-1.5">
+                <div class="d-flex flex-column align-items-start gap-1.5 w-100" style="min-width: 0; max-width: 100%; overflow: hidden;">
                     <?php if ($isKombinasi): ?>
                         <span class="badge rounded-pill px-2 py-0.5" style="background: #EDE9FE; color: #7C3AED; border: 1px solid #DDD6FE; font-size: 0.67rem; font-weight: 600;">
                             <i class="fas fa-layer-group me-1"></i>Kombinasi
@@ -122,7 +122,7 @@ if (!empty($documents)):
                             $fLimit = isset($singleFile['is_page_limited']) && (int)$singleFile['is_page_limited'] === 0 ? 0 : (int)($singleFile['public_page_limit'] ?? 1);
                             $fCanDl = (int)($singleFile['can_download_public'] ?? 0);
                             ?>
-                            <div class="d-inline-flex flex-column align-items-start gap-1">
+                            <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0; max-width: 100%; overflow: hidden;">
                                 <div class="d-flex align-items-center gap-1 flex-wrap">
                                     <?php
                                     $sExt = strtolower($singleFile['file_extension'] ?? pathinfo($singleFile['file_path'], PATHINFO_EXTENSION));
@@ -154,8 +154,13 @@ if (!empty($documents)):
                                 </div>
                                 <?= render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null) ?>
                                 <?php if (!empty($singleFile['narasi'])): ?>
-                                    <div class="text-muted fst-italic text-truncate mt-0.5" style="max-width: 100%; font-size: 0.7rem;" title="<?= htmlspecialchars($singleFile['narasi']) ?>">
-                                        <i class="fas fa-quote-left text-danger opacity-75 me-0.5"></i> <?= htmlspecialchars($singleFile['narasi']) ?>
+                                    <div class="w-100 mt-1" style="min-width: 0; max-width: 100%; overflow: hidden;">
+                                        <div class="text-muted d-flex align-items-center gap-1.5 px-2 py-1 rounded bg-light border border-light-subtle w-100" 
+                                             style="font-size: 0.7rem; line-height: 1.35; min-width: 0; max-width: 100%; overflow: hidden;" 
+                                             title="<?= htmlspecialchars($singleFile['narasi']) ?>">
+                                            <i class="fas fa-quote-left text-danger opacity-75 flex-shrink-0" style="font-size: 0.65rem;"></i>
+                                            <span class="text-truncate d-inline-block" style="min-width: 0; max-width: 100%;"><?= htmlspecialchars($singleFile['narasi']) ?></span>
+                                        </div>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -205,7 +210,7 @@ if (!empty($documents)):
                         <?php elseif ($linkCount === 1): 
                             $singleLink = $gdriveLinks[0];
                         ?>
-                            <div class="d-inline-flex flex-column align-items-start gap-1">
+                            <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0; max-width: 100%; overflow: hidden;">
                                 <div class="d-flex align-items-center gap-1 flex-wrap">
                                     <a href="<?= htmlspecialchars($singleLink['url']) ?>" target="_blank" 
                                        class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 text-decoration-none shadow-2xs" 
@@ -220,8 +225,13 @@ if (!empty($documents)):
                                 </div>
                                 <?= render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null) ?>
                                 <?php if (!empty($singleLink['narasi'])): ?>
-                                    <div class="text-muted fst-italic text-truncate mt-0.5" style="max-width: 100%; font-size: 0.7rem;" title="<?= htmlspecialchars($singleLink['narasi']) ?>">
-                                        <i class="fas fa-quote-left text-primary opacity-75 me-0.5"></i> <?= htmlspecialchars($singleLink['narasi']) ?>
+                                    <div class="w-100 mt-1" style="min-width: 0; max-width: 100%; overflow: hidden;">
+                                        <div class="text-muted d-flex align-items-center gap-1.5 px-2 py-1 rounded bg-light border border-light-subtle w-100" 
+                                             style="font-size: 0.7rem; line-height: 1.35; min-width: 0; max-width: 100%; overflow: hidden;" 
+                                             title="<?= htmlspecialchars($singleLink['narasi']) ?>">
+                                            <i class="fas fa-quote-left text-primary opacity-75 flex-shrink-0" style="font-size: 0.65rem;"></i>
+                                            <span class="text-truncate d-inline-block" style="min-width: 0; max-width: 100%;"><?= htmlspecialchars($singleLink['narasi']) ?></span>
+                                        </div>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -233,8 +243,8 @@ if (!empty($documents)):
                     <?php endif; ?>
                 </div>
             </td>
-            <td>
-                <div class="d-flex flex-column align-items-start gap-1">
+            <td style="overflow: hidden; min-width: 0;">
+                <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0; max-width: 100%; overflow: hidden;">
                     <?= render_review_status_badge($status) ?>
                     
                     <?php if ($isPerluPerbaikan): ?>
@@ -259,11 +269,11 @@ if (!empty($documents)):
                             </a>
                         </div>
                     <?php elseif (!empty($doc['gpm_catatan'])): ?>
-                        <div class="p-1.5 px-2 rounded-2 text-start mt-1 w-100 border" style="background: #FFFBEB; border-color: #FDE68A !important; font-size: 0.72rem;">
+                        <div class="p-1.5 px-2 rounded-2 text-start mt-1 w-100 border" style="background: #FFFBEB; border-color: #FDE68A !important; font-size: 0.72rem; min-width: 0; max-width: 100%; overflow: hidden;">
                             <div class="fw-bold d-flex align-items-center gap-1 mb-0.5" style="color: #B45309; font-size: 0.68rem;">
-                                <i class="fas fa-shield-halved text-warning"></i> Catatan GPM:
+                                <i class="fas fa-shield-halved text-warning flex-shrink-0"></i> <span>Catatan GPM:</span>
                             </div>
-                            <div class="text-secondary text-truncate" style="line-height: 1.35; max-width: 100%;" title="<?= htmlspecialchars($doc['gpm_catatan']) ?>">
+                            <div class="text-secondary text-truncate d-block" style="line-height: 1.35; min-width: 0; max-width: 100%;" title="<?= htmlspecialchars($doc['gpm_catatan']) ?>">
                                 <?= htmlspecialchars($doc['gpm_catatan']) ?>
                             </div>
                         </div>
@@ -274,7 +284,7 @@ if (!empty($documents)):
                     </button>
                 </div>
             </td>
-            <td class="text-center text-nowrap" style="width: 10%;">
+            <td class="text-center text-nowrap" style="width: 110px; min-width: 110px;">
                 <div class="d-inline-flex align-items-center justify-content-center gap-1">
                     <!-- Aksi 1: Lihat Rincian Dokumen -->
                     <button type="button" 
