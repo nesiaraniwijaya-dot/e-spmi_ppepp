@@ -18,6 +18,7 @@ Thumbs.db
 # Temporary / Scratch & Archive Files
 scratch/
 database/backups/
+storage/
 *.zip
 ~$*
 

@@ -1800,9 +1800,15 @@ class SuperAdminController extends Controller {
      */
     public function submitReview(): void {
         if (!Auth::canActionLpmMenu('review_dokumen')) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Akses ditolak: Anda hanya memiliki izin Lihat Saja pada Pusat Review Dokumen.']);
-            exit;
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak: TU LPM dan Sekretaris LPM hanya memiliki hak akses untuk memantau telaah dokumen, tidak berwenang memberikan keputusan review.']);
+                exit;
+            }
+            Auth::setFlash('danger', 'Akses ditolak: TU LPM dan Sekretaris LPM hanya memiliki hak akses untuk memantau telaah dokumen.');
+            redirect('admin/review');
+            return;
         }
         $docId = !empty($_POST['document_id']) ? (int)$_POST['document_id'] : 0;
         $statusReview = trim($_POST['status_review'] ?? '');

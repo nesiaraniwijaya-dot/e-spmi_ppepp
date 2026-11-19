@@ -190,6 +190,46 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
     - **Skrip Migrasi**:
       - `database/migration_fakultas_icon_warna.sql` dan `database/migration_fakultas_icon_warna.php` (idempoten dan terdaftar di `database/migrate_all.php`).
 
+20. **Hak Akses Khusus Pantau Review (TU & Sekretaris LPM) & Notifikasi Email Pengajuan Akses Upload (`core/MailHelper.php`) (19 November 2026)**:
+    - **Pembatasan Aksi Review Dokumen**:
+      - Akun Admin/TU LPM (`tu.lpm@unika.ac.id`) dan role `sekretaris_lpm` dikunci secara sistem menjadi mode **Hanya Pantau (Monitoring)** pada menu Review Dokumen.
+      - Tombol aksi evaluasi mutu ("Setujui" & "Minta Revisi") disembunyikan dan digantikan badge *"Hanya Pantau"*, serta controller memblokir approval/revisi langsung dari kedua akun tersebut demi menjaga tata kelola penjaminan mutu.
+    - **Notifikasi Email Permohonan Buka Akses Upload**:
+      - Saat Program Studi / Fakultas mengajukan permohonan izin buka akses upload dokumen periode tertutup, sistem otomatis mengirimkan email notifikasi ke `tu.lpm@unika.ac.id`.
+      - Dikelola melalui helper baru: `core/MailHelper.php` dengan fail-safe logging di `storage/logs/mail.log`.
+    - **File SQL Terpadu 19 November 2026**:
+      - `database/migration_update_19_nov_2026.sql` (menggabungkan seluruh perubahan kolom fakultas, tabel hak akses menu, izin role sekretaris, dan update akun admin).
+
+21. **Sinkronisasi 53 Akun Pengguna Resmi Institusi SPMI PPEPP UNIKA (19 November 2026)**:
+    - **Cakupan Akun Resmi**:
+      - **6 Akun Tim LPM**: Kepala LPM (`lpm@unika.ac.id`), Sekretaris LPM (`lpm.sekretaris@unika.ac.id`), Ketua Pusat SPM (`lpm.spm@unika.ac.id`), Ketua Pusat AMI (`lpm.ami@unika.ac.id`), Ketua Pusat Pemeringkatan (`lpm.pemeringkatan@unika.ac.id`), Admin TU LPM (`tu.lpm@unika.ac.id`).
+      - **10 Akun Koordinator GPM Fakultas**: FTP (`pratiwi@unika.ac.id`), FT (`budi@unika.ac.id`), FIKOM (`erdhi@unika.ac.id`), FEB (`hardjanti@unika.ac.id`), FHK (`negorotheo@unika.ac.id`), FPSI (`cicih@unika.ac.id`), FAD (`ardiyanto@unika.ac.id`), FK (`lidwina@unika.ac.id`), FBS (`ekawati@unika.ac.id`), FITL (`dhiyan.krishna@unika.ac.id`).
+      - **37 Akun Official Auditee**: 10 Dekan Fakultas (`dekan`) dan 27 Ketua Program Studi (`kaprodi`) untuk jenjang S1, S2, S3, dan Profesi se-lingkungan UNIKA Soegijapranata.
+    - **Password Default Awal**:
+      - Ditetapkan standar `password123` (tersimpan baik dalam format hash Bcrypt maupun `password_plain` untuk kemudahan administrasi root/admin).
+    - **Penyesuaian & Koreksi Data**:
+      - Koreksi domain email GPM FEB dari `hardjanti@unika.ac` menjadi `hardjanti@unika.ac.id`.
+      - Pemilihan email prodi tunggal S2 Magister Teknologi Pangan `pmtp@unika.ac.id` (dari data ganda `pmtp@unika.ac.id / wd3.ftp@unika.ac.id`).
+      - Penataan prodi FIKOM: `ti@unika.ac.id` (Dr. Albertus Dwiyoga Widiantoro) -> S1 Teknik Informatika (prodi_id 1), dan `si@unika.ac.id` (Yonathan Purbo Santosa) -> S1 Sistem Informasi (prodi_id 2).
+    - **Pembersihan Akun Dummy Lama & Transfer Kepemilikan Dokumen**:
+      - 12 akun lama/dummy tingkat GPM (`gpm.fikom@unika.ac.id`), Dekanat (`dekan.fikom`, `wadek.fikom`, `dekan.feb`, `wadekfeb`), Prodi (`kaprodi.ti`, `sekprodi.ti`, `kaprodi.si`, `sekprodi.si`, `kaprodi.akuntansi`, `sekprodi.akuntansi`), dan civitas (`pengguna@unika.ac.id`) telah dibersihkan/dihapus secara aman.
+      - Sebanyak 1.676 berkas dokumen dan 1.282 siklus yang sebelumnya terkait dengan akun dummy telah ditransfer kepemilikannya ke akun resmi baru (`ti@unika.ac.id`, `si@unika.ac.id`, `akuntansi@unika.ac.id`, `fikom@unika.ac.id`) sehingga data institusi tetap 100% utuh tanpa kehilangan riwayat.
+      - Skrip: `database/cleanup_old_dummy_users.php` (otomatis terintegrasi di `database/migrate_all.php`).
+    - **Skrip Seeder & Migrasi**:
+      - PHP Seeder: `database/sync_official_users.php` & `database/cleanup_old_dummy_users.php` (otomatis terintegrasi di `database/migrate_all.php`).
+      - SQL Migration: `database/seed_official_users_19_nov_2026.sql`.
+
+22. **Pengesahan Otomatis Dokumen Lampau & Penyiapan Reviu Periode 2026/2027 (19 November 2026)**:
+    - **Pengesahan Dokumen Lampau (< 2026/2027)**:
+      - Seluruh 9.083 dokumen yang diunggah untuk tahun akademik lampau (2021/2022 s/d 2025/2026) langsung disahkan/disetujui (`status_review = 'sesuai'`, `tahap_review = 'selesai'`).
+      - Riwayat reviu dilengkapi catatan pengesahan institusional serta ditautkan ke Kepala LPM (`lpm@unika.ac.id`) dan Koordinator GPM fakultas terkait.
+    - **Penyiapan Antrean Reviu Tahun Akademik Berjalan (2026/2027)**:
+      - Dokumen pada tahun akademik aktif/berjalan 2026/2027 disiapkan dalam antrean reviu berjenjang:
+        - Tahap 1: Reviu oleh Koordinator GPM Fakultas masing-masing (`status_review = 'menunggu_review_gpm'`, `tahap_review = 'gpm'`).
+        - Tahap 2: Reviu oleh Tim LPM institusi setelah diteruskan oleh GPM.
+    - **Skrip Pembaruan**:
+      - `database/approve_historical_documents.php` (terdaftar dan otomatis dieksekusi melalui `database/migrate_all.php`).
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:

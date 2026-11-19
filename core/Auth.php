@@ -388,7 +388,15 @@ class Auth {
             return false;
         }
 
-        // Root Admin memiliki hak aksi penuh
+        $email = strtolower(trim((string)(self::user()['email'] ?? '')));
+        $role = self::role();
+
+        // TU LPM dan Sekretaris LPM hanya memiliki hak akses untuk memantau/monitoring review, tidak berhak melakukan review
+        if ($menuKey === 'review_dokumen' && ($email === 'tu.lpm@unika.ac.id' || $role === 'tu_lpm' || $role === 'sekretaris_lpm')) {
+            return false;
+        }
+
+        // Root Admin memiliki hak aksi penuh untuk menu administrasi lainnya
         if (self::isRootAdmin()) {
             return true;
         }
@@ -398,7 +406,6 @@ class Auth {
             return false;
         }
 
-        $role = self::role();
         $perms = self::getLpmPermissions();
         if (isset($perms[$role][$menuKey])) {
             return (bool)($perms[$role][$menuKey]['can_view'] && $perms[$role][$menuKey]['can_action']);

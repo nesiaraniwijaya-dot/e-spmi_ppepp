@@ -79,14 +79,16 @@ try {
 
     $stmtInsertPerm = $pdo->prepare("
         INSERT INTO lpm_menu_permissions (role, menu_key, can_view, can_action)
-        VALUES (?, ?, 1, 1)
-        ON DUPLICATE KEY UPDATE updated_at = updated_at
+        VALUES (?, ?, 1, ?)
+        ON DUPLICATE KEY UPDATE can_action = VALUES(can_action), updated_at = updated_at
     ");
 
     $seededCount = 0;
     foreach ($lpmRoles as $role) {
         foreach ($configurableMenus as $menu) {
-            $stmtInsertPerm->execute([$role, $menu]);
+            // Sekretaris LPM secara default hanya bisa memantau review dokumen (read-only)
+            $canAction = ($role === 'sekretaris_lpm' && $menu === 'review_dokumen') ? 0 : 1;
+            $stmtInsertPerm->execute([$role, $menu, $canAction]);
             $seededCount++;
         }
     }

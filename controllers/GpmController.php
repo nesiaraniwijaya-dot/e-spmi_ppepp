@@ -1625,7 +1625,35 @@ class GpmController extends Controller {
                 $alasan
             ]);
 
-            echo json_encode(['success' => true, 'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} berhasil diajukan ke LPM. Silakan menunggu persetujuan Admin LPM."]);
+            // Kirim notifikasi email ke TU LPM
+            if (class_exists('MailHelper')) {
+                $unitName = 'Fakultas';
+                if ($level === 'prodi' && $prodiId) {
+                    $pStmt = $this->db->prepare("SELECT nama_prodi FROM prodis WHERE id = ?");
+                    $pStmt->execute([$prodiId]);
+                    $unitName = $pStmt->fetchColumn() ?: 'Program Studi';
+                } else {
+                    $fStmt = $this->db->prepare("SELECT nama_fakultas FROM fakultas WHERE id = ?");
+                    $fStmt->execute([$this->fakultasId]);
+                    $unitName = $fStmt->fetchColumn() ?: 'Fakultas';
+                }
+
+                MailHelper::sendUploadAccessRequestNotification([
+                    'pemohon_name'   => Auth::name() ?? 'GPM Fakultas',
+                    'pemohon_role'   => Auth::roleName() ?? 'GPM Fakultas',
+                    'pemohon_email'  => Auth::user()['email'] ?? '',
+                    'unit_name'      => $unitName,
+                    'tahun_akademik' => $tahunAkademik,
+                    'alasan'         => $alasan,
+                    'level'          => $level,
+                    'created_at'     => date('Y-m-d H:i:s'),
+                ]);
+            }
+
+            echo json_encode([
+                'success' => true, 
+                'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} berhasil diajukan melalui sistem dan notifikasi telah dikirimkan ke email TU LPM (tu.lpm@unika.ac.id)."
+            ]);
             exit;
         } catch (\Throwable $e) {
             echo json_encode(['success' => false, 'message' => 'Gagal mengajukan permohonan: ' . $e->getMessage()]);

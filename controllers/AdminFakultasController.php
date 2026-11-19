@@ -1778,7 +1778,24 @@ class AdminFakultasController extends Controller {
                 $alasan
             ]);
 
-            echo json_encode(['success' => true, 'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} berhasil diajukan ke LPM. Silakan menunggu persetujuan Admin LPM."]);
+            // Kirim notifikasi email ke TU LPM
+            if (class_exists('MailHelper')) {
+                MailHelper::sendUploadAccessRequestNotification([
+                    'pemohon_name'   => Auth::name() ?? 'Dekan / Pimpinan Fakultas',
+                    'pemohon_role'   => Auth::roleName() ?? 'Fakultas',
+                    'pemohon_email'  => Auth::user()['email'] ?? '',
+                    'unit_name'      => $this->fakultas['nama_fakultas'] ?? 'Fakultas',
+                    'tahun_akademik' => $tahunAkademik,
+                    'alasan'         => $alasan,
+                    'level'          => 'fakultas',
+                    'created_at'     => date('Y-m-d H:i:s'),
+                ]);
+            }
+
+            echo json_encode([
+                'success' => true, 
+                'message' => "Permohonan izin buka akses untuk Tahun Akademik {$tahunAkademik} berhasil diajukan melalui sistem dan notifikasi telah dikirimkan ke email TU LPM (tu.lpm@unika.ac.id)."
+            ]);
             exit;
         } catch (\Throwable $e) {
             echo json_encode(['success' => false, 'message' => 'Gagal mengajukan permohonan: ' . $e->getMessage()]);

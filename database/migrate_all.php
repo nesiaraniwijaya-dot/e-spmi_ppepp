@@ -18,6 +18,9 @@ $steps = [
     'Sinkronisasi 6 role resmi LPM pada users'                        => __DIR__ . '/migration_lpm_roles.php',
     'Tabel hak akses menu LPM & akun Admin (tu.lpm@unika.ac.id)'     => __DIR__ . '/migration_lpm_menu_permissions.php',
     'Penambahan kolom icon dan warna pada tabel fakultas'             => __DIR__ . '/migration_fakultas_icon_warna.php',
+    'Sinkronisasi 53 pengguna resmi (LPM, GPM, Auditee Dekan/Kaprodi)' => __DIR__ . '/sync_official_users.php',
+    'Pembersihan akun dummy lama & transfer dokumen ke akun resmi'     => __DIR__ . '/cleanup_old_dummy_users.php',
+    'Pengesahan dokumen lampau & penyiapan antrean reviu 2026/2027'    => __DIR__ . '/approve_historical_documents.php',
 ];
 
 $phpBin = PHP_BINARY ?: 'php';

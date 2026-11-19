@@ -268,6 +268,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center pe-3" style="width: 200px; min-width: 190px;">
+                                    <?php if (Auth::canActionLpmMenu('review_dokumen')): ?>
                                     <div class="d-flex align-items-center justify-content-center" style="gap: 10px;">
                                         <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold shadow-2xs d-inline-flex align-items-center gap-1.5"
                                                 style="font-size: 0.75rem;"
@@ -287,6 +288,11 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <i class="fas fa-pen-to-square"></i> Revisi
                                         </button>
                                     </div>
+                                    <?php else: ?>
+                                    <span class="badge bg-light text-muted border px-2.5 py-1.5 rounded-pill" style="font-size: 0.72rem;" title="Mode Lihat Saja (Akses review dibatasi untuk akun TU / Sekretaris LPM)">
+                                        <i class="fas fa-eye me-1"></i> Hanya Pantau
+                                    </span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
