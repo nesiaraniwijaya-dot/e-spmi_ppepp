@@ -499,11 +499,13 @@ class AdminProdiController extends Controller {
      */
     public function cycles(): void {
         $existingCyclesWithStages = $this->getExistingCyclesWithStages();
+        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
         $this->render('admin_prodi/cycles', [
             'pageTitle' => 'Judul yang Sudah Ada - Tahapan Siklus PPEPP',
             'prodi' => $this->prodi,
-            'existingCycles' => $existingCyclesWithStages
+            'existingCycles' => $existingCyclesWithStages,
+            'bidangList' => $bidangList
         ]);
     }
 

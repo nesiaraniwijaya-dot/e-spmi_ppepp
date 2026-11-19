@@ -456,11 +456,13 @@ class AdminFakultasController extends Controller {
      */
     public function cycles(): void {
         $existingCyclesWithStages = $this->getExistingCyclesWithStages();
+        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
         $this->render('admin_fakultas/cycles', [
             'pageTitle' => 'Judul yang Sudah Ada - Tahapan Siklus PPEPP Fakultas',
             'fakultas' => $this->fakultas,
-            'existingCycles' => $existingCyclesWithStages
+            'existingCycles' => $existingCyclesWithStages,
+            'bidangList' => $bidangList
         ]);
     }
 
