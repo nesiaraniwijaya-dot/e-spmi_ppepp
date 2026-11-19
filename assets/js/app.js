@@ -10,35 +10,37 @@ document.addEventListener('DOMContentLoaded', function () {
         initDocumentTable(docTable);
     }
 
-    // 2. Global Delete Confirmations with SweetAlert2 (if loaded) or default confirm
-    document.querySelectorAll('.btn-delete-confirm').forEach(button => {
-        button.addEventListener('click', function (e) {
-            e.preventDefault();
-            const form = this.closest('form');
-            const itemName = this.getAttribute('data-name') || 'data ini';
+    // 2. Global Delete Confirmations with SweetAlert2 (if loaded) or default confirm (Event Delegation)
+    document.addEventListener('click', function (e) {
+        const button = e.target.closest('.btn-delete-confirm');
+        if (!button) return;
 
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Konfirmasi Penghapusan',
-                    text: `Apakah Anda yakin ingin menghapus "${itemName}"? Data akan dipindahkan ke daftar Dokumen Terhapus.`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#DC2626',
-                    cancelButtonColor: '#64748B',
-                    confirmButtonText: '<i class="fas fa-trash me-1"></i> Ya, Hapus',
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
-            } else {
-                if (confirm(`Apakah Anda yakin ingin menghapus "${itemName}"? Data akan dipindahkan ke daftar Dokumen Terhapus.`)) {
+        e.preventDefault();
+        const form = button.closest('form');
+        if (!form) return;
+        const itemName = button.getAttribute('data-name') || 'data ini';
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Konfirmasi Penghapusan',
+                text: `Apakah Anda yakin ingin menghapus "${itemName}"? Data akan dipindahkan ke daftar Dokumen Terhapus.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#DC2626',
+                cancelButtonColor: '#64748B',
+                confirmButtonText: '<i class="fas fa-trash me-1"></i> Ya, Hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
                     form.submit();
                 }
+            });
+        } else {
+            if (confirm(`Apakah Anda yakin ingin menghapus "${itemName}"? Data akan dipindahkan ke daftar Dokumen Terhapus.`)) {
+                form.submit();
             }
-        });
+        }
     });
 
     // 2b. Global Permanent Delete Confirmations (Hapus Permanen dari Arsip)
