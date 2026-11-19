@@ -2421,6 +2421,280 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // ==========================================
+    // CLIENT-SIDE VALIDATION & FOCUS HELPERS
+    // Mencegah form me-refresh saat kolom wajib belum diisi
+    // ==========================================
+    function openCardIfCollapsed(cardElement) {
+        if (!cardElement) return;
+        const idx = cardElement.getAttribute('data-card-idx');
+        if (idx !== null) {
+            const body = document.getElementById(`cardBody_${idx}`);
+            const btn = document.getElementById(`collapseBtn_${idx}`);
+            if (body && body.style.display === 'none') {
+                body.style.display = 'block';
+                if (btn) btn.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            }
+        }
+    }
+
+    function focusAndHighlightElement(el) {
+        if (!el) return;
+        try {
+            const cardParent = el.closest('.doc-batch-card');
+            if (cardParent) openCardIfCollapsed(cardParent);
+
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (typeof el.focus === 'function') {
+                el.focus();
+            }
+
+            el.classList.add('is-invalid');
+            const origBorder = el.style.borderColor;
+            const origBoxShadow = el.style.boxShadow;
+            el.style.borderColor = '#EF4444';
+            el.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.25)';
+
+            setTimeout(() => {
+                el.style.borderColor = origBorder;
+                el.style.boxShadow = origBoxShadow;
+                el.classList.remove('is-invalid');
+            }, 3500);
+        } catch (err) {
+            console.warn('focusAndHighlightElement error:', err);
+        }
+    }
+
+    function showFormValidationError(message, targetElement) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Kolom Wajib Belum Lengkap',
+                text: message,
+                confirmButtonText: '<i class="fas fa-pen-to-square me-1.5"></i> Lengkapi Sekarang',
+                confirmButtonColor: '#2563EB',
+                customClass: {
+                    popup: 'rounded-4 shadow-lg border-0',
+                    confirmButton: 'rounded-pill px-4 py-2 fw-semibold'
+                }
+            }).then(() => {
+                if (targetElement) {
+                    focusAndHighlightElement(targetElement);
+                }
+            });
+        } else {
+            alert('PERHATIAN:\n\n' + message);
+            if (targetElement) {
+                focusAndHighlightElement(targetElement);
+            }
+        }
+    }
+
+    function validateBatchDocumentForm(batchForm, actionSubmit) {
+        const isPublish = (actionSubmit === 'publish');
+        const cards = Array.from(batchForm.querySelectorAll('.doc-batch-card'));
+        if (cards.length === 0) {
+            showFormValidationError('Minimal harus ada 1 kartu dokumen untuk diunggah.', null);
+            return false;
+        }
+
+        for (let c = 0; c < cards.length; c++) {
+            const card = cards[c];
+            const idx = parseInt(card.getAttribute('data-card-idx') || c);
+            const docNum = c + 1;
+
+            // 1. Validasi Nama Dokumen
+            const namaInp = card.querySelector(`input[name="docs[${idx}][nama_dokumen]"]`) || card.querySelector('#doc_nama_' + idx);
+            const docTitle = namaInp ? namaInp.value.trim() : '';
+            if (!docTitle) {
+                openCardIfCollapsed(card);
+                showFormValidationError(`Nama Dokumen pada Dokumen #${docNum} wajib diisi.`, namaInp);
+                return false;
+            }
+
+            // 2. Validasi Tanggal / Tahun Akademik (jika terbitkan)
+            const tanggalInp = card.querySelector(`input[name="docs[${idx}][tanggal_dokumen]"]`) || card.querySelector('#doc_tanggal_' + idx);
+            const taInp = card.querySelector(`input[name="docs[${idx}][tahun_akademik]"]`) || card.querySelector('#doc_ta_' + idx);
+            if (isPublish && (!tanggalInp || !tanggalInp.value) && (!taInp || !taInp.value.trim())) {
+                openCardIfCollapsed(card);
+                showFormValidationError(`Tanggal dokumen atau tahun akademik pada Dokumen #${docNum} wajib diisi.`, tanggalInp || taInp);
+                return false;
+            }
+
+            // 3. Validasi Siklus PPEPP (jika terbitkan)
+            if (isPublish) {
+                const siklusChecked = card.querySelector(`input[name="docs[${idx}][siklus]"]:checked`);
+                if (!siklusChecked) {
+                    openCardIfCollapsed(card);
+                    const cycleBox = card.querySelector('.ppepp-cycle-selector-grid') || card;
+                    showFormValidationError(`Kategori Siklus PPEPP pada Dokumen #${docNum} (${docTitle}) wajib dipilih.`, cycleBox);
+                    return false;
+                }
+            }
+
+            // 4. Validasi Bidang Standar Mutu (jika terbitkan)
+            if (isPublish) {
+                const bidangSel = card.querySelector(`select[name="docs[${idx}][bidang_id]"]`);
+                if (!bidangSel || !bidangSel.value) {
+                    openCardIfCollapsed(card);
+                    showFormValidationError(`Bidang Standar Mutu pada Dokumen #${docNum} (${docTitle}) wajib dipilih.`, bidangSel);
+                    return false;
+                }
+            }
+
+            // 5. Validasi Minimal 1 Berkas File atau Tautan Google Drive (Wajib jika terbitkan)
+            const stagedFiles = (batchStagedFiles && batchStagedFiles[idx]) ? batchStagedFiles[idx] : [];
+            const cardLinks = (batchCardLinks && batchCardLinks[idx]) ? batchCardLinks[idx].filter(l => l.url && l.url.trim()) : [];
+            const activeLinkInputs = Array.from(card.querySelectorAll('input.gdrive-doc-input')).filter(inp => inp.value.trim());
+
+            if (isPublish && stagedFiles.length === 0 && cardLinks.length === 0 && activeLinkInputs.length === 0) {
+                openCardIfCollapsed(card);
+                const dropzone = card.querySelector('.batch-dropzone') || card;
+                showFormValidationError(`Dokumen #${docNum} (${docTitle}) wajib memiliki minimal 1 berkas dokumen (PDF/Word/Excel/Gambar) atau tautan Google Drive sebelum diajukan ke GPM.`, dropzone);
+                return false;
+            }
+
+            // 6. Validasi Nama Berkas & Narasi Berkas File
+            for (let f = 0; f < stagedFiles.length; f++) {
+                const file = stagedFiles[f];
+                const fileRow = document.getElementById(`file_row_${idx}_${file._file_id}`);
+                const nameEl = fileRow ? fileRow.querySelector('input.file-custom-name-inp') : null;
+                const narasiEl = fileRow ? fileRow.querySelector('textarea.file-narasi-inp') : null;
+
+                const fileName = nameEl ? nameEl.value.trim() : (file._custom_name || file.name);
+                if (!fileName) {
+                    openCardIfCollapsed(card);
+                    showFormValidationError(`Nama berkas untuk file '${file.name}' pada Dokumen #${docNum} wajib diisi.`, nameEl);
+                    return false;
+                }
+
+                const fileNarasi = narasiEl ? narasiEl.value.trim() : (file._narasi ? file._narasi.trim() : '');
+                if (isPublish && !fileNarasi) {
+                    openCardIfCollapsed(card);
+                    showFormValidationError(`Narasi untuk berkas '${fileName}' pada Dokumen #${docNum} wajib diisi sebelum diajukan ke GPM.`, narasiEl);
+                    return false;
+                }
+            }
+
+            // 7. Validasi Tautan Google Drive & Narasinya
+            const linkRows = card.querySelectorAll(`div[id^="link_row_${idx}_"]`);
+            for (let l = 0; l < linkRows.length; l++) {
+                const row = linkRows[l];
+                const urlEl = row.querySelector('input.gdrive-doc-input');
+                const narasiEl = row.querySelector('textarea.link-narasi-inp');
+
+                const urlVal = urlEl ? urlEl.value.trim() : '';
+                if (urlVal) {
+                    if (typeof validateGdriveDocInput === 'function') {
+                        if (!validateGdriveDocInput(urlEl)) {
+                            openCardIfCollapsed(card);
+                            showFormValidationError(`Tautan Google Drive pada Dokumen #${docNum} tidak valid. Pastikan tautan langsung mengarah ke berkas dokumen Google Drive (bukan folder).`, urlEl);
+                            return false;
+                        }
+                    }
+                    const linkNarasi = narasiEl ? narasiEl.value.trim() : '';
+                    if (isPublish && !linkNarasi) {
+                        openCardIfCollapsed(card);
+                        showFormValidationError(`Narasi untuk tautan Google Drive pada Dokumen #${docNum} wajib diisi sebelum diajukan ke GPM.`, narasiEl);
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    function validateSingleDocumentForm(singleForm, actionSubmit) {
+        const isPublish = (actionSubmit === 'publish');
+
+        // 1. Nama Dokumen
+        const namaInp = singleForm.querySelector('#nama_dokumen') || singleForm.querySelector('input[name="nama_dokumen"]');
+        if (!namaInp || !namaInp.value.trim()) {
+            showFormValidationError('Nama dokumen mutu wajib diisi.', namaInp);
+            return false;
+        }
+
+        // 2. Siklus PPEPP
+        if (isPublish) {
+            const siklusChecked = singleForm.querySelector('input[name="siklus"]:checked');
+            if (!siklusChecked) {
+                const cycleGrid = singleForm.querySelector('.ppepp-cycle-selector-grid') || singleForm;
+                showFormValidationError('Silakan pilih Kategori Siklus PPEPP (Penetapan, Pelaksanaan, Evaluasi, Pengendalian, atau Peningkatan).', cycleGrid);
+                return false;
+            }
+        }
+
+        // 3. Bidang Standar Mutu
+        if (isPublish) {
+            const bidangSel = singleForm.querySelector('#bidang_id') || singleForm.querySelector('select[name="bidang_id"]');
+            if (!bidangSel || !bidangSel.value) {
+                showFormValidationError('Bidang standar mutu wajib dipilih.', bidangSel);
+                return false;
+            }
+        }
+
+        // 4. Minimal 1 Berkas File atau Tautan Google Drive
+        if (isPublish) {
+            const hasExistingFiles = singleForm.querySelectorAll('.existing-file-item').length > 0;
+            const singleFiles = (typeof singleStagedFiles !== 'undefined' && Array.isArray(singleStagedFiles)) ? singleStagedFiles : [];
+            const hasNewFiles = singleFiles.length > 0 || (typeof selectedFiles !== 'undefined' && Array.isArray(selectedFiles) && selectedFiles.length > 0);
+            const hasLinks = Array.from(singleForm.querySelectorAll('.gdrive-doc-input')).some(inp => inp.value.trim());
+
+            if (!hasExistingFiles && !hasNewFiles && !hasLinks) {
+                const dropzone = singleForm.querySelector('#fileDropZone') || singleForm.querySelector('.file-upload-dropzone') || singleForm;
+                showFormValidationError('Dokumen wajib memiliki minimal 1 berkas file dokumen atau tautan Google Drive sebelum diajukan ke GPM.', dropzone);
+                return false;
+            }
+        }
+
+        // 5. Narasi Berkas Baru
+        if (isPublish) {
+            const newFileRows = singleForm.querySelectorAll('[id^="new_file_item_"]');
+            for (let i = 0; i < newFileRows.length; i++) {
+                const row = newFileRows[i];
+                const nameEl = row.querySelector('input[name*="new_file_custom_name"]') || row.querySelector('.fw-bold');
+                const narasiEl = row.querySelector('textarea[name*="new_file_narasi"]');
+                const fileName = nameEl ? (nameEl.value || nameEl.textContent).trim() : 'Berkas';
+
+                if (narasiEl && !narasiEl.value.trim()) {
+                    showFormValidationError(`Narasi untuk berkas '${fileName}' wajib diisi sebelum diajukan ke GPM.`, narasiEl);
+                    return false;
+                }
+            }
+
+            const existingNarasiInputs = singleForm.querySelectorAll('textarea[name^="existing_file_narasi["]');
+            for (let i = 0; i < existingNarasiInputs.length; i++) {
+                const narasiEl = existingNarasiInputs[i];
+                if (!narasiEl.value.trim()) {
+                    showFormValidationError('Narasi untuk berkas yang telah dilampirkan wajib diisi sebelum diajukan ke GPM.', narasiEl);
+                    return false;
+                }
+            }
+        }
+
+        // 6. Validasi Tautan GDrive dan Narasinya
+        const linkItems = singleForm.querySelectorAll('.external-link-item, .link-input-group');
+        for (let i = 0; i < linkItems.length; i++) {
+            const item = linkItems[i];
+            const urlInp = item.querySelector('.gdrive-doc-input');
+            const narasiInp = item.querySelector('textarea[name*="external_link_narasi"]');
+
+            if (urlInp && urlInp.value.trim()) {
+                if (typeof validateGdriveDocInput === 'function' && !validateGdriveDocInput(urlInp)) {
+                    showFormValidationError('Tautan Google Drive tidak valid. Pastikan tautan langsung mengarah ke berkas dokumen, bukan folder.', urlInp);
+                    return false;
+                }
+                if (isPublish && narasiInp && !narasiInp.value.trim()) {
+                    showFormValidationError('Narasi untuk tautan Google Drive wajib diisi sebelum diajukan ke GPM.', narasiInp);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     // Attach form submit validation, base64 conversion & auto-formatting
     const batchForm = document.getElementById('batchDocForm');
     if (batchForm) {
@@ -2439,6 +2713,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.autoPairTahunAkademik(inp, { type: 'blur' });
                 }
             });
+
+            const submitBtn = e.submitter || document.activeElement || document.getElementById('btnSubmitPublishBatch');
+            const actionSubmit = (submitBtn && submitBtn.value) ? submitBtn.value : 'publish';
+
+            // VALIDASI CLIENT-SIDE: Mencegah refresh halaman jika ada kolom wajib belum lengkap
+            if (!validateBatchDocumentForm(batchForm, actionSubmit)) {
+                e.preventDefault();
+                return false;
+            }
+
             if (!validateAllGdriveInputs(batchForm)) {
                 e.preventDefault();
                 return false;
@@ -2457,6 +2741,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 batchForm.querySelectorAll('input[type="file"]').forEach(inp => {
                     inp.disabled = true;
                 });
+                if (submitBtn && submitBtn.name && submitBtn.value) {
+                    let actionInp = document.getElementById('batch_temp_action_submit');
+                    if (!actionInp) {
+                        actionInp = document.createElement('input');
+                        actionInp.type = 'hidden';
+                        actionInp.id = 'batch_temp_action_submit';
+                        actionInp.name = submitBtn.name;
+                        batchForm.appendChild(actionInp);
+                    }
+                    actionInp.value = submitBtn.value;
+                }
+                isBatchSubmitting = true;
                 return true;
             }
 
@@ -2577,6 +2873,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.autoPairTahunAkademik(inp, { type: 'blur' });
                 }
             });
+
+            const submitBtn = e.submitter || document.activeElement || document.getElementById('btnSubmitPublishSingle');
+            const actionSubmit = (submitBtn && submitBtn.value) ? submitBtn.value : 'publish';
+
+            // VALIDASI CLIENT-SIDE: Mencegah refresh halaman jika ada kolom wajib belum lengkap
+            if (!validateSingleDocumentForm(singleEditForm, actionSubmit)) {
+                e.preventDefault();
+                return false;
+            }
+
             if (!validateAllGdriveInputs(singleEditForm)) {
                 e.preventDefault();
                 return false;
@@ -2587,6 +2893,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 singleEditForm.removeAttribute('enctype');
                 singleEditForm.enctype = 'application/x-www-form-urlencoded';
                 singleEditForm.querySelectorAll('input[type="file"]').forEach(inp => {
+                    inp.disabled = true;
+                });
+                if (submitBtn && submitBtn.name && submitBtn.value) {
+                    let actionInp = document.getElementById('single_temp_action_submit');
+                    if (!actionInp) {
+                        actionInp = document.createElement('input');
+                        actionInp.type = 'hidden';
+                        actionInp.id = 'single_temp_action_submit';
+                        actionInp.name = submitBtn.name;
+                        singleEditForm.appendChild(actionInp);
+                    }
+                    actionInp.value = submitBtn.value;
+                }
+                isSingleSubmitting = true;
+                return true;
+            }
                     inp.disabled = true;
                 });
                 return true;
