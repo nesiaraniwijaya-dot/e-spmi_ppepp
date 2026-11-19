@@ -9,10 +9,12 @@ echo "=== INITIALIZING SPMI PPEPP DATABASE & SEEDER ===\n";
 $db = Database::getInstance();
 $pdo = $db->getConnection();
 
-// Execute Schema
-$schemaSql = file_get_contents(__DIR__ . '/ppepp.sql');
-$pdo->exec($schemaSql);
-echo "[OK] Schema (ppepp.sql) executed successfully.\n";
+// Execute Schema if legacy ppepp.sql exists
+if (file_exists(__DIR__ . '/ppepp.sql')) {
+    $schemaSql = file_get_contents(__DIR__ . '/ppepp.sql');
+    $pdo->exec($schemaSql);
+    echo "[OK] Schema (ppepp.sql) executed successfully.\n";
+}
 
 // Execute Migrations
 require_once __DIR__ . '/migration_sub_bidang_and_files.php';

@@ -10,11 +10,16 @@
 Seluruh berkas SQL parsial/terpisah telah dikonsolidasikan ke dalam satu berkas master utama:
 - **`database/spmi_ppepp.sql`** (Dump database MySQL lengkap: struktur tabel, relasi, indeks, data master fakultas/prodi, bidang, sub-bidang, dokumen, landing settings, dan akun pengguna).
 
-Berkas SQL parsial lama yang telah dihapus dan disatukan:
-- `akreditasi_prodi.sql` (dihapus & dilebur)
-- `patch_update_jenis_upload_kombinasi.sql` (dihapus & dilebur)
-- `patch_update_petra_and_pengguna_role.sql` (dihapus & dilebur)
+Berkas SQL parsial/patch yang telah dihapus dan disatukan ke dalam `spmi_ppepp.sql`:
+- `migration_fakultas_icon_warna.sql` (dihapus & dilebur ke `spmi_ppepp.sql`)
+- `migration_performance_indexes.sql` (dihapus & dilebur ke `spmi_ppepp.sql`)
+- `migration_update_19_nov_2026.sql` (dihapus & dilebur ke `spmi_ppepp.sql`)
+- `seed_official_users_19_nov_2026.sql` (dihapus & dilebur ke `spmi_ppepp.sql`)
+- `akreditasi_prodi.sql` (dihapus & dilebur ke `spmi_ppepp.sql`)
+- `patch_update_jenis_upload_kombinasi.sql` (dihapus & dilebur ke `spmi_ppepp.sql`)
+- `patch_update_petra_and_pengguna_role.sql` (dihapus & dilebur ke `spmi_ppepp.sql`)
 - `ppepp.sql` (dihapus & digantikan oleh `spmi_ppepp.sql`)
+- `spmi_ppepp_hosting.sql` (dihapus & digantikan oleh `spmi_ppepp.sql`)
 - `spmi_ppepp_hosting_ready.sql` (dihapus & digantikan oleh `spmi_ppepp.sql`)
 
 ---
@@ -217,7 +222,6 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
       - Skrip: `database/cleanup_old_dummy_users.php` (otomatis terintegrasi di `database/migrate_all.php`).
     - **Skrip Seeder & Migrasi**:
       - PHP Seeder: `database/sync_official_users.php` & `database/cleanup_old_dummy_users.php` (otomatis terintegrasi di `database/migrate_all.php`).
-      - SQL Migration: `database/seed_official_users_19_nov_2026.sql`.
 
 22. **Pengesahan Otomatis Dokumen Lampau & Penyiapan Reviu Periode 2026/2027 (19 November 2026)**:
     - **Pengesahan Dokumen Lampau (< 2026/2027)**:
@@ -230,6 +234,10 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
     - **Skrip Pembaruan**:
       - `database/approve_historical_documents.php` (terdaftar dan otomatis dieksekusi melalui `database/migrate_all.php`).
 
+23. **Pemusatan Berkas SQL ke Satu Master Tunggal (`database/spmi_ppepp.sql`) (19 November 2026)**:
+    - Seluruh berkas SQL pecahan/patch (`migration_...sql`, `seed_...sql`, `ppepp.sql`, `spmi_ppepp_hosting.sql`) telah dihapus dan dilebur menjadi satu file SQL master tunggal: `database/spmi_ppepp.sql`.
+    - `database/spmi_ppepp.sql` memuat 100% struktur tabel lengkap, 55 akun resmi UNIKA, 9.086 dokumen riil, serta seluruh konfigurasi institusi.
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:
@@ -237,21 +245,13 @@ Setelah melakukan `git pull`, cukup jalankan satu perintah terpadu (aman dijalan
 ```bash
 php database/migrate_all.php
 ```
-Atau bila ingin menjalankan skripnya satu per satu:
-```bash
-php database/migration_multi_upload_kombinasi.php
-php database/migration_gpm_evaluations.php
-php database/apply_performance_indexes.php
-php database/migration_lpm_roles.php
-php database/migration_lpm_menu_permissions.php
-```
-atau jalankan kueri SQL `database/migration_performance_indexes.sql` di phpMyAdmin / MySQL CLI, serta impor berkas master bila mulai dari awal:
+Bila ingin memasang database baru secara bersih di server / phpMyAdmin / MySQL CLI, cukup impor satu berkas master terpusat:
 ```bash
 mysql -u root spmi_ppepp < database/spmi_ppepp.sql
 ```
 atau melalui phpMyAdmin:
 1. Buat/pilih database `spmi_ppepp`.
-2. Klik tab **Import**, pilih berkas `database/spmi_ppepp.sql`, lalu klik **Import**.
+2. Klik tab **Import**, pilih berkas tunggal `database/spmi_ppepp.sql`, lalu klik **Import**.
 
 
 
