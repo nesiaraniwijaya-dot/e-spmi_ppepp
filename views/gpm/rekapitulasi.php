@@ -111,19 +111,19 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
             </a>
         </div>
 
-        <div class="table-responsive rounded-3 border">
-            <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
-                <thead class="table-light text-secondary" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+        <div class="table-responsive rounded-3 border" style="overflow-x: hidden;">
+            <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.84rem;">
+                <thead class="table-light text-secondary" style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.4px;">
                     <tr>
-                        <th class="ps-3" style="width: 80px;">Kode</th>
-                        <th>Fakultas</th>
-                        <th>Pimpinan Dekan</th>
-                        <th class="text-center">Total Dokumen</th>
-                        <th class="text-center">Perlu Review</th>
-                        <th class="text-center">Perlu Revisi</th>
-                        <th class="text-center">Sesuai Mutu</th>
-                        <th style="min-width: 150px;">Progres Kepatuhan</th>
-                        <th class="text-center pe-3" style="width: 140px;">Aksi</th>
+                        <th class="ps-3" style="width: 8%; white-space: nowrap;">Kode</th>
+                        <th style="width: 22%;">Fakultas</th>
+                        <th style="width: 14%;">Pimpinan Dekan</th>
+                        <th class="text-center" style="width: 9%; white-space: nowrap;">Total Dok.</th>
+                        <th class="text-center" style="width: 5.5%; white-space: nowrap;">Review</th>
+                        <th class="text-center" style="width: 5.5%; white-space: nowrap;">Revisi</th>
+                        <th class="text-center" style="width: 5.5%; white-space: nowrap;">Sesuai</th>
+                        <th style="width: 14%; white-space: nowrap;">Progres</th>
+                        <th class="text-center pe-3" style="width: 16.5%; white-space: nowrap;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -135,7 +135,7 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                     $pctFak = $totFak > 0 ? round(($appFak / $totFak) * 100) : 0;
                     ?>
                     <tr>
-                        <td class="ps-3">
+                        <td class="ps-3" style="white-space: nowrap;">
                             <span class="badge bg-light text-dark border font-monospace fw-bold"><?= htmlspecialchars($fakultasSummary['kode_fakultas']) ?></span>
                         </td>
                         <td>
@@ -145,12 +145,12 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                         <td class="text-secondary small">
                             <?= htmlspecialchars($fakultasSummary['nama_dekan'] ?: '-') ?>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" style="white-space: nowrap;">
                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 fw-bold">
                                 <?= $totFak ?> Dokumen
                             </span>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" style="white-space: nowrap;">
                             <?php if ($revFak > 0): ?>
                                 <a href="<?= base_url('gpm/dokumen?unit=fakultas&status_review=belum_direview') ?>" class="badge bg-danger rounded-pill px-2.5 py-1 fw-bold text-decoration-none" title="Klik untuk memfilter dokumen perlu review">
                                     <?= $revFak ?>
@@ -159,7 +159,7 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                                 <span class="text-muted small">0</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" style="white-space: nowrap;">
                             <?php if ($rejFak > 0): ?>
                                 <a href="<?= base_url('gpm/dokumen?unit=fakultas&status_review=perlu_perbaikan') ?>" class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold text-decoration-none" title="Klik untuk memfilter dokumen perlu perbaikan">
                                     <?= $rejFak ?>
@@ -168,7 +168,7 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                                 <span class="text-muted small">0</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" style="white-space: nowrap;">
                             <?php if ($appFak > 0): ?>
                                 <a href="<?= base_url('gpm/dokumen?unit=fakultas&status_review=sesuai') ?>" class="badge bg-success rounded-pill px-2.5 py-1 fw-bold text-decoration-none" title="Klik untuk memfilter dokumen sesuai">
                                     <?= $appFak ?>
@@ -178,15 +178,15 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                             <?php endif; ?>
                         </td>
                         <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="progress flex-grow-1" style="height: 7px; border-radius: 6px;">
+                            <div class="d-flex align-items-center gap-2" style="white-space: nowrap;">
+                                <div class="progress flex-grow-1" style="height: 7px; border-radius: 6px; min-width: 40px;">
                                     <div class="progress-bar bg-success" role="progressbar" style="width: <?= $pctFak ?>%" aria-valuenow="<?= $pctFak ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
-                                <span class="small fw-bold text-dark" style="font-size: 0.72rem; min-width: 32px;"><?= $pctFak ?>%</span>
+                                <span class="small fw-bold text-dark text-nowrap" style="font-size: 0.72rem; min-width: 32px; text-align: right;"><?= $pctFak ?>%</span>
                             </div>
                         </td>
-                        <td class="text-center pe-3">
-                            <a href="<?= base_url('gpm/dokumen?unit=fakultas') ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold">
+                        <td class="text-center pe-3" style="white-space: nowrap;">
+                            <a href="<?= base_url('gpm/dokumen?unit=fakultas') ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold text-nowrap shadow-2xs">
                                 <i class="fas fa-folder-open me-1"></i> Lihat Dokumen
                             </a>
                         </td>
@@ -213,20 +213,20 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
             </span>
         </div>
 
-        <div class="table-responsive rounded-3 border">
-            <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
-                <thead class="table-light text-secondary" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+        <div class="table-responsive rounded-3 border" style="overflow-x: hidden;">
+            <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.83rem;">
+                <thead class="table-light text-secondary" style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.4px;">
                     <tr>
-                        <th class="ps-3" style="width: 70px;">Kode</th>
-                        <th>Program Studi</th>
-                        <th>Fakultas</th>
-                        <th>Ketua Program Studi</th>
-                        <th class="text-center">Total Dokumen</th>
-                        <th class="text-center">Perlu Review</th>
-                        <th class="text-center">Perlu Revisi</th>
-                        <th class="text-center">Sesuai</th>
-                        <th style="min-width: 140px;">Progres Kepatuhan</th>
-                        <th class="text-center pe-3" style="width: 140px;">Aksi</th>
+                        <th class="ps-3" style="width: 7%; white-space: nowrap;">Kode</th>
+                        <th style="width: 21%;">Program Studi</th>
+                        <th style="width: 13%;">Fakultas</th>
+                        <th style="width: 13%;">Ketua Prodi</th>
+                        <th class="text-center" style="width: 7%; white-space: nowrap;">Total Dok.</th>
+                        <th class="text-center" style="width: 5%; white-space: nowrap;">Review</th>
+                        <th class="text-center" style="width: 5%; white-space: nowrap;">Revisi</th>
+                        <th class="text-center" style="width: 5%; white-space: nowrap;">Sesuai</th>
+                        <th style="width: 11%; white-space: nowrap;">Progres</th>
+                        <th class="text-center pe-3" style="width: 13%; white-space: nowrap;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -245,7 +245,7 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                             $pctPrd = $totPrd > 0 ? round(($appPrd / $totPrd) * 100) : 0;
                         ?>
                             <tr>
-                                <td class="ps-3">
+                                <td class="ps-3" style="white-space: nowrap;">
                                     <span class="badge bg-light text-dark border font-monospace fw-bold"><?= htmlspecialchars($psum['kode_prodi']) ?></span>
                                 </td>
                                 <td>
@@ -254,12 +254,12 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                                 </td>
                                 <td class="small text-secondary"><?= htmlspecialchars($psum['nama_fakultas']) ?></td>
                                 <td class="small text-secondary"><?= htmlspecialchars($psum['nama_kaprodi'] ?: '-') ?></td>
-                                <td class="text-center">
+                                <td class="text-center" style="white-space: nowrap;">
                                     <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 fw-bold">
                                         <?= $totPrd ?> Dokumen
                                     </span>
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center" style="white-space: nowrap;">
                                     <?php if ($revPrd > 0): ?>
                                         <a href="<?= base_url('gpm/dokumen?unit=' . $psum['id'] . '&status_review=belum_direview') ?>" class="badge bg-danger rounded-pill px-2.5 py-1 fw-bold text-decoration-none" title="Klik untuk memfilter dokumen perlu review">
                                             <?= $revPrd ?>
@@ -268,7 +268,7 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                                         <span class="text-muted small">0</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center" style="white-space: nowrap;">
                                     <?php if ($rejPrd > 0): ?>
                                         <a href="<?= base_url('gpm/dokumen?unit=' . $psum['id'] . '&status_review=perlu_perbaikan') ?>" class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold text-decoration-none" title="Klik untuk memfilter dokumen perlu perbaikan">
                                             <?= $rejPrd ?>
@@ -277,7 +277,7 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                                         <span class="text-muted small">0</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center" style="white-space: nowrap;">
                                     <?php if ($appPrd > 0): ?>
                                         <a href="<?= base_url('gpm/dokumen?unit=' . $psum['id'] . '&status_review=sesuai') ?>" class="badge bg-success rounded-pill px-2.5 py-1 fw-bold text-decoration-none" title="Klik untuk memfilter dokumen sesuai">
                                             <?= $appPrd ?>
@@ -287,15 +287,15 @@ $grandPct = $grandTotal > 0 ? round(($grandSesuai / $grandTotal) * 100) : 0;
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1" style="height: 7px; border-radius: 6px;">
+                                    <div class="d-flex align-items-center gap-2" style="white-space: nowrap;">
+                                        <div class="progress flex-grow-1" style="height: 7px; border-radius: 6px; min-width: 40px;">
                                             <div class="progress-bar bg-success" role="progressbar" style="width: <?= $pctPrd ?>%" aria-valuenow="<?= $pctPrd ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                         </div>
-                                        <span class="small fw-bold text-dark" style="font-size: 0.72rem; min-width: 32px;"><?= $pctPrd ?>%</span>
+                                        <span class="small fw-bold text-dark text-nowrap" style="font-size: 0.72rem; min-width: 32px; text-align: right;"><?= $pctPrd ?>%</span>
                                     </div>
                                 </td>
-                                <td class="text-center pe-3">
-                                    <a href="<?= base_url('gpm/dokumen?unit=' . $psum['id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold">
+                                <td class="text-center pe-3" style="white-space: nowrap;">
+                                    <a href="<?= base_url('gpm/dokumen?unit=' . $psum['id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold text-nowrap shadow-2xs">
                                         <i class="fas fa-folder-open me-1"></i> Lihat Dokumen
                                     </a>
                                 </td>

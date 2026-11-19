@@ -183,6 +183,13 @@ Berkas SQL parsial lama yang telah dihapus dan disatukan:
     - **Skrip Migrasi**:
       - `database/migration_lpm_menu_permissions.php` (idempoten dan otomatis diintegrasikan ke `database/migrate_all.php`).
 
+19. **Penambahan Kolom Ikon & Warna Fakultas (`fakultas.icon`, `fakultas.warna`) (19 November 2026)**:
+    - **Penambahan Kolom pada Tabel `fakultas`**:
+      - Kolom `icon` (`varchar(50)`, default `'fa-landmark'`) dan kolom `warna` (`varchar(30)`, default `'#1E3E62'`).
+      - Digunakan untuk kustomisasi visual ikon dan aksen warna tiap fakultas pada landing page publik dan panel admin.
+    - **Skrip Migrasi**:
+      - `database/migration_fakultas_icon_warna.sql` dan `database/migration_fakultas_icon_warna.php` (idempoten dan terdaftar di `database/migrate_all.php`).
+
 ---
 
 ### Cara Rekan Kolaborator Menerapkan Perubahan Database di Komputer Lokal / Server:

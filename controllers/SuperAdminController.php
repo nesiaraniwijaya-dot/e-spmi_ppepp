@@ -189,31 +189,60 @@ class SuperAdminController extends Controller {
         $kode = strtoupper(trim($_POST['kode_fakultas'] ?? ''));
         $nama = trim($_POST['nama_fakultas'] ?? '');
         $deskripsi = trim($_POST['deskripsi'] ?? '');
+        $icon = trim($_POST['icon'] ?? 'fa-landmark');
+        $warna = trim($_POST['warna'] ?? '#2563EB');
 
         if (empty($kode) || empty($nama)) {
             Auth::setFlash('danger', 'Kode dan Nama Fakultas wajib diisi.');
             redirect('admin/fakultas');
         }
 
-        if ($id) {
-            // Update
-            $stmtOld = $this->db->prepare("SELECT * FROM fakultas WHERE id = ?");
-            $stmtOld->execute([$id]);
-            $oldData = $stmtOld->fetch();
+        // Normalisasi icon (bisa FontAwesome fa-* atau 1 huruf inisial 'letter:X')
+        if (empty($icon)) {
+            $icon = 'fa-landmark';
+        } elseif (preg_match('/^[a-zA-Z0-9]$/', $icon)) {
+            $icon = 'letter:' . strtoupper($icon);
+        } elseif (str_starts_with($icon, 'letter:')) {
+            $cleanLetter = trim(str_replace('letter:', '', $icon));
+            $icon = 'letter:' . strtoupper(substr($cleanLetter, 0, 1));
+        } elseif (!str_starts_with($icon, 'fa-')) {
+            $icon = 'fa-' . $icon;
+        }
 
-            $stmt = $this->db->prepare("UPDATE fakultas SET kode_fakultas = ?, nama_fakultas = ?, deskripsi = ? WHERE id = ?");
-            $stmt->execute([$kode, $nama, $deskripsi, $id]);
+        // Pre-validation: Cek duplikasi kode fakultas
+        $checkStmt = $this->db->prepare("SELECT id, nama_fakultas FROM fakultas WHERE kode_fakultas = ?" . ($id ? " AND id != ?" : ""));
+        $checkParams = $id ? [$kode, $id] : [$kode];
+        $checkStmt->execute($checkParams);
+        $existing = $checkStmt->fetch();
+        if ($existing) {
+            Auth::setFlash('danger', "Kode Fakultas '{$kode}' sudah digunakan oleh Fakultas '{$existing['nama_fakultas']}'. Harap gunakan kode fakultas yang berbeda.");
+            redirect('admin/fakultas');
+        }
 
-            AuditLogger::log('UPDATE', 'Master Fakultas', (string)$id, $nama, $oldData, ['kode' => $kode, 'nama' => $nama, 'deskripsi' => $deskripsi]);
-            Auth::setFlash('success', "Fakultas '{$nama}' berhasil diperbarui.");
-        } else {
-            // Create
-            $stmt = $this->db->prepare("INSERT INTO fakultas (kode_fakultas, nama_fakultas, deskripsi) VALUES (?, ?, ?)");
-            $stmt->execute([$kode, $nama, $deskripsi]);
-            $newId = $this->db->lastInsertId();
+        try {
+            if ($id) {
+                // Update
+                $stmtOld = $this->db->prepare("SELECT * FROM fakultas WHERE id = ?");
+                $stmtOld->execute([$id]);
+                $oldData = $stmtOld->fetch();
 
-            AuditLogger::log('CREATE', 'Master Fakultas', (string)$newId, $nama, null, ['kode' => $kode, 'nama' => $nama, 'deskripsi' => $deskripsi]);
-            Auth::setFlash('success', "Fakultas baru '{$nama}' berhasil ditambahkan.");
+                $stmt = $this->db->prepare("UPDATE fakultas SET kode_fakultas = ?, nama_fakultas = ?, deskripsi = ?, icon = ?, warna = ? WHERE id = ?");
+                $stmt->execute([$kode, $nama, $deskripsi, $icon, $warna, $id]);
+
+                AuditLogger::log('UPDATE', 'Master Fakultas', (string)$id, $nama, $oldData, ['kode' => $kode, 'nama' => $nama, 'deskripsi' => $deskripsi, 'icon' => $icon, 'warna' => $warna]);
+                Auth::setFlash('success', "Fakultas '{$nama}' berhasil diperbarui.");
+            } else {
+                // Create
+                $stmt = $this->db->prepare("INSERT INTO fakultas (kode_fakultas, nama_fakultas, deskripsi, icon, warna) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$kode, $nama, $deskripsi, $icon, $warna]);
+                $newId = $this->db->lastInsertId();
+
+                AuditLogger::log('CREATE', 'Master Fakultas', (string)$newId, $nama, null, ['kode' => $kode, 'nama' => $nama, 'deskripsi' => $deskripsi, 'icon' => $icon, 'warna' => $warna]);
+                Auth::setFlash('success', "Fakultas baru '{$nama}' berhasil ditambahkan.");
+            }
+        } catch (\PDOException $e) {
+            error_log("Error saveFakultas: " . $e->getMessage());
+            Auth::setFlash('danger', 'Gagal menyimpan Fakultas: ' . ($e->getCode() == 23000 ? "Kode Fakultas '{$kode}' sudah digunakan." : 'Terjadi kendala pada basis data.'));
         }
 
         redirect('admin/fakultas');
@@ -295,23 +324,38 @@ class SuperAdminController extends Controller {
             redirect('admin/prodi');
         }
 
-        if ($id) {
-            $stmtOld = $this->db->prepare("SELECT * FROM prodis WHERE id = ?");
-            $stmtOld->execute([$id]);
-            $oldData = $stmtOld->fetch();
+        // Pre-validation: Cek duplikasi kode_prodi (unik)
+        $checkStmt = $this->db->prepare("SELECT id, nama_prodi FROM prodis WHERE kode_prodi = ?" . ($id ? " AND id != ?" : ""));
+        $checkParams = $id ? [$kodeProdi, $id] : [$kodeProdi];
+        $checkStmt->execute($checkParams);
+        $existing = $checkStmt->fetch();
+        if ($existing) {
+            Auth::setFlash('danger', "Kode Program Studi '{$kodeProdi}' sudah digunakan oleh Program Studi '{$existing['nama_prodi']}'. Harap gunakan kode prodi yang unik.");
+            redirect('admin/prodi');
+        }
 
-            $stmt = $this->db->prepare("UPDATE prodis SET fakultas_id = ?, kode_prodi = ?, nama_prodi = ?, jenjang = ?, nama_kaprodi = ?, nidn_kaprodi = ?, nama_sekprodi = ?, nidn_sekprodi = ? WHERE id = ?");
-            $stmt->execute([$fakultasId, $kodeProdi, $namaProdi, $jenjang, $namaKaprodi, $nidnKaprodi, $namaSekprodi, $nidnSekprodi, $id]);
+        try {
+            if ($id) {
+                $stmtOld = $this->db->prepare("SELECT * FROM prodis WHERE id = ?");
+                $stmtOld->execute([$id]);
+                $oldData = $stmtOld->fetch();
 
-            AuditLogger::log('UPDATE', 'Master Prodi', (string)$id, $namaProdi, $oldData, ['kode' => $kodeProdi, 'nama' => $namaProdi, 'kaprodi' => $namaKaprodi, 'sekprodi' => $namaSekprodi], $id, $namaProdi);
-            Auth::setFlash('success', "Program Studi '{$namaProdi}' berhasil diperbarui.");
-        } else {
-            $stmt = $this->db->prepare("INSERT INTO prodis (fakultas_id, kode_prodi, nama_prodi, jenjang, nama_kaprodi, nidn_kaprodi, nama_sekprodi, nidn_sekprodi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$fakultasId, $kodeProdi, $namaProdi, $jenjang, $namaKaprodi, $nidnKaprodi, $namaSekprodi, $nidnSekprodi]);
-            $newId = $this->db->lastInsertId();
+                $stmt = $this->db->prepare("UPDATE prodis SET fakultas_id = ?, kode_prodi = ?, nama_prodi = ?, jenjang = ?, nama_kaprodi = ?, nidn_kaprodi = ?, nama_sekprodi = ?, nidn_sekprodi = ? WHERE id = ?");
+                $stmt->execute([$fakultasId, $kodeProdi, $namaProdi, $jenjang, $namaKaprodi, $nidnKaprodi, $namaSekprodi, $nidnSekprodi, $id]);
 
-            AuditLogger::log('CREATE', 'Master Prodi', (string)$newId, $namaProdi, null, ['kode' => $kodeProdi, 'nama' => $namaProdi, 'jenjang' => $jenjang], (int)$newId, $namaProdi);
-            Auth::setFlash('success', "Program Studi baru '{$namaProdi}' berhasil ditambahkan.");
+                AuditLogger::log('UPDATE', 'Master Prodi', (string)$id, $namaProdi, $oldData, ['kode' => $kodeProdi, 'nama' => $namaProdi, 'kaprodi' => $namaKaprodi, 'sekprodi' => $namaSekprodi], $id, $namaProdi);
+                Auth::setFlash('success', "Program Studi '{$namaProdi}' berhasil diperbarui.");
+            } else {
+                $stmt = $this->db->prepare("INSERT INTO prodis (fakultas_id, kode_prodi, nama_prodi, jenjang, nama_kaprodi, nidn_kaprodi, nama_sekprodi, nidn_sekprodi) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$fakultasId, $kodeProdi, $namaProdi, $jenjang, $namaKaprodi, $nidnKaprodi, $namaSekprodi, $nidnSekprodi]);
+                $newId = $this->db->lastInsertId();
+
+                AuditLogger::log('CREATE', 'Master Prodi', (string)$newId, $namaProdi, null, ['kode' => $kodeProdi, 'nama' => $namaProdi, 'jenjang' => $jenjang], (int)$newId, $namaProdi);
+                Auth::setFlash('success', "Program Studi baru '{$namaProdi}' berhasil ditambahkan.");
+            }
+        } catch (\PDOException $e) {
+            error_log("Error saveProdi: " . $e->getMessage());
+            Auth::setFlash('danger', 'Gagal menyimpan Program Studi: ' . ($e->getCode() == 23000 ? "Kode Program Studi '{$kodeProdi}' sudah digunakan." : 'Terjadi kendala pada basis data.'));
         }
 
         redirect('admin/prodi');
