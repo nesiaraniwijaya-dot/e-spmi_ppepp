@@ -20,4 +20,3 @@ UPDATE `fakultas` SET `icon` = 'fa-scale-balanced',    `warna` = '#BE123C' WHERE
 UPDATE `fakultas` SET `icon` = 'fa-seedling',          `warna` = '#15803D' WHERE `kode_fakultas` = 'FTP';
 UPDATE `fakultas` SET `icon` = 'fa-stethoscope',       `warna` = '#0284C7' WHERE `kode_fakultas` = 'FK';
 UPDATE `fakultas` SET `icon` = 'fa-leaf',              `warna` = '#059669' WHERE `kode_fakultas` = 'FITL';
-UPDATE `fakultas` SET `icon` = 'fa-lightbulb',         `warna` = '#4F46E5' WHERE `kode_fakultas` = 'PIP';
