@@ -352,7 +352,7 @@ function render_sub_standar_badges($subIds = null, array $customMap = null): str
         if (!isset($map[$sId])) continue;
         $item = $map[$sId];
         $name = htmlspecialchars($item['nama_sub_bidang'] ?? '');
-        $html .= '<span class="badge rounded-pill px-2.5 py-1 d-inline-flex align-items-center border shadow-2xs me-1.5 mb-1" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE !important; font-size:0.75rem; font-weight:600; line-height:1.4;" title="' . $name . '"><i class="fas fa-bookmark text-primary opacity-75 me-1.5 flex-shrink-0" style="font-size:0.7rem;"></i><span>' . $name . '</span></span>';
+        $html .= '<span class="badge rounded-pill px-2 py-0.5 d-inline-flex align-items-center border shadow-2xs me-1 mb-0.5 text-wrap text-start" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE !important; font-size:0.68rem; font-weight:600; line-height:1.3; max-width:100%; word-break:break-word;" title="' . $name . '"><i class="fas fa-bookmark text-primary opacity-75 me-1 flex-shrink-0" style="font-size:0.65rem;"></i><span>' . $name . '</span></span>';
     }
     return $html;
 }

@@ -50,9 +50,9 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                 <div class="executive-glass-card">
                     <!-- Top Ribbon / Category Indicator -->
                     <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-white border-opacity-10">
-                        <span class="badge d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill" 
+                        <span class="badge d-inline-flex align-items-center px-2.5 py-1 rounded-pill" 
                               style="background: rgba(59, 130, 246, 0.15); color: #93C5FD; border: 1px solid rgba(59, 130, 246, 0.35); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px;">
-                            <i class="fas fa-user-graduate text-info"></i> KETUA PROGRAM STUDI
+                            KETUA PROGRAM STUDI
                         </span>
                         <span class="text-white-50 small d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
                             <i class="fas fa-landmark text-primary-subtle opacity-75"></i>
@@ -61,24 +61,19 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     </div>
 
                     <!-- Kaprodi Profile Row -->
-                    <div class="d-flex align-items-center gap-3 mb-2">
-                        <div class="executive-avatar-box executive-avatar-blue">
-                            <i class="fas fa-user-tie"></i>
+                    <div class="mb-3">
+                        <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                            Kaprodi <?= htmlspecialchars($prodi['jenjang']) ?>
                         </div>
-                        <div class="overflow-hidden flex-grow-1">
-                            <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">
-                                Kaprodi <?= htmlspecialchars($prodi['jenjang']) ?>
-                            </div>
-                            <div class="fw-bold text-white text-truncate mt-0.5" style="font-size: 1rem; letter-spacing: -0.2px;" title="<?= htmlspecialchars($prodi['nama_kaprodi'] ?: 'Belum ditentukan') ?>">
-                                <?= htmlspecialchars($prodi['nama_kaprodi'] ?: 'Belum ditentukan') ?>
-                            </div>
-                            <?php if (!empty($prodi['nidn_kaprodi'])): ?>
-                                <div class="d-inline-flex align-items-center gap-1 text-primary-subtle small mt-1 px-2 py-0.5 rounded-pill" 
-                                     style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); font-size: 0.7rem;">
-                                    <i class="fas fa-id-badge opacity-75"></i> NIDN: <?= htmlspecialchars($prodi['nidn_kaprodi']) ?>
-                                </div>
-                            <?php endif; ?>
+                        <div class="fw-bold text-white text-truncate mt-1" style="font-size: 1.05rem; letter-spacing: -0.2px; line-height: 1.35;" title="<?= htmlspecialchars($prodi['nama_kaprodi'] ?: 'Belum ditentukan') ?>">
+                            <?= htmlspecialchars($prodi['nama_kaprodi'] ?: 'Belum ditentukan') ?>
                         </div>
+                        <?php if (!empty($prodi['nidn_kaprodi'])): ?>
+                            <div class="d-inline-flex align-items-center gap-1 text-primary-subtle small mt-1.5 px-2.5 py-0.5 rounded-pill" 
+                                 style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem;">
+                                <span>NIDN: <?= htmlspecialchars($prodi['nidn_kaprodi']) ?></span>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Prodi Metadata Sub-Panel (Spacious & Clean without truncation) -->

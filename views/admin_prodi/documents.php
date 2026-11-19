@@ -219,16 +219,16 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
         <!-- Table -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" id="prodiDocumentsTable" style="font-size: 0.85rem;">
+            <table class="table table-hover align-middle mb-0" id="prodiDocumentsTable" style="table-layout: fixed; width: 100%; font-size: 0.82rem;">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 45px;">No</th>
-                        <th>Nama & Nomor Dokumen</th>
-                        <th style="width: 140px;">Siklus PPEPP</th>
-                        <th>Bidang &amp; Standar</th>
-                        <th>Berkas</th>
-                        <th style="min-width: 220px;">Status Review LPM</th>
-                        <th class="text-center text-nowrap" style="width: 130px;">Aksi</th>
+                        <th style="width: 4%;" class="text-center">No</th>
+                        <th style="width: 27%;">Nama & Nomor Dokumen</th>
+                        <th style="width: 12%;">Siklus PPEPP</th>
+                        <th style="width: 17%;">Bidang &amp; Standar</th>
+                        <th style="width: 15%;">Berkas</th>
+                        <th style="width: 15%;">Status Review LPM</th>
+                        <th style="width: 10%;" class="text-center text-nowrap">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="prodiDocTableBody">

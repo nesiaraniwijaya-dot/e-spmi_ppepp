@@ -49,7 +49,7 @@ if (!empty($documents)):
                             <i class="fas fa-graduation-cap me-1"></i><?= htmlspecialchars($doc['nama_prodi']) ?> (<?= htmlspecialchars($doc['jenjang'] ?? 'S1') ?>)
                         </span>
                     <?php else: ?>
-                        <span class="badge rounded-pill shadow-2xs px-2 py-0.5" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.68rem; font-weight: 600;">
+                        <span class="badge rounded-pill shadow-2xs px-2 py-0.5 bg-info bg-opacity-10 text-info border border-info border-opacity-25" style="font-size: 0.68rem; font-weight: 600;">
                             <i class="fas fa-building me-1"></i>Tingkat Dekanat / Fakultas
                         </span>
                     <?php endif; ?>
@@ -232,31 +232,31 @@ if (!empty($documents)):
             </td>
 
             <!-- Aksi Column -->
-            <td class="text-center text-nowrap" style="width: 130px;">
-                <div class="d-inline-flex align-items-center justify-content-center gap-1.5">
+            <td class="text-center text-nowrap" style="width: 10%;">
+                <div class="d-inline-flex align-items-center justify-content-center gap-1">
                     <button type="button" 
                             class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" 
-                            style="width: 36px; height: 36px;" 
+                            style="width: 32px; height: 32px;" 
                             title="Lihat Rincian Dokumen" 
                             data-bs-toggle="modal" 
                             data-bs-target="#docModal<?= $doc['id'] ?>">
-                        <i class="fas fa-eye text-primary" style="font-size: 0.85rem;"></i>
+                        <i class="fas fa-eye text-primary" style="font-size: 0.8rem;"></i>
                     </button>
 
                     <a href="<?= base_url('fakultas/dokumen/edit/' . $doc['id']) ?>" 
                        class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" 
-                       style="width: 36px; height: 36px;" 
+                       style="width: 32px; height: 32px;" 
                        title="Edit Dokumen">
-                        <i class="fas fa-pen text-warning" style="font-size: 0.85rem;"></i>
+                        <i class="fas fa-pen text-warning" style="font-size: 0.8rem;"></i>
                     </a>
 
                     <form action="<?= base_url('fakultas/dokumen/delete/' . $doc['id']) ?>" method="POST" class="d-inline m-0 p-0">
                         <button type="button" 
                                 class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs btn-delete-confirm" 
                                 data-name="<?= htmlspecialchars($doc['nama_dokumen']) ?>" 
-                                style="width: 36px; height: 36px;" 
+                                style="width: 32px; height: 32px;" 
                                 title="Hapus Dokumen">
-                            <i class="fas fa-trash-can text-danger" style="font-size: 0.85rem;"></i>
+                            <i class="fas fa-trash-can text-danger" style="font-size: 0.8rem;"></i>
                         </button>
                     </form>
                 </div>

@@ -214,16 +214,16 @@ $countPeningkatan = $cycleCounts['peningkatan'] ?? 0;
 
         <!-- Table Responsive -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" id="documentsTable" style="font-size: 0.82rem;">
+            <table class="table table-hover align-middle mb-0" id="documentsTable" style="table-layout: fixed; width: 100%; font-size: 0.82rem;">
                 <thead class="table-light text-secondary">
                     <tr>
-                        <th style="width: 45px;" class="text-center">No</th>
-                        <th style="min-width: 250px;">Nama & Nomor Dokumen</th>
-                        <th style="min-width: 130px;">Siklus PPEPP</th>
-                        <th style="min-width: 170px;">Bidang &amp; Standar</th>
-                        <th style="min-width: 140px;">Berkas</th>
-                        <th style="min-width: 140px;">Status Review LPM</th>
-                        <th style="width: 130px;" class="text-center text-nowrap">Aksi</th>
+                        <th style="width: 4%;" class="text-center">No</th>
+                        <th style="width: 27%;">Nama & Nomor Dokumen</th>
+                        <th style="width: 12%;">Siklus PPEPP</th>
+                        <th style="width: 17%;">Bidang &amp; Standar</th>
+                        <th style="width: 15%;">Berkas</th>
+                        <th style="width: 15%;">Status Review LPM</th>
+                        <th style="width: 10%;" class="text-center text-nowrap">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">

@@ -50,9 +50,9 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                 <div class="executive-glass-card">
                     <!-- Top Ribbon / Category Indicator -->
                     <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-white border-opacity-10">
-                        <span class="badge d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill" 
+                        <span class="badge d-inline-flex align-items-center px-2.5 py-1 rounded-pill" 
                               style="background: rgba(59, 130, 246, 0.15); color: #93C5FD; border: 1px solid rgba(59, 130, 246, 0.35); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px;">
-                            <i class="fas fa-crown text-info"></i> PIMPINAN DEKANAT FAKULTAS
+                            PIMPINAN DEKANAT FAKULTAS
                         </span>
                         <?php if (!empty($fakultas['periode_jabatan'])): ?>
                             <span class="text-white-50 small d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
@@ -63,24 +63,19 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     </div>
 
                     <!-- Dekan Profile Row -->
-                    <div class="d-flex align-items-center gap-3 mb-2">
-                        <div class="executive-avatar-box executive-avatar-blue">
-                            <i class="fas fa-user-tie"></i>
+                    <div class="mb-3">
+                        <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                            Dekan Fakultas
                         </div>
-                        <div class="overflow-hidden flex-grow-1">
-                            <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">
-                                Dekan Fakultas
-                            </div>
-                            <div class="fw-bold text-white text-truncate mt-0.5" style="font-size: 1rem; letter-spacing: -0.2px;" title="<?= htmlspecialchars($fakultas['nama_dekan'] ?: 'Belum ditentukan') ?>">
-                                <?= htmlspecialchars($fakultas['nama_dekan'] ?: 'Belum ditentukan') ?>
-                            </div>
-                            <?php if (!empty($fakultas['nidn_dekan'])): ?>
-                                <div class="d-inline-flex align-items-center gap-1 text-primary-subtle small mt-1 px-2 py-0.5 rounded-pill" 
-                                     style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); font-size: 0.7rem;">
-                                    <i class="fas fa-id-badge opacity-75"></i> NIDN: <?= htmlspecialchars($fakultas['nidn_dekan']) ?>
-                                </div>
-                            <?php endif; ?>
+                        <div class="fw-bold text-white text-truncate mt-1" style="font-size: 1.05rem; letter-spacing: -0.2px; line-height: 1.35;" title="<?= htmlspecialchars($fakultas['nama_dekan'] ?: 'Belum ditentukan') ?>">
+                            <?= htmlspecialchars($fakultas['nama_dekan'] ?: 'Belum ditentukan') ?>
                         </div>
+                        <?php if (!empty($fakultas['nidn_dekan'])): ?>
+                            <div class="d-inline-flex align-items-center gap-1 text-primary-subtle small mt-1.5 px-2.5 py-0.5 rounded-pill" 
+                                 style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem;">
+                                <span>NIDN: <?= htmlspecialchars($fakultas['nidn_dekan']) ?></span>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Wadek Sub-Panel if exists -->
@@ -88,10 +83,10 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                         <div class="executive-meta-subpanel">
                             <div class="d-flex align-items-center justify-content-between mb-1.5">
                                 <span class="text-white-50 d-flex align-items-center gap-1.5" style="font-size: 0.72rem; letter-spacing: 0.4px; text-transform: uppercase; font-weight: 600;">
-                                    <i class="fas fa-user-group text-info"></i> Wakil Dekan
+                                    Wakil Dekan
                                 </span>
                             </div>
-                            <div class="text-white fw-bold" style="font-size: 0.88rem; line-height: 1.35; word-break: break-word;">
+                            <div class="text-white fw-bold" style="font-size: 0.95rem; line-height: 1.35; word-break: break-word;">
                                 <?= htmlspecialchars($fakultas['nama_wadek']) ?>
                             </div>
                         </div>

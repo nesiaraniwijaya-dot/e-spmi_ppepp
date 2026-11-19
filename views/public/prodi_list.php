@@ -150,20 +150,14 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                             </div>
 
                             <!-- Kaprodi Info Box -->
-                            <div class="bg-light rounded-3 p-3 mb-3 border">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0" 
-                                         style="width: 42px; height: 42px; font-size: 1.2rem;">
-                                        <i class="fas fa-user-tie"></i>
+                            <div class="bg-light rounded-3 p-2.5 px-3 mb-3 border">
+                                <div class="text-truncate">
+                                    <div class="small text-muted" style="font-size: 0.72rem;">Ketua Program Studi (Kaprodi):</div>
+                                    <div class="fw-bold text-dark-blue small text-truncate mt-0.5">
+                                        <?= htmlspecialchars($p['nama_kaprodi'] ?: 'Belum ditentukan') ?>
                                     </div>
-                                    <div class="text-truncate">
-                                        <div class="small text-muted" style="font-size: 0.75rem;">Ketua Program Studi (Kaprodi):</div>
-                                        <div class="fw-bold text-dark-blue small text-truncate">
-                                            <?= htmlspecialchars($p['nama_kaprodi'] ?: 'Belum ditentukan') ?>
-                                        </div>
-                                        <div class="text-muted text-truncate" style="font-size: 0.72rem;">
-                                            <?= !empty($p['nidn_kaprodi']) ? 'NIDN: ' . htmlspecialchars($p['nidn_kaprodi']) : 'Program Studi ' . htmlspecialchars($p['jenjang']) ?>
-                                        </div>
+                                    <div class="text-muted text-truncate" style="font-size: 0.7rem;">
+                                        <?= !empty($p['nidn_kaprodi']) ? 'NIDN: ' . htmlspecialchars($p['nidn_kaprodi']) : 'Program Studi ' . htmlspecialchars($p['jenjang']) ?>
                                     </div>
                                 </div>
                             </div>

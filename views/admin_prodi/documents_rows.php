@@ -33,7 +33,7 @@ if (!empty($documents)):
                     <div class="small text-muted" style="font-size: 0.72rem;"><i class="fas fa-hashtag me-1"></i> <?= htmlspecialchars($doc['nomor_dokumen']) ?></div>
                 <?php endif; ?>
                 <?php if ($doc['tahun_akademik']): ?>
-                    <span class="badge bg-light text-secondary border me-1" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
+                    <span class="badge bg-light text-secondary border me-1" style="font-size: 0.68rem;"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
                 <?php endif; ?>
             </td>
             <td>
@@ -74,8 +74,8 @@ if (!empty($documents)):
                                         type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.72rem;">
                                     <i class="fas fa-folder-open text-danger"></i> <?= $filesCount ?> Berkas
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 320px; max-width: 440px; width: max-content; font-size: 0.78rem;">
-                                    <li class="dropdown-header text-muted fw-bold px-2 py-1" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">PILIH BERKAS DOKUMEN:</li>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 300px; max-width: 400px; font-size: 0.78rem;">
+                                    <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.7rem; font-weight: 600;">PILIH BERKAS DOKUMEN:</li>
                                     <?php foreach ($files as $fItem): 
                                         $fLimit = isset($fItem['is_page_limited']) && (int)$fItem['is_page_limited'] === 0 ? 0 : (int)($fItem['public_page_limit'] ?? 1);
                                         $fCanDl = (int)($fItem['can_download_public'] ?? 0);
@@ -98,11 +98,11 @@ if (!empty($documents)):
                                                     </span>
                                                     <div class="d-flex align-items-center gap-1 flex-shrink-0">
                                                         <?php if (!empty($fItem['folder_name'])): ?>
-                                                            <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;" title="Folder: <?= htmlspecialchars($fItem['folder_name']) ?>">
+                                                            <span class="badge rounded-pill bg-light text-secondary border shadow-2xs" style="font-size: 0.68rem; font-weight: 600;" title="Folder: <?= htmlspecialchars($fItem['folder_name']) ?>">
                                                                 <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($fItem['folder_name']) ?>
                                                             </span>
                                                         <?php endif; ?>
-                                                        <span class="badge bg-light text-muted border" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
+                                                        <span class="badge bg-light text-muted border" style="font-size: 0.68rem; font-weight: 600;"><?= htmlspecialchars($fItem['file_size'] ?: 'PDF') ?></span>
                                                     </div>
                                                 </div>
                                                 <?= render_sub_standar_badges($fItem['sub_bidang_ids'] ?? null) ?>
@@ -147,15 +147,15 @@ if (!empty($documents)):
                                         <i class="<?= $sIcon ?>"></i> <?= $sLabel ?>
                                     </button>
                                     <?php if (!empty($singleFile['folder_name'])): ?>
-                                        <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
+                                        <span class="badge rounded-pill bg-light text-secondary border shadow-2xs" style="font-size: 0.68rem; font-weight: 600;">
                                             <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleFile['folder_name']) ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
                                 <?= render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null) ?>
                                 <?php if (!empty($singleFile['narasi'])): ?>
-                                    <div class="text-muted fst-italic text-truncate" style="max-width: 180px; font-size: 0.68rem;" title="<?= htmlspecialchars($singleFile['narasi']) ?>">
-                                        <i class="fas fa-comment-dots text-danger me-0.5"></i> <?= htmlspecialchars($singleFile['narasi']) ?>
+                                    <div class="text-muted fst-italic text-truncate mt-0.5" style="max-width: 100%; font-size: 0.7rem;" title="<?= htmlspecialchars($singleFile['narasi']) ?>">
+                                        <i class="fas fa-quote-left text-danger opacity-75 me-0.5"></i> <?= htmlspecialchars($singleFile['narasi']) ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -169,8 +169,8 @@ if (!empty($documents)):
                                         type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.72rem;">
                                     <i class="fab fa-google-drive text-primary"></i> <?= $linkCount ?> Link GDrive
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 320px; max-width: 440px; width: max-content; font-size: 0.78rem;">
-                                    <li class="dropdown-header text-muted fw-bold px-2 py-1" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">PILIH TAUTAN GDRIVE:</li>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 rounded-3" style="min-width: 300px; max-width: 400px; font-size: 0.78rem;">
+                                    <li class="dropdown-header text-muted fw-bold px-2 py-1" style="font-size: 0.7rem; font-weight: 600;">PILIH TAUTAN GDRIVE:</li>
                                     <?php foreach ($gdriveLinks as $lIdx => $linkObj): 
                                         $gUrl = $linkObj['url'];
                                         $gNarasi = $linkObj['narasi'];
@@ -184,11 +184,11 @@ if (!empty($documents)):
                                                     </span>
                                                     <div class="d-flex align-items-center gap-1 flex-shrink-0">
                                                         <?php if (!empty($linkObj['folder_name'])): ?>
-                                                            <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
+                                                            <span class="badge rounded-pill bg-light text-secondary border shadow-2xs" style="font-size: 0.68rem; font-weight: 600;">
                                                                 <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($linkObj['folder_name']) ?>
                                                             </span>
                                                         <?php endif; ?>
-                                                        <i class="fas fa-arrow-up-right-from-square text-muted" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;"></i>
+                                                        <i class="fas fa-arrow-up-right-from-square text-muted" style="font-size: 0.7rem;"></i>
                                                     </div>
                                                 </div>
                                                 <?= render_sub_standar_badges($linkObj['sub_bidang_ids'] ?? null) ?>
@@ -213,15 +213,15 @@ if (!empty($documents)):
                                         <i class="fab fa-google-drive"></i> GDrive
                                     </a>
                                     <?php if (!empty($singleLink['folder_name'])): ?>
-                                        <span class="badge rounded-pill shadow-2xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
+                                        <span class="badge rounded-pill bg-light text-secondary border shadow-2xs" style="font-size: 0.68rem; font-weight: 600;">
                                             <i class="fas fa-folder me-0.5"></i><?= htmlspecialchars($singleLink['folder_name']) ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
                                 <?= render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null) ?>
                                 <?php if (!empty($singleLink['narasi'])): ?>
-                                    <div class="text-muted fst-italic text-truncate" style="max-width: 180px; font-size: 0.68rem;" title="<?= htmlspecialchars($singleLink['narasi']) ?>">
-                                        <i class="fas fa-comment-dots text-primary me-0.5"></i> <?= htmlspecialchars($singleLink['narasi']) ?>
+                                    <div class="text-muted fst-italic text-truncate mt-0.5" style="max-width: 100%; font-size: 0.7rem;" title="<?= htmlspecialchars($singleLink['narasi']) ?>">
+                                        <i class="fas fa-quote-left text-primary opacity-75 me-0.5"></i> <?= htmlspecialchars($singleLink['narasi']) ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -259,39 +259,39 @@ if (!empty($documents)):
                             </a>
                         </div>
                     <?php elseif (!empty($doc['gpm_catatan'])): ?>
-                        <div class="p-1.5 rounded text-start mt-0.5" style="background: #FEF3C7; border: 1px solid #FCD34D; max-width: 230px;">
-                            <div class="fw-bold text-warning-emphasis d-flex align-items-center gap-1" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
+                        <div class="p-1.5 px-2 rounded-2 text-start mt-1 w-100 border" style="background: #FFFBEB; border-color: #FDE68A !important; font-size: 0.72rem;">
+                            <div class="fw-bold d-flex align-items-center gap-1 mb-0.5" style="color: #B45309; font-size: 0.68rem;">
                                 <i class="fas fa-shield-halved text-warning"></i> Catatan GPM:
                             </div>
-                            <div class="text-truncate text-secondary" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;" title="<?= htmlspecialchars($doc['gpm_catatan']) ?>">
+                            <div class="text-secondary text-truncate" style="line-height: 1.35; max-width: 100%;" title="<?= htmlspecialchars($doc['gpm_catatan']) ?>">
                                 <?= htmlspecialchars($doc['gpm_catatan']) ?>
                             </div>
                         </div>
                     <?php endif; ?>
 
-                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5 btn-review-history d-inline-flex align-items-center gap-1 mt-0.5 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 0.65rem; font-weight: 600;">
+                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-0.5 btn-review-history d-inline-flex align-items-center gap-1 mt-1 shadow-2xs" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>" style="font-size: 0.7rem;">
                         <i class="fas fa-history text-secondary"></i> Riwayat Review
                     </button>
                 </div>
             </td>
-            <td class="text-center text-nowrap" style="width: 130px;">
-                <div class="d-inline-flex align-items-center justify-content-center gap-1.5">
+            <td class="text-center text-nowrap" style="width: 10%;">
+                <div class="d-inline-flex align-items-center justify-content-center gap-1">
                     <!-- Aksi 1: Lihat Rincian Dokumen -->
                     <button type="button" 
                             class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" 
-                            style="width: 36px; height: 36px;" 
+                            style="width: 32px; height: 32px;" 
                             title="Lihat Rincian Dokumen" 
                             data-bs-toggle="modal" 
                             data-bs-target="#docModal<?= $doc['id'] ?>">
-                        <i class="fas fa-eye text-primary" style="font-size: 0.85rem;"></i>
+                        <i class="fas fa-eye text-primary" style="font-size: 0.8rem;"></i>
                     </button>
 
                     <!-- Aksi 2: Ubah / Edit Dokumen -->
                     <a href="<?= base_url('prodi/dokumen/edit/' . $doc['id']) ?>" 
                        class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs" 
-                       style="width: 36px; height: 36px;" 
+                       style="width: 32px; height: 32px;" 
                        title="Edit / Ubah Dokumen">
-                        <i class="fas fa-pen text-warning" style="font-size: 0.85rem;"></i>
+                        <i class="fas fa-pen text-warning" style="font-size: 0.8rem;"></i>
                     </a>
 
                     <!-- Aksi 3: Hapus Dokumen -->
@@ -299,9 +299,9 @@ if (!empty($documents)):
                         <button type="button" 
                                 class="btn btn-light btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center border shadow-2xs btn-delete-confirm" 
                                 data-name="<?= htmlspecialchars($doc['nama_dokumen']) ?>" 
-                                style="width: 36px; height: 36px;" 
+                                style="width: 32px; height: 32px;" 
                                 title="Hapus Dokumen">
-                            <i class="fas fa-trash-can text-danger" style="font-size: 0.85rem;"></i>
+                            <i class="fas fa-trash-can text-danger" style="font-size: 0.8rem;"></i>
                         </button>
                     </form>
                 </div>
