@@ -19,57 +19,84 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     </div>
 
     <!-- Table Card -->
-    <div class="card border-0 shadow-sm rounded-4 p-4">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4">
+        <div class="table-responsive" style="overflow-x: hidden;">
+            <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.83rem;">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 50px;">No</th>
-                        <th>Kode & Jenjang</th>
-                        <th>Nama Program Studi</th>
-                        <th>Fakultas</th>
-                        <th>Pimpinan Prodi</th>
-                        <th>Akun Login (Kaprodi / Sekprodi)</th>
-                        <th class="text-center">Dokumen</th>
-                        <th class="text-center" style="width: 140px;">Aksi</th>
+                        <th class="text-center" style="width: 4.5%; white-space: nowrap;">No</th>
+                        <th style="width: 14%; white-space: nowrap;">Kode &amp; Jenjang</th>
+                        <th style="width: 21%;">Nama Program Studi</th>
+                        <th style="width: 14%;">Fakultas</th>
+                        <th style="width: 18%;">Pimpinan Prodi</th>
+                        <th style="width: 16%;">Akun Terhubung</th>
+                        <th class="text-center" style="width: 5%; white-space: nowrap;">Dok.</th>
+                        <th class="text-center" style="width: 7.5%; white-space: nowrap;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($prodiList)): ?>
                         <tr><td colspan="8" class="text-center py-4 text-muted">Belum ada data program studi.</td></tr>
                     <?php else: ?>
-                        <?php $no = 1; foreach ($prodiList as $p): ?>
+                        <?php 
+                        $no = 1; 
+                        $jenjangColors = [
+                            'S1' => 'background: #1E3E62; color: #FBBF24;',
+                            'S2' => 'background: #4338CA; color: #FFFFFF;',
+                            'S3' => 'background: #6D28D9; color: #FFFFFF;',
+                            'D3' => 'background: #0F766E; color: #FFFFFF;',
+                            'Profesi' => 'background: #047857; color: #FFFFFF;',
+                        ];
+                        foreach ($prodiList as $p): 
+                            $jStyle = $jenjangColors[$p['jenjang']] ?? 'background: #1E3E62; color: #FBBF24;';
+                        ?>
                             <tr>
-                                <td class="text-center text-muted fw-semibold"><?= $no++ ?></td>
-                                <td>
-                                    <span class="badge bg-dark-blue text-warning px-2.5 py-1 fw-bold"><?= htmlspecialchars($p['jenjang']) ?></span>
-                                    <span class="badge bg-light text-secondary border"><?= htmlspecialchars($p['kode_prodi']) ?></span>
+                                <td class="text-center text-muted fw-semibold" style="white-space: nowrap;"><?= $no++ ?></td>
+                                <td style="white-space: nowrap;">
+                                    <div class="d-inline-flex align-items-center gap-1.5 flex-nowrap">
+                                        <span class="badge fw-bold px-2 py-1 shadow-2xs" style="<?= $jStyle ?> font-size: 0.72rem; min-width: 32px; text-align: center;">
+                                            <?= htmlspecialchars($p['jenjang']) ?>
+                                        </span>
+                                        <span class="badge bg-light text-dark border px-2 py-1 font-monospace" style="font-size: 0.72rem; max-width: 95px; overflow: hidden; text-overflow: ellipsis;" title="<?= htmlspecialchars($p['kode_prodi']) ?>">
+                                            <?= htmlspecialchars($p['kode_prodi']) ?>
+                                        </span>
+                                    </div>
                                 </td>
-                                <td class="fw-bold text-dark-blue"><?= htmlspecialchars($p['nama_prodi']) ?></td>
-                                <td class="small text-muted"><?= htmlspecialchars($p['nama_fakultas']) ?></td>
-                                <td>
-                                    <div class="small fw-semibold text-dark"><span class="badge bg-primary-subtle text-primary border me-1">Kaprodi</span><?= htmlspecialchars($p['nama_kaprodi'] ?: '-') ?></div>
+                                <td class="fw-bold text-dark-blue" style="word-break: break-word; line-height: 1.35;">
+                                    <?= htmlspecialchars($p['nama_prodi']) ?>
+                                </td>
+                                <td class="small text-secondary" style="word-break: break-word; line-height: 1.3;">
+                                    <?= htmlspecialchars($p['nama_fakultas']) ?>
+                                </td>
+                                <td style="word-break: break-word; line-height: 1.3;">
+                                    <div class="small fw-semibold text-dark text-truncate" title="<?= htmlspecialchars($p['nama_kaprodi'] ?: '-') ?>">
+                                        <span class="badge bg-primary-subtle text-primary border me-1" style="font-size: 0.65rem;">Kaprodi</span><?= htmlspecialchars($p['nama_kaprodi'] ?: '-') ?>
+                                    </div>
                                     <?php if ($p['nidn_kaprodi']): ?>
-                                        <div class="text-muted ms-1" style="font-size: 0.72rem;">NIDN: <?= htmlspecialchars($p['nidn_kaprodi']) ?></div>
+                                        <div class="text-muted" style="font-size: 0.7rem;">NIDN: <?= htmlspecialchars($p['nidn_kaprodi']) ?></div>
                                     <?php endif; ?>
                                     <?php if (!empty($p['nama_sekprodi'])): ?>
-                                        <div class="small fw-semibold text-dark mt-1"><span class="badge bg-secondary-subtle text-secondary border me-1">Sekprodi</span><?= htmlspecialchars($p['nama_sekprodi']) ?></div>
+                                        <div class="small fw-semibold text-dark text-truncate mt-1" title="<?= htmlspecialchars($p['nama_sekprodi']) ?>">
+                                            <span class="badge bg-secondary-subtle text-secondary border me-1" style="font-size: 0.65rem;">Sekprodi</span><?= htmlspecialchars($p['nama_sekprodi']) ?>
+                                        </div>
                                         <?php if ($p['nidn_sekprodi']): ?>
-                                            <div class="text-muted ms-1" style="font-size: 0.72rem;">NIDN: <?= htmlspecialchars($p['nidn_sekprodi']) ?></div>
+                                            <div class="text-muted" style="font-size: 0.7rem;">NIDN: <?= htmlspecialchars($p['nidn_sekprodi']) ?></div>
                                         <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <div class="d-flex flex-column gap-1">
                                         <?php if (!empty($p['kaprodi_user_name'])): ?>
-                                            <span class="badge bg-success-subtle text-success border text-start py-1" style="font-size:0.75rem;"><i class="fas fa-user-tie me-1"></i> <?= htmlspecialchars($p['kaprodi_user_name']) ?></span>
+                                            <span class="badge bg-success-subtle text-success border text-start text-truncate py-1 d-block" style="font-size:0.72rem;" title="Kaprodi: <?= htmlspecialchars($p['kaprodi_user_name']) ?>">
+                                                <i class="fas fa-user-tie me-1"></i><?= htmlspecialchars($p['kaprodi_user_name']) ?>
+                                            </span>
                                         <?php else: ?>
-                                            <span class="badge bg-warning-subtle text-warning border text-start py-1" style="font-size:0.75rem;"><i class="fas fa-exclamation-triangle me-1"></i> Kaprodi: Kosong</span>
+                                            <span class="badge bg-warning-subtle text-warning border text-start py-0.5 d-block" style="font-size:0.68rem;"><i class="fas fa-exclamation-triangle me-1"></i>Kaprodi: -</span>
                                         <?php endif; ?>
                                         <?php if (!empty($p['sekprodi_user_name'])): ?>
-                                            <span class="badge bg-info-subtle text-info border text-start py-1" style="font-size:0.75rem;"><i class="fas fa-user-edit me-1"></i> <?= htmlspecialchars($p['sekprodi_user_name']) ?></span>
-                                        <?php else: ?>
-                                            <span class="badge bg-light text-muted border text-start py-1" style="font-size:0.75rem;"><i class="fas fa-info-circle me-1"></i> Sekprodi: Kosong</span>
+                                            <span class="badge bg-info-subtle text-info border text-start text-truncate py-1 d-block" style="font-size:0.72rem;" title="Sekprodi: <?= htmlspecialchars($p['sekprodi_user_name']) ?>">
+                                                <i class="fas fa-user-edit me-1"></i><?= htmlspecialchars($p['sekprodi_user_name']) ?>
+                                            </span>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -77,19 +104,21 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     <span class="badge bg-light text-dark border fw-bold"><?= $p['total_dokumen'] ?></span>
                                 </td>
                                 <td class="text-center">
-                                    <div class="d-flex justify-content-center gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-2.5" 
+                                    <div class="d-flex justify-content-center align-items-center gap-1">
+                                        <button type="button" class="btn btn-xs btn-outline-warning rounded-circle p-0 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 26px; height: 26px;"
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#modalProdi"
-                                                onclick="editProdi(<?= htmlspecialchars(json_encode($p)) ?>)">
-                                            <i class="fas fa-edit"></i>
+                                                onclick="editProdi(<?= htmlspecialchars(json_encode($p)) ?>)"
+                                                title="Edit Program Studi">
+                                            <i class="fas fa-edit" style="font-size: 0.72rem;"></i>
                                         </button>
-                                        <a href="<?= base_url('prodi/' . $p['id']) ?>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2.5" title="Lihat Dashboard Publik">
-                                            <i class="fas fa-external-link-alt"></i>
+                                        <a href="<?= base_url('prodi/' . $p['id']) ?>" target="_blank" class="btn btn-xs btn-outline-info rounded-circle p-0 d-inline-flex align-items-center justify-content-center" style="width: 26px; height: 26px;" title="Lihat Dashboard Publik">
+                                            <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
                                         </a>
-                                        <form action="<?= base_url('admin/prodi/delete/' . $p['id']) ?>" method="POST" class="d-inline">
-                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 btn-delete-confirm" data-name="<?= htmlspecialchars($p['nama_prodi']) ?>">
-                                                <i class="fas fa-trash"></i>
+                                        <form action="<?= base_url('admin/prodi/delete/' . $p['id']) ?>" method="POST" class="d-inline m-0">
+                                            <button type="button" class="btn btn-xs btn-outline-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center btn-delete-confirm" style="width: 26px; height: 26px;" data-name="<?= htmlspecialchars($p['nama_prodi']) ?>" title="Hapus Program Studi">
+                                                <i class="fas fa-trash" style="font-size: 0.7rem;"></i>
                                             </button>
                                         </form>
                                     </div>

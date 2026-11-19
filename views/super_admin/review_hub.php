@@ -344,19 +344,19 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <p class="text-muted small mb-0">Status kepatuhan dokumen PPEPP level fakultas yang diunggah oleh pimpinan dekanat.</p>
                         </div>
                     </div>
-                    <div class="table-responsive rounded-3 border">
-                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
-                            <thead class="table-light text-secondary" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <div class="table-responsive rounded-3 border" style="overflow-x: hidden;">
+                        <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.84rem;">
+                            <thead class="table-light text-secondary" style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.4px;">
                                 <tr>
-                                    <th class="ps-3" style="width: 100px;">Kode</th>
-                                    <th>Fakultas</th>
-                                    <th>Pimpinan Dekan</th>
-                                    <th class="text-center">Total Dokumen</th>
-                                    <th class="text-center">Perlu Review</th>
-                                    <th class="text-center">Perlu Revisi</th>
-                                    <th class="text-center">Sesuai Mutu</th>
-                                    <th style="min-width: 160px;">Progres Kepatuhan</th>
-                                    <th class="text-center pe-3" style="width: 140px;">Aksi</th>
+                                    <th class="ps-3" style="width: 8%; white-space: nowrap;">Kode</th>
+                                    <th style="width: 22%;">Fakultas</th>
+                                    <th style="width: 13%;">Pimpinan Dekan</th>
+                                    <th class="text-center" style="width: 8%; white-space: nowrap;">Total Dok.</th>
+                                    <th class="text-center" style="width: 5.5%; white-space: nowrap;">Review</th>
+                                    <th class="text-center" style="width: 5.5%; white-space: nowrap;">Revisi</th>
+                                    <th class="text-center" style="width: 5.5%; white-space: nowrap;">Sesuai</th>
+                                    <th style="width: 14%; white-space: nowrap;">Progres</th>
+                                    <th class="text-center pe-3" style="width: 18.5%; white-space: nowrap;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -369,9 +369,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     $cycles = $fsum['cycles'] ?? [];
                                 ?>
                                     <tr class="align-middle">
-                                        <td class="ps-3">
-                                            <div class="d-flex align-items-center gap-1.5">
-                                                <button class="btn btn-xs btn-outline-primary rounded-circle p-0 d-inline-flex align-items-center justify-content-center toggle-cycles-btn" 
+                                        <td class="ps-3" style="white-space: nowrap;">
+                                            <div class="d-flex align-items-center gap-1.5 flex-nowrap">
+                                                <button class="btn btn-xs btn-outline-primary rounded-circle p-0 d-inline-flex align-items-center justify-content-center toggle-cycles-btn flex-shrink-0" 
                                                         style="width: 24px; height: 24px;" 
                                                         type="button" 
                                                         data-bs-toggle="collapse" 
@@ -392,26 +392,26 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             </a>
                                         </td>
                                         <td class="text-secondary small"><?= htmlspecialchars($fsum['nama_dekan'] ?: '-') ?></td>
-                                        <td class="text-center">
+                                        <td class="text-center" style="white-space: nowrap;">
                                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 fw-bold">
                                                 <?= $totFak ?> Dokumen
                                             </span>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center" style="white-space: nowrap;">
                                             <?php if ($revFak > 0): ?>
                                                 <span class="badge bg-danger rounded-pill px-2.5 py-1 fw-bold"><?= $revFak ?></span>
                                             <?php else: ?>
                                                 <span class="text-muted small">0</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center" style="white-space: nowrap;">
                                             <?php if ($rejFak > 0): ?>
                                                 <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold"><?= $rejFak ?></span>
                                             <?php else: ?>
                                                 <span class="text-muted small">0</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center" style="white-space: nowrap;">
                                             <?php if ($appFak > 0): ?>
                                                 <span class="badge bg-success rounded-pill px-2.5 py-1 fw-bold"><?= $appFak ?></span>
                                             <?php else: ?>
@@ -419,8 +419,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="progress flex-grow-1" style="height: 7px;">
+                                            <div class="d-flex align-items-center gap-2" style="white-space: nowrap;">
+                                                <div class="progress flex-grow-1" style="height: 7px; min-width: 40px;">
                                                     <div class="progress-bar <?= $pctFak >= 80 ? 'bg-success' : ($pctFak >= 40 ? 'bg-info' : ($pctFak > 0 ? 'bg-warning' : 'bg-secondary')) ?>" 
                                                          role="progressbar" 
                                                          style="width: <?= $pctFak ?>%" 
@@ -428,15 +428,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                          aria-valuemin="0" 
                                                          aria-valuemax="100"></div>
                                                 </div>
-                                                <span class="small fw-bold text-dark" style="font-size: 0.72rem; min-width: 32px;" title="Rata-rata kepatuhan PPEPP (20% per tahap Disetujui)"><?= $pctFak ?>%</span>
+                                                <span class="small fw-bold text-dark text-nowrap" style="font-size: 0.72rem; min-width: 32px; text-align: right;" title="Rata-rata kepatuhan PPEPP (20% per tahap Disetujui)"><?= $pctFak ?>%</span>
                                             </div>
                                         </td>
-                                        <td class="text-center pe-3">
-                                            <div class="d-flex align-items-center justify-content-center gap-1">
-                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1" data-bs-toggle="collapse" data-bs-target="#collapse-fak-<?= $fsum['id'] ?>" title="Buka dropdown daftar judul PPEPP">
+                                        <td class="text-center pe-3" style="white-space: nowrap;">
+                                            <div class="d-inline-flex align-items-center justify-content-center gap-1.5 flex-nowrap">
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 text-nowrap shadow-2xs" data-bs-toggle="collapse" data-bs-target="#collapse-fak-<?= $fsum['id'] ?>" title="Buka dropdown daftar judul PPEPP">
                                                     <i class="fas fa-list-ul me-1"></i> Aspek
                                                 </button>
-                                                <a href="<?= base_url('admin/review-fakultas/' . $fsum['id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1">
+                                                <a href="<?= base_url('admin/review-fakultas/' . $fsum['id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 text-nowrap shadow-2xs">
                                                     <i class="fas fa-arrow-right me-1"></i> Detail
                                                 </a>
                                             </div>
@@ -481,20 +481,20 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <p class="text-muted small mb-0">Tabel komparasi status kepatuhan dan review dokumen PPEPP program studi.</p>
                         </div>
                     </div>
-                    <div class="table-responsive rounded-3 border">
-                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
-                            <thead class="table-light text-secondary" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <div class="table-responsive rounded-3 border" style="overflow-x: hidden;">
+                        <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.83rem;">
+                            <thead class="table-light text-secondary" style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.4px;">
                                 <tr>
-                                    <th class="ps-3" style="width: 70px;">Kode</th>
-                                    <th>Program Studi</th>
-                                    <th>Fakultas</th>
-                                    <th>Ketua Program Studi</th>
-                                    <th class="text-center">Total Dokumen</th>
-                                    <th class="text-center">Perlu Review</th>
-                                    <th class="text-center">Perlu Revisi</th>
-                                    <th class="text-center">Sesuai</th>
-                                    <th style="min-width: 140px;">Progres Kepatuhan</th>
-                                    <th class="text-center pe-3" style="width: 140px;">Aksi</th>
+                                    <th class="ps-3" style="width: 7%; white-space: nowrap;">Kode</th>
+                                    <th style="width: 22%;">Program Studi</th>
+                                    <th style="width: 14%;">Fakultas</th>
+                                    <th style="width: 14%;">Ketua Prodi</th>
+                                    <th class="text-center" style="width: 7%; white-space: nowrap;">Total</th>
+                                    <th class="text-center" style="width: 5%; white-space: nowrap;">Review</th>
+                                    <th class="text-center" style="width: 5%; white-space: nowrap;">Revisi</th>
+                                    <th class="text-center" style="width: 5%; white-space: nowrap;">Sesuai</th>
+                                    <th style="width: 11%; white-space: nowrap;">Progres</th>
+                                    <th class="text-center pe-3" style="width: 10%; white-space: nowrap;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -506,33 +506,33 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     $pctPrd = $totPrd > 0 ? round(($appPrd / $totPrd) * 100) : 0;
                                 ?>
                                     <tr>
-                                        <td class="ps-3"><span class="badge bg-light text-dark border"><?= htmlspecialchars($psum['kode_prodi']) ?></span></td>
+                                        <td class="ps-3" style="white-space: nowrap;"><span class="badge bg-light text-dark border font-monospace"><?= htmlspecialchars($psum['kode_prodi']) ?></span></td>
                                         <td>
                                             <div class="fw-bold text-dark-blue"><?= htmlspecialchars($psum['nama_prodi']) ?></div>
                                             <span class="badge bg-dark-blue text-warning" style="font-size:0.65rem;"><?= htmlspecialchars($psum['jenjang']) ?></span>
                                         </td>
                                         <td class="small text-secondary"><?= htmlspecialchars($psum['nama_fakultas']) ?></td>
                                         <td class="small text-secondary"><?= htmlspecialchars($psum['nama_kaprodi'] ?: '-') ?></td>
-                                        <td class="text-center">
+                                        <td class="text-center" style="white-space: nowrap;">
                                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 fw-bold">
                                                 <?= $totPrd ?> Dokumen
                                             </span>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center" style="white-space: nowrap;">
                                             <?php if ($revPrd > 0): ?>
                                                 <span class="badge bg-danger rounded-pill px-2.5 py-1 fw-bold"><?= $revPrd ?></span>
                                             <?php else: ?>
                                                 <span class="text-muted small">0</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center" style="white-space: nowrap;">
                                             <?php if ($rejPrd > 0): ?>
                                                 <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold"><?= $rejPrd ?></span>
                                             <?php else: ?>
                                                 <span class="text-muted small">0</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center" style="white-space: nowrap;">
                                             <?php if ($appPrd > 0): ?>
                                                 <span class="badge bg-success rounded-pill px-2.5 py-1 fw-bold"><?= $appPrd ?></span>
                                             <?php else: ?>
@@ -540,15 +540,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="progress flex-grow-1" style="height: 7px;">
+                                            <div class="d-flex align-items-center gap-2" style="white-space: nowrap;">
+                                                <div class="progress flex-grow-1" style="height: 7px; min-width: 40px;">
                                                     <div class="progress-bar bg-success" role="progressbar" style="width: <?= $pctPrd ?>%" aria-valuenow="<?= $pctPrd ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                                 </div>
-                                                <span class="small fw-bold text-dark" style="font-size: 0.72rem; min-width: 32px;"><?= $pctPrd ?>%</span>
+                                                <span class="small fw-bold text-dark text-nowrap" style="font-size: 0.72rem; min-width: 32px; text-align: right;"><?= $pctPrd ?>%</span>
                                             </div>
                                         </td>
-                                        <td class="text-center pe-3">
-                                            <a href="<?= base_url('admin/review-prodi/' . $psum['id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1">
+                                        <td class="text-center pe-3" style="white-space: nowrap;">
+                                            <a href="<?= base_url('admin/review-prodi/' . $psum['id']) ?>" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 text-nowrap shadow-2xs">
                                                 <i class="fas fa-arrow-right me-1"></i> Detail
                                             </a>
                                         </td>

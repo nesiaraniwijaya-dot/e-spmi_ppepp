@@ -227,6 +227,14 @@ $totalDokumenSafe = max(1, $totalDokumen);
                     'category' => 'saintek',
                     'category_label' => 'Sains & Teknologi'
                 ],
+                'FIKOM' => [
+                    'icon' => 'fa-laptop-code',
+                    'accent' => 'linear-gradient(90deg, #2563EB, #38BDF8)',
+                    'color' => '#2563EB',
+                    'bg_icon' => '#EFF6FF',
+                    'category' => 'saintek',
+                    'category_label' => 'Sains & Teknologi'
+                ],
                 'FEB' => [
                     'icon' => 'fa-chart-line',
                     'accent' => 'linear-gradient(90deg, #059669, #34D399)',
@@ -312,6 +320,21 @@ $totalDokumenSafe = max(1, $totalDokumen);
                     'category_label' => 'Fakultas'
                 ];
 
+                // Dynamic icon & color from database with fallback
+                $cardIcon = !empty($fak['icon']) ? $fak['icon'] : $conf['icon'];
+                $isLetterIcon = str_starts_with($cardIcon, 'letter:') || (strlen($cardIcon) === 1 && !str_starts_with($cardIcon, 'fa-'));
+                $displayLetter = $isLetterIcon ? strtoupper(str_replace('letter:', '', $cardIcon)) : '';
+                if (!$isLetterIcon && !str_starts_with($cardIcon, 'fa-')) {
+                    $cardIcon = 'fa-' . $cardIcon;
+                }
+                $cardColor = !empty($fak['warna']) ? $fak['warna'] : $conf['color'];
+                $cardAccent = (!empty($conf['accent']) && (empty($fak['warna']) || $fak['warna'] === $conf['color'])) 
+                    ? $conf['accent'] 
+                    : "linear-gradient(90deg, {$cardColor}, {$cardColor}a0)";
+                $cardBgIcon = (!empty($conf['bg_icon']) && (empty($fak['warna']) || $fak['warna'] === $conf['color'])) 
+                    ? $conf['bg_icon'] 
+                    : "{$cardColor}15";
+
                 // Parse real prodi names into array
                 $prodiList = !empty($fak['prodi_names']) ? explode('||', $fak['prodi_names']) : [];
                 $searchKeywords = strtolower($fak['nama_fakultas'] . ' ' . $fak['kode_fakultas'] . ' ' . implode(' ', $prodiList));
@@ -322,14 +345,18 @@ $totalDokumenSafe = max(1, $totalDokumen);
                     
                     <a href="<?= base_url('fakultas/' . $fak['id']) ?>" class="card-fakultas">
                         <!-- Top Accent Stripe -->
-                        <div class="card-fakultas-accent" style="background: <?= $conf['accent'] ?>;"></div>
+                        <div class="card-fakultas-accent" style="background: <?= $cardAccent ?>;"></div>
                         
                         <div class="card-fakultas-body">
                             
                             <!-- Top: Icon -->
                             <div class="card-fakultas-top">
-                                <div class="card-fakultas-icon" style="background: <?= $conf['bg_icon'] ?>; color: <?= $conf['color'] ?>;">
-                                    <i class="fas <?= $conf['icon'] ?>"></i>
+                                <div class="card-fakultas-icon" style="background: <?= $cardBgIcon ?>; color: <?= $cardColor ?>;">
+                                    <?php if ($isLetterIcon): ?>
+                                        <span class="fw-bolder" style="font-size: 1.45rem; line-height: 1; font-family: var(--font-heading, sans-serif);"><?= htmlspecialchars($displayLetter) ?></span>
+                                    <?php else: ?>
+                                        <i class="fas <?= $cardIcon ?>"></i>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 

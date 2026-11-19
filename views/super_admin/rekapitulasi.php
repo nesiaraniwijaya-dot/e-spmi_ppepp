@@ -24,39 +24,52 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
     </div>
 
     <!-- Table Card -->
-    <div class="card border-0 shadow-sm rounded-4 p-4">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle mb-0">
+    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4">
+        <div class="table-responsive" style="overflow-x: hidden;">
+            <table class="table table-bordered table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.83rem;">
                 <thead class="table-light text-center">
                     <tr>
-                        <th rowspan="2" style="width: 50px;">No</th>
-                        <th rowspan="2">Fakultas</th>
-                        <th rowspan="2">Program Studi</th>
-                        <th rowspan="2">Ketua Program Studi</th>
+                        <th rowspan="2" style="width: 4.5%; white-space: nowrap;">No</th>
+                        <th rowspan="2" style="width: 16%;">Fakultas</th>
+                        <th rowspan="2" style="width: 22%;">Program Studi</th>
+                        <th rowspan="2" style="width: 13.5%;">Ketua Prodi</th>
                         <th colspan="5" class="bg-primary text-white py-1">Distribusi Siklus PPEPP</th>
-                        <th rowspan="2" style="width: 90px;">Total</th>
-                        <th rowspan="2" style="width: 100px;">Aksi</th>
+                        <th rowspan="2" style="width: 7.5%; white-space: nowrap;">Total</th>
+                        <th rowspan="2" style="width: 9%; white-space: nowrap;">Aksi</th>
                     </tr>
-                    <tr class="small text-muted">
-                        <th style="width: 70px;" class="text-primary">P1</th>
-                        <th style="width: 70px;" class="text-success">P2</th>
-                        <th style="width: 70px;" class="text-warning">E</th>
-                        <th style="width: 70px;" class="text-purple" style="color: #7C3AED;">P3</th>
-                        <th style="width: 70px;" class="text-info">P4</th>
+                    <tr class="small text-muted" style="font-size: 0.75rem;">
+                        <th style="width: 5.5%;" class="text-primary">P1</th>
+                        <th style="width: 5.5%;" class="text-success">P2</th>
+                        <th style="width: 5.5%;" class="text-warning">E</th>
+                        <th style="width: 5.5%;" class="text-purple" style="color: #7C3AED;">P3</th>
+                        <th style="width: 5.5%;" class="text-info">P4</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($rekapList)): ?>
                         <tr><td colspan="11" class="text-center py-4 text-muted">Belum ada data prodi.</td></tr>
                     <?php else: ?>
-                        <?php $no = 1; foreach ($rekapList as $r): ?>
+                        <?php 
+                        $no = 1; 
+                        $jenjangColors = [
+                            'S1' => 'background: #1E3E62; color: #FBBF24;',
+                            'S2' => 'background: #4338CA; color: #FFFFFF;',
+                            'S3' => 'background: #6D28D9; color: #FFFFFF;',
+                            'D3' => 'background: #0F766E; color: #FFFFFF;',
+                            'Profesi' => 'background: #047857; color: #FFFFFF;',
+                        ];
+                        foreach ($rekapList as $r): 
+                            $jStyle = $jenjangColors[$r['jenjang']] ?? 'background: #1E3E62; color: #FBBF24;';
+                        ?>
                             <tr>
-                                <td class="text-center text-muted fw-semibold"><?= $no++ ?></td>
+                                <td class="text-center text-muted fw-semibold" style="white-space: nowrap;"><?= $no++ ?></td>
                                 <td class="small fw-bold text-secondary"><?= htmlspecialchars($r['nama_fakultas']) ?></td>
                                 <td>
-                                    <span class="badge bg-dark-blue text-warning me-1"><?= htmlspecialchars($r['jenjang']) ?></span>
-                                    <span class="fw-bold text-dark-blue"><?= htmlspecialchars($r['nama_prodi']) ?></span>
-                                    <div class="text-muted" style="font-size: 0.72rem;">Kode: <?= htmlspecialchars($r['kode_prodi']) ?></div>
+                                    <div class="d-flex align-items-center gap-1.5 mb-1">
+                                        <span class="badge fw-bold px-2 py-0.5 shadow-2xs" style="<?= $jStyle ?> font-size: 0.7rem; min-width: 30px; text-align: center;"><?= htmlspecialchars($r['jenjang']) ?></span>
+                                        <span class="fw-bold text-dark-blue"><?= htmlspecialchars($r['nama_prodi']) ?></span>
+                                    </div>
+                                    <div class="text-muted" style="font-size: 0.72rem;">Kode: <span class="font-monospace"><?= htmlspecialchars($r['kode_prodi']) ?></span></div>
                                 </td>
                                 <td class="small text-secondary"><?= htmlspecialchars($r['nama_kaprodi'] ?: '-') ?></td>
                                 <td class="text-center"><span class="badge badge-penetapan"><?= $r['p1_count'] ?></span></td>
@@ -64,9 +77,9 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <td class="text-center"><span class="badge badge-evaluasi"><?= $r['e_count'] ?></span></td>
                                 <td class="text-center"><span class="badge badge-pengendalian"><?= $r['p3_count'] ?></span></td>
                                 <td class="text-center"><span class="badge badge-peningkatan"><?= $r['p4_count'] ?></span></td>
-                                <td class="text-center fw-bold text-dark-blue fs-6"><?= $r['total_dokumen'] ?></td>
-                                <td class="text-center">
-                                    <a href="<?= base_url('prodi/' . $r['id']) ?>" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                <td class="text-center fw-bold text-dark-blue fs-6" style="white-space: nowrap;"><?= $r['total_dokumen'] ?></td>
+                                <td class="text-center" style="white-space: nowrap;">
+                                    <a href="<?= base_url('prodi/' . $r['id']) ?>" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 text-nowrap shadow-2xs" style="font-size: 0.75rem;">
                                         <i class="fas fa-eye me-1"></i> Buka
                                     </a>
                                 </td>

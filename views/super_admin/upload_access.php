@@ -149,17 +149,17 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </button>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 0.84rem;">
+                <div class="table-responsive" style="overflow-x: hidden;">
+                    <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.83rem;">
                         <thead class="table-light text-secondary fw-semibold" style="font-size: 0.74rem; text-transform: uppercase;">
                             <tr>
-                                <th class="ps-3 py-3" style="width: 40px;">#</th>
-                                <th class="py-3" style="min-width: 140px;">Tahun Akademik</th>
-                                <th class="py-3" style="min-width: 230px;">Siklus Kalender &amp; Dokumen</th>
-                                <th class="py-3" style="min-width: 170px;">Status Aktif (Berjalan)</th>
-                                <th class="py-3" style="min-width: 230px;">Batas Waktu Tenggat (Deadline)</th>
-                                <th class="py-3 text-center" style="min-width: 140px;">Jatah Upload</th>
-                                <th class="py-3 text-end pe-3" style="min-width: 180px;">Aksi LPM</th>
+                                <th class="ps-3 py-2.5" style="width: 4.5%; white-space: nowrap;">#</th>
+                                <th class="py-2.5" style="width: 13%; white-space: nowrap;">Tahun Akademik</th>
+                                <th class="py-2.5" style="width: 20%;">Kalender &amp; Dokumen</th>
+                                <th class="py-2.5" style="width: 15%;">Status Berjalan</th>
+                                <th class="py-2.5" style="width: 18%;">Batas Tenggat (Deadline)</th>
+                                <th class="py-2.5 text-center" style="width: 10.5%;">Jatah Upload</th>
+                                <th class="py-2.5 text-end pe-3" style="width: 19%; white-space: nowrap;">Aksi LPM</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -177,8 +177,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 $docCount = (int)($d['total_dokumen'] ?? 0);
                             ?>
                                 <tr>
-                                    <td class="ps-3 text-muted fw-bold"><?= $dNo++ ?></td>
-                                    <td>
+                                    <td class="ps-3 text-muted fw-bold" style="white-space: nowrap;"><?= $dNo++ ?></td>
+                                    <td style="white-space: nowrap;">
                                         <span class="badge px-3 py-1.5 rounded-pill font-monospace fw-bold fs-6 <?= $isAct ? 'bg-primary text-white shadow-2xs' : 'bg-light text-dark border' ?>">
                                             <?= htmlspecialchars($d['tahun_akademik']) ?>
                                         </span>
@@ -246,30 +246,30 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             </span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="text-end pe-3">
-                                        <div class="d-inline-flex align-items-center gap-1.5">
+                                    <td class="text-end pe-3" style="white-space: nowrap;">
+                                        <div class="d-inline-flex align-items-center gap-1.5 justify-content-end flex-nowrap">
                                             <!-- Tombol Atur Tenggat (Deadline) -->
-                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 shadow-2xs fw-semibold"
-                                                    style="font-size: 0.76rem;"
+                                            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 shadow-2xs fw-semibold text-nowrap"
+                                                    style="font-size: 0.72rem;"
                                                     onclick="openDeadlineModal(<?= htmlspecialchars(json_encode($d)) ?>)"
                                                     title="Atur Batas Tanggal &amp; Jam Tenggat Unggah">
-                                                <i class="fas fa-stopwatch me-1"></i> Atur Tenggat
+                                                <i class="fas fa-stopwatch me-1"></i>Tenggat
                                             </button>
 
                                             <!-- Tombol Buka / Tutup Jatah Upload -->
                                             <?php if (!empty($d['setting_id'])): ?>
-                                                <button type="button" class="btn btn-sm <?= $isOpen ? 'btn-outline-danger' : 'btn-success text-white' ?> rounded-pill px-2.5 py-1 fw-semibold shadow-2xs"
-                                                        style="font-size: 0.76rem;"
+                                                <button type="button" class="btn btn-xs <?= $isOpen ? 'btn-outline-danger' : 'btn-success text-white' ?> rounded-pill px-2.5 py-1 fw-semibold shadow-2xs text-nowrap"
+                                                        style="font-size: 0.72rem;"
                                                         onclick="toggleOpenStatus(<?= $d['setting_id'] ?>, '<?= htmlspecialchars($d['tahun_akademik']) ?>', <?= $isOpen ? 0 : 1 ?>)"
                                                         title="<?= $isOpen ? 'Tutup Jatah Upload' : 'Buka Jatah Upload' ?>">
-                                                    <i class="fas fa-<?= $isOpen ? 'lock' : 'lock-open' ?>"></i>
+                                                    <i class="fas fa-<?= $isOpen ? 'lock' : 'lock-open' ?> me-1"></i>
                                                     <span><?= $isOpen ? 'Tutup' : 'Buka' ?></span>
                                                 </button>
                                             <?php endif; ?>
 
                                             <!-- Tombol Ubah Periode Kalender / Catatan -->
-                                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2 py-1 text-muted shadow-2xs"
-                                                    style="font-size: 0.76rem;"
+                                            <button type="button" class="btn btn-xs btn-light border rounded-circle p-0 text-muted shadow-2xs d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                                                    style="width: 26px; height: 26px; font-size: 0.72rem;"
                                                     onclick="openEditPeriodModal(<?= htmlspecialchars(json_encode($d)) ?>)"
                                                     title="Ubah Tanggal Periode Kalender">
                                                 <i class="fas fa-pencil"></i>
@@ -299,18 +299,18 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <p class="text-muted small mb-0">Belum ada Program Studi atau Fakultas yang mengajukan permohonan buka akses upload.</p>
                     </div>
                 <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" style="font-size: 0.84rem;">
+                    <div class="table-responsive" style="overflow-x: hidden;">
+                        <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.83rem;">
                             <thead class="table-light text-secondary fw-semibold" style="font-size: 0.74rem; text-transform: uppercase;">
                                 <tr>
-                                    <th class="ps-3 py-3" style="width: 40px;">#</th>
-                                    <th class="py-3" style="min-width: 200px;">Unit Pemohon</th>
-                                    <th class="py-3" style="min-width: 140px;">Tahun Akademik</th>
-                                    <th class="py-3" style="min-width: 260px;">Alasan Pengajuan</th>
-                                    <th class="py-3" style="min-width: 140px;">Tanggal Diajukan</th>
-                                    <th class="py-3" style="min-width: 140px;">Status Permohonan</th>
-                                    <th class="py-3" style="min-width: 180px;">Dispensasi Akses</th>
-                                    <th class="py-3 text-end pe-3" style="min-width: 130px;">Aksi</th>
+                                    <th class="ps-3 py-2.5" style="width: 4%;">#</th>
+                                    <th class="py-2.5" style="width: 18%;">Unit Pemohon</th>
+                                    <th class="py-2.5" style="width: 10%;">Tahun Akademik</th>
+                                    <th class="py-2.5" style="width: 26%;">Alasan Pengajuan</th>
+                                    <th class="py-2.5" style="width: 11%;">Diajukan</th>
+                                    <th class="py-2.5" style="width: 11%;">Status</th>
+                                    <th class="py-2.5" style="width: 11%;">Dispensasi</th>
+                                    <th class="py-2.5 text-end pe-3" style="width: 9%;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -340,45 +340,45 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                 TA <?= htmlspecialchars($r['tahun_akademik']) ?>
                                             </span>
                                         </td>
-                                        <td>
-                                            <div class="text-dark small" style="line-height: 1.45; white-space: pre-wrap; font-size: 0.8rem;">
+                                        <td style="word-break: break-word;">
+                                            <div class="text-dark small" style="line-height: 1.4; font-size: 0.78rem; word-break: break-word;">
                                                 <?= htmlspecialchars($r['alasan']) ?>
                                             </div>
                                             <?php if (!empty($r['catatan_lpm'])): ?>
-                                                <div class="p-1.5 mt-1 rounded bg-light border text-muted small" style="font-size: 0.72rem;">
+                                                <div class="p-1 mt-1 rounded bg-light border text-muted small" style="font-size: 0.7rem; word-break: break-word;">
                                                     <strong>Catatan LPM:</strong> <?= htmlspecialchars($r['catatan_lpm']) ?>
                                                 </div>
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <span class="text-muted small">
+                                            <span class="text-muted small" style="font-size: 0.72rem;">
                                                 <i class="far fa-clock me-1"></i><?= date('d M Y, H:i', strtotime($r['created_at'])) ?> WIB
                                             </span>
                                         </td>
                                         <td>
                                             <?php if ($isPending): ?>
-                                                <span class="badge bg-warning bg-opacity-20 text-warning-emphasis border border-warning rounded-pill px-2.5 py-1">
+                                                <span class="badge bg-warning bg-opacity-20 text-warning-emphasis border border-warning rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
                                                     <i class="fas fa-hourglass-half me-1"></i> Menunggu
                                                 </span>
                                             <?php elseif ($isApproved): ?>
                                                 <?php if ($isExpired): ?>
-                                                    <span class="badge bg-secondary rounded-pill px-2.5 py-1">
+                                                    <span class="badge bg-secondary rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
                                                         <i class="fas fa-lock me-1"></i> Telah Berakhir
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-success rounded-pill px-2.5 py-1">
-                                                        <i class="fas fa-check-circle me-1"></i> Disetujui (Aktif)
+                                                    <span class="badge bg-success rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
+                                                        <i class="fas fa-check-circle me-1"></i> Disetujui
                                                     </span>
                                                 <?php endif; ?>
                                             <?php elseif ($isRejected): ?>
-                                                <span class="badge bg-danger rounded-pill px-2.5 py-1">
+                                                <span class="badge bg-danger rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
                                                     <i class="fas fa-times-circle me-1"></i> Ditolak
                                                 </span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
                                             <?php if ($isApproved && !empty($r['akses_berlaku_sampai'])): ?>
-                                                <div class="small fw-semibold <?= $isExpired ? 'text-muted' : 'text-success' ?>" style="font-size: 0.75rem;">
+                                                <div class="small fw-semibold <?= $isExpired ? 'text-muted' : 'text-success' ?>" style="font-size: 0.72rem;">
                                                     <i class="far fa-calendar-check me-1"></i>s/d <?= date('d M Y, H:i', strtotime($r['akses_berlaku_sampai'])) ?> WIB
                                                 </div>
                                                 <?php if (!empty($r['processor_name'])): ?>
@@ -390,23 +390,23 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         </td>
                                         <td class="text-end pe-3">
                                             <?php if ($isPending): ?>
-                                                <div class="d-inline-flex gap-1">
-                                                    <button type="button" class="btn btn-sm btn-success rounded-pill px-2.5 py-1 fw-semibold shadow-2xs"
-                                                            style="font-size: 0.75rem;"
+                                                <div class="d-inline-flex gap-1 justify-content-end flex-wrap">
+                                                    <button type="button" class="btn btn-xs btn-success rounded-pill px-2 py-0.5 fw-semibold shadow-2xs"
+                                                            style="font-size: 0.72rem;"
                                                             onclick="openApproveModal(<?= htmlspecialchars(json_encode($r)) ?>)">
-                                                        <i class="fas fa-check me-1"></i> Setujui
+                                                        <i class="fas fa-check me-0.5"></i> Setujui
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 fw-semibold shadow-2xs"
-                                                            style="font-size: 0.75rem;"
+                                                    <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-0.5 fw-semibold shadow-2xs"
+                                                            style="font-size: 0.72rem;"
                                                             onclick="openRejectModal(<?= htmlspecialchars(json_encode($r)) ?>)">
-                                                        <i class="fas fa-times me-1"></i> Tolak
+                                                        <i class="fas fa-times me-0.5"></i> Tolak
                                                     </button>
                                                 </div>
                                             <?php else: ?>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 shadow-2xs"
-                                                        style="font-size: 0.75rem;"
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5 shadow-2xs"
+                                                        style="font-size: 0.72rem;"
                                                         onclick="openApproveModal(<?= htmlspecialchars(json_encode($r)) ?>)">
-                                                    <i class="fas fa-pen-to-square me-1"></i> Sesuaikan
+                                                    <i class="fas fa-pen-to-square me-0.5"></i> Sesuaikan
                                                 </button>
                                             <?php endif; ?>
                                         </td>
