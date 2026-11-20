@@ -186,7 +186,7 @@ if (!empty($documents)):
                                 </td>
 
                                 <!-- Siklus PPEPP -->
-                                <td class="align-top py-3">
+                                <td class="align-top py-3 text-nowrap" style="width: 165px; min-width: 160px; white-space: nowrap;">
                                     <?= siklus_badge($doc['siklus']) ?>
                                 </td>
 

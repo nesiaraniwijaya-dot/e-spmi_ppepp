@@ -30,7 +30,7 @@ if (!empty($documents)):
             data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . $doc['nomor_dokumen'] . ' ' . ($doc['nama_bidang'] ?? ''))) ?>"
             style="<?= $isPerluPerbaikan ? 'border-left: 4px solid #DC2626 !important; background: #FFFBFB;' : '' ?>">
             
-            <td class="text-center text-muted fw-bold" style="white-space: nowrap; width: 60px; min-width: 60px;"><?= $no++ ?></td>
+            <td class="text-center text-muted fw-bold text-nowrap" style="white-space: nowrap !important; width: 55px; min-width: 55px;"><?= $no++ ?></td>
             
             <td style="overflow: hidden; word-break: break-word;">
                 <div class="fw-bold text-dark-blue mb-1">
@@ -56,7 +56,7 @@ if (!empty($documents)):
                 </div>
             </td>
 
-            <td>
+            <td style="width: 165px; min-width: 160px; white-space: nowrap;" class="text-nowrap">
                 <?= siklus_badge($doc['siklus']) ?>
             </td>
 

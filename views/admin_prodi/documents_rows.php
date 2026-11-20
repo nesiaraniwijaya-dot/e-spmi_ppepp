@@ -26,7 +26,7 @@ if (!empty($documents)):
             data-tahun-akademik="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
             data-status-review="<?= $status ?>"
             style="<?= $isPerluPerbaikan ? 'border-left: 4px solid #DC2626 !important; background: #FFFBFB;' : '' ?>">
-            <td class="text-center fw-semibold text-muted" style="white-space: nowrap; width: 60px; min-width: 60px;"><?= $no++ ?></td>
+            <td class="text-center fw-semibold text-muted text-nowrap" style="white-space: nowrap !important; width: 55px; min-width: 55px;"><?= $no++ ?></td>
             <td style="overflow: hidden; word-break: break-word;">
                 <div class="fw-bold text-dark-blue mb-0.5"><?= htmlspecialchars($doc['nama_dokumen']) ?></div>
                 <?php if ($doc['nomor_dokumen']): ?>
@@ -36,7 +36,7 @@ if (!empty($documents)):
                     <span class="badge bg-light text-secondary border me-1" style="font-size: 0.68rem;"><i class="far fa-calendar-alt text-primary me-1"></i>TA <?= htmlspecialchars($doc['tahun_akademik']) ?></span>
                 <?php endif; ?>
             </td>
-            <td>
+            <td style="width: 165px; min-width: 160px; white-space: nowrap;" class="text-nowrap">
                 <?= siklus_badge($doc['siklus']) ?>
             </td>
             <td style="min-width: 0; max-width: 100%; overflow: hidden;">

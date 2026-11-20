@@ -517,7 +517,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <th style="width: 45px;" class="text-center">No</th>
                             <th>Nama &amp; Nomor Dokumen</th>
                             <th>Unit Sasaran</th>
-                            <th style="width: 130px;">Siklus PPEPP</th>
+                            <th style="width: 165px; min-width: 160px;" class="text-nowrap">Siklus PPEPP</th>
                             <th>Bidang &amp; Standar</th>
                             <th>Status Review</th>
                             <th class="text-center" style="width: 100px;">Aksi</th>
@@ -549,7 +549,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         </span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= siklus_badge($rd['siklus']) ?></td>
+                                <td class="text-nowrap" style="white-space: nowrap; width: 165px;"><?= siklus_badge($rd['siklus']) ?></td>
                                 <td>
                                     <div class="small fw-semibold text-dark"><?= htmlspecialchars($rd['nama_bidang'] ?: 'Umum / Lainnya') ?></div>
                                     <?php if (!empty($rd['nama_sub_bidang'])): ?>

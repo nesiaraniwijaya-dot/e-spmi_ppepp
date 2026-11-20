@@ -337,16 +337,16 @@ if (!isset($siklusCounts) || !is_array($siklusCounts)) {
 
         <!-- Dokumen Table -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" id="gpmDocumentsTable">
+            <table class="table table-hover align-middle mb-0" id="gpmDocumentsTable" style="min-width: 1100px;">
                 <thead class="table-light text-uppercase small text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">
                     <tr>
-                        <th class="ps-3 py-3" style="width: 45px;">No</th>
+                        <th class="ps-3 py-3 text-nowrap" style="width: 45px;">No</th>
                         <th class="py-3" style="width: 140px;">Unit Sasaran</th>
                         <th class="py-3" style="min-width: 250px;">Dokumen Mutu & Berkas</th>
-                        <th class="py-3" style="width: 130px;">Siklus PPEPP</th>
+                        <th class="py-3 text-nowrap" style="width: 165px; min-width: 160px;">Siklus PPEPP</th>
                         <th class="py-3" style="min-width: 170px;">Bidang &amp; Standar</th>
                         <th class="py-3" style="min-width: 180px;">Status &amp; Tahap Review</th>
-                        <th class="text-end pe-3 py-3" style="width: 140px;">Aksi</th>
+                        <th class="text-end pe-3 py-3 text-nowrap" style="width: 140px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y" id="gpmDocTableBody">
