@@ -1,13 +1,14 @@
 <?php
 /**
- * Update Pimpinan Fakultas & Program Studi sesuai Data Excel Resmi
- * SPMI PPEPP UNIKA Soegijapranata
+ * update_pimpinan_official.php
+ * Sinkronisasi Pimpinan Dekanat & Program Studi sesuai data resmi Excel.
+ * Jika nama Wakil Dekan atau Sekprodi tidak tercantum di Excel, maka dikosongkan (NULL).
  */
 require_once __DIR__ . '/../config/database.php';
 
 $db = Database::getInstance()->getConnection();
 
-echo "Memperbarui Data Pimpinan Fakultas (Dekan)...\n";
+echo "=== SINKRONISASI PIMPINAN FAKULTAS (DEKAN) ===\n";
 
 $dekanData = [
     1 => 'Dr. B. Tyas Susanti, MA', // FAD
@@ -22,13 +23,16 @@ $dekanData = [
     10 => 'B. Danang Setianto, S.H., LL.M., Ph.D', // FITL
 ];
 
+// Kosongkan nama_wadek & nidn_wadek karena tidak ada di official Excel auditee
+$db->exec("UPDATE fakultas SET nama_wadek = NULL, nidn_wadek = NULL");
+
 $stmtDekan = $db->prepare("UPDATE fakultas SET nama_dekan = ? WHERE id = ?");
 foreach ($dekanData as $fakId => $namaDekan) {
     $stmtDekan->execute([$namaDekan, $fakId]);
-    echo "  [OK] Fakultas ID {$fakId}: {$namaDekan}\n";
+    echo "  [OK] Fakultas ID {$fakId}: {$namaDekan} (Wadek: Dikosongkan)\n";
 }
 
-echo "\nMemperbarui Data Ketua Program Studi (Kaprodi)...\n";
+echo "\n=== SINKRONISASI KETUA PROGRAM STUDI (KAPRODI) ===\n";
 
 $kaprodiData = [
     // FAD
@@ -37,9 +41,9 @@ $kaprodiData = [
     23 => 'Dr.,Ir. Robert Riyanto W., M.T.', // S2 Arsitektur
     24 => 'Prof., Dr.-Ing., L.M.F. Purwanto', // S3 Arsitektur
 
-    // FIKOM
-    1 => 'Dr. Albertus Dwiyoga Widiantoro, S.Kom., M.Kom.', // S1 Teknik Informatika (email: ti@unika.ac.id)
-    2 => 'Yonathan Purbo Santosa, S.Kom., M.Sc.', // S1 Sistem Informasi (email: si@unika.ac.id)
+    // FIKOM (Sesuai arahan: Yonathan = TI, Albertus = SI)
+    1 => 'Yonathan Purbo Santosa, S.Kom., M.Sc.', // S1 Teknik Informatika
+    2 => 'Dr. Albertus Dwiyoga Widiantoro, S.Kom., M.Kom.', // S1 Sistem Informasi
 
     // FEB
     4 => 'G. Freddy Koeswoyo, SE., M.Si', // S1 Akuntansi
@@ -79,10 +83,17 @@ $kaprodiData = [
     29 => 'Prof. Dr. Theresia Dwi Hastuti S.E., M.Si., AK., CA., CPA., CGAA.', // S3 Ilmu Lingkungan
 ];
 
+// Kosongkan nama_sekprodi & nidn_sekprodi karena tidak ada di official Excel auditee
+$db->exec("UPDATE prodis SET nama_sekprodi = NULL, nidn_sekprodi = NULL");
+
 $stmtKaprodi = $db->prepare("UPDATE prodis SET nama_kaprodi = ? WHERE id = ?");
 foreach ($kaprodiData as $prodiId => $namaKaprodi) {
     $stmtKaprodi->execute([$namaKaprodi, $prodiId]);
-    echo "  [OK] Prodi ID {$prodiId}: {$namaKaprodi}\n";
+    echo "  [OK] Prodi ID {$prodiId}: {$namaKaprodi} (Sekprodi: Dikosongkan)\n";
 }
 
-echo "\nSelesai! Seluruh nama Dekan dan Kaprodi telah disinkronkan sesuai data Excel.\n";
+// Sinkronkan akun user login kaprodi FIKOM agar tepat mengarah ke prodi masing-masing
+$db->exec("UPDATE users SET prodi_id = 1 WHERE name LIKE '%Yonathan Purbo Santosa%' AND role = 'kaprodi'");
+$db->exec("UPDATE users SET prodi_id = 2 WHERE name LIKE '%Albertus Dwiyoga Widiantoro%' AND role = 'kaprodi'");
+
+echo "\nSelesai! Seluruh nama Dekan dan Kaprodi telah disinkronkan, sedangkan Wadek dan Sekprodi telah dikosongkan sesuai instruksi.\n";
