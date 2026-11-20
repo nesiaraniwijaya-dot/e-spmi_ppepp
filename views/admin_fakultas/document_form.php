@@ -723,15 +723,14 @@ $siklusDefinitions = [
                 </div>
                 <div class="d-flex flex-column align-items-stretch align-items-md-end gap-1.5">
                     <button type="button" id="btnAddDocCard"
-                            class="btn btn-sm btn-secondary opacity-75 border-0 rounded-pill px-3.5 py-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-xs"
-                            style="cursor: not-allowed;"
-                            onclick="addNewDocCard()" disabled
-                            title="Lengkapi seluruh isian wajib kartu saat ini sebelum menambah kartu baru">
+                            class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3.5 py-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-xs"
+                            onclick="addNewDocCard()"
+                            title="Tambah Kartu Dokumen">
                         <i class="fas fa-plus"></i>
                         <span>Tambah Kartu Dokumen</span>
                     </button>
-                    <div id="addCardRequirementHint" class="text-warning-emphasis bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-pill px-2.5 py-1 fw-medium text-md-end" style="font-size: 0.72rem; line-height: 1.3;">
-                        <i class="fas fa-circle-info me-1"></i>Lengkapi semua isian wajib kartu saat ini terlebih dahulu.
+                    <div id="addCardRequirementHint" class="text-warning-emphasis bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-pill px-2.5 py-1 fw-medium text-md-end d-none" style="font-size: 0.72rem; line-height: 1.3;">
+                        <i class="fas fa-circle-info me-1"></i>Batas maksimal 10 kartu dokumen telah tercapai.
                     </div>
                 </div>
             </div>
@@ -2403,6 +2402,17 @@ function addNewDocCard(presetData = null) {
 
         cardCounter++;
         updateTotalCardCounter();
+
+        // Buka kartu baru & scroll ke kartu
+        const newCardBody = document.getElementById(`cardBody_${currentIdx}`);
+        if (newCardBody) newCardBody.style.display = 'block';
+        const newCardEl = document.getElementById(`docCard_${currentIdx}`);
+        if (newCardEl && currentIdx > 0) {
+            newCardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        if (typeof window.refreshBatchAddCardState === 'function') {
+            window.refreshBatchAddCardState();
+        }
     } catch (err) {
         console.error('Error saat merender kartu formulir dokumen:', err);
     }

@@ -221,39 +221,28 @@
         const hint = document.getElementById('addCardRequirementHint');
         if (!btn) return;
 
-        const check = window.validateAllBatchCardsComplete(10);
-        if (check.valid) {
-            btn.disabled = false;
-            btn.classList.remove('btn-secondary', 'opacity-75');
-            btn.classList.add('btn-primary', 'bg-scu-blue');
-            btn.style.cursor = '';
-            btn.title = 'Tambahkan kartu dokumen baru';
-            if (hint) {
-                hint.classList.add('d-none');
-                hint.innerHTML = '';
-            }
-            return;
-        }
+        const cards = document.querySelectorAll('#batchCardsContainer .doc-batch-card');
+        const cardCount = cards ? cards.length : 0;
 
-        btn.disabled = true;
-        btn.classList.remove('btn-primary', 'bg-scu-blue');
-        btn.classList.add('btn-secondary', 'opacity-75');
-        btn.style.cursor = 'not-allowed';
-
-        if (check.reasonType === 'max_limit') {
-            btn.title = check.message;
+        if (cardCount >= 10) {
+            btn.disabled = true;
+            btn.classList.remove('btn-primary', 'bg-scu-blue');
+            btn.classList.add('btn-secondary', 'opacity-75');
+            btn.style.cursor = 'not-allowed';
+            btn.title = 'Maksimal pengunggahan sekaligus adalah 10 dokumen.';
             if (hint) {
                 hint.classList.remove('d-none');
                 hint.innerHTML = `<i class="fas fa-circle-info me-1"></i>Batas maksimal 10 kartu dokumen telah tercapai.`;
             }
-        } else if (check.firstInvalid) {
-            const inv = check.firstInvalid;
-            const summaryItems = inv.missing.slice(0, 3).join(', ')
-                + (inv.missing.length > 3 ? ` (+${inv.missing.length - 3} lainnya)` : '');
-            btn.title = `Lengkapi Dokumen #${inv.displayNumber}: ${inv.missing.join(', ')}`;
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('btn-secondary', 'opacity-75');
+            btn.classList.add('btn-primary', 'bg-scu-blue');
+            btn.style.cursor = 'pointer';
+            btn.title = `Tambahkan kartu dokumen baru (${cardCount}/10)`;
             if (hint) {
-                hint.classList.remove('d-none');
-                hint.innerHTML = `<i class="fas fa-circle-info me-1"></i>Lengkapi <strong>Dokumen #${inv.displayNumber}</strong> dulu: ${escapeTextHtml(summaryItems)}`;
+                hint.classList.add('d-none');
+                hint.innerHTML = '';
             }
         }
     };
@@ -280,13 +269,18 @@
 
     window.canProceedAddDocCard = function() {
         const cards = document.querySelectorAll('#batchCardsContainer .doc-batch-card');
-        if (!cards || cards.length === 0) return true;
-
-        const check = window.validateAllBatchCardsComplete(10);
-        window.refreshBatchAddCardState();
-        if (!check.valid) {
-            window.focusFirstIncompleteBatchField(check);
-            alert(check.message);
+        if (cards && cards.length >= 10) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Batas Maksimal Dokumen',
+                    text: 'Maksimal pengunggahan sekaligus dalam satu batch adalah 10 dokumen.',
+                    confirmButtonColor: '#2563EB'
+                });
+            } else {
+                alert('Maksimal pengunggahan sekaligus dalam satu batch adalah 10 dokumen.');
+            }
+            window.refreshBatchAddCardState();
             return false;
         }
         return true;
