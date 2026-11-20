@@ -159,6 +159,11 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                                     <div class="text-muted text-truncate" style="font-size: 0.7rem;">
                                         <?= !empty($p['nidn_kaprodi']) ? 'NIDN: ' . htmlspecialchars($p['nidn_kaprodi']) : 'Program Studi ' . htmlspecialchars($p['jenjang']) ?>
                                     </div>
+                                    <?php if (!empty($p['nama_sekprodi'])): ?>
+                                        <div class="border-top pt-1.5 mt-1.5 text-truncate" style="font-size: 0.7rem;">
+                                            <span class="text-muted">Sekprodi:</span> <span class="fw-semibold text-dark"><?= htmlspecialchars($p['nama_sekprodi']) ?></span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
