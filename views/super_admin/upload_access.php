@@ -153,17 +153,17 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </button>
                 </div>
 
-                <div class="table-responsive" style="overflow-x: hidden;">
-                    <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.83rem;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 w-100" style="min-width: 1100px; font-size: 0.83rem;">
                         <thead class="table-light text-secondary fw-semibold" style="font-size: 0.74rem; text-transform: uppercase;">
                             <tr>
-                                <th class="ps-3 py-2.5" style="width: 4.5%; white-space: nowrap;">#</th>
-                                <th class="py-2.5" style="width: 13%; white-space: nowrap;">Tahun Akademik</th>
-                                <th class="py-2.5" style="width: 20%;">Kalender &amp; Dokumen</th>
-                                <th class="py-2.5" style="width: 15%;">Status Berjalan</th>
-                                <th class="py-2.5" style="width: 18%;">Batas Tenggat (Deadline)</th>
-                                <th class="py-2.5 text-center" style="width: 10.5%;">Jatah Upload</th>
-                                <th class="py-2.5 text-end pe-3" style="width: 19%; white-space: nowrap;">Aksi LPM</th>
+                                <th class="ps-3 py-2.5 text-center text-nowrap" style="width: 45px; min-width: 45px;">#</th>
+                                <th class="py-2.5 text-nowrap" style="width: 130px; min-width: 125px;">Tahun Akademik</th>
+                                <th class="py-2.5" style="min-width: 210px;">Kalender &amp; Dokumen</th>
+                                <th class="py-2.5 text-nowrap" style="width: 195px; min-width: 190px;">Status Berjalan</th>
+                                <th class="py-2.5 text-nowrap" style="min-width: 210px;">Batas Tenggat (Deadline)</th>
+                                <th class="py-2.5 text-center text-nowrap" style="width: 115px; min-width: 110px;">Jatah Upload</th>
+                                <th class="py-2.5 text-end pe-3 text-nowrap" style="width: 180px; min-width: 175px;">Aksi LPM</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -200,37 +200,37 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             </span>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="text-nowrap" style="width: 195px; min-width: 190px; white-space: nowrap;">
                                         <!-- Switch On/Off Tahun Akademik Aktif -->
-                                        <div class="form-check form-switch d-inline-flex align-items-center gap-2 m-0 p-0">
+                                        <div class="form-check form-switch d-inline-flex align-items-center gap-2 m-0 p-0 flex-nowrap">
                                             <input class="form-check-input ms-0 shadow-2xs switch-ta-active" 
                                                    type="checkbox" 
                                                    role="switch" 
                                                    id="switch_ta_<?= $d['id'] ?>" 
                                                    <?= $isAct ? 'checked' : '' ?>
-                                                   style="cursor: pointer; width: 2.5em; height: 1.3em;"
+                                                   style="cursor: pointer; width: 2.25em; height: 1.18em; flex-shrink: 0;"
                                                    data-id="<?= $d['id'] ?>"
                                                    data-ta="<?= htmlspecialchars($d['tahun_akademik']) ?>"
                                                    onchange="handleToggleActiveYear(<?= $d['id'] ?>, '<?= htmlspecialchars($d['tahun_akademik']) ?>', this)">
-                                            <label class="form-check-label small fw-semibold cursor-pointer user-select-none mb-0" for="switch_ta_<?= $d['id'] ?>" id="label_ta_<?= $d['id'] ?>">
+                                            <label class="form-check-label small fw-semibold cursor-pointer user-select-none mb-0 text-nowrap" for="switch_ta_<?= $d['id'] ?>" id="label_ta_<?= $d['id'] ?>">
                                                 <?php if ($isAct): ?>
-                                                    <span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs">
-                                                        <i class="fas fa-circle-check me-1"></i> Aktif Berjalan
+                                                    <span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.72rem; letter-spacing: 0.2px;">
+                                                        <i class="fas fa-circle-check"></i> Aktif Berjalan
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1">
+                                                    <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
                                                         Nonaktif
                                                     </span>
                                                 <?php endif; ?>
                                             </label>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="text-nowrap" style="white-space: nowrap;">
                                         <?php if (!empty($d['deadline_upload'])): ?>
-                                            <div class="fw-semibold <?= $isPastDeadline ? 'text-danger' : 'text-dark' ?>" style="font-size: 0.8rem;">
+                                            <div class="fw-semibold <?= $isPastDeadline ? 'text-danger' : 'text-dark' ?>" style="font-size: 0.8rem; white-space: nowrap;">
                                                 <i class="far fa-clock me-1 text-primary"></i><?= date('d M Y, H:i', strtotime($d['deadline_upload'])) ?> WIB
                                             </div>
-                                            <div class="small <?= $isPastDeadline ? 'text-danger' : 'text-success' ?>" style="font-size: 0.72rem;">
+                                            <div class="small <?= $isPastDeadline ? 'text-danger' : 'text-success' ?>" style="font-size: 0.72rem; white-space: nowrap;">
                                                 <?= $isPastDeadline ? '<i class="fas fa-lock me-1"></i>Telah Berakhir (Terkunci)' : '<i class="fas fa-unlock me-1"></i>Unggah Dibuka Bebas' ?>
                                             </div>
                                         <?php else: ?>
@@ -239,7 +239,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             </span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center text-nowrap" style="white-space: nowrap;">
                                         <?php if ($isOpen): ?>
                                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1 rounded-pill fw-semibold shadow-2xs">
                                                 <i class="fas fa-circle-check me-1"></i> DIBUKA
@@ -303,8 +303,8 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <p class="text-muted small mb-0">Belum ada Program Studi atau Fakultas yang mengajukan permohonan buka akses upload.</p>
                     </div>
                 <?php else: ?>
-                    <div class="table-responsive" style="overflow-x: hidden;">
-                        <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed; font-size: 0.83rem;">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 w-100" style="min-width: 1050px; font-size: 0.83rem;">
                             <thead class="table-light text-secondary fw-semibold" style="font-size: 0.74rem; text-transform: uppercase;">
                                 <tr>
                                     <th class="ps-3 py-2.5" style="width: 4%;">#</th>
@@ -733,12 +733,12 @@ function handleToggleActiveYear(id, taName, switchEl) {
                 if (parseInt(swId) === parseInt(id)) {
                     sw.checked = true;
                     if (lbl) {
-                        lbl.innerHTML = '<span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs"><i class="fas fa-circle-check me-1"></i> Aktif Berjalan</span>';
+                        lbl.innerHTML = '<span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.72rem; letter-spacing: 0.2px;"><i class="fas fa-circle-check"></i> Aktif Berjalan</span>';
                     }
                 } else if (swId) {
                     sw.checked = false;
                     if (lbl) {
-                        lbl.innerHTML = '<span class="badge bg-light text-muted border rounded-pill px-2.5 py-1">Nonaktif</span>';
+                        lbl.innerHTML = '<span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">Nonaktif</span>';
                     }
                 }
                 sw.disabled = false;
