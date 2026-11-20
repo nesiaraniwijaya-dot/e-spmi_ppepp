@@ -146,22 +146,10 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                     </div>
 
                     <div class="mb-3">
-                        <label for="user_email" class="form-label fw-semibold small text-secondary">Alamat Email Institusi *</label>
+                        <label for="user_email" class="form-label fw-semibold small text-secondary">Alamat Email Institusi (@unika.ac.id) *</label>
                         <input type="email" class="form-control" id="user_email" name="email" placeholder="nama@unika.ac.id" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="user_password" class="form-label fw-semibold small text-secondary">
-                            Kata Sandi (Password) <span class="badge bg-light text-secondary border font-normal">Opsional (Google SSO)</span> <span id="pwdHelp" class="text-muted fw-normal"></span>
-                        </label>
-                        <div class="input-group mb-1">
-                            <input type="password" class="form-control" id="user_password" name="password" placeholder="Kosongkan jika pengguna login via Google SSO" autocomplete="new-password">
-                            <button class="btn btn-outline-secondary" type="button" id="btnTogglePwdModal" onclick="toggleModalPwdVisibility()" title="Lihat / Sembunyikan Password">
-                                <i class="fas fa-eye" id="iconTogglePwdModal"></i>
-                            </button>
-                        </div>
                         <div class="form-text text-muted" style="font-size: 0.75rem;">
-                            <i class="fab fa-google text-primary me-1"></i> Pengguna yang login via <strong>Google SSO</strong> tidak memerlukan kata sandi lokal. Kata sandi dikelola secara terpusat oleh akun Google institusi pengguna.
+                            <i class="fab fa-google text-primary me-1"></i> Autentikasi menggunakan <strong>Google SSO (@unika.ac.id)</strong> resmi universitas tanpa memerlukan kata sandi manual.
                         </div>
                     </div>
 
@@ -185,12 +173,6 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <optgroup label="Tingkat Program Studi">
                                 <option value="kaprodi" selected>Ketua Program Studi (Kaprodi)</option>
                                 <option value="sekprodi">Sekretaris Program Studi (Sekprodi)</option>
-                            </optgroup>
-                            <optgroup label="Tingkat Pengguna / Publik">
-                                <option value="pengguna">Pengguna / Civitas (Akses Penuh Dokumen Web Publik)</option>
-                            </optgroup>
-                            <optgroup label="Tingkat Pengujian / Developer (Multi-Role)">
-                                <option value="testing">Akun Pengujian / Testing (Akses Seluruh Role)</option>
                             </optgroup>
                         </select>
                     </div>
@@ -268,12 +250,6 @@ function resetUserForm() {
     document.getElementById('user_id').value = '';
     document.getElementById('user_name').value = '';
     document.getElementById('user_email').value = '';
-    document.getElementById('user_password').value = '';
-    document.getElementById('user_password').placeholder = 'Kosongkan jika pengguna login via Google SSO';
-    document.getElementById('user_password').type = 'password';
-    document.getElementById('iconTogglePwdModal').className = 'fas fa-eye';
-    document.getElementById('user_password').required = false;
-    document.getElementById('pwdHelp').textContent = '';
     document.getElementById('user_role').value = 'kaprodi';
     document.getElementById('user_prodi_id').value = '';
     document.getElementById('user_fakultas_id').value = '';
@@ -286,29 +262,11 @@ function editUser(data) {
     document.getElementById('user_id').value = data.id;
     document.getElementById('user_name').value = data.name;
     document.getElementById('user_email').value = data.email;
-    document.getElementById('user_password').value = '';
-    document.getElementById('user_password').placeholder = 'Kosongkan jika tidak ingin mengubah password';
-    document.getElementById('user_password').type = 'password';
-    document.getElementById('iconTogglePwdModal').className = 'fas fa-eye';
-    document.getElementById('user_password').required = false;
-    document.getElementById('pwdHelp').textContent = '';
     document.getElementById('user_role').value = data.role;
     document.getElementById('user_prodi_id').value = data.prodi_id || '';
     document.getElementById('user_fakultas_id').value = data.fakultas_id || data.resolved_fakultas_id || '';
     document.getElementById('user_is_active').checked = data.is_active == 1;
     handleRoleChange(data.role);
-}
-
-function toggleModalPwdVisibility() {
-    const input = document.getElementById('user_password');
-    const icon = document.getElementById('iconTogglePwdModal');
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.className = 'fas fa-eye-slash';
-    } else {
-        input.type = 'password';
-        icon.className = 'fas fa-eye';
-    }
 }
 
 </script>

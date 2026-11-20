@@ -626,9 +626,8 @@ class SuperAdminController extends Controller {
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
-        $password = trim($_POST['password'] ?? '');
         $role = trim($_POST['role'] ?? 'kaprodi');
-        $allowedUserRoles = array_merge(Auth::LPM_ROLES, ['dekan', 'wadek', 'gpm', 'kaprodi', 'sekprodi', 'pengguna', 'testing']);
+        $allowedUserRoles = array_merge(Auth::LPM_ROLES, ['dekan', 'wadek', 'gpm', 'kaprodi', 'sekprodi']);
         if (!in_array($role, $allowedUserRoles, true)) {
             Auth::setFlash('danger', 'Role pengguna tidak valid.');
             redirect('admin/users');
@@ -652,21 +651,14 @@ class SuperAdminController extends Controller {
             $stmtOld->execute([$id]);
             $oldData = $stmtOld->fetch();
 
-            if (!empty($password)) {
-                $hashed = password_hash($password, PASSWORD_BCRYPT);
-                $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, password = ?, password_plain = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
-                $stmt->execute([$name, $email, $hashed, $password, $role, $prodiId, $fakultasId, $isActive, $id]);
-            } else {
-                $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
-                $stmt->execute([$name, $email, $role, $prodiId, $fakultasId, $isActive, $id]);
-            }
+            $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
+            $stmt->execute([$name, $email, $role, $prodiId, $fakultasId, $isActive, $id]);
 
             AuditLogger::log('UPDATE', 'Manajemen User', (string)$id, $name, $oldData, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId, 'is_active' => $isActive]);
             Auth::setFlash('success', "Akun pengguna '{$name}' berhasil diperbarui.");
         } else {
-            $plainPwd = !empty($password) ? $password : '-(Diatur via Google SSO)-';
-            $pwdToHash = !empty($password) ? $password : bin2hex(random_bytes(10));
-            $hashed = password_hash($pwdToHash, PASSWORD_BCRYPT);
+            $plainPwd = '-(Diatur via Google SSO)-';
+            $hashed = password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT);
 
             $stmt = $this->db->prepare("INSERT INTO users (name, email, password, password_plain, role, prodi_id, fakultas_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([$name, $email, $hashed, $plainPwd, $role, $prodiId, $fakultasId, $isActive]);
