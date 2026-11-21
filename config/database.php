@@ -4,6 +4,45 @@
  * SPMI PPEPP UNIKA Soegijapranata
  */
 
+// 1. Dukungan pembacaan file .env jika tersedia di root project
+if (file_exists(__DIR__ . '/../.env')) {
+    $env_lines = @file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($env_lines) {
+        foreach ($env_lines as $line) {
+            $line = trim($line);
+            if ($line === '' || strpos($line, '#') === 0) continue;
+            if (strpos($line, '=') !== false) {
+                list($env_key, $env_val) = explode('=', $line, 2);
+                $env_key = trim($env_key);
+                $env_val = trim($env_val, " \t\n\r\0\x0B\"'");
+                if (getenv($env_key) === false) {
+                    putenv("$env_key=$env_val");
+                    $_ENV[$env_key] = $env_val;
+                    $_SERVER[$env_key] = $env_val;
+                }
+            }
+        }
+    }
+}
+
+// 2. Dukungan Google OAuth via environment (.env, server env, atau config/env.php)
+if (!defined('GOOGLE_CLIENT_ID')) {
+    $envClientId = getenv('GOOGLE_CLIENT_ID') ?: ($_ENV['GOOGLE_CLIENT_ID'] ?? ($_SERVER['GOOGLE_CLIENT_ID'] ?? ''));
+    if (!$envClientId && file_exists(__DIR__ . '/env.php')) {
+        $envData = require __DIR__ . '/env.php';
+        $envClientId = $envData['GOOGLE_CLIENT_ID'] ?? '';
+    }
+    define('GOOGLE_CLIENT_ID', $envClientId ?: '');
+}
+if (!defined('GOOGLE_CLIENT_SECRET')) {
+    $envClientSecret = getenv('GOOGLE_CLIENT_SECRET') ?: ($_ENV['GOOGLE_CLIENT_SECRET'] ?? ($_SERVER['GOOGLE_CLIENT_SECRET'] ?? ''));
+    if (!$envClientSecret && file_exists(__DIR__ . '/env.php')) {
+        $envData = require __DIR__ . '/env.php';
+        $envClientSecret = $envData['GOOGLE_CLIENT_SECRET'] ?? '';
+    }
+    define('GOOGLE_CLIENT_SECRET', $envClientSecret ?: '');
+}
+
 class Database {
     private static ?Database $instance = null;
     private ?PDO $pdo = null;
@@ -35,6 +74,28 @@ class Database {
             $this->dbname = $env['DB_DATABASE'] ?? $this->dbname;
             $this->username = $env['DB_USERNAME'] ?? $this->username;
             $this->password = $env['DB_PASSWORD'] ?? $this->password;
+        }
+
+        // Override dari environment variables (.env / server env) jika tersedia
+        $envHost = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? ''));
+        if ($envHost !== '') $this->host = $envHost;
+
+        $envPort = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? ($_SERVER['DB_PORT'] ?? ''));
+        if ($envPort !== '') $this->port = $envPort;
+
+        $envDb = getenv('DB_DATABASE') ?: ($_ENV['DB_DATABASE'] ?? ($_SERVER['DB_DATABASE'] ?? ''));
+        if ($envDb !== '') $this->dbname = $envDb;
+
+        $envUser = getenv('DB_USERNAME') ?: ($_ENV['DB_USERNAME'] ?? ($_SERVER['DB_USERNAME'] ?? ''));
+        if ($envUser !== '') $this->username = $envUser;
+
+        $envPass = getenv('DB_PASSWORD');
+        if ($envPass !== false) {
+            $this->password = $envPass;
+        } elseif (isset($_ENV['DB_PASSWORD'])) {
+            $this->password = $_ENV['DB_PASSWORD'];
+        } elseif (isset($_SERVER['DB_PASSWORD'])) {
+            $this->password = $_SERVER['DB_PASSWORD'];
         }
 
         try {

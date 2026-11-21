@@ -42,12 +42,37 @@ if (!defined('APP_NAME')) {
     // Image Optimizer & WebP Converter
     require_once ROOT_PATH . '/core/ImageOptimizer.php';
 
+    // Dukungan pembacaan file .env jika tersedia di root project
+    if (file_exists(ROOT_PATH . '/.env')) {
+        $env_lines = @file(ROOT_PATH . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($env_lines) {
+            foreach ($env_lines as $line) {
+                $line = trim($line);
+                if ($line === '' || strpos($line, '#') === 0) continue;
+                if (strpos($line, '=') !== false) {
+                    list($env_key, $env_val) = explode('=', $line, 2);
+                    $env_key = trim($env_key);
+                    $env_val = trim($env_val, " \t\n\r\0\x0B\"'");
+                    if (getenv($env_key) === false) {
+                        putenv("$env_key=$env_val");
+                        $_ENV[$env_key] = $env_val;
+                        $_SERVER[$env_key] = $env_val;
+                    }
+                }
+            }
+        }
+    }
+
     // Load env variables if available
     $envConfig = file_exists(__DIR__ . '/env.php') ? (require __DIR__ . '/env.php') : [];
 
     // Google SSO (OAuth 2.0) Configuration
-    define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: ($envConfig['GOOGLE_CLIENT_ID'] ?? ''));
-    define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: ($envConfig['GOOGLE_CLIENT_SECRET'] ?? ''));
+    if (!defined('GOOGLE_CLIENT_ID')) {
+        define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: ($_ENV['GOOGLE_CLIENT_ID'] ?? ($_SERVER['GOOGLE_CLIENT_ID'] ?? ($envConfig['GOOGLE_CLIENT_ID'] ?? ''))));
+    }
+    if (!defined('GOOGLE_CLIENT_SECRET')) {
+        define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: ($_ENV['GOOGLE_CLIENT_SECRET'] ?? ($_SERVER['GOOGLE_CLIENT_SECRET'] ?? ($envConfig['GOOGLE_CLIENT_SECRET'] ?? ''))));
+    }
 
     // Otomatis upgrade ke HTTPS untuk redirect URI Google OAuth jika berada di hosting online
     $oauthRedirect = BASE_URL . '/auth/google/callback';
