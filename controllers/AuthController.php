@@ -183,6 +183,10 @@ class AuthController extends Controller {
                 redirect(ltrim($returnUrl, '/'));
             }
             redirect(Auth::getDashboardRoute());
+        } elseif (str_contains($googleEmail, 'student.') || str_contains($googleEmail, '@student.')) {
+            // Akun email mahasiswa (student.unika.ac.id) wajib terdaftar di Manajemen Pengguna
+            Auth::setFlash('danger', 'Akun mahasiswa Google <strong>' . htmlspecialchars($googleEmail) . '</strong> belum terdaftar di Manajemen Pengguna sistem E-SPMI. Silakan hubungi Administrator LPM jika Anda memerlukan akses.');
+            redirect('login');
         } elseif (str_ends_with($googleEmail, '@unika.ac.id') || str_ends_with($googleEmail, '@unica.ac.id') || str_ends_with($googleEmail, '.unika.ac.id') || str_ends_with($googleEmail, '.unica.ac.id')) {
             $_SESSION['user_id'] = 'civitas_' . substr(md5($googleEmail), 0, 10);
             $_SESSION['user_name'] = !empty($googleName) ? $googleName : explode('@', $googleEmail)[0];
