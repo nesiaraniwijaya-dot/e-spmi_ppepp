@@ -54,18 +54,16 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                               style="background: rgba(59, 130, 246, 0.15); color: #93C5FD; border: 1px solid rgba(59, 130, 246, 0.35); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px;">
                             PIMPINAN DEKANAT FAKULTAS
                         </span>
-                        <?php if (!empty($fakultas['periode_jabatan'])): ?>
-                            <span class="text-white-50 small d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
-                                <i class="far fa-calendar-check text-info opacity-75"></i>
-                                <span><?= htmlspecialchars($fakultas['periode_jabatan']) ?></span>
-                            </span>
-                        <?php endif; ?>
+                        <span class="text-white-50 small d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                            <i class="fas fa-landmark text-primary-subtle opacity-75"></i>
+                            <span><?= htmlspecialchars($fakultas['singkatan'] ?? $fakultas['nama_fakultas']) ?></span>
+                        </span>
                     </div>
 
                     <!-- Dekan Profile Row -->
                     <div class="mb-3">
                         <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">
-                            Dekan Fakultas
+                            <i class="fas fa-user-tie text-info me-1"></i>Dekan Fakultas
                         </div>
                         <div class="fw-bold text-white text-truncate mt-1" style="font-size: 1.05rem; letter-spacing: -0.2px; line-height: 1.35;" title="<?= htmlspecialchars($fakultas['nama_dekan'] ?: 'Belum ditentukan') ?>">
                             <?= htmlspecialchars($fakultas['nama_dekan'] ?: 'Belum ditentukan') ?>
@@ -82,13 +80,19 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                     <?php if (!empty($fakultas['nama_wadek'])): ?>
                         <div class="executive-meta-subpanel">
                             <div class="d-flex align-items-center justify-content-between mb-1.5">
-                                <span class="text-white-50 d-flex align-items-center gap-1.5" style="font-size: 0.72rem; letter-spacing: 0.4px; text-transform: uppercase; font-weight: 600;">
-                                    Wakil Dekan
+                                <span class="text-white-50 d-flex align-items-center gap-1.5" style="font-size: 0.68rem; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 700;">
+                                    <i class="fas fa-user-gear text-info me-1"></i>Wakil Dekan Fakultas
                                 </span>
                             </div>
-                            <div class="text-white fw-bold" style="font-size: 0.95rem; line-height: 1.35; word-break: break-word;">
+                            <div class="text-white fw-bold" style="font-size: 0.98rem; line-height: 1.35; word-break: break-word;">
                                 <?= htmlspecialchars($fakultas['nama_wadek']) ?>
                             </div>
+                            <?php if (!empty($fakultas['nidn_wadek'])): ?>
+                                <div class="d-inline-flex align-items-center gap-1 text-primary-subtle small mt-1.5 px-2.5 py-0.5 rounded-pill" 
+                                     style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem;">
+                                    <span>NIDN: <?= htmlspecialchars($fakultas['nidn_wadek']) ?></span>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
 

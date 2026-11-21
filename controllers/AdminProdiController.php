@@ -2047,29 +2047,26 @@ class AdminProdiController extends Controller {
     public function saveKaprodi(): void {
         $namaKaprodi = trim($_POST['nama_kaprodi'] ?? '');
         $nidnKaprodi = trim($_POST['nidn_kaprodi'] ?? '');
-        $namaSekprodi = trim($_POST['nama_sekprodi'] ?? '');
-        $nidnSekprodi = trim($_POST['nidn_sekprodi'] ?? '');
 
         if (empty($namaKaprodi)) {
             Auth::setFlash('danger', 'Nama Ketua Program Studi wajib diisi.');
             redirect('prodi/kaprodi');
+            return;
         }
 
-        $stmtOld = $this->db->prepare("SELECT nama_kaprodi, nidn_kaprodi, nama_sekprodi, nidn_sekprodi FROM prodis WHERE id = ?");
+        $stmtOld = $this->db->prepare("SELECT nama_kaprodi, nidn_kaprodi FROM prodis WHERE id = ?");
         $stmtOld->execute([$this->prodiId]);
         $oldData = $stmtOld->fetch();
 
-        $stmt = $this->db->prepare("UPDATE prodis SET nama_kaprodi = ?, nidn_kaprodi = ?, nama_sekprodi = ?, nidn_sekprodi = ? WHERE id = ?");
-        $stmt->execute([$namaKaprodi, $nidnKaprodi, $namaSekprodi, $nidnSekprodi, $this->prodiId]);
+        $stmt = $this->db->prepare("UPDATE prodis SET nama_kaprodi = ?, nidn_kaprodi = ? WHERE id = ?");
+        $stmt->execute([$namaKaprodi, $nidnKaprodi, $this->prodiId]);
 
-        AuditLogger::log('UPDATE', 'Profil Kaprodi & Sekprodi', (string)$this->prodiId, $this->prodi['nama_prodi'], $oldData, [
+        AuditLogger::log('UPDATE', 'Profil Kaprodi', (string)$this->prodiId, $this->prodi['nama_prodi'], $oldData, [
             'nama_kaprodi' => $namaKaprodi,
-            'nidn_kaprodi' => $nidnKaprodi,
-            'nama_sekprodi' => $namaSekprodi,
-            'nidn_sekprodi' => $nidnSekprodi
+            'nidn_kaprodi' => $nidnKaprodi
         ], $this->prodiId, $this->prodi['nama_prodi']);
 
-        Auth::setFlash('success', 'Informasi Ketua dan Sekretaris Program Studi berhasil diperbarui.');
+        Auth::setFlash('success', 'Informasi Ketua Program Studi (Kaprodi) berhasil diperbarui.');
         redirect('prodi/kaprodi');
     }
 

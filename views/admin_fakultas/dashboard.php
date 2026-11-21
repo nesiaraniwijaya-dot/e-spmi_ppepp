@@ -54,12 +54,14 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <span class="badge bg-light text-muted border" style="font-size: 0.72rem;">NIDN: <?= htmlspecialchars($fakultas['nidn_dekan']) ?></span>
                         <?php endif; ?>
                     </div>
-                    <div class="d-flex flex-wrap align-items-center gap-3 text-muted small mt-1" style="font-size: 0.75rem;">
-                        <?php if (!empty($fakultas['nama_wadek'])): ?>
-                            <span><i class="fas fa-user text-secondary me-1"></i>Wakil Dekan: <?= htmlspecialchars($fakultas['nama_wadek']) ?></span>
-                        <?php endif; ?>
-                        <span><i class="fas fa-calendar-alt text-warning me-1"></i>Periode: <?= htmlspecialchars($fakultas['periode_jabatan'] ?: '2022 - 2026') ?></span>
-                    </div>
+                    <?php if (!empty($fakultas['nama_wadek'])): ?>
+                        <div class="d-flex flex-wrap align-items-center gap-2 text-muted small mt-1" style="font-size: 0.78rem;">
+                            <span class="fw-semibold text-secondary"><i class="fas fa-user-gear text-info me-1"></i>Wakil Dekan: <?= htmlspecialchars($fakultas['nama_wadek']) ?></span>
+                            <?php if (!empty($fakultas['nidn_wadek'])): ?>
+                                <span class="badge bg-light text-muted border" style="font-size: 0.7rem;">NIDN: <?= htmlspecialchars($fakultas['nidn_wadek']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
             <a href="<?= base_url('fakultas/dekanat') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 align-self-start align-self-md-center">

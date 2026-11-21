@@ -135,47 +135,6 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         </div>
                     </div>
 
-                    <!-- 3. MASA JABATAN & PROFIL FAKULTAS -->
-                    <div class="dekanat-section-box">
-                        <div class="d-flex align-items-start gap-3 mb-4 pb-3 border-bottom" style="border-color: #E2E8F0 !important;">
-                            <span class="rounded-circle bg-purple bg-opacity-10 text-purple d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; font-size: 1.05rem;">
-                                <i class="fas fa-calendar-check"></i>
-                            </span>
-                            <div>
-                                <h6 class="fw-bold text-dark-blue mb-1" style="font-size: 1.02rem;">Masa Kepengurusan & Profil Singkat</h6>
-                                <p class="text-muted small mb-0" style="font-size: 0.82rem;">Periode dinas kepengurusan dekanat dan deskripsi ringkas visi misi.</p>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="periode_jabatan" class="form-label-dekanat">
-                                <span>Periode Jabatan Kepengurusan Dekanat</span>
-                            </label>
-                            <div class="input-group" style="max-width: 360px;">
-                                <span class="input-group-text bg-light text-muted border-end-0" style="border-color: #CBD5E1;">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </span>
-                                <input type="text" class="form-control form-control-dekanat border-start-0 ps-1" id="periode_jabatan" name="periode_jabatan" 
-                                       value="<?= htmlspecialchars($fakultas['periode_jabatan'] ?? '2022 - 2026') ?>" 
-                                       placeholder="Contoh: 2022 - 2026">
-                            </div>
-                            <div class="form-text mt-2 small text-muted" style="font-size: 0.78rem;">
-                                Contoh penulisan format tahun: <code>2022 - 2026</code>
-                            </div>
-                        </div>
-
-                        <div class="mb-0">
-                            <label for="deskripsi" class="form-label-dekanat">
-                                <span>Deskripsi / Visi Misi Singkat Fakultas</span>
-                            </label>
-                            <textarea class="form-control form-control-dekanat" id="deskripsi" name="deskripsi" rows="4" 
-                                      placeholder="Tuliskan gambaran profil atau fokus keunggulan penjaminan mutu fakultas..."><?= htmlspecialchars($fakultas['deskripsi'] ?? '') ?></textarea>
-                            <div class="form-text mt-2 small text-muted" style="font-size: 0.78rem;">
-                                Informasi ini akan ditampilkan pada ringkasan portal penjaminan mutu tingkat fakultas.
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- ACTION BUTTONS WITH CLEAR SEPARATION -->
                     <div class="d-flex flex-column flex-sm-row justify-content-end align-items-center gap-3 pt-4 mt-4 border-top" style="border-color: #E2E8F0 !important;">
                         <a href="<?= base_url('fakultas/dashboard') ?>" class="btn btn-light border px-4 py-2.5 rounded-pill text-secondary fw-semibold shadow-2xs w-100 w-sm-auto text-center">

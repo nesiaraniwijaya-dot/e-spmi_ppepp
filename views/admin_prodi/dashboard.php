@@ -58,40 +58,23 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     <?php endif; ?>
 
-    <!-- Pimpinan Prodi Profile Alert Card (Kaprodi & Sekprodi) -->
+    <!-- Pimpinan Prodi Profile Alert Card (Kaprodi) -->
     <div class="card bg-white border-0 shadow-sm rounded-4 p-3 mb-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-            <div class="d-flex flex-wrap align-items-center gap-4">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-warning bg-opacity-20 text-warning-emphasis d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.25rem;">
-                        <i class="fas fa-graduation-cap text-warning"></i>
-                    </div>
-                    <div>
-                        <div class="small text-muted" style="font-size: 0.73rem;">Ketua Program Studi (Kaprodi):</div>
-                        <div class="fw-bold text-dark-blue" style="font-size: 0.92rem;"><?= htmlspecialchars($prodi['nama_kaprodi'] ?: 'Belum diatur') ?></div>
-                        <?php if (!empty($prodi['nidn_kaprodi'])): ?>
-                            <div class="text-muted" style="font-size: 0.72rem;">NIDN: <?= htmlspecialchars($prodi['nidn_kaprodi']) ?></div>
-                        <?php endif; ?>
-                    </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-warning bg-opacity-20 text-warning-emphasis d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; font-size: 1.35rem;">
+                    <i class="fas fa-graduation-cap text-warning"></i>
                 </div>
-
-                <div class="vr d-none d-md-block" style="height: 38px; opacity: 0.15;"></div>
-
-                <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-success bg-opacity-15 text-success d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
-                        <i class="fas fa-signature text-success"></i>
-                    </div>
-                    <div>
-                        <div class="small text-muted" style="font-size: 0.73rem;">Sekretaris Program Studi (Sekprodi):</div>
-                        <div class="fw-bold text-dark-blue" style="font-size: 0.92rem;"><?= htmlspecialchars($prodi['nama_sekprodi'] ?: 'Belum diatur') ?></div>
-                        <?php if (!empty($prodi['nidn_sekprodi'])): ?>
-                            <div class="text-muted" style="font-size: 0.72rem;">NIDN: <?= htmlspecialchars($prodi['nidn_sekprodi']) ?></div>
-                        <?php endif; ?>
-                    </div>
+                <div>
+                    <div class="small text-muted fw-semibold" style="font-size: 0.75rem;">Ketua Program Studi (Kaprodi) Terdaftar:</div>
+                    <div class="fw-bold text-dark-blue fs-6"><?= htmlspecialchars($prodi['nama_kaprodi'] ?: 'Belum diatur') ?></div>
+                    <?php if (!empty($prodi['nidn_kaprodi'])): ?>
+                        <div class="text-muted small mt-0.5" style="font-size: 0.75rem;"><span class="badge bg-light text-muted border">NIDN: <?= htmlspecialchars($prodi['nidn_kaprodi']) ?></span></div>
+                    <?php endif; ?>
                 </div>
             </div>
-            <a href="<?= base_url('prodi/kaprodi') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3 align-self-start align-self-md-center text-nowrap">
-                <i class="fas fa-pen-to-square me-1"></i> Kelola Pimpinan Prodi
+            <a href="<?= base_url('prodi/kaprodi') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 align-self-start align-self-md-center text-nowrap">
+                <i class="fas fa-pen-to-square me-1"></i> Kelola Profil Kaprodi
             </a>
         </div>
     </div>

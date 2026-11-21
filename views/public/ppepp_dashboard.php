@@ -76,23 +76,6 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                         <?php endif; ?>
                     </div>
 
-                    <!-- Sekprodi Profile Sub-Panel if exists -->
-                    <?php if (!empty($prodi['nama_sekprodi'])): ?>
-                        <div class="executive-meta-subpanel mb-3">
-                            <div class="d-flex align-items-center justify-content-between mb-1.5">
-                                <span class="text-white-50 d-flex align-items-center gap-1.5" style="font-size: 0.72rem; letter-spacing: 0.4px; text-transform: uppercase; font-weight: 600;">
-                                    Sekretaris Program Studi
-                                </span>
-                                <?php if (!empty($prodi['nidn_sekprodi'])): ?>
-                                    <span class="text-white-50 small" style="font-size: 0.68rem;">NIDN: <?= htmlspecialchars($prodi['nidn_sekprodi']) ?></span>
-                                <?php endif; ?>
-                            </div>
-                            <div class="text-white fw-bold" style="font-size: 0.95rem; line-height: 1.35; word-break: break-word;">
-                                <?= htmlspecialchars($prodi['nama_sekprodi']) ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
                     <!-- Prodi Metadata Sub-Panel (Spacious & Clean without truncation) -->
                     <div class="executive-meta-subpanel">
                         <div class="d-flex align-items-center justify-content-between mb-1.5">

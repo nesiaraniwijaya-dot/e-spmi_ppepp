@@ -1773,8 +1773,6 @@ class AdminFakultasController extends Controller {
         $nidnDekan = trim($_POST['nidn_dekan'] ?? '');
         $namaWadek = trim($_POST['nama_wadek'] ?? '');
         $nidnWadek = trim($_POST['nidn_wadek'] ?? '');
-        $periodeJabatan = trim($_POST['periode_jabatan'] ?? '2022 - 2026');
-        $deskripsi = trim($_POST['deskripsi'] ?? '');
 
         if (empty($namaDekan)) {
             Auth::setFlash('danger', 'Nama lengkap Dekan wajib diisi.');
@@ -1786,21 +1784,20 @@ class AdminFakultasController extends Controller {
             UPDATE fakultas SET 
                 nama_dekan = ?, nidn_dekan = ?,
                 nama_wadek = ?, nidn_wadek = ?,
-                periode_jabatan = ?, deskripsi = ?,
                 updated_at = NOW()
             WHERE id = ?
         ");
-        $stmt->execute([$namaDekan, $nidnDekan, $namaWadek, $nidnWadek, $periodeJabatan, $deskripsi, $this->fakultasId]);
+        $stmt->execute([$namaDekan, $nidnDekan, $namaWadek, $nidnWadek, $this->fakultasId]);
 
         AuditLogger::log(
             aksi: 'UPDATE',
             modul: 'Profil Dekanat',
             targetId: (string)$this->fakultasId,
             targetName: $this->fakultas['nama_fakultas'],
-            newValues: ['dekan' => $namaDekan, 'wadek' => $namaWadek, 'periode' => $periodeJabatan]
+            newValues: ['dekan' => $namaDekan, 'wadek' => $namaWadek]
         );
 
-        Auth::setFlash('success', 'Profil Dekanat berhasil diperbarui dan akan ditampilkan pada portal publik.');
+        Auth::setFlash('success', 'Profil Dekanat berhasil diperbarui.');
         redirect('fakultas/dekanat');
     }
 

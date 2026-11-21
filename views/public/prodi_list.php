@@ -21,7 +21,7 @@ $prodiCount = count($prodiList);
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
                 <h1 class="page-banner-title mb-1"><?= htmlspecialchars($fakultas['nama_fakultas']) ?></h1>
-                <p class="text-light opacity-80 small mb-0" style="max-width: 700px;"><?= htmlspecialchars($fakultas['deskripsi']) ?></p>
+                <p class="text-light opacity-80 small mb-0" style="max-width: 700px;">Daftar Program Studi dan Dokumen Mutu Penjaminan Mutu PPEPP Fakultas</p>
             </div>
             <a href="<?= base_url() ?>" class="btn btn-outline-light btn-sm rounded-pill px-3.5 py-2 align-self-start align-self-md-center" style="font-family:var(--font-heading);font-weight:600;">
                 <i class="fas fa-arrow-left me-1"></i> Ganti Fakultas
@@ -93,14 +93,13 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                             <div class="text-truncate">
                                 <div class="small text-muted" style="font-size: 0.75rem;">Pimpinan Dekanat Fakultas:</div>
                                 <div class="fw-bold text-dark-blue small text-truncate">
-                                    Dekan: <?= htmlspecialchars($fakultas['nama_dekan'] ?: 'Belum diatur') ?>
+                                    <i class="fas fa-user-tie text-primary me-1"></i>Dekan: <?= htmlspecialchars($fakultas['nama_dekan'] ?: 'Belum diatur') ?>
                                 </div>
-                                <div class="text-muted text-truncate" style="font-size: 0.72rem;">
-                                    <?php if (!empty($fakultas['nama_wadek'])): ?>
-                                        Wadek: <?= htmlspecialchars($fakultas['nama_wadek']) ?> &bull;
-                                    <?php endif; ?>
-                                    Periode: <?= htmlspecialchars($fakultas['periode_jabatan'] ?: '-') ?>
-                                </div>
+                                <?php if (!empty($fakultas['nama_wadek'])): ?>
+                                    <div class="fw-semibold text-secondary small text-truncate mt-0.5" style="font-size: 0.78rem;">
+                                        <i class="fas fa-user-gear text-info me-1"></i>Wakil Dekan: <?= htmlspecialchars($fakultas['nama_wadek']) ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -159,11 +158,6 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
                                     <div class="text-muted text-truncate" style="font-size: 0.7rem;">
                                         <?= !empty($p['nidn_kaprodi']) ? 'NIDN: ' . htmlspecialchars($p['nidn_kaprodi']) : 'Program Studi ' . htmlspecialchars($p['jenjang']) ?>
                                     </div>
-                                    <?php if (!empty($p['nama_sekprodi'])): ?>
-                                        <div class="border-top pt-1.5 mt-1.5 text-truncate" style="font-size: 0.7rem;">
-                                            <span class="text-muted">Sekprodi:</span> <span class="fw-semibold text-dark"><?= htmlspecialchars($p['nama_sekprodi']) ?></span>
-                                        </div>
-                                    <?php endif; ?>
                                 </div>
                             </div>
 
