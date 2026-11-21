@@ -370,24 +370,24 @@ if (!empty($documents)):
                                 <span>Narasi &amp; Keterangan Pengunggah:</span>
                             </div>
                             <?php if (!empty(trim($doc['deskripsi'] ?? ''))): ?>
-                                <div class="mb-2 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
-                                    <span class="fw-semibold text-dark d-block mb-0.5"><i class="fas fa-file-lines text-muted me-1"></i>Narasi Dokumen:</span>
-                                    <span class="text-dark-blue" style="white-space: pre-wrap; word-break: break-word;"><?= nl2br(htmlspecialchars($doc['deskripsi'])) ?></span>
+                                <div class="mb-2 p-3 rounded-3 bg-white border border-primary-subtle text-secondary shadow-2xs" style="line-height: 1.55;">
+                                    <span class="fw-bold text-primary d-block mb-1" style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.3px;"><i class="fas fa-file-lines me-1"></i>Narasi Dokumen:</span>
+                                    <span class="text-dark fw-semibold" style="white-space: pre-wrap; word-break: break-word; font-size: 0.98rem;"><?= nl2br(htmlspecialchars($doc['deskripsi'])) ?></span>
                                 </div>
                             <?php endif; ?>
                             <?php foreach ($reviewFiles as $rf): ?>
                                 <?php if (!empty(trim($rf['narasi'] ?? '')) && trim($rf['narasi']) !== trim($doc['deskripsi'] ?? '')): ?>
-                                    <div class="mb-1.5 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
-                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-0.5 flex-wrap">
-                                            <span class="fw-semibold text-dark d-flex align-items-center gap-1.5 text-truncate" style="max-width: 450px;">
+                                    <div class="mb-2 p-3 rounded-3 bg-white border border-light-subtle text-secondary shadow-2xs" style="line-height: 1.55;">
+                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-1 flex-wrap">
+                                            <span class="fw-bold text-dark d-flex align-items-center gap-1.5 text-truncate" style="max-width: 450px; font-size: 0.88rem;">
                                                 <i class="<?= ($rf['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf text-danger' ?> flex-shrink-0"></i>
                                                 <span class="text-truncate"><?= htmlspecialchars($rf['file_name']) ?></span>
                                             </span>
                                             <?php if (!empty($rf['folder_name'])): ?>
-                                                <span class="badge bg-light text-muted border" style="font-size: 0.65rem;"><?= htmlspecialchars($rf['folder_name']) ?></span>
+                                                <span class="badge bg-light text-muted border" style="font-size: 0.68rem;"><?= htmlspecialchars($rf['folder_name']) ?></span>
                                             <?php endif; ?>
                                         </div>
-                                        <div class="text-dark-blue mt-1 ps-2.5 border-start border-2 border-primary" style="white-space: pre-wrap; word-break: break-word;">
+                                        <div class="text-dark fw-semibold mt-1 ps-2.5 border-start border-3 border-primary" style="white-space: pre-wrap; word-break: break-word; font-size: 0.98rem;">
                                             <?= nl2br(htmlspecialchars($rf['narasi'])) ?>
                                         </div>
                                     </div>
@@ -395,12 +395,12 @@ if (!empty($documents)):
                             <?php endforeach; ?>
                             <?php foreach ($reviewLinks as $rlIdx => $rl): ?>
                                 <?php if (!empty(trim($rl['narasi'] ?? '')) && trim($rl['narasi']) !== trim($doc['deskripsi'] ?? '')): ?>
-                                    <div class="mb-1.5 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
-                                        <span class="fw-semibold text-dark d-flex align-items-center gap-1.5 mb-0.5">
+                                    <div class="mb-2 p-3 rounded-3 bg-white border border-light-subtle text-secondary shadow-2xs" style="line-height: 1.55;">
+                                        <span class="fw-bold text-dark d-flex align-items-center gap-1.5 mb-1" style="font-size: 0.88rem;">
                                             <i class="fab fa-google-drive text-success flex-shrink-0"></i>
                                             <span><?= htmlspecialchars(!empty($rl['label']) ? $rl['label'] : ('Tautan Google Drive #' . ($rlIdx + 1))) ?></span>
                                         </span>
-                                        <div class="text-dark-blue mt-1 ps-2.5 border-start border-2 border-success" style="white-space: pre-wrap; word-break: break-word;">
+                                        <div class="text-dark fw-semibold mt-1 ps-2.5 border-start border-3 border-success" style="white-space: pre-wrap; word-break: break-word; font-size: 0.98rem;">
                                             <?= nl2br(htmlspecialchars($rl['narasi'])) ?>
                                         </div>
                                     </div>

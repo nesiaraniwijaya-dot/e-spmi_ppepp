@@ -69,14 +69,21 @@
                 </div>
 
                 <!-- Standar & Narasi Berkas Ribbon (Responsive & Scrollable) -->
-                <div id="pdfModalNarasiWrap" class="px-3 py-2 text-white border-bottom border-secondary border-opacity-25" style="display:none; background:#1e293b;">
-                    <div class="d-flex flex-column gap-1.5">
+                <div id="pdfModalNarasiWrap" class="px-3.5 py-2.5 text-white border-bottom border-secondary border-opacity-25" style="display:none; background:#0F172A;">
+                    <div class="d-flex flex-column gap-2">
                         <div id="pdfModalStandarWrap" class="d-flex align-items-center gap-1.5 flex-wrap" style="display:none;"></div>
-                        <div id="pdfModalNarasiRow" class="d-flex align-items-start gap-2" style="display:none;">
-                            <span class="badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25 mt-0.5 px-2 py-1 flex-shrink-0" style="font-size:0.72rem;">
-                                <i class="fas fa-align-left me-1"></i> Narasi
-                            </span>
-                            <div id="pdfModalNarasiText" class="small" style="white-space:pre-line; word-break:break-word; max-height:85px; overflow-y:auto; line-height:1.55; color:#cbd5e1;"></div>
+                        
+                        <!-- Narasi / Keterangan Berkas Callout Notice (Prominent & Eye-Catching) -->
+                        <div id="pdfModalNarasiRow" class="rounded-3 p-3 d-flex flex-column gap-1.5 shadow-sm" style="display:none; background: linear-gradient(135deg, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1px solid rgba(56, 189, 248, 0.45); border-left: 5px solid #0EA5E9 !important;">
+                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                <span class="badge rounded-pill px-3 py-1 fw-bold text-white d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #0284C7; font-size: 0.82rem; letter-spacing: 0.4px;">
+                                    <i class="fas fa-comment-dots text-white"></i> NARASI / KETERANGAN BERKAS DOKUMEN:
+                                </span>
+                                <span class="text-white-50 small d-none d-sm-inline" style="font-size: 0.74rem;">
+                                    <i class="fas fa-info-circle text-info me-1"></i>Catatan resmi dari pengunggah dokumen
+                                </span>
+                            </div>
+                            <div id="pdfModalNarasiText" class="fw-semibold text-white px-1 mt-1" style="white-space: pre-line; word-break: break-word; font-size: 1.05rem; line-height: 1.6; letter-spacing: 0.2px; max-height: 120px; overflow-y: auto; text-shadow: 0 1px 2px rgba(0,0,0,0.3);"></div>
                         </div>
                     </div>
                 </div>
