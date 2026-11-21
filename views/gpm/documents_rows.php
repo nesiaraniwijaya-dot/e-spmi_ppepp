@@ -691,7 +691,7 @@ if (!empty($documents)):
                                 </div>
                             <?php endif; ?>
 
-                            <form action="<?= base_url('gpm/review/submit') ?>" method="POST">
+                            <form action="<?= base_url('gpm/review/submit') ?>" method="POST" novalidate>
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
                                 <input type="hidden" name="id" value="<?= $doc['id'] ?>">
@@ -907,7 +907,7 @@ if (!empty($documents)):
                                         </div>
                                     <?php endif; ?>
 
-                                    <form action="<?= base_url('gpm/review/submit') ?>" method="POST">
+                                    <form action="<?= base_url('gpm/review/submit') ?>" method="POST" novalidate>
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
                                         <input type="hidden" name="id" value="<?= $doc['id'] ?>">

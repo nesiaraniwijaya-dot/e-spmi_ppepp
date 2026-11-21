@@ -110,59 +110,137 @@ document.addEventListener('DOMContentLoaded', function () {
             const form = container.querySelector('form');
             if (!form) return;
 
-            form.addEventListener('submit', function(e) {
-                if (role === 'gpm') {
-                    const checkedStatus = form.querySelector('input[name="status_review"]:checked');
-                    const catatan = form.querySelector('textarea[name="catatan_review"]');
-                    if (checkedStatus && checkedStatus.value === 'revisi_gpm') {
-                        if (!catatan || !catatan.value.trim()) {
-                            e.preventDefault();
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Catatan Review Wajib Diisi',
-                                    text: 'Silakan tuliskan catatan atau arahan perbaikan untuk unit pengunggah sebelum menyimpan keputusan Perlu Revisi.',
-                                    confirmButtonColor: '#2563EB'
-                                }).then(() => {
-                                    if (catatan) catatan.focus();
-                                });
-                            } else {
-                                alert('Catatan review wajib diisi bila memilih opsi Perlu Revisi.');
-                                if (catatan) catatan.focus();
-                            }
-                            return false;
+            // Cegah binding event berulang jika modal dibuka beberapa kali
+            if (form.dataset.ajaxBound === '1') return;
+            form.dataset.ajaxBound = '1';
+
+            // Event listener klik radio button untuk feedback border & background card
+            const decisionRadios = form.querySelectorAll('input[type="radio"][name="status_review"]');
+            decisionRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const cards = form.querySelectorAll('.review-decision-card');
+                    cards.forEach(c => {
+                        c.style.borderColor = '#E2E8F0';
+                        c.style.backgroundColor = '#FFFFFF';
+                    });
+                    const parentCard = this.closest('.review-decision-card');
+                    if (parentCard) {
+                        if (this.value === 'revisi_gpm' || this.value === 'perlu_perbaikan') {
+                            parentCard.style.borderColor = '#EF4444';
+                            parentCard.style.backgroundColor = '#FEF2F2';
+                        } else {
+                            parentCard.style.borderColor = '#10B981';
+                            parentCard.style.backgroundColor = '#F0FDF4';
                         }
                     }
-                } else if (role === 'lpm') {
-                    const checkedStatus = form.querySelector('input[name="status_review"]:checked');
-                    const catatan = form.querySelector('textarea[name="catatan_review"]');
-                    if (checkedStatus && checkedStatus.value === 'perlu_perbaikan') {
-                        if (!catatan || !catatan.value.trim()) {
-                            e.preventDefault();
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Catatan Perbaikan Wajib Diisi',
-                                    text: 'Silakan tuliskan poin-poin catatan evaluasi perbaikan sebelum mengembalikan dokumen ke unit.',
-                                    confirmButtonColor: '#2563EB'
-                                }).then(() => {
-                                    if (catatan) catatan.focus();
-                                });
-                            } else {
-                                alert('Catatan evaluasi wajib diisi bila meminta perbaikan/revisi.');
-                                if (catatan) catatan.focus();
-                            }
-                            return false;
-                        }
+                });
+            });
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+                const statusReview = formData.get('status_review');
+                const catatanReview = (formData.get('catatan_review') || '').trim();
+
+                if (!statusReview) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Pilih Keputusan Review',
+                            text: 'Silakan tentukan keputusan hasil review dokumen mutu terlebih dahulu.',
+                            confirmButtonColor: '#2563EB'
+                        });
+                    } else {
+                        alert('Silakan tentukan keputusan hasil review dokumen mutu terlebih dahulu.');
                     }
+                    return false;
+                }
+
+                // Validasi catatan wajib jika perlu revisi
+                if ((statusReview === 'revisi_gpm' || statusReview === 'perlu_perbaikan') && !catatanReview) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Catatan Review Wajib Diisi',
+                            text: 'Silakan tuliskan arahan atau catatan perbaikan untuk unit pengunggah sebelum menyimpan keputusan Perlu Revisi.',
+                            confirmButtonColor: '#2563EB'
+                        }).then(() => {
+                            const ta = form.querySelector('textarea[name="catatan_review"]');
+                            if (ta) ta.focus();
+                        });
+                    } else {
+                        alert('Catatan review wajib diisi bila memilih opsi Perlu Revisi.');
+                        const ta = form.querySelector('textarea[name="catatan_review"]');
+                        if (ta) ta.focus();
+                    }
+                    return false;
                 }
 
                 const submitBtn = form.querySelector('button[type="submit"]');
+                const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
                 if (submitBtn) {
-                    setTimeout(() => {
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1.5"></i> Menyimpan Keputusan...';
-                    }, 0);
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1.5"></i> Menyimpan Keputusan...';
+                }
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (result && result.success) {
+                        if (typeof Swal !== 'undefined') {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: result.message || 'Keputusan review berhasil disimpan.',
+                                timer: 1600,
+                                showConfirmButton: false
+                            });
+                        }
+                        // Refresh halaman agar tabel dokumen merefleksikan perubahan status
+                        window.location.reload();
+                    } else {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = origBtnHtml;
+                        }
+                        const errMsg = (result && result.message) ? result.message : 'Gagal menyimpan keputusan review.';
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: errMsg,
+                                confirmButtonColor: '#EF4444'
+                            });
+                        } else {
+                            alert(errMsg);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Submit review error:', err);
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = origBtnHtml;
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Terjadi Kesalahan',
+                            text: 'Terjadi gangguan jaringan atau kegagalan respon server saat menyimpan keputusan. Silakan coba kembali.',
+                            confirmButtonColor: '#EF4444'
+                        });
+                    } else {
+                        alert('Terjadi kesalahan jaringan saat menyimpan keputusan.');
+                    }
                 }
             });
         }
@@ -182,14 +260,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         }
                     }
-                }
-
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    setTimeout(() => {
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1.5"></i> Menyimpan Keputusan...';
-                    }, 0);
                 }
             });
         }

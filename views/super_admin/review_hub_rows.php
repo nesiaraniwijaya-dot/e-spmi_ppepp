@@ -362,7 +362,7 @@ if (!empty($documents)):
                 </div>
                 <div class="card-body p-3.5">
                     <?php if (Auth::canActionLpmMenu('review_dokumen') && $st !== 'sesuai'): ?>
-                        <form action="<?= base_url('admin/review-dokumen/submit') ?>" method="POST" class="m-0 review-action-form">
+                        <form action="<?= base_url('admin/review-dokumen/submit') ?>" method="POST" class="m-0 review-action-form" novalidate>
                             <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
                             <input type="hidden" name="redirect_to" value="admin/review-dokumen">
 
