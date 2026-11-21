@@ -23,8 +23,8 @@ $totalSudah    = count($sudahDocs);
 $fakultasPerlu = $fakultasPerlu ?? 0;
 $prodiPerlu    = $prodiPerlu ?? 0;
 
-// Tab aktif default: Jika ada catatan baru dari LPM, prioritaskan tab LPM
-$activeTab = ($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-unit' : (($totalSudah > 0) ? 'tab-sudah' : 'tab-all'));
+// Tab aktif default: Prioritaskan dokumen hasil perbaikan (Siap Review GPM), kemudian catatan baru LPM
+$activeTab = ($totalSudah > 0) ? 'tab-sudah' : (($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-unit' : 'tab-all'));
 
 $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
     $files = $doc['files'] ?? [];
@@ -189,8 +189,28 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
         </div>
     </div>
 
-    <!-- Metric KPI Cards (4 Kolom: Catatan Baru LPM, Sedang Dikerjakan Unit, Siap Telaah Ulang, Total Siklus Revisi) -->
+    <!-- Metric KPI Cards (4 Kolom: Hasil Perbaikan, Catatan Baru LPM, Sedang Dikerjakan Unit, Total Riwayat) -->
     <div class="row g-3 mb-4">
+        <!-- 1. Telah Diperbaiki Unit (Hasil Perbaikan) -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="saas-stat-card h-100" style="border-top: 4px solid #2563EB !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="saas-stat-label text-primary">Telah Diperbaiki Unit</span>
+                    <div class="saas-stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;">
+                        <i class="fas fa-clock-rotate-left <?= $totalSudah > 0 ? 'fa-beat-fade' : '' ?>"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="d-flex align-items-baseline gap-2 mb-1">
+                        <span class="saas-stat-number text-primary"><?= $totalSudah ?></span>
+                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">Siap Review Ulang</span>
+                    </div>
+                    <div class="saas-stat-help">Telah diperbaiki unit &amp; siap diajukan kembali ke LPM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Catatan Baru LPM -->
         <div class="col-sm-6 col-xl-3">
             <div class="saas-stat-card h-100" style="border-top: 4px solid #EA580C !important;">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -209,6 +229,7 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
             </div>
         </div>
 
+        <!-- 3. Sedang Dikerjakan Unit -->
         <div class="col-sm-6 col-xl-3">
             <div class="saas-stat-card h-100" style="border-top: 4px solid #DC2626 !important;">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -227,24 +248,7 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
-            <div class="saas-stat-card h-100" style="border-top: 4px solid #2563EB !important;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="saas-stat-label text-primary">Telah Diperbaiki Unit</span>
-                    <div class="saas-stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;">
-                        <i class="fas fa-clock-rotate-left"></i>
-                    </div>
-                </div>
-                <div>
-                    <div class="d-flex align-items-baseline gap-2 mb-1">
-                        <span class="saas-stat-number text-primary"><?= $totalSudah ?></span>
-                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">Siap Review Ulang</span>
-                    </div>
-                    <div class="saas-stat-help">Telah diperbaiki unit &amp; siap diajukan kembali ke LPM</div>
-                </div>
-            </div>
-        </div>
-
+        <!-- 4. Total Riwayat Revisi -->
         <div class="col-sm-6 col-xl-3">
             <div class="saas-stat-card h-100" style="border-top: 4px solid #059669 !important;">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -330,6 +334,11 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
             <!-- Baris 1: Status Tabs Filter Berjenjang -->
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-2.5 border-bottom" style="border-color: #F1F5F9 !important;">
                 <div class="nav nav-pills d-flex flex-wrap align-items-center gap-2" id="perbaikanTabs" role="tablist">
+                    <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 <?= $activeTab === 'tab-sudah' ? 'active' : '' ?>" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
+                        <i class="fas fa-clock-rotate-left text-primary"></i>
+                        <span>Hasil Perbaikan (Siap Review GPM)</span>
+                        <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($sudahDocs) ?></span>
+                    </button>
                     <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 <?= $activeTab === 'tab-lpm' ? 'active' : '' ?>" id="tab-lpm-btn" data-bs-toggle="pill" data-bs-target="#tab-lpm" type="button" role="tab" style="font-size: 0.84rem;">
                         <i class="fas fa-reply text-warning"></i>
                         <span>Catatan dari LPM (Perlu Diteruskan)</span>
@@ -339,11 +348,6 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                         <i class="fas fa-wrench text-danger"></i>
                         <span>Sedang Diperbaiki Unit</span>
                         <span class="badge rounded-pill bg-danger text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($unitRevisiDocs) ?></span>
-                    </button>
-                    <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 <?= $activeTab === 'tab-sudah' ? 'active' : '' ?>" id="tab-sudah-btn" data-bs-toggle="pill" data-bs-target="#tab-sudah" type="button" role="tab" style="font-size: 0.84rem;">
-                        <i class="fas fa-clock-rotate-left text-primary"></i>
-                        <span>Hasil Perbaikan (Siap Review GPM)</span>
-                        <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($sudahDocs) ?></span>
                     </button>
                     <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 <?= $activeTab === 'tab-all' ? 'active' : '' ?>" id="tab-all-btn" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" style="font-size: 0.84rem;">
                         <i class="fas fa-layer-group text-secondary"></i>
@@ -1663,6 +1667,67 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span><i class="fas fa-arrows-spin me-1"></i><?= strtoupper($doc['siklus'] ?? 'PPEPP') ?></span>
                     </div>
                 </div>
+
+                <?php
+                $reviewFiles = $doc['files'] ?? [];
+                $reviewLinks = parse_external_links($doc['external_link'] ?? '');
+                $hasReviewNarasi = !empty(trim($doc['deskripsi'] ?? ''));
+                if (!$hasReviewNarasi) {
+                    foreach ($reviewFiles as $rf) {
+                        if (!empty(trim($rf['narasi'] ?? ''))) { $hasReviewNarasi = true; break; }
+                    }
+                }
+                if (!$hasReviewNarasi) {
+                    foreach ($reviewLinks as $rl) {
+                        if (!empty(trim($rl['narasi'] ?? ''))) { $hasReviewNarasi = true; break; }
+                    }
+                }
+                ?>
+                <?php if ($hasReviewNarasi): ?>
+                    <div class="card p-3 rounded-3 border-0 mb-3" style="background: #F8FAFC; border: 1px solid #E2E8F0 !important;">
+                        <div class="d-flex align-items-center gap-1.5 fw-bold text-dark mb-2" style="font-size: 0.8rem;">
+                            <i class="fas fa-align-left text-primary"></i>
+                            <span>Narasi &amp; Keterangan Pengunggah:</span>
+                        </div>
+                        <?php if (!empty(trim($doc['deskripsi'] ?? ''))): ?>
+                            <div class="mb-2 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
+                                <span class="fw-semibold text-dark d-block mb-0.5"><i class="fas fa-file-lines text-muted me-1"></i>Narasi Dokumen:</span>
+                                <span class="text-dark-blue" style="white-space: pre-wrap; word-break: break-word;"><?= nl2br(htmlspecialchars($doc['deskripsi'])) ?></span>
+                            </div>
+                        <?php endif; ?>
+                        <?php foreach ($reviewFiles as $rf): ?>
+                            <?php if (!empty(trim($rf['narasi'] ?? '')) && trim($rf['narasi']) !== trim($doc['deskripsi'] ?? '')): ?>
+                                <div class="mb-1.5 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-0.5 flex-wrap">
+                                        <span class="fw-semibold text-dark d-flex align-items-center gap-1.5 text-truncate" style="max-width: 450px;">
+                                            <i class="<?= ($rf['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf text-danger' ?> flex-shrink-0"></i>
+                                            <span class="text-truncate"><?= htmlspecialchars($rf['file_name']) ?></span>
+                                        </span>
+                                        <?php if (!empty($rf['folder_name'])): ?>
+                                            <span class="badge bg-light text-muted border" style="font-size: 0.65rem;"><?= htmlspecialchars($rf['folder_name']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-dark-blue mt-1 ps-2.5 border-start border-2 border-primary" style="white-space: pre-wrap; word-break: break-word;">
+                                        <?= nl2br(htmlspecialchars($rf['narasi'])) ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                        <?php foreach ($reviewLinks as $rlIdx => $rl): ?>
+                            <?php if (!empty(trim($rl['narasi'] ?? '')) && trim($rl['narasi']) !== trim($doc['deskripsi'] ?? '')): ?>
+                                <div class="mb-1.5 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
+                                    <span class="fw-semibold text-dark d-flex align-items-center gap-1.5 mb-0.5">
+                                        <i class="fab fa-google-drive text-success flex-shrink-0"></i>
+                                        <span><?= htmlspecialchars(!empty($rl['label']) ? $rl['label'] : ('Tautan Google Drive #' . ($rlIdx + 1))) ?></span>
+                                    </span>
+                                    <div class="text-dark-blue mt-1 ps-2.5 border-start border-2 border-success" style="white-space: pre-wrap; word-break: break-word;">
+                                        <?= nl2br(htmlspecialchars($rl['narasi'])) ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
 
                 <?php if ($doc['status_review'] === 'sudah_diperbaiki'): ?>
                     <div class="alert alert-info border-info border-opacity-25 rounded-3 mb-3 d-flex align-items-start gap-2.5">

@@ -734,6 +734,7 @@ class AdminFakultasController extends Controller {
                         }
                     }
                     $externalLink = !empty($rawLinks) ? json_encode($rawLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null;
+                    $deskripsi = null;
 
                     // Fallback parent doc public settings inherited from item #1
                     if ($jenisUpload === 'file') {
@@ -921,6 +922,9 @@ class AdminFakultasController extends Controller {
                         $filePath = $uploadedFilesList[0]['file_path'];
                         $fileSize = $uploadedFilesList[0]['file_size'];
                         $fileExt = $uploadedFilesList[0]['file_extension'];
+                        if (empty($deskripsi) && !empty($uploadedFilesList[0]['narasi'])) {
+                            $deskripsi = $uploadedFilesList[0]['narasi'];
+                        }
                     } else {
                         $filePath = null;
                         $fileSize = null;
@@ -929,6 +933,9 @@ class AdminFakultasController extends Controller {
 
                     if ($hasLinks) {
                         $externalLink = json_encode($rawLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                        if (empty($deskripsi) && !empty($rawLinks[0]['narasi'])) {
+                            $deskripsi = $rawLinks[0]['narasi'];
+                        }
                     } else {
                         $externalLink = null;
                     }
@@ -972,13 +979,13 @@ class AdminFakultasController extends Controller {
                             nama_dokumen, nomor_dokumen, siklus, tahun_akademik, tanggal_dokumen,
                             tanggal_berlaku_mulai, tanggal_berlaku_selesai,
                             jenis_upload, file_path, file_size, file_extension, external_link,
-                            public_page_limit, can_download_public, status_review, tahap_review, level, created_at
+                            public_page_limit, can_download_public, status_review, tahap_review, deskripsi, level, created_at
                         ) VALUES (
                             ?, ?, NULL, ?, ?, ?,
                             ?, ?, ?, ?, ?,
                             ?, ?,
                             ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, 'fakultas', NOW()
+                            ?, ?, ?, ?, ?, 'fakultas', NOW()
                         )
                     ");
                     $stmt->execute([
@@ -986,7 +993,7 @@ class AdminFakultasController extends Controller {
                         $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik, $tanggalDokumen,
                         $startDate, $endDate,
                         $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
-                        $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview
+                        $publicPageLimit, $canDownloadPublic, $statusReview, $tahapReview, $deskripsi
                     ]);
                     $docId = (int)$this->db->lastInsertId();
 
@@ -1184,6 +1191,7 @@ class AdminFakultasController extends Controller {
                 }
             }
             $externalLink = !empty($rawLinks) ? json_encode($rawLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null;
+            $deskripsi = null;
 
             // Parent document access settings: inherit from item #1 (file #1 or link #1)
             if ($jenisUpload === 'file') {
@@ -1468,15 +1476,29 @@ class AdminFakultasController extends Controller {
                 $filePath = $primaryFile['file_path'];
                 $fileSize = $primaryFile['file_size'];
                 $fileExt = $primaryFile['file_extension'];
+                if (empty($deskripsi) && !empty($primaryFile['narasi'])) {
+                    $deskripsi = $primaryFile['narasi'];
+                }
             } else {
                 if (!$deletedLegacy && !empty($existing['file_path'])) {
                     $filePath = $existing['file_path'];
                     $fileSize = $existing['file_size'];
                     $fileExt = $existing['file_extension'];
+                    if (empty($deskripsi) && !empty($existing['deskripsi'])) {
+                        $deskripsi = $existing['deskripsi'];
+                    }
                 } else {
                     $filePath = null;
                     $fileSize = null;
                     $fileExt = null;
+                }
+            }
+
+            if (empty($deskripsi)) {
+                if (!empty($rawLinks[0]['narasi'])) {
+                    $deskripsi = $rawLinks[0]['narasi'];
+                } elseif (!empty($_POST['new_file_narasi'][0])) {
+                    $deskripsi = trim($_POST['new_file_narasi'][0]);
                 }
             }
 
@@ -1526,14 +1548,14 @@ class AdminFakultasController extends Controller {
                     nama_dokumen = ?, nomor_dokumen = ?, bidang_id = ?, sub_bidang_id = ?,
                     siklus = ?, tahun_akademik = ?, tanggal_dokumen = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?,
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, external_link = ?,
-                    public_page_limit = ?, can_download_public = ?, status_review = ?, tahap_review = ?, updated_at = NOW()
+                    public_page_limit = ?, can_download_public = ?, status_review = ?, tahap_review = ?, deskripsi = ?, updated_at = NOW()
                 WHERE id = ? AND fakultas_id = ? AND level = 'fakultas'
             ");
             $stmtUpdate->execute([
                 $namaDokumen, $nomorDokumen, $bidangId, $subBidangId,
                 $siklus, $tahunAkademik, $tanggalDokumen, $startDate, $endDate,
                 $jenisUpload, $filePath, $fileSize, $fileExt, $externalLink,
-                $publicPageLimit, $canDownloadPublic, $newStatusReview, $newTahapReview,
+                $publicPageLimit, $canDownloadPublic, $newStatusReview, $newTahapReview, $deskripsi,
                 $id, $this->fakultasId
             ]);
 

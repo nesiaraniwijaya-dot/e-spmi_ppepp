@@ -966,6 +966,9 @@ class AdminProdiController extends Controller {
                         $filePath = $primary['file_path'];
                         $fileSize = $primary['file_size'];
                         $fileExt = $primary['file_extension'];
+                        if (empty($deskripsi) && !empty($primary['narasi'])) {
+                            $deskripsi = $primary['narasi'];
+                        }
                     } else {
                         $filePath = null;
                         $fileSize = null;
@@ -974,6 +977,9 @@ class AdminProdiController extends Controller {
 
                     if ($hasLinks) {
                         $externalLink = json_encode($rawLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                        if (empty($deskripsi) && !empty($rawLinks[0]['narasi'])) {
+                            $deskripsi = $rawLinks[0]['narasi'];
+                        }
                     } else {
                         $externalLink = null;
                     }
@@ -1601,15 +1607,29 @@ class AdminProdiController extends Controller {
                 $filePath = $primaryFile['file_path'];
                 $fileSize = $primaryFile['file_size'];
                 $fileExt = $primaryFile['file_extension'];
+                if (empty($deskripsi) && !empty($primaryFile['narasi'])) {
+                    $deskripsi = $primaryFile['narasi'];
+                }
             } else {
                 if (!$deletedLegacy && !empty($oldDoc['file_path'])) {
                     $filePath = $oldDoc['file_path'];
                     $fileSize = $oldDoc['file_size'];
                     $fileExt = $oldDoc['file_extension'];
+                    if (empty($deskripsi) && !empty($oldDoc['deskripsi'])) {
+                        $deskripsi = $oldDoc['deskripsi'];
+                    }
                 } else {
                     $filePath = null;
                     $fileSize = null;
                     $fileExt = null;
+                }
+            }
+
+            if (empty($deskripsi)) {
+                if (!empty($rawSingleLinks[0]['narasi'])) {
+                    $deskripsi = $rawSingleLinks[0]['narasi'];
+                } elseif (!empty($_POST['new_file_narasi'][0])) {
+                    $deskripsi = trim($_POST['new_file_narasi'][0]);
                 }
             }
 

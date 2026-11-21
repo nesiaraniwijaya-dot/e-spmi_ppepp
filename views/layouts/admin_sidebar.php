@@ -59,11 +59,12 @@ try {
         $sidebarPendingGpmCount = (int)$stmtPendingGpm->fetchColumn();
         $sidebarPerluPerbaikanCount = $sidebarPendingGpmCount;
 
-        // Dokumen dalam masa revisi
+        // Dokumen dalam masa revisi yang butuh tindakan GPM (Hasil perbaikan dari unit + Catatan baru dari LPM)
+        // 'revisi_gpm' (sedang dikerjakan unit) tidak dihitung dalam notifikasi sesuai permintaan
         $stmtRevisi = $sidebarDb->prepare("
             SELECT COUNT(*) FROM ppepp_documents 
             WHERE (fakultas_id = ? OR prodi_id IN (SELECT id FROM prodis WHERE fakultas_id = ?))
-              AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
+              AND status_review IN ('sudah_diperbaiki', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL
         ");
         $stmtRevisi->execute([$sidebarFakultasId, $sidebarFakultasId]);
         $sidebarRevisiCount = (int)$stmtRevisi->fetchColumn();

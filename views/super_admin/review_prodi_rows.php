@@ -348,6 +348,67 @@ if (!empty($documents)):
                     <span class="badge bg-white bg-opacity-20 text-white rounded-pill px-2.5 py-1 small"><?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?></span>
                 </div>
                 <div class="card-body p-3.5">
+                    <?php
+                    $reviewFiles = $doc['files'] ?? [];
+                    $reviewLinks = parse_external_links($doc['external_link'] ?? '');
+                    $hasReviewNarasi = !empty(trim($doc['deskripsi'] ?? ''));
+                    if (!$hasReviewNarasi) {
+                        foreach ($reviewFiles as $rf) {
+                            if (!empty(trim($rf['narasi'] ?? ''))) { $hasReviewNarasi = true; break; }
+                        }
+                    }
+                    if (!$hasReviewNarasi) {
+                        foreach ($reviewLinks as $rl) {
+                            if (!empty(trim($rl['narasi'] ?? ''))) { $hasReviewNarasi = true; break; }
+                        }
+                    }
+                    ?>
+                    <?php if ($hasReviewNarasi): ?>
+                        <div class="card p-3 rounded-3 border-0 mb-3" style="background: #F8FAFC; border: 1px solid #E2E8F0 !important;">
+                            <div class="d-flex align-items-center gap-1.5 fw-bold text-dark mb-2" style="font-size: 0.8rem;">
+                                <i class="fas fa-align-left text-primary"></i>
+                                <span>Narasi &amp; Keterangan Pengunggah:</span>
+                            </div>
+                            <?php if (!empty(trim($doc['deskripsi'] ?? ''))): ?>
+                                <div class="mb-2 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
+                                    <span class="fw-semibold text-dark d-block mb-0.5"><i class="fas fa-file-lines text-muted me-1"></i>Narasi Dokumen:</span>
+                                    <span class="text-dark-blue" style="white-space: pre-wrap; word-break: break-word;"><?= nl2br(htmlspecialchars($doc['deskripsi'])) ?></span>
+                                </div>
+                            <?php endif; ?>
+                            <?php foreach ($reviewFiles as $rf): ?>
+                                <?php if (!empty(trim($rf['narasi'] ?? '')) && trim($rf['narasi']) !== trim($doc['deskripsi'] ?? '')): ?>
+                                    <div class="mb-1.5 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
+                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-0.5 flex-wrap">
+                                            <span class="fw-semibold text-dark d-flex align-items-center gap-1.5 text-truncate" style="max-width: 450px;">
+                                                <i class="<?= ($rf['file_category'] ?? '') === 'photo' ? 'fas fa-image text-info' : 'fas fa-file-pdf text-danger' ?> flex-shrink-0"></i>
+                                                <span class="text-truncate"><?= htmlspecialchars($rf['file_name']) ?></span>
+                                            </span>
+                                            <?php if (!empty($rf['folder_name'])): ?>
+                                                <span class="badge bg-light text-muted border" style="font-size: 0.65rem;"><?= htmlspecialchars($rf['folder_name']) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="text-dark-blue mt-1 ps-2.5 border-start border-2 border-primary" style="white-space: pre-wrap; word-break: break-word;">
+                                            <?= nl2br(htmlspecialchars($rf['narasi'])) ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                            <?php foreach ($reviewLinks as $rlIdx => $rl): ?>
+                                <?php if (!empty(trim($rl['narasi'] ?? '')) && trim($rl['narasi']) !== trim($doc['deskripsi'] ?? '')): ?>
+                                    <div class="mb-1.5 p-2.5 rounded-3 bg-white border border-light-subtle text-secondary small" style="line-height: 1.5; font-size: 0.8rem;">
+                                        <span class="fw-semibold text-dark d-flex align-items-center gap-1.5 mb-0.5">
+                                            <i class="fab fa-google-drive text-success flex-shrink-0"></i>
+                                            <span><?= htmlspecialchars(!empty($rl['label']) ? $rl['label'] : ('Tautan Google Drive #' . ($rlIdx + 1))) ?></span>
+                                        </span>
+                                        <div class="text-dark-blue mt-1 ps-2.5 border-start border-2 border-success" style="white-space: pre-wrap; word-break: break-word;">
+                                            <?= nl2br(htmlspecialchars($rl['narasi'])) ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
                     <?php if (Auth::canActionLpmMenu('review_dokumen') && $status !== 'sesuai'): ?>
                         <form action="<?= base_url('admin/review-dokumen/submit') ?>" method="POST" class="m-0 review-action-form" novalidate>
                             <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
