@@ -2988,7 +2988,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    const singleEditForm = document.getElementById('documentUploadForm') || document.getElementById('editDocForm') || document.querySelector('form[action*="/save"]');
+    const singleEditForm = document.getElementById('documentUploadForm') || document.getElementById('editDocForm');
     if (singleEditForm) {
         let isSingleSubmitting = false;
         singleEditForm.addEventListener('submit', async function(e) {

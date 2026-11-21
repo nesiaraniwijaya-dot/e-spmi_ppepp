@@ -761,20 +761,20 @@ function render_review_status_badge(string $status, string $extraClasses = '', ?
     // Bagi role Prodi/Dekanat, dokumen yang dikembalikan LPM ke GPM tetap berstatus "Sedang Direview GPM"
     // sampai GPM secara resmi meneruskan catatan perbaikan ke unit.
     if ($isUnitUser && in_array($status, ['revisi_lpm', 'perlu_perbaikan'])) {
-        return '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Sedang Direview GPM</span>';
+        return '<span class="badge rounded-pill text-dark border text-nowrap ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Sedang Direview GPM</span>';
     }
 
     return match($status) {
-        'draft' => '<span class="badge rounded-pill bg-secondary text-white ' . $extraClasses . '" style="font-size:0.75rem;"><i class="fas fa-file-pen me-1"></i> Draf</span>',
-        'menunggu_review_gpm', 'belum_direview' => '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Menunggu Review GPM</span>',
-        'sudah_diperbaiki' => '<span class="badge rounded-pill text-dark border ' . $extraClasses . '" style="background:#E0F2FE; color:#0369A1; border-color:#BAE6FD !important; font-size:0.75rem;"><i class="fas fa-clock-rotate-left text-primary me-1"></i> Sudah Diperbaiki (Review GPM)</span>',
-        'revisi_gpm' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#EF4444; border-color:#DC2626 !important; font-size:0.75rem;"><i class="fas fa-wrench me-1"></i> Perlu Revisi (GPM)</span>',
-        'menunggu_review_lpm' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#2563EB; border-color:#1D4ED8 !important; font-size:0.75rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan ke LPM</span>',
+        'draft' => '<span class="badge rounded-pill bg-secondary text-white text-nowrap ' . $extraClasses . '" style="font-size:0.75rem;"><i class="fas fa-file-pen me-1"></i> Draf</span>',
+        'menunggu_review_gpm', 'belum_direview' => '<span class="badge rounded-pill text-dark border text-nowrap ' . $extraClasses . '" style="background:#FEF3C7; color:#92400E; border-color:#FCD34D !important; font-size:0.75rem;"><i class="fas fa-clock text-warning me-1"></i> Menunggu Review GPM</span>',
+        'sudah_diperbaiki' => '<span class="badge rounded-pill text-dark border text-nowrap ' . $extraClasses . '" style="background:#E0F2FE; color:#0369A1; border-color:#BAE6FD !important; font-size:0.75rem;"><i class="fas fa-clock-rotate-left text-primary me-1"></i> Sudah Diperbaiki (Review GPM)</span>',
+        'revisi_gpm' => '<span class="badge rounded-pill text-white border text-nowrap ' . $extraClasses . '" style="background:#EF4444; border-color:#DC2626 !important; font-size:0.75rem;"><i class="fas fa-wrench me-1"></i> Perlu Revisi (GPM)</span>',
+        'menunggu_review_lpm' => '<span class="badge rounded-pill text-white border text-nowrap ' . $extraClasses . '" style="background:#2563EB; border-color:#1D4ED8 !important; font-size:0.75rem;"><i class="fas fa-paper-plane me-1"></i> Diteruskan ke LPM</span>',
         'revisi_lpm', 'perlu_perbaikan' => ($role === 'gpm')
-            ? '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#EA580C; border-color:#C2410C !important; font-size:0.75rem;"><i class="fas fa-reply me-1"></i> Catatan LPM (Perlu Diteruskan)</span>'
-            : '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#DC2626; border-color:#B91C1C !important; font-size:0.75rem;"><i class="fas fa-undo me-1"></i> Dikembalikan ke GPM</span>',
-        'sesuai' => '<span class="badge rounded-pill text-white border ' . $extraClasses . '" style="background:#16A34A; border-color:#15803D !important; font-size:0.75rem;"><i class="fas fa-circle-check me-1"></i> Disetujui Standar Mutu</span>',
-        default => '<span class="badge rounded-pill bg-light text-dark border ' . $extraClasses . '" style="font-size:0.75rem;">' . htmlspecialchars($status) . '</span>'
+            ? '<span class="badge rounded-pill text-white border text-nowrap ' . $extraClasses . '" style="background:#EA580C; border-color:#C2410C !important; font-size:0.75rem;"><i class="fas fa-reply me-1"></i> Catatan LPM (Perlu Diteruskan)</span>'
+            : '<span class="badge rounded-pill text-white border text-nowrap ' . $extraClasses . '" style="background:#DC2626; border-color:#B91C1C !important; font-size:0.75rem;"><i class="fas fa-undo me-1"></i> Dikembalikan ke GPM</span>',
+        'sesuai' => '<span class="badge rounded-pill text-white border text-nowrap ' . $extraClasses . '" style="background:#16A34A; border-color:#15803D !important; font-size:0.75rem;"><i class="fas fa-circle-check me-1"></i> Disetujui Standar Mutu</span>',
+        default => '<span class="badge rounded-pill bg-light text-dark border text-nowrap ' . $extraClasses . '" style="font-size:0.75rem;">' . htmlspecialchars($status) . '</span>'
     };
 }
 

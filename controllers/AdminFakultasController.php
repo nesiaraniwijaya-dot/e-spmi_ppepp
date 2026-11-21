@@ -503,6 +503,76 @@ class AdminFakultasController extends Controller {
     }
 
     /**
+     * Detail Dokumen Mutu Tingkat Fakultas
+     */
+    public function detailDocument(string $id): void {
+        $stmt = $this->db->prepare("
+            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang,
+                   p.nama_prodi,
+                   u.name as uploader_name,
+                   rev.name as reviewer_name, rev.role as reviewer_role
+            FROM ppepp_documents d
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN users u ON d.user_id = u.id
+            LEFT JOIN users rev ON d.reviewed_by = rev.id
+            WHERE d.id = ? AND d.fakultas_id = ? AND d.deleted_at IS NULL
+        ");
+        $stmt->execute([(int)$id, $this->fakultasId]);
+        $doc = $stmt->fetch();
+
+        if (!$doc) {
+            Auth::setFlash('danger', 'Dokumen tidak ditemukan atau bukan milik Fakultas Anda.');
+            redirect('fakultas/dokumen');
+            return;
+        }
+
+        // Ambil berkas lampiran
+        $stmtFiles = $this->db->prepare("
+            SELECT * FROM ppepp_document_files 
+            WHERE document_id = ? AND deleted_at IS NULL 
+            ORDER BY sort_order ASC, id ASC
+        ");
+        $stmtFiles->execute([(int)$id]);
+        $files = $stmtFiles->fetchAll() ?: [];
+        if (empty($files) && !empty($doc['file_path'])) {
+            $files = [[
+                'id' => 0,
+                'file_name' => $doc['nama_file'] ?? basename($doc['file_path']),
+                'file_path' => $doc['file_path'],
+                'file_type' => $doc['file_type'] ?? 'application/pdf',
+                'file_size' => $doc['file_size'] ?? 0,
+                'narasi' => $doc['deskripsi'] ?? '',
+                'folder_name' => $doc['folder_name'] ?? 'Utama',
+                'file_category' => $doc['file_category'] ?? 'file',
+                'external_link' => $doc['external_link'] ?? null,
+                'created_at' => $doc['created_at']
+            ]];
+        }
+        $doc['files'] = $files;
+
+        // Ambil riwayat review dokumen
+        $stmtReviews = $this->db->prepare("
+            SELECT r.*, u.name as reviewer_user_name, u.role as reviewer_user_role
+            FROM ppepp_document_reviews r
+            LEFT JOIN users u ON r.reviewer_id = u.id
+            WHERE r.document_id = ?
+            ORDER BY r.created_at DESC, r.id DESC
+        ");
+        $stmtReviews->execute([(int)$id]);
+        $reviews = $stmtReviews->fetchAll() ?: [];
+
+        $this->render('admin_fakultas/detail', [
+            'pageTitle' => 'Detail Dokumen: ' . $doc['nama_dokumen'],
+            'fakultas' => $this->fakultas,
+            'doc' => $doc,
+            'files' => $files,
+            'reviews' => $reviews
+        ]);
+    }
+
+    /**
      * Form Ubah Dokumen Mutu Tingkat Fakultas
      */
     public function editDocument(string $id): void {

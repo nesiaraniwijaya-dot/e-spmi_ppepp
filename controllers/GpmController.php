@@ -448,12 +448,18 @@ class GpmController extends Controller {
         $statusReview  = trim($_POST['status_review'] ?? '');
         $catatanReview = trim($_POST['catatan_review'] ?? '');
         $redirectUrl   = trim($_POST['redirect_to'] ?? 'gpm/dokumen');
+        $isAjax        = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
 
         // Validasi Status Keputusan Review GPM:
         // 1. 'menunggu_review_lpm' : Rekomendasikan / Teruskan ke Review LPM
         // 2. 'revisi_gpm'          : Kembalikan ke Prodi / Fakultas untuk direvisi
         $allowedStatuses = ['menunggu_review_lpm', 'revisi_gpm'];
         if (!$docId || !in_array($statusReview, $allowedStatuses)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Keputusan review dokumen tidak valid.']);
+                exit;
+            }
             Auth::setFlash('danger', 'Keputusan review dokumen tidak valid.');
             redirect($redirectUrl);
             return;
@@ -462,18 +468,28 @@ class GpmController extends Controller {
         // Pastikan dokumen ada dan dalam ruang lingkup fakultas / prodi binaan GPM
         $doc = $this->findDocWithScope($docId);
         if (!$doc) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Dokumen tidak ditemukan atau di luar wewenang review GPM fakultas Anda.']);
+                exit;
+            }
             Auth::setFlash('danger', 'Dokumen tidak ditemukan atau di luar wewenang review GPM fakultas Anda.');
             redirect($redirectUrl);
             return;
         }
 
         if ($statusReview === 'revisi_gpm' && empty($catatanReview)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Catatan / rekomendasi perbaikan wajib diisi jika meminta revisi dokumen.']);
+                exit;
+            }
             Auth::setFlash('danger', 'Catatan / rekomendasi perbaikan wajib diisi jika meminta revisi dokumen.');
             redirect($redirectUrl);
             return;
         }
 
-        $reviewerId           = Auth::id();
+        $reviewerId           = Auth::id() ?: 0;
         $officialReviewerName = 'GPM ' . ($this->fakultas['nama_fakultas'] ?? 'Fakultas');
         $oldStatus            = $doc['status_review'];
         $finalStatus          = $statusReview;
@@ -482,64 +498,100 @@ class GpmController extends Controller {
             ? ($catatanReview ?: 'Disetujui oleh GPM tingkat Fakultas dan diteruskan ke LPM untuk review akhir.')
             : $catatanReview;
 
-        // 1. Update Dokumen PPEPP
-        $stmtUpdate = $this->db->prepare("
-            UPDATE ppepp_documents 
-            SET status_review = ?,
-                tahap_review = ?,
-                catatan_review = ?,
-                gpm_reviewed_by = ?,
-                gpm_reviewed_at = NOW(),
-                gpm_catatan = ?,
-                updated_at = NOW()
-            WHERE id = ?
-        ");
-        $stmtUpdate->execute([
-            $finalStatus,
-            $tahapReview,
-            $finalCatatan,
-            $reviewerId,
-            $finalCatatan,
-            $docId
-        ]);
+        try {
+            $this->db->beginTransaction();
 
-        // 2. Catat Riwayat Review ke ppepp_document_reviews
-        $stmtLog = $this->db->prepare("
-            INSERT INTO ppepp_document_reviews 
-            (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
-            VALUES (?, ?, 'gpm', ?, 'gpm', ?, ?, ?, NOW())
-        ");
-        $stmtLog->execute([
-            $docId,
-            $reviewerId,
-            $officialReviewerName,
-            $oldStatus,
-            $finalStatus,
-            $finalCatatan
-        ]);
+            // 1. Update Dokumen PPEPP
+            $stmtUpdate = $this->db->prepare("
+                UPDATE ppepp_documents 
+                SET status_review = ?,
+                    tahap_review = ?,
+                    catatan_review = ?,
+                    gpm_reviewed_by = ?,
+                    gpm_reviewed_at = NOW(),
+                    gpm_catatan = ?,
+                    reviewed_by = ?,
+                    reviewed_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = ?
+            ");
+            $stmtUpdate->execute([
+                $finalStatus,
+                $tahapReview,
+                $finalCatatan,
+                $reviewerId,
+                $finalCatatan,
+                $reviewerId,
+                $docId
+            ]);
 
-        // 2b. Jika status 'revisi_gpm', catat juga tracking revisi untuk unit pengunggah
-        if ($finalStatus === 'revisi_gpm') {
-            $this->recordRevisionTracking($doc, $reviewerId, $officialReviewerName, $finalCatatan);
+            // 2. Catat Riwayat Review ke ppepp_document_reviews
+            $stmtLog = $this->db->prepare("
+                INSERT INTO ppepp_document_reviews 
+                (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
+                VALUES (?, ?, 'gpm', ?, 'gpm', ?, ?, ?, NOW())
+            ");
+            $stmtLog->execute([
+                $docId,
+                $reviewerId,
+                $officialReviewerName,
+                $oldStatus,
+                $finalStatus,
+                $finalCatatan
+            ]);
+
+            // 2b. Jika status 'revisi_gpm', catat juga tracking revisi untuk unit pengunggah
+            if ($finalStatus === 'revisi_gpm') {
+                $this->recordRevisionTracking($doc, $reviewerId, $officialReviewerName, $finalCatatan);
+            }
+
+            // 3. Catat ke Audit Logger
+            $unitName = ($doc['level'] === 'fakultas')
+                ? ($this->fakultas['nama_fakultas'] ?? 'Dekanat Fakultas')
+                : 'Program Studi';
+            AuditLogger::log('UPDATE', 'Review Dokumen GPM', (string)$docId, $doc['nama_dokumen'], $doc, [
+                'status_review'  => $finalStatus,
+                'tahap_review'   => $tahapReview,
+                'catatan_review' => $finalCatatan,
+                'reviewer_role'  => 'gpm',
+                'reviewer'       => $officialReviewerName,
+                'verifikator'    => Auth::user()['name'] ?? 'Petugas GPM'
+            ], (int)($doc['prodi_id'] ?? 0), $unitName);
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('[GpmController::submitReview] Error: ' . $e->getMessage());
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem saat menyimpan review: ' . $e->getMessage()]);
+                exit;
+            }
+            Auth::setFlash('danger', 'Terjadi kesalahan sistem saat menyimpan keputusan review.');
+            redirect($redirectUrl);
+            return;
         }
 
-        // 3. Catat ke Audit Logger
-        $unitName = ($doc['level'] === 'fakultas')
-            ? ($this->fakultas['nama_fakultas'] ?? 'Dekanat Fakultas')
-            : 'Program Studi';
-        AuditLogger::log('UPDATE', 'Review Dokumen GPM', (string)$docId, $doc['nama_dokumen'], $doc, [
-            'status_review'  => $finalStatus,
-            'tahap_review'   => $tahapReview,
-            'catatan_review' => $finalCatatan,
-            'reviewer_role'  => 'gpm',
-            'reviewer'       => $officialReviewerName,
-            'verifikator'    => Auth::user()['name'] ?? 'Petugas GPM'
-        ], (int)($doc['prodi_id'] ?? 0), $unitName);
+        $msgSuccess = ($finalStatus === 'menunggu_review_lpm')
+            ? "Dokumen '{$doc['nama_dokumen']}' telah berhasil disetujui oleh GPM dan diteruskan ke antrean review LPM."
+            : "Dokumen '{$doc['nama_dokumen']}' dikembalikan dengan catatan perbaikan untuk ditindaklanjuti oleh unit pengunggah.";
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => $msgSuccess,
+                'status'  => $finalStatus
+            ]);
+            exit;
+        }
 
         if ($finalStatus === 'menunggu_review_lpm') {
-            Auth::setFlash('success', "Dokumen '{$doc['nama_dokumen']}' telah berhasil disetujui oleh GPM dan diteruskan ke antrean review LPM.");
+            Auth::setFlash('success', $msgSuccess);
         } else {
-            Auth::setFlash('warning', "Dokumen '{$doc['nama_dokumen']}' dikembalikan dengan catatan perbaikan untuk ditindaklanjuti oleh unit pengunggah.");
+            Auth::setFlash('warning', $msgSuccess);
         }
 
         redirect($redirectUrl);
@@ -829,8 +881,8 @@ class GpmController extends Controller {
     }
 
     private function isDocInScope(array $doc): bool {
-        // 1. Dokumen tingkat Fakultas yang berada di bawah fakultas GPM ini
-        if ((int)($doc['fakultas_id'] ?? 0) === $this->fakultasId && ($doc['level'] === 'fakultas' || empty($doc['prodi_id']))) {
+        // 1. Dokumen yang terasosiasi dengan fakultas GPM ini (baik tingkat fakultas maupun prodi di bawahnya)
+        if ((int)($doc['fakultas_id'] ?? 0) === $this->fakultasId) {
             return true;
         }
         // 2. Dokumen tingkat Program Studi yang berada di bawah fakultas GPM ini

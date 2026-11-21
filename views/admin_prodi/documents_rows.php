@@ -157,16 +157,6 @@ if (!empty($documents)):
                                     <?php endif; ?>
                                 </div>
                                 <?= render_sub_standar_badges($singleFile['sub_bidang_ids'] ?? null) ?>
-                                <?php if (!empty($singleFile['narasi'])): ?>
-                                    <div class="w-100 mt-1" style="min-width: 0; max-width: 100%; overflow: hidden;">
-                                        <div class="text-muted d-flex align-items-center gap-1.5 px-2 py-1 rounded bg-light border border-light-subtle w-100" 
-                                             style="font-size: 0.7rem; line-height: 1.35; min-width: 0; max-width: 100%; overflow: hidden;" 
-                                             title="<?= htmlspecialchars($singleFile['narasi']) ?>">
-                                            <i class="fas fa-quote-left text-danger opacity-75 flex-shrink-0" style="font-size: 0.65rem;"></i>
-                                            <span class="text-truncate d-inline-block" style="min-width: 0; max-width: 100%;"><?= htmlspecialchars($singleFile['narasi']) ?></span>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>
@@ -228,16 +218,6 @@ if (!empty($documents)):
                                     <?php endif; ?>
                                 </div>
                                 <?= render_sub_standar_badges($singleLink['sub_bidang_ids'] ?? null) ?>
-                                <?php if (!empty($singleLink['narasi'])): ?>
-                                    <div class="w-100 mt-1" style="min-width: 0; max-width: 100%; overflow: hidden;">
-                                        <div class="text-muted d-flex align-items-center gap-1.5 px-2 py-1 rounded bg-light border border-light-subtle w-100" 
-                                             style="font-size: 0.7rem; line-height: 1.35; min-width: 0; max-width: 100%; overflow: hidden;" 
-                                             title="<?= htmlspecialchars($singleLink['narasi']) ?>">
-                                            <i class="fas fa-quote-left text-primary opacity-75 flex-shrink-0" style="font-size: 0.65rem;"></i>
-                                            <span class="text-truncate d-inline-block" style="min-width: 0; max-width: 100%;"><?= htmlspecialchars($singleLink['narasi']) ?></span>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>
@@ -247,9 +227,9 @@ if (!empty($documents)):
                     <?php endif; ?>
                 </div>
             </td>
-            <td style="overflow: hidden; min-width: 0;">
-                <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0; max-width: 100%; overflow: hidden;">
-                    <?= render_review_status_badge($status) ?>
+            <td style="min-width: 180px; width: 185px;">
+                <div class="d-flex flex-column align-items-start gap-1 w-100">
+                    <div class="text-nowrap"><?= render_review_status_badge($status) ?></div>
                     
                     <?php if ($isPerluPerbaikan): ?>
                         <div class="d-flex align-items-center gap-1 flex-wrap mt-0.5">
@@ -484,12 +464,10 @@ if (!empty($documents)):
                                             <?php endif; ?>
 
                                             <?php if (!empty($f['narasi'])): ?>
-                                                <div class="mt-2.5 p-2.5 rounded-2 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
-                                                    <div class="fw-semibold text-danger d-flex align-items-center gap-1 mb-1" style="font-size: 0.72rem;">
-                                                        <i class="fas fa-quote-left text-danger opacity-75"></i> <span>Catatan / Narasi Berkas:</span>
-                                                    </div>
-                                                    <div class="text-secondary small" style="line-height: 1.45; white-space: pre-line; word-break: break-word; font-size: 0.78rem;">
-                                                        <?= htmlspecialchars($f['narasi']) ?>
+                                                <div class="mt-2.5 p-2.5 px-3 rounded-3 bg-light border-start border-3 border-primary" style="background-color: #F8FAFC !important;">
+                                                    <div class="text-secondary small d-flex align-items-start gap-2" style="font-size: 0.8rem; line-height: 1.5; word-break: break-word;">
+                                                        <i class="fas fa-quote-left text-primary opacity-50 mt-1 flex-shrink-0" style="font-size: 0.7rem;"></i>
+                                                        <span class="text-dark-blue"><?= nl2br(htmlspecialchars($f['narasi'])) ?></span>
                                                     </div>
                                                 </div>
                                             <?php endif; ?>
@@ -541,12 +519,10 @@ if (!empty($documents)):
                                             <?php endif; ?>
 
                                             <?php if (!empty($l['narasi'])): ?>
-                                                <div class="mt-2.5 p-2.5 rounded-2 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
-                                                    <div class="fw-semibold text-success d-flex align-items-center gap-1 mb-1" style="font-size: 0.72rem;">
-                                                        <i class="fas fa-quote-left text-success opacity-75"></i> <span>Catatan / Narasi Tautan:</span>
-                                                    </div>
-                                                    <div class="text-secondary small" style="line-height: 1.45; white-space: pre-line; word-break: break-word; font-size: 0.78rem;">
-                                                        <?= htmlspecialchars($l['narasi']) ?>
+                                                <div class="mt-2.5 p-2.5 px-3 rounded-3 bg-light border-start border-3 border-success" style="background-color: #F8FAFC !important;">
+                                                    <div class="text-secondary small d-flex align-items-start gap-2" style="font-size: 0.8rem; line-height: 1.5; word-break: break-word;">
+                                                        <i class="fas fa-quote-left text-success opacity-50 mt-1 flex-shrink-0" style="font-size: 0.7rem;"></i>
+                                                        <span class="text-dark-blue"><?= nl2br(htmlspecialchars($l['narasi'])) ?></span>
                                                     </div>
                                                 </div>
                                             <?php endif; ?>

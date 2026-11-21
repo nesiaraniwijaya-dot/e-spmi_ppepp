@@ -227,7 +227,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         <th style="width: 165px; min-width: 160px;" class="text-nowrap">Siklus PPEPP</th>
                         <th style="width: 20%;">Bidang &amp; Standar</th>
                         <th style="width: 16%;">Berkas</th>
-                        <th style="width: 16%;">Status Review LPM</th>
+                        <th style="width: 185px; min-width: 180px;" class="text-nowrap">Status Review GPM</th>
                         <th style="width: 105px; min-width: 100px;" class="text-center text-nowrap">Aksi</th>
                     </tr>
                 </thead>
