@@ -571,7 +571,7 @@ class AdminProdiController extends Controller {
         // Ambil berkas lampiran
         $stmtFiles = $this->db->prepare("
             SELECT * FROM ppepp_document_files 
-            WHERE document_id = ? AND deleted_at IS NULL 
+            WHERE document_id = ?
             ORDER BY sort_order ASC, id ASC
         ");
         $stmtFiles->execute([(int)$id]);
