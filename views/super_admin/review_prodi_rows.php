@@ -336,6 +336,7 @@ if (!empty($documents)):
             </td>
         </tr>
 
+        <tr class="d-none"><td colspan="6">
         <!-- TEMPLATE REVIEW LPM UNTUK PDF VIEWER MODAL -->
         <div id="lpmReviewTemplate_<?= $doc['id'] ?>" class="d-none">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-2 text-start">
@@ -404,7 +405,7 @@ if (!empty($documents)):
                                 </button>
                                 <div class="d-flex align-items-center gap-2">
                                     <button type="button" class="btn btn-light rounded-pill px-3 py-1.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                                    <button type="submit" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 py-1.5 btn-sm fw-semibold shadow-xs">
+                                    <button type="button" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 py-1.5 btn-sm fw-semibold shadow-xs btn-submit-review" data-action="submit-review" data-doc-id="<?= $doc['id'] ?>">
                                         <i class="fas fa-paper-plane me-1.5"></i> Simpan Keputusan LPM
                                     </button>
                                 </div>
@@ -663,6 +664,7 @@ if (!empty($documents)):
                 </div>
             </div>
         </div>
+        </td></tr>
     <?php endforeach; ?>
 <?php else: ?>
     <tr id="emptyRow">

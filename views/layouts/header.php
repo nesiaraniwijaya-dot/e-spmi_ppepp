@@ -23,6 +23,7 @@ $currentUser = Auth::user();
     <!-- LPM Design System Stylesheet -->
     <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
     <script>
+        window.BASE_URL = '<?= base_url() ?>';
         window.IS_USER_LOGGED_IN = <?= is_unika_user_logged_in() ? 'true' : 'false' ?>;
         window.IS_UNIKA_USER = <?= is_unika_user_logged_in() ? 'true' : 'false' ?>;
         window.LOGIN_URL = '<?= base_url("login") ?>';

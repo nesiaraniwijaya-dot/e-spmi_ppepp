@@ -353,6 +353,7 @@ if (!empty($documents)):
 
 <!-- Modals Container: Terpisah di luar card dan container agar tidak terpengaruh stacking context / z-index card -->
 <?php if (!empty($documents)): ?>
+    <tr class="d-none"><td colspan="7">
     <?php foreach ($documents as $doc): 
                 $files = $doc['files'] ?? [];
                 $links = $doc['links'] ?? [];
@@ -767,7 +768,7 @@ if (!empty($documents)):
                                     </button>
                                     <div class="d-flex gap-2">
                                         <button type="button" class="btn btn-light rounded-pill px-3.5 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
-                                        <button type="submit" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs">
+                                        <button type="button" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs btn-submit-review" data-action="submit-review" data-doc-id="<?= $doc['id'] ?>">
                                             <i class="fas fa-paper-plane me-1.5"></i> Simpan Keputusan Review
                                         </button>
                                     </div>
@@ -983,7 +984,7 @@ if (!empty($documents)):
                                             </button>
                                             <div class="d-flex gap-2">
                                                 <button type="button" class="btn btn-light rounded-pill px-3.5 btn-sm fw-semibold" data-bs-dismiss="modal">Batal</button>
-                                                <button type="submit" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs">
+                                                <button type="button" class="btn btn-primary bg-scu-blue border-0 rounded-pill px-4 btn-sm fw-semibold shadow-xs btn-submit-review" data-action="submit-review" data-doc-id="<?= $doc['id'] ?>">
                                                     <i class="fas fa-paper-plane me-1.5"></i> Simpan Keputusan Review
                                                 </button>
                                             </div>
@@ -1042,6 +1043,7 @@ if (!empty($documents)):
                 </div>
 
     <?php endforeach; ?>
+    </td></tr>
 <?php else: ?>
     <tr id="gpmEmptyRow">
         <td colspan="7" class="text-center py-5 text-muted">

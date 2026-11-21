@@ -105,27 +105,26 @@ document.addEventListener('DOMContentLoaded', function () {
     if (pdfModal) {
         window._currentPdfIsReviewMode = false;
 
-        function initCopiedReviewForm(container, role) {
+        function initCopiedReviewForm(container, role, triggerBtn) {
             if (!container) return;
             const form = container.querySelector('form');
-            if (!form) return;
 
             // Cegah binding event berulang jika modal dibuka beberapa kali
-            if (form.dataset.ajaxBound === '1') return;
-            form.dataset.ajaxBound = '1';
+            if (container.dataset.reviewBound === '1') return;
+            container.dataset.reviewBound = '1';
 
             // Event listener klik radio button untuk feedback border & background card
-            const decisionRadios = form.querySelectorAll('input[type="radio"][name="status_review"]');
+            const decisionRadios = container.querySelectorAll('input[type="radio"][name="status_review"]');
             decisionRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
-                    const cards = form.querySelectorAll('.review-decision-card');
+                    const cards = container.querySelectorAll('.review-decision-card, .review-choice-label');
                     cards.forEach(c => {
                         c.style.borderColor = '#E2E8F0';
                         c.style.backgroundColor = '#FFFFFF';
                     });
-                    const parentCard = this.closest('.review-decision-card');
+                    const parentCard = this.closest('.review-decision-card, .review-choice-label');
                     if (parentCard) {
-                        if (this.value === 'revisi_gpm' || this.value === 'perlu_perbaikan') {
+                        if (this.value === 'revisi_gpm' || this.value === 'revisi_lpm' || this.value === 'perlu_perbaikan') {
                             parentCard.style.borderColor = '#EF4444';
                             parentCard.style.backgroundColor = '#FEF2F2';
                         } else {
@@ -136,13 +135,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             });
 
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
+            // Temukan tombol Simpan Keputusan Review
+            const submitBtn = container.querySelector('button[data-action="submit-review"]')
+                           || container.querySelector('button[type="submit"]')
+                           || container.querySelector('.btn-submit-review')
+                           || container.querySelector('button.btn-primary');
 
-                const formData = new FormData(form);
-                const statusReview = formData.get('status_review');
-                const catatanReview = (formData.get('catatan_review') || '').trim();
+            async function handleReviewSubmit(e) {
+                if (e) e.preventDefault();
 
+                // Ambil nilai radio status review yang dipilih
+                const checkedRadio = container.querySelector('input[type="radio"][name="status_review"]:checked');
+                const statusReview = checkedRadio ? checkedRadio.value : '';
+
+                // Ambil catatan review
+                const ta = container.querySelector('textarea[name="catatan_review"]');
+                const catatanReview = (ta ? ta.value : '').trim();
+
+                // Ambil document_id
+                const docId = container.querySelector('input[name="document_id"]')?.value
+                           || container.querySelector('input[name="id"]')?.value
+                           || triggerBtn?.getAttribute('data-doc-id')
+                           || '';
+
+                // Ambil CSRF token
+                const csrfToken = container.querySelector('input[name="csrf_token"]')?.value
+                               || document.querySelector('input[name="csrf_token"]')?.value
+                               || '';
+
+                // Validasi Status Keputusan
                 if (!statusReview) {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -158,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // Validasi catatan wajib jika perlu revisi
-                if ((statusReview === 'revisi_gpm' || statusReview === 'perlu_perbaikan') && !catatanReview) {
+                if ((statusReview === 'revisi_gpm' || statusReview === 'revisi_lpm' || statusReview === 'perlu_perbaikan') && !catatanReview) {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'warning',
@@ -166,18 +187,29 @@ document.addEventListener('DOMContentLoaded', function () {
                             text: 'Silakan tuliskan arahan atau catatan perbaikan untuk unit pengunggah sebelum menyimpan keputusan Perlu Revisi.',
                             confirmButtonColor: '#2563EB'
                         }).then(() => {
-                            const ta = form.querySelector('textarea[name="catatan_review"]');
                             if (ta) ta.focus();
                         });
                     } else {
                         alert('Catatan review wajib diisi bila memilih opsi Perlu Revisi.');
-                        const ta = form.querySelector('textarea[name="catatan_review"]');
                         if (ta) ta.focus();
                     }
                     return false;
                 }
 
-                const submitBtn = form.querySelector('button[type="submit"]');
+                // Tentukan target URL
+                let targetUrl = (form && form.action) ? form.action : '';
+                if (!targetUrl) {
+                    const baseUrl = window.BASE_URL || (window.location.origin + (window.location.pathname.startsWith('/spmi_ppepp') ? '/spmi_ppepp' : ''));
+                    targetUrl = (role === 'gpm') ? (baseUrl + '/gpm/review/submit') : (baseUrl + '/admin/review-dokumen/submit');
+                }
+
+                const formData = new FormData();
+                formData.append('document_id', docId);
+                formData.append('id', docId);
+                formData.append('status_review', statusReview);
+                formData.append('catatan_review', catatanReview);
+                if (csrfToken) formData.append('csrf_token', csrfToken);
+
                 const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
                 if (submitBtn) {
                     submitBtn.disabled = true;
@@ -185,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 try {
-                    const response = await fetch(form.action, {
+                    const response = await fetch(targetUrl, {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -242,7 +274,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         alert('Terjadi kesalahan jaringan saat menyimpan keputusan.');
                     }
                 }
-            });
+            }
+
+            if (submitBtn) {
+                submitBtn.addEventListener('click', handleReviewSubmit);
+            }
+            if (form) {
+                form.addEventListener('submit', handleReviewSubmit);
+            }
         }
 
         const scrollArea = document.getElementById('pdfViewerScrollArea');
@@ -372,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (srcEl) {
                         reviewActionBox.innerHTML = srcEl.innerHTML;
                         reviewActionBox.style.display = 'none'; // Awalnya sembunyi, tampil di halaman akhir
-                        initCopiedReviewForm(reviewActionBox, reviewRole);
+                        initCopiedReviewForm(reviewActionBox, reviewRole, button);
                     }
                 }
 
