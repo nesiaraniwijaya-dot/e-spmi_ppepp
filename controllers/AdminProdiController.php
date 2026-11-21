@@ -651,13 +651,16 @@ class AdminProdiController extends Controller {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
         $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active = 1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
 
+        $doc['files'] = $docFiles;
+
         $this->render('admin_prodi/document_form', [
             'pageTitle' => 'Ubah Dokumen: ' . $doc['nama_dokumen'],
             'prodi' => $this->prodi,
             'bidangList' => $bidangList,
             'subBidangList' => $subBidangList,
             'doc' => $doc,
-            'docFiles' => $docFiles
+            'docFiles' => $docFiles,
+            'isEdit' => true
         ]);
     }
 

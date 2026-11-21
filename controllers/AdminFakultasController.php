@@ -612,6 +612,8 @@ class AdminFakultasController extends Controller {
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active=1 ORDER BY id ASC")->fetchAll();
         $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active=1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
 
+        $doc['files'] = $docFiles;
+
         $this->render('admin_fakultas/document_form', [
             'pageTitle' => 'Ubah Dokumen Mutu: ' . $doc['nama_dokumen'],
             'fakultas' => $this->fakultas,

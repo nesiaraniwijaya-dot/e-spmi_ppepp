@@ -12,7 +12,7 @@ $currentTanggal = !empty($doc['tanggal_dokumen'])
     ? $doc['tanggal_dokumen'] 
     : (!empty($doc['created_at']) ? date('Y-m-d', strtotime($doc['created_at'])) : date('Y-m-d'));
 $currentSiklus = $isEdit ? ($doc['siklus'] ?? '') : '';
-$docFiles = $doc['files'] ?? [];
+$docFiles = !empty($docFiles) ? $docFiles : ($doc['files'] ?? []);
 $savedLinks = parse_external_links($doc['external_link'] ?? '');
 if ($isEdit) {
     if (!empty($docFiles) && !empty($savedLinks)) {
