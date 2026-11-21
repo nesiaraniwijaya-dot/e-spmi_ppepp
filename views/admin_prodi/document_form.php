@@ -381,75 +381,85 @@ $siklusDefinitions = [
                                                     $fBg = 'bg-primary bg-opacity-10 text-purple';
                                                 }
                                             ?>
-                                                <div class="card p-3.5 bg-white border rounded-4 shadow-2xs existing-file-item" id="existingFileRow_<?= $f['id'] ?>">
-                                                    <div class="d-flex align-items-center justify-content-between gap-2 pb-2.5 border-bottom">
+                                                <div class="card p-3.5 bg-white border rounded-4 shadow-2xs existing-file-item transition-all" id="existingFileRow_<?= $f['id'] ?>">
+                                                    <div class="d-flex align-items-center justify-content-between gap-2 pb-2.5 border-bottom transition-all" id="existingFileHeader_<?= $f['id'] ?>">
                                                         <div class="d-flex align-items-center gap-2.5 text-truncate" style="min-width: 0;">
                                                             <div class="p-2 rounded-3 <?= $fBg ?> flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
                                                                 <i class="fas <?= $fIcon ?> fa-lg"></i>
                                                             </div>
                                                             <div class="text-truncate">
-                                                                <div class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;"><?= htmlspecialchars($f['file_name']) ?></div>
-                                                                <div class="text-muted" style="font-size: 0.74rem;"><?= $fSize ?></div>
+                                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                                    <span class="fw-bold text-dark text-truncate" id="existingFileNameText_<?= $f['id'] ?>" style="font-size: 0.88rem; transition: all 0.2s ease;"><?= htmlspecialchars($f['file_name']) ?></span>
+                                                                    <span class="badge bg-danger rounded-pill px-2.5 py-0.5 d-none shadow-2xs" id="delBadge_<?= $f['id'] ?>" style="font-size: 0.7rem; font-weight: 600;">
+                                                                        <i class="fas fa-trash-can me-1"></i>Akan Dihapus
+                                                                    </span>
+                                                                </div>
+                                                                <span class="badge bg-light text-muted border mt-0.5" style="font-size: 0.72rem;">
+                                                                    <?= $fSize ?>
+                                                                </span>
                                                             </div>
                                                         </div>
                                                         <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                                                            <a href="<?= base_url($f['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-3 rounded-pill d-inline-flex align-items-center gap-1.5 fw-semibold" title="Unduh / Lihat" style="font-size: 0.78rem;">
+                                                            <a href="<?= base_url($f['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-3 rounded-pill d-inline-flex align-items-center gap-1.5 fw-semibold" id="viewBtn_<?= $f['id'] ?>" title="Unduh / Lihat" style="font-size: 0.78rem;">
                                                                 <i class="fas fa-eye"></i> <span>Lihat</span>
                                                             </a>
                                                             <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill d-inline-flex align-items-center gap-1.5 fw-semibold transition-all" id="delBtn_<?= $f['id'] ?>" title="Hapus Berkas Ini" onclick="markFileForDeletion(<?= $f['id'] ?>)" style="font-size: 0.78rem;">
-                                                                <i class="fas fa-trash-can"></i> <span>Hapus</span>
+                                                                <i class="fas fa-trash-can text-danger me-1"></i> <span>Hapus</span>
                                                             </button>
                                                         </div>
                                                     </div>
 
-                                                    <div class="mt-2.5 mb-2">
-                                                        <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                                            <i class="fas fa-pen-to-square text-primary"></i> Nama Berkas (Bisa diubah / rename):
-                                                        </label>
-                                                        <input type="text" class="form-control py-1.5" name="existing_file_name[<?= $f['id'] ?>]" value="<?= htmlspecialchars($f['file_name']) ?>" placeholder="Nama berkas...">
-                                                    </div>
+                                                    <div id="existingFileBody_<?= $f['id'] ?>" class="existing-file-body transition-all">
+                                                        <div class="mt-2.5 mb-2">
+                                                            <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
+                                                                <i class="fas fa-pen-to-square text-primary"></i> Nama Berkas (Bisa diubah / rename):
+                                                            </label>
+                                                            <input type="text" class="form-control py-1.5" name="existing_file_name[<?= $f['id'] ?>]" value="<?= htmlspecialchars($f['file_name']) ?>" placeholder="Nama berkas...">
+                                                        </div>
 
-                                                    <div class="mt-2.5">
-                                                        <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                                            <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas Ini:
-                                                        </label>
-                                                        <textarea class="form-control py-2" name="existing_file_narasi[<?= $f['id'] ?>]" rows="1" placeholder="Tuliskan keterangan isi berkas ini..."><?= htmlspecialchars($f['narasi'] ?? '') ?></textarea>
-                                                    </div>
+                                                        <div class="mt-2.5">
+                                                            <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
+                                                                <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas Ini:
+                                                            </label>
+                                                            <textarea class="form-control py-2" name="existing_file_narasi[<?= $f['id'] ?>]" rows="1" placeholder="Tuliskan keterangan isi berkas ini..."><?= htmlspecialchars($f['narasi'] ?? '') ?></textarea>
+                                                        </div>
 
-                                                    <!-- Standar Mutu Picker Per-File -->
-                                                    <?= render_sub_standar_picker_html("existing_file_sub_bidang[{$f['id']}][]", $fSubIds, "ex_file_{$f['id']}", $bidangList, $subBidangList, $doc['bidang_id'] ?? null) ?>
+                                                        <!-- Standar Mutu Picker Per-File -->
+                                                        <?= render_sub_standar_picker_html("existing_file_sub_bidang[{$f['id']}][]", $fSubIds, "ex_file_{$f['id']}", $bidangList, $subBidangList, $doc['bidang_id'] ?? null) ?>
 
-                                                    <!-- Per-File Access Settings (2-Card Pill System) -->
-                                                    <div class="row g-2.5 mt-2.5">
-                                                        <div class="col-md-7">
-                                                            <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
-                                                                <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                                                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="ex_limit_sw_<?= $f['id'] ?>" name="existing_file_is_limited[<?= $f['id'] ?>]" value="1" <?= $fLimited ? 'checked' : '' ?> onchange="document.getElementById('ex_limit_wrap_<?= $f['id'] ?>').style.display = this.checked ? 'inline-flex' : 'none'" style="width: 2.2em; height: 1.2em;">
-                                                                    <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="ex_limit_sw_<?= $f['id'] ?>" style="font-size: 0.82rem;">
-                                                                        Batasi Pratinjau
-                                                                    </label>
+                                                        <!-- Per-File Access Settings (2-Card Pill System) -->
+                                                        <div class="row g-2.5 mt-2.5">
+                                                            <div class="col-md-7">
+                                                                <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
+                                                                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                                                        <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="ex_limit_sw_<?= $f['id'] ?>" name="existing_file_is_limited[<?= $f['id'] ?>]" value="1" <?= $fLimited ? 'checked' : '' ?> onchange="document.getElementById('ex_limit_wrap_<?= $f['id'] ?>').style.display = this.checked ? 'inline-flex' : 'none'" style="width: 2.2em; height: 1.2em;">
+                                                                        <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="ex_limit_sw_<?= $f['id'] ?>" style="font-size: 0.82rem;">
+                                                                            Batasi Pratinjau
+                                                                        </label>
+                                                                    </div>
+                                                                    <div class="input-group input-group-sm" id="ex_limit_wrap_<?= $f['id'] ?>" style="width: 100px; <?= $fLimited ? 'display:inline-flex;' : 'display:none;' ?>">
+                                                                        <input type="number" class="form-control text-center py-1 fw-bold" name="existing_file_page_limit[<?= $f['id'] ?>]" min="1" max="50" value="<?= $fLimitVal ?>" style="font-size: 0.78rem;">
+                                                                        <span class="input-group-text px-1.5 text-muted small">Hlm</span>
+                                                                    </div>
                                                                 </div>
-                                                                <div class="input-group input-group-sm" id="ex_limit_wrap_<?= $f['id'] ?>" style="width: 100px; <?= $fLimited ? 'display:inline-flex;' : 'display:none;' ?>">
-                                                                    <input type="number" class="form-control text-center py-1 fw-bold" name="existing_file_page_limit[<?= $f['id'] ?>]" min="1" max="50" value="<?= $fLimitVal ?>" style="font-size: 0.78rem;">
-                                                                    <span class="input-group-text px-1.5 text-muted small">Hlm</span>
+                                                            </div>
+                                                            <div class="col-md-5">
+                                                                <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
+                                                                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                                                        <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="ex_dl_sw_<?= $f['id'] ?>" name="existing_file_can_download[<?= $f['id'] ?>]" value="1" <?= $fCanDownload ? 'checked' : '' ?> style="width: 2.2em; height: 1.2em;">
+                                                                        <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="ex_dl_sw_<?= $f['id'] ?>" style="font-size: 0.82rem;">
+                                                                            Unduh Publik
+                                                                        </label>
+                                                                    </div>
+                                                                    <span class="badge bg-light text-muted border small d-none d-sm-inline">Publik</span>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-5">
-                                                            <div class="access-setting-pill d-flex align-items-center justify-content-between p-2.5 rounded-3 border bg-light-subtle h-100">
-                                                                <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                                                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="ex_dl_sw_<?= $f['id'] ?>" name="existing_file_can_download[<?= $f['id'] ?>]" value="1" <?= $fCanDownload ? 'checked' : '' ?> style="width: 2.2em; height: 1.2em;">
-                                                                    <label class="form-check-label text-dark fw-bold small mb-0 cursor-pointer" for="ex_dl_sw_<?= $f['id'] ?>" style="font-size: 0.82rem;">
-                                                                        Unduh Publik
-                                                                    </label>
-                                                                </div>
-                                                                <span class="badge bg-light text-muted border small d-none d-sm-inline">Publik</span>
-                                                            </div>
-                                                        </div>
                                                     </div>
 
-                                                    <div class="delete-indicator text-danger small fw-semibold d-none mt-2" id="delInd_<?= $f['id'] ?>" style="font-size: 0.78rem;">
-                                                        <i class="fas fa-exclamation-triangle me-1"></i> Berkas akan dihapus saat disimpan. Klik Batal Hapus untuk membatalkan.
+                                                    <div class="delete-indicator text-danger small fw-semibold d-none mt-2 p-2 rounded-2 bg-danger bg-opacity-10 border border-danger-subtle d-flex align-items-center gap-1.5" id="delInd_<?= $f['id'] ?>" style="font-size: 0.74rem;">
+                                                        <i class="fas fa-triangle-exclamation flex-shrink-0 text-danger"></i>
+                                                        <span>Berkas akan dihapus saat disimpan. Klik <strong>Batal Hapus</strong> untuk mengembalikan rincian berkas.</span>
                                                     </div>
                                                 </div>
                                             <?php endforeach; ?>
@@ -858,8 +868,13 @@ function markFileForDeletion(fileId) {
     const row = document.getElementById(`existingFileRow_${fileId}`);
     if (!row) return;
     let input = document.getElementById(`delFileInput_${fileId}`);
+    const body = document.getElementById(`existingFileBody_${fileId}`);
+    const header = document.getElementById(`existingFileHeader_${fileId}`);
+    const nameText = document.getElementById(`existingFileNameText_${fileId}`);
+    const delBadge = document.getElementById(`delBadge_${fileId}`);
     const indicator = document.getElementById(`delInd_${fileId}`);
     const btn = document.getElementById(`delBtn_${fileId}`);
+
     if (!input) {
         input = document.createElement('input');
         input.type = 'hidden';
@@ -867,30 +882,56 @@ function markFileForDeletion(fileId) {
         input.value = fileId;
         input.id = `delFileInput_${fileId}`;
         row.appendChild(input);
-        row.style.opacity = '0.65';
-        row.style.background = '#FEE2E2';
-        row.style.borderColor = '#F87171';
+
+        // Ringkaskan tampilan
+        row.style.background = '#FFF5F5';
+        row.style.borderColor = '#FECACA';
+
+        if (body) body.classList.add('d-none');
+        if (header) {
+            header.classList.remove('border-bottom', 'pb-2.5');
+            header.classList.add('py-0.5');
+        }
+        if (nameText) {
+            nameText.style.textDecoration = 'line-through';
+            nameText.style.color = '#DC2626';
+        }
+        if (delBadge) delBadge.classList.remove('d-none');
         if (indicator) indicator.classList.remove('d-none');
+
         if (btn) {
-            btn.className = 'btn btn-sm btn-danger text-white py-1 px-2.5 rounded-pill d-inline-flex align-items-center gap-1.5 shadow-xs';
+            btn.className = 'btn btn-sm btn-danger text-white py-1 px-3 rounded-pill d-inline-flex align-items-center gap-1.5 shadow-xs fw-semibold';
             btn.style.backgroundColor = '#DC2626';
             btn.style.borderColor = '#DC2626';
             btn.style.color = '#FFFFFF';
-            btn.innerHTML = '<i class="fas fa-trash-can text-white"></i> <span>Batal Hapus</span>';
-            btn.title = 'Batalkan Hapus Berkas Ini';
+            btn.innerHTML = '<i class="fas fa-rotate-left me-1"></i> <span>Batal Hapus</span>';
+            btn.title = 'Batalkan Penghapusan Berkas';
         }
     } else {
         input.remove();
-        row.style.opacity = '1';
+
+        // Kembalikan ke tampilan penuh semula
         row.style.background = '';
         row.style.borderColor = '';
+
+        if (body) body.classList.remove('d-none');
+        if (header) {
+            header.classList.add('border-bottom', 'pb-2.5');
+            header.classList.remove('py-0.5');
+        }
+        if (nameText) {
+            nameText.style.textDecoration = 'none';
+            nameText.style.color = '';
+        }
+        if (delBadge) delBadge.classList.add('d-none');
         if (indicator) indicator.classList.add('d-none');
+
         if (btn) {
-            btn.className = 'btn btn-sm btn-outline-danger py-1 px-2.5 rounded-pill d-inline-flex align-items-center gap-1.5 transition-all';
+            btn.className = 'btn btn-sm btn-outline-danger py-1 px-3 rounded-pill d-inline-flex align-items-center gap-1.5 fw-semibold transition-all';
             btn.style.backgroundColor = '';
             btn.style.borderColor = '';
             btn.style.color = '';
-            btn.innerHTML = '<i class="fas fa-trash-can text-danger"></i> <span>Hapus</span>';
+            btn.innerHTML = '<i class="fas fa-trash-can text-danger me-1"></i> <span>Hapus</span>';
             btn.title = 'Hapus Berkas Ini';
         }
     }
