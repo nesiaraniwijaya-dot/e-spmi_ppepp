@@ -152,14 +152,6 @@ $currentUser = Auth::user();
                                         </a>
                                     </li>
                                     <?php endif; ?>
-                                    <?php if (Auth::canSwitchRole()): ?>
-                                    <li>
-                                        <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-primary fw-bold" style="background: rgba(37, 99, 235, 0.08);"
-                                           href="<?= base_url('auth/select-role') ?>">
-                                            <i class="fas fa-arrows-rotate text-primary"></i> Ganti Peran (Role Switcher)
-                                        </a>
-                                    </li>
-                                    <?php endif; ?>
                                     <li><hr class="dropdown-divider my-1"></li>
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"

@@ -160,7 +160,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                 <th class="ps-3 py-2.5 text-center text-nowrap" style="width: 45px; min-width: 45px;">#</th>
                                 <th class="py-2.5 text-nowrap" style="width: 130px; min-width: 125px;">Tahun Akademik</th>
                                 <th class="py-2.5" style="min-width: 210px;">Kalender &amp; Dokumen</th>
-                                <th class="py-2.5 text-nowrap" style="width: 195px; min-width: 190px;">Status Berjalan</th>
+                                <th class="py-2.5 text-nowrap" style="width: 220px; min-width: 210px;">Status Berjalan</th>
                                 <th class="py-2.5 text-nowrap" style="min-width: 210px;">Batas Tenggat (Deadline)</th>
                                 <th class="py-2.5 text-center text-nowrap" style="width: 115px; min-width: 110px;">Jatah Upload</th>
                                 <th class="py-2.5 text-end pe-3 text-nowrap" style="width: 180px; min-width: 175px;">Aksi LPM</th>
@@ -200,25 +200,27 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                             </span>
                                         </div>
                                     </td>
-                                    <td class="text-nowrap" style="width: 195px; min-width: 190px; white-space: nowrap;">
+                                    <td class="text-nowrap" style="width: 220px; min-width: 210px; white-space: nowrap;">
                                         <!-- Switch On/Off Tahun Akademik Aktif -->
-                                        <div class="form-check form-switch d-inline-flex align-items-center gap-2 m-0 p-0 flex-nowrap">
-                                            <input class="form-check-input ms-0 shadow-2xs switch-ta-active" 
-                                                   type="checkbox" 
-                                                   role="switch" 
-                                                   id="switch_ta_<?= $d['id'] ?>" 
-                                                   <?= $isAct ? 'checked' : '' ?>
-                                                   style="cursor: pointer; width: 2.25em; height: 1.18em; flex-shrink: 0;"
-                                                   data-id="<?= $d['id'] ?>"
-                                                   data-ta="<?= htmlspecialchars($d['tahun_akademik']) ?>"
-                                                   onchange="handleToggleActiveYear(<?= $d['id'] ?>, '<?= htmlspecialchars($d['tahun_akademik']) ?>', this)">
-                                            <label class="form-check-label small fw-semibold cursor-pointer user-select-none mb-0 text-nowrap" for="switch_ta_<?= $d['id'] ?>" id="label_ta_<?= $d['id'] ?>">
+                                        <div class="d-inline-flex align-items-center gap-2.5 m-0 p-0" style="vertical-align: middle;">
+                                            <div class="form-check form-switch m-0 p-0 d-flex align-items-center" style="min-height: auto;">
+                                                <input class="form-check-input shadow-2xs switch-ta-active" 
+                                                       type="checkbox" 
+                                                       role="switch" 
+                                                       id="switch_ta_<?= $d['id'] ?>" 
+                                                       <?= $isAct ? 'checked' : '' ?>
+                                                       style="cursor: pointer; width: 2.35em; height: 1.25em; float: none; margin: 0 !important; flex-shrink: 0;"
+                                                       data-id="<?= $d['id'] ?>"
+                                                       data-ta="<?= htmlspecialchars($d['tahun_akademik']) ?>"
+                                                       onchange="handleToggleActiveYear(<?= $d['id'] ?>, '<?= htmlspecialchars($d['tahun_akademik']) ?>', this)">
+                                            </div>
+                                            <label class="form-check-label small fw-semibold cursor-pointer user-select-none mb-0 text-nowrap ms-1" for="switch_ta_<?= $d['id'] ?>" id="label_ta_<?= $d['id'] ?>">
                                                 <?php if ($isAct): ?>
-                                                    <span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.72rem; letter-spacing: 0.2px;">
+                                                    <span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs d-inline-flex align-items-center gap-1.5" style="font-size: 0.74rem; letter-spacing: 0.2px;">
                                                         <i class="fas fa-circle-check"></i> Aktif Berjalan
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                                                    <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.74rem;">
                                                         Nonaktif
                                                     </span>
                                                 <?php endif; ?>
@@ -733,12 +735,12 @@ function handleToggleActiveYear(id, taName, switchEl) {
                 if (parseInt(swId) === parseInt(id)) {
                     sw.checked = true;
                     if (lbl) {
-                        lbl.innerHTML = '<span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs d-inline-flex align-items-center gap-1" style="font-size: 0.72rem; letter-spacing: 0.2px;"><i class="fas fa-circle-check"></i> Aktif Berjalan</span>';
+                        lbl.innerHTML = '<span class="badge bg-success rounded-pill px-2.5 py-1 shadow-2xs d-inline-flex align-items-center gap-1.5" style="font-size: 0.74rem; letter-spacing: 0.2px;"><i class="fas fa-circle-check"></i> Aktif Berjalan</span>';
                     }
                 } else if (swId) {
                     sw.checked = false;
                     if (lbl) {
-                        lbl.innerHTML = '<span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">Nonaktif</span>';
+                        lbl.innerHTML = '<span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.74rem;">Nonaktif</span>';
                     }
                 }
                 sw.disabled = false;

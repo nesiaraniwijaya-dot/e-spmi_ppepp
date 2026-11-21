@@ -18,9 +18,6 @@ class GpmController extends Controller {
     public function __construct() {
         parent::__construct();
         Auth::requireRole(['gpm']);
-        if (Auth::role() === 'testing') {
-            redirect('auth/select-role');
-        }
 
         $this->fakultasId = (int)(Auth::fakultasId() ?? 0);
         if (!$this->fakultasId) {

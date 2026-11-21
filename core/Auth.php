@@ -97,9 +97,6 @@ class Auth {
             $_SESSION['user_fakultas_id'] = $user['resolved_fakultas_id'] ?? $user['fakultas_id'] ?? null;
             $_SESSION['user_fakultas_name'] = $user['nama_fakultas'] ?? null;
             $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
-            if ($user['role'] === 'testing') {
-                $_SESSION['is_multi_role_testing'] = true;
-            }
 
             // Log login event
             AuditLogger::log(
@@ -167,9 +164,6 @@ class Auth {
             $_SESSION['user_fakultas_id'] = $user['resolved_fakultas_id'] ?? $user['fakultas_id'] ?? null;
             $_SESSION['user_fakultas_name'] = $user['nama_fakultas'] ?? null;
             $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
-            if ($user['role'] === 'testing') {
-                $_SESSION['is_multi_role_testing'] = true;
-            }
 
             AuditLogger::log(
                 aksi: 'LOGIN',
@@ -213,31 +207,25 @@ class Auth {
             $stmt->execute([$_SESSION['user_id']]);
             $dbUser = $stmt->fetch();
             if ($dbUser) {
-                $isTestingMode = !empty($_SESSION['is_multi_role_testing']) || ($dbUser['role'] ?? '') === 'testing' || ($_SESSION['user_real_role'] ?? '') === 'testing';
-                
+                $_SESSION['user_name'] = $dbUser['name'];
                 $_SESSION['user_email'] = $dbUser['email'];
+                $_SESSION['user_role'] = $dbUser['role'];
                 $_SESSION['user_avatar'] = $dbUser['avatar'] ?? null;
-
-                // Jangan timpa peran simulasi jika sedang dalam mode pengujian multi-role
-                if (!$isTestingMode || empty($_SESSION['user_role']) || $_SESSION['user_role'] === 'testing') {
-                    $_SESSION['user_name'] = $dbUser['name'];
-                    $_SESSION['user_role'] = $dbUser['role'];
-                    $_SESSION['user_prodi_id'] = $dbUser['prodi_id'];
-                    $_SESSION['user_prodi_name'] = $dbUser['nama_prodi'] ?? null;
-                    $_SESSION['user_fakultas_id'] = $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null;
-                    $_SESSION['user_fakultas_name'] = $dbUser['nama_fakultas'] ?? null;
-                }
+                $_SESSION['user_prodi_id'] = $dbUser['prodi_id'];
+                $_SESSION['user_prodi_name'] = $dbUser['nama_prodi'] ?? null;
+                $_SESSION['user_fakultas_id'] = $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null;
+                $_SESSION['user_fakultas_name'] = $dbUser['nama_fakultas'] ?? null;
 
                 self::$cachedUser = [
                     'id' => $dbUser['id'],
-                    'name' => $_SESSION['user_name'] ?? $dbUser['name'],
+                    'name' => $dbUser['name'],
                     'email' => $dbUser['email'],
-                    'role' => $_SESSION['user_role'] ?? $dbUser['role'],
+                    'role' => $dbUser['role'],
                     'avatar' => $dbUser['avatar'] ?? null,
-                    'prodi_id' => $_SESSION['user_prodi_id'] ?? $dbUser['prodi_id'] ?? null,
-                    'prodi_name' => $_SESSION['user_prodi_name'] ?? $dbUser['nama_prodi'] ?? null,
-                    'fakultas_id' => $_SESSION['user_fakultas_id'] ?? $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null,
-                    'fakultas_name' => $_SESSION['user_fakultas_name'] ?? $dbUser['nama_fakultas'] ?? null
+                    'prodi_id' => $dbUser['prodi_id'] ?? null,
+                    'prodi_name' => $dbUser['nama_prodi'] ?? null,
+                    'fakultas_id' => $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null,
+                    'fakultas_name' => $dbUser['nama_fakultas'] ?? null
                 ];
                 return self::$cachedUser;
             }
@@ -435,24 +423,11 @@ class Auth {
     }
 
     public static function isTesting(): bool {
-        return self::role() === 'testing' || !empty($_SESSION['is_multi_role_testing']);
+        return self::role() === 'testing';
     }
 
     public static function canSwitchRole(): bool {
-        self::startSession();
-        if (!self::check()) {
-            return false;
-        }
-        $realRole = $_SESSION['user_real_role'] ?? ($_SESSION['user_role'] ?? '');
-        $realEmail = strtolower(trim((string)($_SESSION['user_email'] ?? '')));
-        $multiRoleEmails = [
-            'nesiaraniwijaya@gmail.com',
-            'ravywhienelda@gmail.com',
-        ];
-
-        return !empty($_SESSION['is_multi_role_testing'])
-            || in_array($realRole, ['testing', 'super_admin'], true)
-            || in_array($realEmail, $multiRoleEmails, true);
+        return false;
     }
 
     public static function getOfficialTitle(): string {
@@ -519,7 +494,7 @@ class Auth {
             'kaprodi', 'sekprodi' => 'prodi/dashboard',
             'dekan', 'wadek' => 'fakultas/dashboard',
             'gpm' => 'gpm/dashboard',
-            'testing' => 'auth/select-role',
+            'testing' => 'admin/dashboard',
             'pengguna' => 'dokumen',
             default => 'dokumen'
         };
