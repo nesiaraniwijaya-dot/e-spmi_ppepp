@@ -2891,7 +2891,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // ADA BERKAS: konversi berkas ke Base64 agar dapat dikirim dengan form-urlencoded
             // Ini untuk mengatasi emergency rule OpenResty yang memblokir multipart/form-data
             e.preventDefault();
-            const submitBtn = e.submitter || document.activeElement || document.getElementById('btnSubmitPublishBatch');
             const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
             if (submitBtn) {
                 submitBtn.disabled = true;
@@ -3041,13 +3040,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 isSingleSubmitting = true;
                 return true;
             }
-                    inp.disabled = true;
-                });
-                return true;
-            }
 
             e.preventDefault();
-            const submitBtn = e.submitter || document.activeElement;
             const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
             if (submitBtn) {
                 submitBtn.disabled = true;
