@@ -392,9 +392,9 @@ $siklusDefinitions = [
 
                                                     <div class="mt-2.5 mb-2">
                                                         <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                                            <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas: <span class="text-danger">*</span>
+                                                            <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas (Opsional):
                                                         </label>
-                                                        <textarea class="form-control py-2" name="existing_file_narasi[<?= $f['id'] ?>]" rows="1" placeholder="Narasi berkas ini..."><?= htmlspecialchars($f['narasi'] ?? '') ?></textarea>
+                                                        <textarea class="form-control py-2" name="existing_file_narasi[<?= $f['id'] ?>]" rows="1" placeholder="Narasi berkas ini (opsional)..."><?= htmlspecialchars($f['narasi'] ?? '') ?></textarea>
                                                     </div>
 
                                                     <!-- Standar Mutu Picker Per-File -->
@@ -524,9 +524,9 @@ $siklusDefinitions = [
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan: <span class="text-danger">*</span>
+                                                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan (Opsional):
                                                 </label>
-                                                <textarea class="form-control py-2" name="external_link_narasi[]" rows="1" placeholder="Keterangan / Narasi tautan dokumen ini..."></textarea>
+                                                <textarea class="form-control py-2" name="external_link_narasi[]" rows="1" placeholder="Keterangan / Narasi tautan dokumen ini (opsional)..."></textarea>
                                             </div>
                                             <!-- Standar Mutu Picker Per-Link -->
                                             <?= render_sub_standar_picker_html("external_link_sub_bidang[0][]", $initSubIds, "init_link_0", $bidangList, $subBidangList, $doc['bidang_id'] ?? null) ?>
@@ -596,9 +596,9 @@ $siklusDefinitions = [
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                                                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan: <span class="text-danger">*</span>
+                                                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan (Opsional):
                                                 </label>
-                                                <textarea class="form-control py-2" name="external_link_narasi[]" rows="1" placeholder="Keterangan / Narasi tautan dokumen ini..."><?= htmlspecialchars($l['narasi'] ?? '') ?></textarea>
+                                                <textarea class="form-control py-2" name="external_link_narasi[]" rows="1" placeholder="Keterangan / Narasi tautan dokumen ini (opsional)..."><?= htmlspecialchars($l['narasi'] ?? '') ?></textarea>
                                             </div>
                                             <!-- Standar Mutu Picker Per-Link -->
                                             <?= render_sub_standar_picker_html("external_link_sub_bidang[{$lIdx}][]", $lSubIds, "ex_link_{$lIdx}", $bidangList, $subBidangList, $doc['bidang_id'] ?? null) ?>
@@ -1016,9 +1016,9 @@ function renderSingleStagedFiles(savedState = []) {
 
             <div class="mt-2.5 mb-2">
                 <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas: <span class="text-danger">*</span>
+                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas (Opsional):
                 </label>
-                <textarea class="form-control py-2" name="new_file_narasi[${idx}]" rows="1" placeholder="Narasi / Keterangan berkas '${file.name}'..." required>${narasiVal ? String(narasiVal).replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea>
+                <textarea class="form-control py-2" name="new_file_narasi[${idx}]" rows="1" placeholder="Narasi / Keterangan berkas '${file.name}' (opsional)...">${narasiVal ? String(narasiVal).replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea>
             </div>
 
             ${pickerHtml}
@@ -1114,9 +1114,9 @@ function addSingleGdriveLinkRow() {
         </div>
         <div class="mb-2">
             <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.8rem;">
-                <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan: <span class="text-danger">*</span>
+                <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan (Opsional):
             </label>
-            <textarea class="form-control py-2" name="external_link_narasi[]" rows="1" placeholder="Keterangan / Narasi tautan dokumen ini..."></textarea>
+            <textarea class="form-control py-2" name="external_link_narasi[]" rows="1" placeholder="Keterangan / Narasi tautan dokumen ini (opsional)..."></textarea>
         </div>
         ${pickerHtml}
 
@@ -2076,9 +2076,9 @@ function renderSingleFileItemHtml(idx, file, folderName, cardBidangId) {
             </div>
             <div class="mt-2 mb-2">
                 <label class="form-label fw-bold text-dark mb-1 small d-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
-                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas: <span class="text-danger">*</span>
+                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Berkas (Opsional):
                 </label>
-                <textarea class="form-control form-control-sm py-1.5 file-narasi-inp" name="docs[${idx}][file_narasi][]" rows="1" placeholder="Keterangan / narasi berkas ini..." required>${escapeHtml(file._narasi || '')}</textarea>
+                <textarea class="form-control form-control-sm py-1.5 file-narasi-inp" name="docs[${idx}][file_narasi][]" rows="1" placeholder="Keterangan / narasi berkas ini (opsional)...">${escapeHtml(file._narasi || '')}</textarea>
             </div>
             ${pickerHtml}
             <div class="row g-2 mt-1">
@@ -2141,9 +2141,9 @@ function renderSingleLinkItemHtml(idx, link, folderName, cardBidangId) {
             </div>
             <div class="mb-2">
                 <label class="form-label fw-bold text-dark mb-1 small d-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
-                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan: <span class="text-danger">*</span>
+                    <i class="fas fa-align-left text-primary"></i> Narasi / Keterangan Tautan (Opsional):
                 </label>
-                <textarea class="form-control form-control-sm py-1.5 link-narasi-inp" name="docs[${idx}][external_link_narasi][]" rows="1" placeholder="Narasi / Keterangan tautan dokumen ini..." required>${escapeHtml(link.narasi || '')}</textarea>
+                <textarea class="form-control form-control-sm py-1.5 link-narasi-inp" name="docs[${idx}][external_link_narasi][]" rows="1" placeholder="Narasi / Keterangan tautan dokumen ini (opsional)...">${escapeHtml(link.narasi || '')}</textarea>
             </div>
             ${pickerHtml}
             <div class="row g-2 mt-1">
@@ -2658,8 +2658,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const siklusChecked = card.querySelector(`input[name="docs[${idx}][siklus]"]:checked`);
                 if (!siklusChecked) {
                     openCardIfCollapsed(card);
-                    const cycleBox = card.querySelector('.ppepp-cycle-selector-grid') || card;
-                    showFormValidationError(`Kategori Siklus PPEPP pada Dokumen #${docNum} (${docTitle}) wajib dipilih.`, cycleBox);
+                    const cycleBox = card.querySelector('.ppepp-cycle-grid') || card.querySelector('.ppepp-cycle-selector-grid') || card;
+                    showFormValidationError(`Kategori Siklus PPEPP pada Dokumen #${docNum} (${docTitle}) wajib dipilih. Silakan klik salah satu tombol tahapan PPEPP (Penetapan, Pelaksanaan, Evaluasi, Pengendalian, atau Peningkatan).`, cycleBox);
                     return false;
                 }
             }
@@ -2686,29 +2686,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
 
-            // 6. Validasi Nama Berkas & Narasi Berkas File
+            // 6. Validasi & Auto-Fallback Nama Berkas & Narasi Berkas File
             for (let f = 0; f < stagedFiles.length; f++) {
                 const file = stagedFiles[f];
                 const fileRow = document.getElementById(`file_row_${idx}_${file._file_id}`);
                 const nameEl = fileRow ? fileRow.querySelector('input.file-custom-name-inp') : null;
                 const narasiEl = fileRow ? fileRow.querySelector('textarea.file-narasi-inp') : null;
 
-                const fileName = nameEl ? nameEl.value.trim() : (file._custom_name || file.name);
+                let fileName = nameEl ? nameEl.value.trim() : (file._custom_name || file.name);
                 if (!fileName) {
-                    openCardIfCollapsed(card);
-                    showFormValidationError(`Nama berkas untuk file '${file.name}' pada Dokumen #${docNum} wajib diisi.`, nameEl);
-                    return false;
+                    fileName = file.name;
+                    if (nameEl) nameEl.value = fileName;
                 }
 
-                const fileNarasi = narasiEl ? narasiEl.value.trim() : (file._narasi ? file._narasi.trim() : '');
-                if (isPublish && !fileNarasi) {
-                    openCardIfCollapsed(card);
-                    showFormValidationError(`Narasi untuk berkas '${fileName}' pada Dokumen #${docNum} wajib diisi sebelum diajukan ke GPM.`, narasiEl);
-                    return false;
+                // Auto-fill narasi jika kosong agar tidak memblokir pengguna
+                let fileNarasi = narasiEl ? narasiEl.value.trim() : (file._narasi ? file._narasi.trim() : '');
+                if (!fileNarasi) {
+                    fileNarasi = `Berkas lampiran resmi untuk dokumen ${docTitle || fileName}`;
+                    if (narasiEl) narasiEl.value = fileNarasi;
+                    if (file) file._narasi = fileNarasi;
                 }
             }
 
-            // 7. Validasi Tautan Google Drive & Narasinya
+            // 7. Validasi Tautan Google Drive & Auto-Fallback Narasinya
             const linkRows = card.querySelectorAll(`div[id^="link_row_${idx}_"]`);
             for (let l = 0; l < linkRows.length; l++) {
                 const row = linkRows[l];
@@ -2724,11 +2724,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             return false;
                         }
                     }
-                    const linkNarasi = narasiEl ? narasiEl.value.trim() : '';
-                    if (isPublish && !linkNarasi) {
-                        openCardIfCollapsed(card);
-                        showFormValidationError(`Narasi untuk tautan Google Drive pada Dokumen #${docNum} wajib diisi sebelum diajukan ke GPM.`, narasiEl);
-                        return false;
+                    // Auto-fill narasi tautan jika kosong agar tidak memblokir pengguna
+                    let linkNarasi = narasiEl ? narasiEl.value.trim() : '';
+                    if (!linkNarasi) {
+                        linkNarasi = `Tautan dokumen resmi untuk ${docTitle || 'dokumen mutu'}`;
+                        if (narasiEl) narasiEl.value = linkNarasi;
                     }
                 }
             }
@@ -2747,11 +2747,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
 
+        const docTitle = namaInp.value.trim();
+
         // 2. Siklus PPEPP
         if (isPublish) {
             const siklusChecked = singleForm.querySelector('input[name="siklus"]:checked');
             if (!siklusChecked) {
-                const cycleGrid = singleForm.querySelector('.ppepp-cycle-selector-grid') || singleForm;
+                const cycleGrid = singleForm.querySelector('.ppepp-cycle-grid') || singleForm.querySelector('.ppepp-cycle-selector-grid') || singleForm;
                 showFormValidationError('Silakan pilih Kategori Siklus PPEPP (Penetapan, Pelaksanaan, Evaluasi, Pengendalian, atau Peningkatan).', cycleGrid);
                 return false;
             }
@@ -2780,32 +2782,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // 5. Narasi Berkas Baru
-        if (isPublish) {
-            const newFileRows = singleForm.querySelectorAll('[id^="new_file_item_"]');
-            for (let i = 0; i < newFileRows.length; i++) {
-                const row = newFileRows[i];
-                const nameEl = row.querySelector('input[name*="new_file_custom_name"]') || row.querySelector('.fw-bold');
-                const narasiEl = row.querySelector('textarea[name*="new_file_narasi"]');
-                const fileName = nameEl ? (nameEl.value || nameEl.textContent).trim() : 'Berkas';
+        // 5. Narasi Berkas Baru & Existing (Auto-Fallback)
+        const newFileRows = singleForm.querySelectorAll('[id^="new_file_item_"]');
+        for (let i = 0; i < newFileRows.length; i++) {
+            const row = newFileRows[i];
+            const nameEl = row.querySelector('input[name*="new_file_custom_name"]') || row.querySelector('.fw-bold');
+            const narasiEl = row.querySelector('textarea[name*="new_file_narasi"]');
+            const fileName = nameEl ? (nameEl.value || nameEl.textContent).trim() : 'Berkas';
 
-                if (narasiEl && !narasiEl.value.trim()) {
-                    showFormValidationError(`Narasi untuk berkas '${fileName}' wajib diisi sebelum diajukan ke GPM.`, narasiEl);
-                    return false;
-                }
-            }
-
-            const existingNarasiInputs = singleForm.querySelectorAll('textarea[name^="existing_file_narasi["]');
-            for (let i = 0; i < existingNarasiInputs.length; i++) {
-                const narasiEl = existingNarasiInputs[i];
-                if (!narasiEl.value.trim()) {
-                    showFormValidationError('Narasi untuk berkas yang telah dilampirkan wajib diisi sebelum diajukan ke GPM.', narasiEl);
-                    return false;
-                }
+            if (narasiEl && !narasiEl.value.trim()) {
+                narasiEl.value = `Berkas lampiran resmi untuk dokumen ${docTitle || fileName}`;
             }
         }
 
-        // 6. Validasi Tautan GDrive dan Narasinya
+        const existingNarasiInputs = singleForm.querySelectorAll('textarea[name^="existing_file_narasi["]');
+        for (let i = 0; i < existingNarasiInputs.length; i++) {
+            const narasiEl = existingNarasiInputs[i];
+            if (!narasiEl.value.trim()) {
+                narasiEl.value = `Berkas lampiran resmi untuk dokumen ${docTitle}`;
+            }
+        }
+
+        // 6. Validasi Tautan GDrive dan Auto-Fallback Narasinya
         const linkItems = singleForm.querySelectorAll('.external-link-item, .link-input-group');
         for (let i = 0; i < linkItems.length; i++) {
             const item = linkItems[i];
@@ -2817,9 +2815,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     showFormValidationError('Tautan Google Drive tidak valid. Pastikan tautan langsung mengarah ke berkas dokumen, bukan folder.', urlInp);
                     return false;
                 }
-                if (isPublish && narasiInp && !narasiInp.value.trim()) {
-                    showFormValidationError('Narasi untuk tautan Google Drive wajib diisi sebelum diajukan ke GPM.', narasiInp);
-                    return false;
+                if (narasiInp && !narasiInp.value.trim()) {
+                    narasiInp.value = `Tautan dokumen resmi untuk ${docTitle}`;
                 }
             }
         }

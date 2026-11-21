@@ -620,8 +620,8 @@ class AdminFakultasController extends Controller {
                                 if ($errLink !== null) {
                                     throw new \Exception("Dokumen #{$docNumber} (Tautan #" . ($lIdx + 1) . "): {$errLink}");
                                 }
-                                if (!$isDraft && empty($tNarasi)) {
-                                    throw new \Exception("Narasi untuk tautan Google Drive pada Dokumen #{$docNumber} wajib diisi.");
+                                if (empty($tNarasi)) {
+                                    $tNarasi = "Tautan dokumen resmi untuk " . (!empty($namaDokumen) ? $namaDokumen : 'dokumen mutu');
                                 }
                                 $lSubs = !empty($batchLinkSubs[$lIdx]) && is_array($batchLinkSubs[$lIdx])
                                     ? array_values(array_filter(array_map('intval', $batchLinkSubs[$lIdx])))
@@ -691,8 +691,8 @@ class AdminFakultasController extends Controller {
                                 if (in_array($ext, $allowedExts)) {
                                     $fileNarasis = !empty($d['file_narasi']) && is_array($d['file_narasi']) ? array_values($d['file_narasi']) : [];
                                     $fNarasi = trim($fileNarasis[$fIdx] ?? ($d['file_narasi'][$fIdx] ?? ''));
-                                    if (!$isDraft && empty($fNarasi)) {
-                                        throw new \Exception("Narasi untuk berkas '{$origName}' pada Dokumen #{$docNumber} wajib diisi.");
+                                    if (empty($fNarasi)) {
+                                        $fNarasi = "Berkas lampiran resmi untuk dokumen " . (!empty($namaDokumen) ? $namaDokumen : $origName);
                                     }
                                     $fSubs = !empty($batchFileSubs[$fIdx]) && is_array($batchFileSubs[$fIdx])
                                         ? array_values(array_filter(array_map('intval', $batchFileSubs[$fIdx])))
@@ -742,8 +742,8 @@ class AdminFakultasController extends Controller {
                             if (in_array($ext, $allowedExts)) {
                                 $fileNarasis = !empty($d['file_narasi']) && is_array($d['file_narasi']) ? array_values($d['file_narasi']) : [];
                                 $fNarasi = trim($fileNarasis[$fIdx] ?? ($d['file_narasi'][$fIdx] ?? ''));
-                                if (!$isDraft && empty($fNarasi)) {
-                                    throw new \Exception("Narasi untuk berkas '{$origName}' pada Dokumen #{$docNumber} wajib diisi.");
+                                if (empty($fNarasi)) {
+                                    $fNarasi = "Berkas lampiran resmi untuk dokumen " . (!empty($namaDokumen) ? $namaDokumen : $origName);
                                 }
                                 $fSubs = !empty($batchFileSubs[$fIdx]) && is_array($batchFileSubs[$fIdx])
                                     ? array_values(array_filter(array_map('intval', $batchFileSubs[$fIdx])))
@@ -1073,10 +1073,8 @@ class AdminFakultasController extends Controller {
                             redirect('fakultas/dokumen/edit/' . $id);
                             return;
                         }
-                        if (!$isDraft && empty($tNarasi)) {
-                            Auth::setFlash('danger', 'Narasi untuk setiap tautan Google Drive wajib diisi.');
-                            redirect('fakultas/dokumen/edit/' . $id);
-                            return;
+                        if (empty($tNarasi)) {
+                            $tNarasi = "Tautan dokumen resmi untuk " . (!empty($namaDokumen) ? $namaDokumen : 'dokumen mutu');
                         }
                         $lSubs = !empty($linkSubBidangs[$lIdx]) && is_array($linkSubBidangs[$lIdx])
                             ? array_values(array_filter(array_map('intval', $linkSubBidangs[$lIdx])))
