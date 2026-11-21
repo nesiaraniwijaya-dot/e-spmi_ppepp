@@ -138,6 +138,23 @@ $siklusDefinitions = [
                             </div>
                         </div>
 
+                        <!-- Form Catatan Tindak Lanjut Perbaikan oleh Unit -->
+                        <div class="p-3 rounded-3 bg-white border border-danger-subtle mb-3">
+                            <label class="form-label fw-bold text-dark small mb-1.5 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <span class="d-flex align-items-center gap-1.5 text-primary">
+                                    <i class="fas fa-pen-to-square"></i>
+                                    <span>Catatan Tindak Lanjut Revisi oleh Unit:</span>
+                                </span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size: 0.7rem;">Sangat Dianjurkan</span>
+                            </label>
+                            <textarea name="catatan_perbaikan_unit" rows="3" class="form-control rounded-3" 
+                                      placeholder="Contoh: Berkas telah disesuaikan pada Bab 2 dan bukti foto/dokumentasi rapat telah ditambahkan sesuai arahan..." 
+                                      style="font-size: 0.84rem; line-height: 1.5;"><?= htmlspecialchars($doc['catatan_perbaikan_unit'] ?? '') ?></textarea>
+                            <div class="form-text small text-muted mt-1" style="font-size: 0.72rem;">
+                                <i class="fas fa-circle-info text-primary me-1"></i> Tuliskan ringkasan bagian apa saja yang telah Anda perbaiki agar reviewer GPM &amp; LPM dapat langsung memeriksa poin-poin tersebut.
+                            </div>
+                        </div>
+
                         <!-- Directive Sub-banner -->
                         <div class="d-flex align-items-center gap-2 text-danger small pt-1">
                             <i class="fas fa-circle-info flex-shrink-0"></i>

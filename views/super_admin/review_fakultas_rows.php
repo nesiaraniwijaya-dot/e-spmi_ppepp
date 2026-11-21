@@ -413,6 +413,15 @@ if (!empty($documents)):
                         <form action="<?= base_url('admin/review-dokumen/submit') ?>" method="POST" class="m-0 review-action-form" novalidate>
                             <input type="hidden" name="document_id" value="<?= $doc['id'] ?>">
 
+                            <?php if (!empty($doc['catatan_perbaikan_unit'])): ?>
+                                <div class="p-2.5 rounded-3 border border-primary-subtle mb-3 small" style="background: #F0F9FF;">
+                                    <div class="fw-bold text-primary mb-1 d-flex align-items-center gap-1.5">
+                                        <i class="fas fa-circle-check text-primary"></i> Catatan Tindak Lanjut Revisi oleh Unit:
+                                    </div>
+                                    <div class="text-dark bg-white p-2 rounded-2 border border-primary border-opacity-25" style="line-height: 1.45; white-space: pre-wrap; font-size: 0.82rem;"><?= nl2br(htmlspecialchars($doc['catatan_perbaikan_unit'])) ?></div>
+                                </div>
+                            <?php endif; ?>
+
                             <?php if (!empty($doc['gpm_catatan'])): ?>
                                 <div class="p-2.5 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 mb-3 small">
                                     <div class="fw-bold text-warning-emphasis mb-1 d-flex align-items-center gap-1.5">

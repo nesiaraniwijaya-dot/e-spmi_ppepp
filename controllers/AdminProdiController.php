@@ -1673,20 +1673,23 @@ class AdminProdiController extends Controller {
                 }
             }
 
+            $catatanPerbaikanUnit = trim($_POST['catatan_perbaikan_unit'] ?? '');
+            $finalCatatanPerbaikan = $catatanPerbaikanUnit !== '' ? $catatanPerbaikanUnit : ($oldDoc['catatan_perbaikan_unit'] ?? null);
+
             $stmt = $this->db->prepare("
                 UPDATE ppepp_documents 
                 SET bidang_id = ?, sub_bidang_id = ?, nama_dokumen = ?, nomor_dokumen = ?, siklus = ?, 
                     tahun_akademik = ?, tanggal_dokumen = ?, tanggal_berlaku_mulai = ?, tanggal_berlaku_selesai = ?, 
                     jenis_upload = ?, file_path = ?, file_size = ?, file_extension = ?, 
                     external_link = ?, public_page_limit = ?, can_download_public = ?, 
-                    status_review = ?, tahap_review = ?, deskripsi = ?, updated_at = NOW()
+                    status_review = ?, tahap_review = ?, deskripsi = ?, catatan_perbaikan_unit = ?, updated_at = NOW()
                 WHERE id = ? AND prodi_id = ?
             ");
             $stmt->execute([
                 $bidangId, $subBidangId, $namaDokumen, $nomorDokumen, $siklus, $tahunAkademik,
                 $tanggalDokumen, $startDate, $endDate, $jenisUpload, $filePath, $fileSize, $fileExt,
                 $externalLink, $publicPageLimit, $canDownloadPublic, 
-                $newStatusReview, $newTahapReview, $deskripsi, $id, $this->prodiId
+                $newStatusReview, $newTahapReview, $deskripsi, $finalCatatanPerbaikan, $id, $this->prodiId
             ]);
 
             // Sinkronisasi seluruh sub bidang ke dokumen induk
@@ -1702,7 +1705,7 @@ class AdminProdiController extends Controller {
                 $uploaderName = ($curUser['name'] ?? 'Admin Prodi') . ' (' . ($this->prodi['nama_prodi'] ?? 'Prodi') . ')';
                 $stmtRevUp = $this->db->prepare("
                     UPDATE ppepp_document_revisions 
-                    SET uploader_id = ?, uploader_name = ?, uploader_role = ?, status_review = 'sudah_diperbaiki', revised_at = NOW() 
+                    SET uploader_id = ?, uploader_name = ?, uploader_role = ?, status_review = 'sudah_diperbaiki', catatan_perbaikan = ?, revised_at = NOW() 
                     WHERE document_id = ? AND revised_at IS NULL 
                     ORDER BY id DESC LIMIT 1
                 ");
@@ -1710,20 +1713,26 @@ class AdminProdiController extends Controller {
                     Auth::id(),
                     $uploaderName,
                     Auth::role(),
+                    $finalCatatanPerbaikan,
                     $id
                 ]);
 
                 // Catat log pengajuan ulang revisi ke ppepp_document_reviews agar tercatat di Riwayat Review
+                $logCatatan = !empty($finalCatatanPerbaikan)
+                    ? 'Tindak Lanjut Revisi Unit: ' . $finalCatatanPerbaikan
+                    : 'Dokumen hasil revisi telah diunggah oleh Program Studi dan diajukan kembali ke GPM Fakultas untuk di-review.';
+
                 $stmtRevLog = $this->db->prepare("
                     INSERT INTO ppepp_document_reviews 
                     (document_id, reviewer_id, reviewer_role, reviewer_name, tahap, status_sebelumnya, status_hasil, catatan, created_at)
-                    VALUES (?, ?, 'admin_prodi', ?, 'resubmission', ?, 'sudah_diperbaiki', 'Dokumen hasil revisi telah diunggah oleh Program Studi dan diajukan kembali ke GPM Fakultas untuk di-review.', NOW())
+                    VALUES (?, ?, 'admin_prodi', ?, 'resubmission', ?, 'sudah_diperbaiki', ?, NOW())
                 ");
                 $stmtRevLog->execute([
                     $id,
                     Auth::id(),
                     $uploaderName,
-                    $oldDoc['status_review'] ?? 'perlu_perbaikan'
+                    $oldDoc['status_review'] ?? 'perlu_perbaikan',
+                    $logCatatan
                 ]);
             }
 

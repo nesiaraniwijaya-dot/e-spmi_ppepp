@@ -778,6 +778,19 @@ if (!empty($documents)):
                                 </div>
                             <?php endif; ?>
 
+                            <?php if (!empty($doc['catatan_perbaikan_unit'])): ?>
+                                <div class="p-3 rounded-3 mb-3 border border-primary-subtle" style="background: #F0F9FF;">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1.5">
+                                        <span class="small fw-bold text-primary text-uppercase d-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
+                                            <i class="fas fa-check-circle text-primary"></i> Catatan Tindak Lanjut Revisi oleh Unit Sasaran:
+                                        </span>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-3 border border-primary border-opacity-25 small text-dark" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.84rem;">
+                                        <?= nl2br(htmlspecialchars($doc['catatan_perbaikan_unit'])) ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                             <!-- Catatan Evaluasi Internal LPM (Khusus Akses GPM) jika ada -->
                             <?php if (!empty($doc['lpm_catatan'])): ?>
                                 <div class="p-3 rounded-3 mb-3 border border-warning-subtle" style="background: #FFFBEB;">
