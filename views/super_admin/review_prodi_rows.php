@@ -367,9 +367,9 @@ if (!empty($documents)):
                                 </label>
                                 <div class="row g-2">
                                     <div class="col-md-6">
-                                        <label class="card h-100 p-2.5 border rounded-3 cursor-pointer position-relative hover-shadow-sm review-choice-label" style="border-color: #A7F3D0 !important; background: #ECFDF5;">
+                                        <label class="card h-100 p-2.5 border rounded-3 cursor-pointer position-relative hover-shadow-sm review-choice-label" style="border-color: #E2E8F0; background: #FFFFFF;">
                                             <div class="d-flex align-items-start gap-2">
-                                                <input type="radio" name="status_review" value="sesuai" class="form-check-input mt-1" checked required>
+                                                <input type="radio" name="status_review" value="sesuai" class="form-check-input mt-1" required>
                                                 <div>
                                                     <div class="fw-bold text-success small mb-0.5"><i class="fas fa-circle-check me-1"></i> Disetujui (Sesuai)</div>
                                                     <div class="text-muted" style="font-size: 0.72rem; line-height: 1.35;">Dokumen telah memenuhi standar mutu dan siklus dinyatakan selesai/sah.</div>
@@ -378,7 +378,7 @@ if (!empty($documents)):
                                         </label>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="card h-100 p-2.5 border rounded-3 cursor-pointer position-relative hover-shadow-sm review-choice-label" style="border-color: #FECACA !important; background: #FEF2F2;">
+                                        <label class="card h-100 p-2.5 border rounded-3 cursor-pointer position-relative hover-shadow-sm review-choice-label" style="border-color: #E2E8F0; background: #FFFFFF;">
                                             <div class="d-flex align-items-start gap-2">
                                                 <input type="radio" name="status_review" value="perlu_perbaikan" class="form-check-input mt-1" required>
                                                 <div>
@@ -396,7 +396,7 @@ if (!empty($documents)):
                                     <span>Catatan / Uraian Evaluasi LPM:</span>
                                     <span class="text-muted fw-normal text-none" style="font-size: 0.68rem;">(Wajib diisi jika minta revisi)</span>
                                 </label>
-                                <textarea name="catatan_review" class="form-control form-control-sm rounded-3" rows="3" placeholder="Tuliskan apresiasi atau poin-poin yang wajib diperbaiki oleh unit..."><?= htmlspecialchars($doc['catatan_review'] ?? '') ?></textarea>
+                                <textarea name="catatan_review" class="form-control form-control-sm rounded-3" rows="3" placeholder="Tuliskan apresiasi atau poin-poin yang wajib diperbaiki oleh unit..."></textarea>
                             </div>
 
                             <div class="d-flex align-items-center justify-content-between pt-2 border-top flex-wrap gap-2">

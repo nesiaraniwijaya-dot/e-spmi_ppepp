@@ -109,9 +109,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!container) return;
             const form = container.querySelector('form');
 
-            // Cegah binding event berulang jika modal dibuka beberapa kali
-            if (container.dataset.reviewBound === '1') return;
-            container.dataset.reviewBound = '1';
+            // Temukan tombol Simpan Keputusan Review
+            const submitBtn = container.querySelector('button[data-action="submit-review"]')
+                           || container.querySelector('button[type="submit"]')
+                           || container.querySelector('.btn-submit-review')
+                           || container.querySelector('button.btn-primary');
+
+            // Cegah binding event berulang pada tombol yang sama
+            if (submitBtn && submitBtn.dataset.reviewBound === '1') return;
+            if (submitBtn) submitBtn.dataset.reviewBound = '1';
 
             // Event listener klik radio button untuk feedback border & background card
             const decisionRadios = container.querySelectorAll('input[type="radio"][name="status_review"]');
@@ -134,12 +140,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
             });
-
-            // Temukan tombol Simpan Keputusan Review
-            const submitBtn = container.querySelector('button[data-action="submit-review"]')
-                           || container.querySelector('button[type="submit"]')
-                           || container.querySelector('.btn-submit-review')
-                           || container.querySelector('button.btn-primary');
 
             async function handleReviewSubmit(e) {
                 if (e) e.preventDefault();
@@ -411,6 +411,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (srcEl) {
                         reviewActionBox.innerHTML = srcEl.innerHTML;
                         reviewActionBox.style.display = 'none'; // Awalnya sembunyi, tampil di halaman akhir
+
+                        // Default form review kosong: pastikan semua opsi keputusan tidak tercentang & catatan kosong
+                        reviewActionBox.querySelectorAll('input[type="radio"][name="status_review"]').forEach(r => {
+                            r.checked = false;
+                        });
+                        const taCatatan = reviewActionBox.querySelector('textarea[name="catatan_review"]');
+                        if (taCatatan) {
+                            taCatatan.value = '';
+                        }
+                        reviewActionBox.querySelectorAll('.review-decision-card, .review-choice-label').forEach(c => {
+                            c.style.borderColor = '#E2E8F0';
+                            c.style.backgroundColor = '#FFFFFF';
+                        });
+
                         initCopiedReviewForm(reviewActionBox, reviewRole, button);
                     }
                 }

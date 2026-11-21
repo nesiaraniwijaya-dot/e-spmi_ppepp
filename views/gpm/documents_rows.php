@@ -705,7 +705,7 @@ if (!empty($documents)):
                                     <div class="row g-2">
                                         <div class="col-md-6">
                                             <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
-                                                <input type="radio" name="status_review" value="menunggu_review_lpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= (!in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan', 'revisi_lpm'])) ? 'checked' : '' ?> required>
+                                                <input type="radio" name="status_review" value="menunggu_review_lpm" class="form-check-input position-absolute top-0 end-0 m-3" required>
                                                 <div class="d-flex align-items-center gap-2.5 mb-1.5">
                                                     <div class="rounded-circle p-2 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                                         <i class="fas fa-check"></i>
@@ -719,7 +719,7 @@ if (!empty($documents)):
                                         </div>
                                         <div class="col-md-6">
                                             <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
-                                                <input type="radio" name="status_review" value="revisi_gpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan', 'revisi_lpm']) ? 'checked' : '' ?> required>
+                                                <input type="radio" name="status_review" value="revisi_gpm" class="form-check-input position-absolute top-0 end-0 m-3" required>
                                                 <div class="d-flex align-items-center gap-2.5 mb-1.5">
                                                     <div class="rounded-circle p-2 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                                         <i class="fas fa-triangle-exclamation"></i>
@@ -736,11 +736,6 @@ if (!empty($documents)):
 
                                 <?php
                                     $isLpmReturn = in_array($doc['status_review'] ?? '', ['revisi_lpm', 'perlu_perbaikan']);
-                                    $hasFreshGpmText = !empty($doc['gpm_catatan']) && (
-                                        !$isLpmReturn
-                                        || (!empty($doc['gpm_reviewed_at']) && !empty($doc['lpm_reviewed_at']) && strtotime($doc['gpm_reviewed_at']) > strtotime($doc['lpm_reviewed_at']))
-                                    );
-                                    $prefillGpmText = $hasFreshGpmText ? $doc['gpm_catatan'] : '';
                                     $cleanLpmRef = trim(preg_replace('/^\[CATATAN\s+INTERNAL\s+LPM[^\]]*\]\s*/i', '', (string)($doc['lpm_catatan'] ?? '')));
                                 ?>
                                 <div class="mb-3">
@@ -756,7 +751,7 @@ if (!empty($documents)):
                                             </button>
                                         <?php endif; ?>
                                     </div>
-                                    <textarea name="catatan_review" rows="3" class="form-control rounded-3" placeholder="Tuliskan arahan resmi GPM atau detail evaluasi perbaikan untuk unit..."><?= htmlspecialchars($prefillGpmText) ?></textarea>
+                                    <textarea name="catatan_review" rows="3" class="form-control rounded-3" placeholder="Tuliskan arahan resmi GPM atau detail evaluasi perbaikan untuk unit..."></textarea>
                                     <div class="form-text small" style="font-size: 0.72rem;">
                                         <i class="fas fa-info-circle text-primary me-1"></i> Wajib diisi bila memilih opsi "Perlu Revisi". <?= $isLpmReturn ? 'Unit hanya akan menerima arahan resmi ini atas nama GPM (catatan LPM tetap tersembunyi).' : 'Catatan ini akan terbaca oleh unit sasaran dan reviewer LPM.' ?>
                                     </div>
@@ -921,7 +916,7 @@ if (!empty($documents)):
                                             <div class="row g-2">
                                                 <div class="col-md-6">
                                                     <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
-                                                        <input type="radio" name="status_review" value="menunggu_review_lpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= (!in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan', 'revisi_lpm'])) ? 'checked' : '' ?> required>
+                                                        <input type="radio" name="status_review" value="menunggu_review_lpm" class="form-check-input position-absolute top-0 end-0 m-3" required>
                                                         <div class="d-flex align-items-center gap-2.5 mb-1.5">
                                                             <div class="rounded-circle p-2 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                                                 <i class="fas fa-check"></i>
@@ -935,7 +930,7 @@ if (!empty($documents)):
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="card h-100 p-3 rounded-3 border cursor-pointer review-decision-card position-relative" style="transition: all 0.2s ease;">
-                                                        <input type="radio" name="status_review" value="revisi_gpm" class="form-check-input position-absolute top-0 end-0 m-3" <?= in_array($doc['status_review'], ['revisi_gpm', 'perlu_perbaikan', 'revisi_lpm']) ? 'checked' : '' ?> required>
+                                                        <input type="radio" name="status_review" value="revisi_gpm" class="form-check-input position-absolute top-0 end-0 m-3" required>
                                                         <div class="d-flex align-items-center gap-2.5 mb-1.5">
                                                             <div class="rounded-circle p-2 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                                                 <i class="fas fa-triangle-exclamation"></i>
@@ -972,7 +967,7 @@ if (!empty($documents)):
                                                     </button>
                                                 <?php endif; ?>
                                             </div>
-                                            <textarea name="catatan_review" id="catatanGpm<?= $doc['id'] ?>" rows="3" class="form-control rounded-3" placeholder="Tuliskan arahan resmi GPM atau detail evaluasi perbaikan untuk unit..."><?= htmlspecialchars($prefillGpmText) ?></textarea>
+                                            <textarea name="catatan_review" id="catatanGpm<?= $doc['id'] ?>" rows="3" class="form-control rounded-3" placeholder="Tuliskan arahan resmi GPM atau detail evaluasi perbaikan untuk unit..."></textarea>
                                             <div class="form-text small" style="font-size: 0.72rem;">
                                                 <i class="fas fa-info-circle text-primary me-1"></i> Wajib diisi bila memilih opsi "Perlu Revisi". <?= $isLpmReturn ? 'Unit hanya akan menerima arahan resmi ini atas nama GPM (catatan LPM tetap tersembunyi).' : 'Catatan ini akan terbaca oleh unit sasaran dan reviewer LPM.' ?>
                                             </div>
