@@ -20,7 +20,7 @@ class PublicController extends Controller {
                    GROUP_CONCAT(DISTINCT p.nama_prodi ORDER BY p.nama_prodi SEPARATOR '||') as prodi_names
             FROM fakultas f
             LEFT JOIN prodis p ON f.id = p.fakultas_id
-            LEFT JOIN ppepp_documents d ON p.id = d.prodi_id AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            LEFT JOIN ppepp_documents d ON p.id = d.prodi_id AND d.deleted_at IS NULL AND d.status_review = 'sesuai'
             GROUP BY f.id
             ORDER BY f.nama_fakultas ASC
         ");
@@ -29,15 +29,15 @@ class PublicController extends Controller {
         // Overall statistics
         $totalFakultas = count($fakultasList);
         $totalProdi = $this->db->query("SELECT COUNT(*) FROM prodis")->fetchColumn();
-        $totalDokumen = $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE deleted_at IS NULL AND status_review != 'draft'")->fetchColumn();
+        $totalDokumen = $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE deleted_at IS NULL AND status_review = 'sesuai'")->fetchColumn();
 
-        // Count per cycle across university (excluding draft)
+        // Count per cycle across university (excluding draft and non-approved)
         $cycleCounts = [
-            'penetapan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='penetapan' AND deleted_at IS NULL AND status_review != 'draft'")->fetchColumn(),
-            'pelaksanaan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='pelaksanaan' AND deleted_at IS NULL AND status_review != 'draft'")->fetchColumn(),
-            'evaluasi' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='evaluasi' AND deleted_at IS NULL AND status_review != 'draft'")->fetchColumn(),
-            'pengendalian' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='pengendalian' AND deleted_at IS NULL AND status_review != 'draft'")->fetchColumn(),
-            'peningkatan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='peningkatan' AND deleted_at IS NULL AND status_review != 'draft'")->fetchColumn(),
+            'penetapan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='penetapan' AND deleted_at IS NULL AND status_review = 'sesuai'")->fetchColumn(),
+            'pelaksanaan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='pelaksanaan' AND deleted_at IS NULL AND status_review = 'sesuai'")->fetchColumn(),
+            'evaluasi' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='evaluasi' AND deleted_at IS NULL AND status_review = 'sesuai'")->fetchColumn(),
+            'pengendalian' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='pengendalian' AND deleted_at IS NULL AND status_review = 'sesuai'")->fetchColumn(),
+            'peningkatan' => $this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE siklus='peningkatan' AND deleted_at IS NULL AND status_review = 'sesuai'")->fetchColumn(),
         ];
 
         $this->render('public/home', [
@@ -74,7 +74,7 @@ class PublicController extends Controller {
                    SUM(CASE WHEN d.siklus = 'pengendalian' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as count_p3,
                    SUM(CASE WHEN d.siklus = 'peningkatan' AND d.deleted_at IS NULL THEN 1 ELSE 0 END) as count_p4
             FROM prodis p
-            LEFT JOIN ppepp_documents d ON p.id = d.prodi_id AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            LEFT JOIN ppepp_documents d ON p.id = d.prodi_id AND d.deleted_at IS NULL AND d.status_review = 'sesuai'
             WHERE p.fakultas_id = ?
             GROUP BY p.id
             ORDER BY p.jenjang ASC, p.nama_prodi ASC
@@ -92,7 +92,7 @@ class PublicController extends Controller {
                 SUM(CASE WHEN siklus = 'pengendalian' THEN 1 ELSE 0 END) as count_p3,
                 SUM(CASE WHEN siklus = 'peningkatan' THEN 1 ELSE 0 END) as count_p4
             FROM ppepp_documents
-            WHERE fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL AND status_review != 'draft'
+            WHERE fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL AND status_review = 'sesuai'
         ");
         $stmtFakDocs->execute([$fakultasId]);
         $fakultasDocStats = $stmtFakDocs->fetch() ?: [
@@ -164,14 +164,14 @@ class PublicController extends Controller {
         // Fetch All Active Bidang Standar for Filtering
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
-        // Fetch All Active Documents for this prodi (Excluding soft deleted)
+        // Fetch All Active Documents for this prodi (Excluding soft deleted, only approved by LPM)
         $stmtDocs = $this->db->prepare("
             SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, u.name as uploader_name
             FROM ppepp_documents d
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
-            WHERE d.prodi_id = ? AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            WHERE d.prodi_id = ? AND d.deleted_at IS NULL AND d.status_review = 'sesuai'
             ORDER BY d.created_at DESC
         ");
         $stmtDocs->execute([$prodiId]);
@@ -207,8 +207,8 @@ class PublicController extends Controller {
         $stmtFak->execute([$fakultasId]);
         $fakultas = $stmtFak->fetch();
 
-        // Calculate total faculty documents count
-        $stmtFakCount = $this->db->prepare("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL AND status_review != 'draft'");
+        // Calculate total faculty documents count (only approved by LPM)
+        $stmtFakCount = $this->db->prepare("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL AND status_review = 'sesuai'");
         $stmtFakCount->execute([$fakultasId]);
         $fakultas['total_dokumen'] = (int)$stmtFakCount->fetchColumn();
 
@@ -217,7 +217,7 @@ class PublicController extends Controller {
             SELECT p.id, p.nama_prodi, p.jenjang, p.kode_prodi,
                    COUNT(d.id) as total_dokumen
             FROM prodis p
-            LEFT JOIN ppepp_documents d ON p.id = d.prodi_id AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            LEFT JOIN ppepp_documents d ON p.id = d.prodi_id AND d.deleted_at IS NULL AND d.status_review = 'sesuai'
             WHERE p.fakultas_id = ?
             GROUP BY p.id
             ORDER BY p.jenjang ASC, p.nama_prodi ASC
@@ -253,22 +253,22 @@ class PublicController extends Controller {
 
         $fId = (int)$fakultas['id'];
 
-        // Calculate total faculty documents count
-        $stmtFakCount = $this->db->prepare("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL AND status_review != 'draft'");
+        // Calculate total faculty documents count (only approved by LPM)
+        $stmtFakCount = $this->db->prepare("SELECT COUNT(*) FROM ppepp_documents WHERE fakultas_id = ? AND level = 'fakultas' AND deleted_at IS NULL AND status_review = 'sesuai'");
         $stmtFakCount->execute([$fId]);
         $fakultas['total_dokumen'] = (int)$stmtFakCount->fetchColumn();
 
         // Fetch All Active Bidang Standar for Filtering
         $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
 
-        // Fetch All Active Faculty Documents (level = 'fakultas')
+        // Fetch All Active Faculty Documents (level = 'fakultas', only approved by LPM)
         $stmtDocs = $this->db->prepare("
             SELECT d.*, b.nama_bidang, b.kode_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang, u.name as uploader_name
             FROM ppepp_documents d
             LEFT JOIN bidang_standar b ON d.bidang_id = b.id
             LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
             LEFT JOIN users u ON d.user_id = u.id
-            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            WHERE d.fakultas_id = ? AND d.level = 'fakultas' AND d.deleted_at IS NULL AND d.status_review = 'sesuai'
             ORDER BY d.created_at DESC
         ");
         $stmtDocs->execute([$fId]);
@@ -303,7 +303,7 @@ class PublicController extends Controller {
             SELECT p.id, p.nama_prodi, p.jenjang, p.kode_prodi,
                    COUNT(d.id) as total_dokumen
             FROM prodis p
-            LEFT JOIN ppepp_documents d ON p.id = d.prodi_id AND d.deleted_at IS NULL AND d.status_review != 'draft'
+            LEFT JOIN ppepp_documents d ON p.id = d.prodi_id AND d.deleted_at IS NULL AND d.status_review = 'sesuai'
             WHERE p.fakultas_id = ?
             GROUP BY p.id
             ORDER BY p.jenjang ASC, p.nama_prodi ASC
@@ -351,7 +351,8 @@ class PublicController extends Controller {
         $page = max(1, (int)($_GET['page'] ?? 1));
 
         // Base Query Builder (semua filter KECUALI siklus) agar jumlah tab per siklus real-time sesuai periode/filter aktif
-        $baseWhere = ["d.deleted_at IS NULL", "d.status_review != 'draft'"];
+        // HANYA dokumen yang telah disetujui LPM (status_review = 'sesuai') yang ditampilkan di portal publik
+        $baseWhere = ["d.deleted_at IS NULL", "d.status_review = 'sesuai'"];
         $baseParams = [];
 
         // Pencarian teks pada nama dokumen, nomor dokumen, nama prodi, nama bidang
