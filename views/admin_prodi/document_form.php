@@ -353,13 +353,38 @@ $siklusDefinitions = [
                                                     ? (is_array($f['sub_bidang_ids']) ? $f['sub_bidang_ids'] : json_decode($f['sub_bidang_ids'], true)) 
                                                     : (!empty($doc['sub_bidang_id']) ? [(int)$doc['sub_bidang_id']] : []);
                                                 if (!is_array($fSubIds)) $fSubIds = [];
-                                                $fSize = !empty($f['file_size']) ? (is_numeric($f['file_size']) ? number_format($f['file_size']/1024, 1).' KB' : $f['file_size']) : 'PDF';
+                                                $fSize = !empty($f['file_size']) ? (is_numeric($f['file_size']) ? number_format($f['file_size']/1024, 1).' KB' : $f['file_size']) : 'Berkas';
+                                                $fExt = strtolower(pathinfo($f['file_name'] ?? '', PATHINFO_EXTENSION));
+                                                $isImg = in_array($fExt, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg']);
+                                                $isDoc = in_array($fExt, ['doc', 'docx']);
+                                                $isXls = in_array($fExt, ['xls', 'xlsx', 'csv']);
+                                                $isPpt = in_array($fExt, ['ppt', 'pptx']);
+                                                $isVid = in_array($fExt, ['mp4', 'mkv', 'mov', 'webm', 'avi', 'm4a']);
+                                                
+                                                $fIcon = 'fa-file-pdf';
+                                                $fBg = 'bg-danger bg-opacity-10 text-danger';
+                                                if ($isImg) {
+                                                    $fIcon = 'fa-file-image';
+                                                    $fBg = 'bg-warning bg-opacity-10 text-warning';
+                                                } elseif ($isDoc) {
+                                                    $fIcon = 'fa-file-word';
+                                                    $fBg = 'bg-primary bg-opacity-10 text-primary';
+                                                } elseif ($isXls) {
+                                                    $fIcon = 'fa-file-excel';
+                                                    $fBg = 'bg-success bg-opacity-10 text-success';
+                                                } elseif ($isPpt) {
+                                                    $fIcon = 'fa-file-powerpoint';
+                                                    $fBg = 'bg-warning bg-opacity-10 text-warning';
+                                                } elseif ($isVid) {
+                                                    $fIcon = 'fa-file-video';
+                                                    $fBg = 'bg-primary bg-opacity-10 text-purple';
+                                                }
                                             ?>
-                                                <div class="card p-3.5 bg-white border rounded-4 shadow-2xs" id="existingFileRow_<?= $f['id'] ?>">
+                                                <div class="card p-3.5 bg-white border rounded-4 shadow-2xs existing-file-item" id="existingFileRow_<?= $f['id'] ?>">
                                                     <div class="d-flex align-items-center justify-content-between gap-2 pb-2.5 border-bottom">
                                                         <div class="d-flex align-items-center gap-2.5 text-truncate" style="min-width: 0;">
-                                                            <div class="p-2 rounded-3 bg-danger bg-opacity-10 text-danger flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                                                                <i class="fas fa-file-pdf fa-lg"></i>
+                                                            <div class="p-2 rounded-3 <?= $fBg ?> flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                                                <i class="fas <?= $fIcon ?> fa-lg"></i>
                                                             </div>
                                                             <div class="text-truncate">
                                                                 <div class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;"><?= htmlspecialchars($f['file_name']) ?></div>
@@ -967,7 +992,10 @@ function renderSingleStagedFiles(savedState = []) {
         const ext = file.name.split('.').pop().toLowerCase();
         let iconClass = 'fa-file-pdf text-danger';
         let bgClass = 'bg-danger bg-opacity-10 text-danger';
-        if (['doc', 'docx'].includes(ext)) {
+        if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg'].includes(ext)) {
+            iconClass = 'fa-file-image text-warning';
+            bgClass = 'bg-warning bg-opacity-10 text-warning';
+        } else if (['doc', 'docx'].includes(ext)) {
             iconClass = 'fa-file-word text-primary';
             bgClass = 'bg-primary bg-opacity-10 text-primary';
         } else if (['xls', 'xlsx'].includes(ext)) {
@@ -986,7 +1014,8 @@ function renderSingleStagedFiles(savedState = []) {
         const narasiVal = (st.narasi !== undefined) ? st.narasi : '';
 
         const div = document.createElement('div');
-        div.className = 'card p-3.5 bg-white border rounded-4 shadow-2xs';
+        div.id = `new_file_item_${idx}`;
+        div.className = 'card p-3.5 bg-white border rounded-4 shadow-2xs new-file-item';
         div.innerHTML = `
             <div class="d-flex align-items-center justify-content-between gap-2 pb-2.5 border-bottom">
                 <div class="d-flex align-items-center gap-2.5 text-truncate" style="min-width: 0;">
@@ -2768,9 +2797,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 4. Minimal 1 Berkas File atau Tautan Google Drive
         if (isPublish) {
-            const hasExistingFiles = singleForm.querySelectorAll('.existing-file-item').length > 0;
+            const existingFileCards = Array.from(singleForm.querySelectorAll('.existing-file-item, [id^="existingFileRow_"]'))
+                .filter(row => !row.querySelector('input[name="delete_file_ids[]"]'));
+            const hasExistingFiles = existingFileCards.length > 0;
             const singleFiles = (typeof singleStagedFiles !== 'undefined' && Array.isArray(singleStagedFiles)) ? singleStagedFiles : [];
-            const hasNewFiles = singleFiles.length > 0 || (typeof selectedFiles !== 'undefined' && Array.isArray(selectedFiles) && selectedFiles.length > 0);
+            const hasNewFiles = singleFiles.length > 0 
+                || (typeof selectedFiles !== 'undefined' && Array.isArray(selectedFiles) && selectedFiles.length > 0)
+                || singleForm.querySelectorAll('.new-file-item, [id^="new_file_item_"]').length > 0;
             const hasLinks = Array.from(singleForm.querySelectorAll('.gdrive-doc-input')).some(inp => inp.value.trim());
 
             if (!hasExistingFiles && !hasNewFiles && !hasLinks) {
