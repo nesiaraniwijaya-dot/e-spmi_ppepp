@@ -478,6 +478,19 @@ class GpmController extends Controller {
             return;
         }
 
+        // Dokumen yang berstatus sedang diperbaiki unit tidak dapat di-review ulang sebelum unit mengunggah revisi
+        if ($doc['status_review'] === 'revisi_gpm') {
+            $msg = 'Dokumen ini sedang dalam perbaikan oleh unit sasaran. Menunggu unit mengunggah revisi terbaru sebelum dapat di-review kembali.';
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $msg]);
+                exit;
+            }
+            Auth::setFlash('warning', $msg);
+            redirect($redirectUrl);
+            return;
+        }
+
         if ($statusReview === 'revisi_gpm' && empty($catatanReview)) {
             if ($isAjax) {
                 header('Content-Type: application/json');

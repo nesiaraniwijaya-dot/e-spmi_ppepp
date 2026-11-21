@@ -263,7 +263,7 @@ if (!empty($documents)):
                                     $previewStandar = render_sub_standar_badges($firstFile ? ($firstFile['sub_bidang_ids'] ?? null) : ($firstLink ? ($firstLink['sub_bidang_ids'] ?? null) : null));
                                     ?>
                                     <div class="d-inline-flex align-items-center gap-1.5">
-                                        <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])): ?>
+                                        <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm'])): ?>
                                             <button type="button" 
                                                     class="btn btn-sm btn-primary bg-scu-blue border-0 rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs text-white fw-bold" 
                                                     title="Buka Berkas & Review Dokumen Ini" 
@@ -285,6 +285,29 @@ if (!empty($documents)):
                                                     data-can-access="1"
                                                     style="font-size: 0.8rem;">
                                                 <i class="fas fa-clipboard-check"></i> Review
+                                            </button>
+                                        <?php elseif ($doc['status_review'] === 'revisi_gpm'): ?>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs fw-semibold" 
+                                                    title="Buka Berkas & Tinjau Arahan Revisi Unit (Sedang Diperbaiki Unit)" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#pdfPreviewModal"
+                                                    data-is-review="1"
+                                                    data-review-role="gpm"
+                                                    data-doc-id="<?= $doc['id'] ?>"
+                                                    data-doc-title="<?= htmlspecialchars($previewDocTitle, ENT_QUOTES) ?>"
+                                                    data-pdf-url="<?= $previewPdfUrl ?>"
+                                                    data-is-link="<?= $isFirstLink ? '1' : '0' ?>"
+                                                    data-link-url="<?= $previewLinkUrl ?>"
+                                                    data-doc-narasi="<?= htmlspecialchars($previewNarasi, ENT_QUOTES) ?>"
+                                                    data-doc-standar="<?= htmlspecialchars($previewStandar, ENT_QUOTES) ?>"
+                                                    data-doc-ta="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>"
+                                                    data-all-files="<?= htmlspecialchars(json_encode($allFilesData), ENT_QUOTES) ?>"
+                                                    data-review-source="#gpmReviewTemplate_<?= $doc['id'] ?>"
+                                                    data-can-download="1"
+                                                    data-can-access="1"
+                                                    style="font-size: 0.78rem;">
+                                                <i class="fas fa-clock-rotate-left"></i> Tinjau
                                             </button>
                                         <?php elseif ($doc['status_review'] === 'menunggu_review_lpm'): ?>
                                             <button type="button" 
@@ -707,7 +730,43 @@ if (!empty($documents)):
                             </div>
                         <?php endif; ?>
 
-                        <?php if (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm', 'revisi_gpm'])): ?>
+                        <?php if ($doc['status_review'] === 'revisi_gpm'): ?>
+                            <!-- TAMPILAN STATUS DOKUMEN SEDANG DIPERBAIKI UNIT -->
+                            <div class="alert alert-danger border-danger border-opacity-25 rounded-3 mb-3 d-flex align-items-start gap-2.5">
+                                <i class="fas fa-tools text-danger mt-1"></i>
+                                <div class="small">
+                                    <strong class="text-danger">Dokumen Sedang Dalam Perbaikan oleh Unit Sasaran:</strong>
+                                    <div class="text-muted mt-0.5" style="line-height: 1.45;">
+                                        GPM telah memberikan arahan perbaikan untuk dokumen ini. Saat ini dokumen berstatus <strong>Menunggu Unit</strong>. Anda dapat melihat kembali berkas dan catatan arahan revisi di bawah ini. Formulir keputusan review akan aktif kembali secara otomatis setelah unit sasaran mengunggah dan mengajukan hasil perbaikan.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tampilkan Catatan Arahan Revisi GPM yang Sedang Dikerjakan Unit -->
+                            <?php if (!empty($doc['catatan_review'])): ?>
+                                <div class="p-3 rounded-3 mb-3 border border-danger-subtle" style="background: #FFF5F5;">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1.5">
+                                        <span class="small fw-bold text-danger text-uppercase d-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
+                                            <i class="fas fa-clipboard-list text-danger"></i> Arahan Revisi GPM ke Unit Sasaran:
+                                        </span>
+                                        <?php if (!empty($doc['gpm_reviewed_at']) || !empty($doc['reviewed_at'])): ?>
+                                            <span class="badge bg-white text-secondary border px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                                <i class="far fa-clock me-1 text-secondary opacity-75"></i><?= date('d M Y, H:i', strtotime($doc['gpm_reviewed_at'] ?? $doc['reviewed_at'])) ?> WIB
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-3 border border-danger border-opacity-25 small text-dark" style="line-height: 1.55; white-space: pre-wrap; font-size: 0.85rem;"><?= htmlspecialchars($doc['catatan_review']) ?></div>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 btn-sm btn-review-history d-inline-flex align-items-center gap-1.5" data-doc-id="<?= $doc['id'] ?>" data-doc-name="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>">
+                                    <i class="fas fa-history"></i> Buka Riwayat Review Lengkap
+                                </button>
+                                <button type="button" class="btn btn-light rounded-pill px-4 btn-sm fw-semibold" data-bs-dismiss="modal">Tutup</button>
+                            </div>
+
+                        <?php elseif (in_array($doc['status_review'], ['menunggu_review_gpm', 'sudah_diperbaiki', 'belum_direview', 'perlu_perbaikan', 'revisi_lpm'])): ?>
                             <!-- FORM TELAAH AKTIF OLEH GPM -->
                             <?php if ($doc['status_review'] === 'sudah_diperbaiki'): ?>
                                 <div class="alert alert-info border-info border-opacity-25 rounded-3 mb-3 d-flex align-items-start gap-2.5">
