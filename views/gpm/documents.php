@@ -62,12 +62,17 @@ if (!isset($siklusCounts) || !is_array($siklusCounts)) {
         </div>
     </div>
 
+    <?php
+    $isFilteredGpm = in_array($statusFilter, ['menunggu_review_gpm', 'belum_direview']);
+    $isFilteredLpm = ($statusFilter === 'menunggu_review_lpm');
+    ?>
+
     <!-- Quick Action Notification Grid: GPM Review Workflow -->
     <div class="row g-3 g-xl-4 mb-4 pb-1">
         <!-- 1. Antrean Review GPM -->
         <div class="col-lg-4 col-md-6 col-12">
             <div class="card border-0 shadow-2xs rounded-4 p-3.5 p-xl-4 h-100 d-flex flex-row align-items-center justify-content-between gap-3.5 transition-all" 
-                 style="background: linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%); border: 1px solid #FCD34D !important;">
+                 style="background: linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%); border: <?= $isFilteredGpm ? '2px solid #D97706' : '1px solid #FCD34D' ?> !important; <?= $isFilteredGpm ? 'box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25) !important;' : '' ?>">
                 <div class="d-flex align-items-center gap-3.5" style="min-width: 0;">
                     <div class="rounded-4 bg-warning text-dark d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.25rem;">
                         <i class="fas fa-clipboard-check"></i>
@@ -84,17 +89,24 @@ if (!isset($siklusCounts) || !is_array($siklusCounts)) {
                         </div>
                     </div>
                 </div>
-                <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3.5 py-2 fw-bold text-nowrap shadow-xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;">
-                    <span>Filter</span>
-                    <i class="fas fa-filter"></i>
-                </a>
+                <?php if ($isFilteredGpm): ?>
+                    <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3.5 py-2 fw-bold text-nowrap shadow-xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;" title="Filter aktif. Klik untuk menampilkan semua status">
+                        <span>Aktif</span>
+                        <i class="fas fa-check"></i>
+                    </a>
+                <?php else: ?>
+                    <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_gpm') ?>" class="btn btn-warning text-dark btn-sm rounded-pill px-3.5 py-2 fw-bold text-nowrap shadow-xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;">
+                        <span>Filter</span>
+                        <i class="fas fa-filter"></i>
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
 
         <!-- 2. Diteruskan ke LPM -->
         <div class="col-lg-4 col-md-6 col-12">
             <div class="card border-0 shadow-2xs rounded-4 p-3.5 p-xl-4 h-100 d-flex flex-row align-items-center justify-content-between gap-3.5 transition-all" 
-                 style="background: linear-gradient(135deg, #F0F7FF 0%, #EFF6FF 100%); border: 1px solid #BFDBFE !important;">
+                 style="background: linear-gradient(135deg, #F0F7FF 0%, #EFF6FF 100%); border: <?= $isFilteredLpm ? '2px solid #2563EB' : '1px solid #BFDBFE' ?> !important; <?= $isFilteredLpm ? 'box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25) !important;' : '' ?>">
                 <div class="d-flex align-items-center gap-3.5" style="min-width: 0;">
                     <div class="rounded-4 bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.25rem;">
                         <i class="fas fa-paper-plane"></i>
@@ -111,10 +123,17 @@ if (!isset($siklusCounts) || !is_array($siklusCounts)) {
                         </div>
                     </div>
                 </div>
-                <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_lpm') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 py-2 fw-semibold text-nowrap shadow-2xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;">
-                    <span>Filter</span>
-                    <i class="fas fa-filter"></i>
-                </a>
+                <?php if ($isFilteredLpm): ?>
+                    <a href="<?= base_url('gpm/dokumen') ?>" class="btn btn-primary btn-sm rounded-pill px-3.5 py-2 fw-semibold text-nowrap shadow-xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;" title="Filter aktif. Klik untuk menampilkan semua status">
+                        <span>Aktif</span>
+                        <i class="fas fa-check"></i>
+                    </a>
+                <?php else: ?>
+                    <a href="<?= base_url('gpm/dokumen?status_review=menunggu_review_lpm') ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 py-2 fw-semibold text-nowrap shadow-2xs d-inline-flex align-items-center gap-1.5 flex-shrink-0" style="font-size: 0.82rem;">
+                        <span>Filter</span>
+                        <i class="fas fa-filter"></i>
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
 
