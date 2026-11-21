@@ -3692,12 +3692,42 @@ class SuperAdminController extends Controller {
             return;
         }
 
+        $lpmRoles = [
+            'kepala_lpm',
+            'sekretaris_lpm',
+            'ketua_pusat_spm',
+            'ketua_pusat_ami',
+            'ketua_pusat_pemeringkatan',
+        ];
+
+        $configurableMenus = [
+            'dashboard',
+            'review_dokumen',
+            'monitoring_berkas',
+            'monitoring_gpm',
+            'upload_access',
+            'master_fakultas',
+            'master_prodi',
+            'master_bidang',
+        ];
+
         try {
-            $this->db->exec("UPDATE lpm_menu_permissions SET can_view = 1, can_action = 1, updated_at = NOW()");
+            $stmtUpsert = $this->db->prepare("
+                INSERT INTO lpm_menu_permissions (role, menu_key, can_view, can_action)
+                VALUES (?, ?, 1, 1)
+                ON DUPLICATE KEY UPDATE can_view = 1, can_action = 1, updated_at = NOW()
+            ");
+
+            foreach ($lpmRoles as $r) {
+                foreach ($configurableMenus as $m) {
+                    $stmtUpsert->execute([$r, $m]);
+                }
+            }
+
             Auth::clearPermissionCache();
 
             AuditLogger::log('RESET', 'Hak Akses Menu LPM', 'matrix', 'Reset seluruh hak akses menu LPM ke default institusi');
-            Auth::setFlash('success', 'Seluruh hak akses menu LPM berhasil dikembalikan ke pengaturan awal (akses penuh)!');
+            Auth::setFlash('success', 'Seluruh hak akses menu LPM berhasil dikembalikan ke pengaturan awal institusi (semua aktif & akses penuh)!');
         } catch (\Throwable $e) {
             Auth::setFlash('danger', 'Gagal mereset hak akses menu: ' . $e->getMessage());
         }
