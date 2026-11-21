@@ -7,24 +7,26 @@
  */
 require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
-$revisiDocs     = $revisiDocs ?? [];
-$lpmRevisiDocs  = $lpmRevisiDocs ?? array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['revisi_lpm', 'perlu_perbaikan'])));
-$unitRevisiDocs = $unitRevisiDocs ?? array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'revisi_gpm'));
-$sudahDocs      = $sudahDocs ?? array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
-$perluDocs      = $perluDocs ?? array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['revisi_lpm', 'revisi_gpm', 'perlu_perbaikan'])));
+$revisiDocs      = $revisiDocs ?? [];
+$menungguGpmDocs = $menungguGpmDocs ?? array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['menunggu_review_gpm', 'belum_direview'])));
+$lpmRevisiDocs   = $lpmRevisiDocs ?? array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['revisi_lpm', 'perlu_perbaikan'])));
+$unitRevisiDocs  = $unitRevisiDocs ?? array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'revisi_gpm'));
+$sudahDocs       = $sudahDocs ?? array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
+$perluDocs       = $perluDocs ?? array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['menunggu_review_gpm', 'belum_direview', 'revisi_lpm', 'revisi_gpm', 'perlu_perbaikan'])));
 
-$fakultas      = $fakultas ?? [];
-$prodisList    = $prodisList ?? [];
-$unitFilter    = $unitFilter ?? 'all';
-$totalPerlu    = $totalPerlu ?? count($perluDocs);
-$totalRevisiGpm = count($unitRevisiDocs);
-$totalRevisiLpm = count($lpmRevisiDocs);
-$totalSudah    = count($sudahDocs);
-$fakultasPerlu = $fakultasPerlu ?? 0;
-$prodiPerlu    = $prodiPerlu ?? 0;
+$fakultas        = $fakultas ?? [];
+$prodisList      = $prodisList ?? [];
+$unitFilter      = $unitFilter ?? 'all';
+$totalPerlu      = $totalPerlu ?? count($perluDocs);
+$totalMenungguGpm = count($menungguGpmDocs);
+$totalRevisiGpm  = count($unitRevisiDocs);
+$totalRevisiLpm  = count($lpmRevisiDocs);
+$totalSudah      = count($sudahDocs);
+$fakultasPerlu   = $fakultasPerlu ?? 0;
+$prodiPerlu      = $prodiPerlu ?? 0;
 
-// Tab aktif default: Prioritaskan dokumen hasil perbaikan (Siap Review GPM), kemudian catatan baru LPM
-$activeTab = ($totalSudah > 0) ? 'tab-sudah' : (($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-unit' : 'tab-all'));
+// Tab aktif default: Prioritaskan dokumen hasil perbaikan (Siap Review GPM), kemudian menunggu review awal GPM, lalu catatan baru LPM
+$activeTab = ($totalSudah > 0) ? 'tab-sudah' : (($totalMenungguGpm > 0) ? 'tab-menunggu' : (($totalRevisiLpm > 0) ? 'tab-lpm' : (($totalRevisiGpm > 0) ? 'tab-unit' : 'tab-all')));
 
 $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
     $files = $doc['files'] ?? [];
@@ -63,7 +65,7 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
             ];
         }
     }
-    ?>
+
     $isRevisiGpm = ($doc['status_review'] ?? '') === 'revisi_gpm';
     $effectiveBtnLabel = $isRevisiGpm ? 'Tinjau Berkas' : $btnLabel;
     $btnClass = $isRevisiGpm 
@@ -345,6 +347,11 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                         <i class="fas fa-clock-rotate-left text-primary"></i>
                         <span>Hasil Perbaikan (Siap Review GPM)</span>
                         <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 0.7rem;"><?= count($sudahDocs) ?></span>
+                    </button>
+                    <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 <?= $activeTab === 'tab-menunggu' ? 'active' : '' ?>" id="tab-menunggu-btn" data-bs-toggle="pill" data-bs-target="#tab-menunggu" type="button" role="tab" style="font-size: 0.84rem;">
+                        <i class="fas fa-clock text-warning"></i>
+                        <span>Menunggu Review GPM</span>
+                        <span class="badge rounded-pill bg-warning text-dark px-2 py-0.5 fw-bold" style="font-size: 0.7rem;"><?= count($menungguGpmDocs) ?></span>
                     </button>
                     <button class="nav-link rounded-pill fw-semibold d-inline-flex align-items-center gap-2 px-3.5 py-2 <?= $activeTab === 'tab-lpm' ? 'active' : '' ?>" id="tab-lpm-btn" data-bs-toggle="pill" data-bs-target="#tab-lpm" type="button" role="tab" style="font-size: 0.84rem;">
                         <i class="fas fa-reply text-warning"></i>
@@ -981,6 +988,162 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
         </div>
 
         <!-- ======================================================= -->
+        <!-- TAB: MENUNGGU REVIEW GPM                                -->
+        <!-- ======================================================= -->
+        <div class="tab-pane fade <?= $activeTab === 'tab-menunggu' ? 'show active' : '' ?>" id="tab-menunggu" role="tabpanel">
+            <?php if (empty($menungguGpmDocs)): ?>
+                <div class="card rounded-4 p-5 text-center bg-white shadow-2xs" style="border: 1px solid #E2E8F0 !important;">
+                    <div class="py-4">
+                        <div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px; font-size: 2rem;">
+                            <i class="fas fa-circle-check"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Tidak Ada Dokumen Menunggu Review GPM</h5>
+                        <p class="text-muted small mx-auto mb-3" style="max-width: 480px; line-height: 1.5;">
+                            Seluruh dokumen mutu yang diajukan oleh Fakultas dan Program Studi saat ini telah direview oleh GPM.
+                        </p>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="modern-table-card mb-4">
+                    <div class="p-3.5 px-4 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3" style="background: #FFFBEB; border-color: #FDE68A !important;">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-2xs" style="background: #D97706; color: #FFFFFF; font-size: 0.8rem;">
+                                <i class="fas fa-clock"></i> <strong><?= count($menungguGpmDocs) ?> Dokumen Menunggu Review GPM</strong>
+                            </span>
+                            <span class="text-dark small">Dokumen mutu baru yang diajukan oleh Program Studi atau Fakultas dan siap untuk ditelaah oleh Gugus Penjaminan Mutu.</span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 table-modern-perbaikan">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4 text-center" style="width: 44px;">No</th>
+                                    <th style="width: 155px;">Unit Sasaran</th>
+                                    <th style="min-width: 210px; width: 25%;">Nama Dokumen Mutu</th>
+                                    <th class="text-center" style="width: 110px;">Siklus</th>
+                                    <th style="min-width: 145px; width: 15%;">Bidang</th>
+                                    <th style="min-width: 200px; width: 22%;">Status &amp; Tanggal Diajukan</th>
+                                    <th class="text-center text-nowrap" style="width: 105px;">Lampiran</th>
+                                    <th class="pe-4 text-center text-nowrap" style="width: 165px;">Aksi Review</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($menungguGpmDocs as $idx => $doc): 
+                                    $filesCount = count($doc['files'] ?? []);
+                                    $hasLink = !empty($doc['external_link']);
+                                    $unitLabel = ($doc['level'] === 'fakultas') ? 'Tingkat Fakultas' : (($doc['jenjang'] ?? 'S1') . ' ' . ($doc['nama_prodi'] ?? ''));
+                                    $submDate = !empty($doc['created_at']) ? date('d M Y, H:i', strtotime($doc['created_at'])) . ' WIB' : '-';
+                                ?>
+                                    <tr class="perbaikan-row" data-tahun="<?= htmlspecialchars($doc['tahun_akademik'] ?? '') ?>" data-search="<?= strtolower(htmlspecialchars($doc['nama_dokumen'] . ' ' . ($doc['nomor_dokumen'] ?? '') . ' ' . ($doc['nama_bidang'] ?? '') . ' ' . ($doc['nama_sub_bidang'] ?? '') . ' ' . $unitLabel)) ?>">
+                                        <td class="ps-4 text-center text-muted fw-bold small" style="border-end: 1px solid #F1F5F9;"><?= $idx + 1 ?></td>
+                                        
+                                        <td class="py-3 px-3" style="border-end: 1px solid #F1F5F9;">
+                                            <span class="badge rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1 shadow-2xs text-nowrap" 
+                                                  style="font-size: 0.72rem; <?= ($doc['level'] === 'fakultas') ? 'background: #FAF5FF; color: #7C3AED; border: 1px solid #E9D5FF;' : 'background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;' ?>">
+                                                <i class="fas <?= ($doc['level'] === 'fakultas') ? 'fa-building-columns' : 'fa-graduation-cap' ?>"></i>
+                                                <span><?= htmlspecialchars($unitLabel) ?></span>
+                                            </span>
+                                        </td>
+
+                                        <td class="py-3 px-3.5" style="border-end: 1px solid #F1F5F9;">
+                                            <div class="fw-bold text-dark-blue mb-1" style="line-height: 1.4; font-size: 0.87rem;">
+                                                <a href="<?= base_url('gpm/dokumen?search=' . urlencode($doc['nama_dokumen'])) ?>" class="text-decoration-none text-dark-blue hover-primary">
+                                                    <?= htmlspecialchars($doc['nama_dokumen']) ?>
+                                                </a>
+                                            </div>
+                                            <div class="d-flex flex-wrap align-items-center gap-2 small text-muted" style="font-size: 0.73rem;">
+                                                <?php if (!empty($doc['nomor_dokumen'])): ?>
+                                                    <span class="d-inline-flex align-items-center gap-0.5"><i class="fas fa-hashtag text-secondary opacity-75"></i><?= htmlspecialchars($doc['nomor_dokumen']) ?></span>
+                                                    <span>&bull;</span>
+                                                <?php endif; ?>
+                                                <span>TA: <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></span>
+                                            </div>
+                                        </td>
+
+                                        <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
+                                            <?= siklus_badge($doc['siklus']) ?>
+                                        </td>
+
+                                        <td class="py-3 px-3" style="border-end: 1px solid #F1F5F9;">
+                                            <div class="small fw-semibold text-secondary" style="line-height: 1.35;">
+                                                <?= htmlspecialchars($doc['nama_bidang'] ?? 'Standar Mutu') ?>
+                                            </div>
+                                            <?php if (!empty($doc['nama_sub_bidang'])): ?>
+                                                <div class="text-muted small mt-1 d-flex align-items-center gap-1" style="font-size: 0.71rem;">
+                                                    <i class="fas fa-angle-right text-secondary opacity-75"></i>
+                                                    <span><?= htmlspecialchars($doc['nama_sub_bidang']) ?></span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <td class="py-3 px-3" style="border-end: 1px solid #F1F5F9;">
+                                            <div class="d-flex flex-column gap-1">
+                                                <div><?= render_review_status_badge($doc['status_review'], 'shadow-2xs') ?></div>
+                                                <div class="text-muted small d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                                                    <i class="far fa-calendar-plus text-secondary opacity-75"></i>
+                                                    <span><?= htmlspecialchars($submDate) ?></span>
+                                                </div>
+                                                <?php if (!empty($doc['uploader_name'])): ?>
+                                                    <div class="text-secondary small d-flex align-items-center gap-1" style="font-size: 0.71rem;">
+                                                        <i class="fas fa-user-pen text-secondary opacity-75"></i>
+                                                        <span class="text-truncate" style="max-width: 180px;"><?= htmlspecialchars($doc['uploader_name']) ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+
+                                        <td class="py-3 px-2 text-center" style="border-end: 1px solid #F1F5F9;">
+                                            <?php if ($filesCount > 0): ?>
+                                                <a href="<?= base_url($doc['files'][0]['file_path']) ?>" target="_blank" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 small d-inline-flex align-items-center gap-1 shadow-2xs text-nowrap" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-file-pdf text-danger"></i>
+                                                    <span><?= $filesCount ?> Berkas</span>
+                                                </a>
+                                            <?php elseif ($hasLink): ?>
+                                                <a href="<?= htmlspecialchars(explode("\n", $doc['external_link'])[0]) ?>" target="_blank" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 small d-inline-flex align-items-center gap-1 shadow-2xs text-primary text-nowrap" style="font-size: 0.72rem;">
+                                                    <i class="fab fa-google-drive text-success"></i>
+                                                    <span>GDrive</span>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="text-muted small fst-italic" style="font-size: 0.75rem;">-</span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <td class="pe-4 py-3 text-center">
+                                            <div class="d-inline-flex align-items-center gap-1.5 text-nowrap">
+                                                <?php $renderPerbaikanReviewBtn($doc, 'Review & Putuskan'); ?>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-circle p-0 btn-review-history d-inline-flex align-items-center justify-content-center shadow-2xs" data-doc-id="<?= $doc['id'] ?>" title="Riwayat Review" style="width: 32px; height: 32px; font-size: 0.76rem;">
+                                                    <i class="fas fa-history text-secondary"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer Pagination Tab Menunggu -->
+                    <div class="p-3 border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2" id="pagWrapTabMenunggu" style="border-color: #E2E8F0 !important;">
+                        <div class="small text-muted" id="infoTabMenunggu">Menghitung...</div>
+                        <div class="table-pagination-control">
+                            <div class="table-perpage-wrap">
+                                <label class="table-perpage-label">Ukuran Halaman:</label>
+                                <select class="form-select table-perpage-select shadow-none" onchange="changePerbaikanPageSize(this.value)">
+                                    <option value="10">10 data</option>
+                                    <option value="25">25 data</option>
+                                    <option value="50" selected>50 data</option>
+                                    <option value="100">100 data</option>
+                                </select>
+                            </div>
+                            <nav id="pagTabMenunggu" aria-label="Navigasi Halaman"></nav>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- ======================================================= -->
         <!-- TAB 4: SEMUA STATUS REVISI                             -->
         <!-- ======================================================= -->
         <div class="tab-pane fade <?= $activeTab === 'tab-all' ? 'show active' : '' ?>" id="tab-all" role="tabpanel">
@@ -1392,6 +1555,9 @@ function paginateTab(tabId, page) {
     } else if (tabId === 'tab-sudah') {
         infoId = 'infoTabSudah';
         pagId = 'pagTabSudah';
+    } else if (tabId === 'tab-menunggu') {
+        infoId = 'infoTabMenunggu';
+        pagId = 'pagTabMenunggu';
     } else if (tabId === 'tab-all') {
         infoId = 'infoTabAll';
         pagId = 'pagTabAll';
@@ -1453,7 +1619,7 @@ function paginateTab(tabId, page) {
 }
 
 function refreshAllPerbaikanTabs() {
-    ['tab-lpm', 'tab-unit', 'tab-sudah', 'tab-all'].forEach(id => paginateTab(id, 1));
+    ['tab-lpm', 'tab-unit', 'tab-sudah', 'tab-menunggu', 'tab-all'].forEach(id => paginateTab(id, 1));
 }
 
 function filterPerbaikanList() {

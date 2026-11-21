@@ -778,7 +778,7 @@ class GpmController extends Controller {
             LEFT JOIN fakultas f ON d.fakultas_id = f.id
             LEFT JOIN users u ON COALESCE(d.reviewed_by, d.gpm_reviewed_by, d.lpm_reviewed_by) = u.id
             LEFT JOIN users up ON d.user_id = up.id
-            WHERE d.status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
+            WHERE d.status_review IN ('menunggu_review_gpm', 'belum_direview', 'revisi_gpm', 'revisi_lpm', 'perlu_perbaikan', 'sudah_diperbaiki') AND d.deleted_at IS NULL
         ";
         $params = [];
 
@@ -798,7 +798,8 @@ class GpmController extends Controller {
                 COALESCE(d.lpm_reviewed_at, '1970-01-01 00:00:00'),
                 COALESCE(d.gpm_reviewed_at, '1970-01-01 00:00:00'),
                 COALESCE(d.reviewed_at, '1970-01-01 00:00:00'),
-                COALESCE(d.updated_at, '1970-01-01 00:00:00')
+                COALESCE(d.updated_at, '1970-01-01 00:00:00'),
+                COALESCE(d.created_at, '1970-01-01 00:00:00')
             ) DESC, d.id DESC";
 
         $stmt = $this->db->prepare($sql);
@@ -807,17 +808,20 @@ class GpmController extends Controller {
         $this->attachFilesToDocs($revisiDocs);
 
         // Segmentasi dokumen berjenjang:
-        // 1. Dokumen yang baru dikembalikan LPM dan menunggu GPM meneruskannya ke unit
+        // 1. Dokumen yang menunggu review awal GPM
+        $menungguGpmDocs = array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['menunggu_review_gpm', 'belum_direview'])));
+        // 2. Dokumen yang baru dikembalikan LPM dan menunggu GPM meneruskannya ke unit
         $lpmRevisiDocs = array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['revisi_lpm', 'perlu_perbaikan'])));
-        // 2. Dokumen yang sudah diteruskan GPM dan sedang dalam pengerjaan oleh unit sasaran
+        // 3. Dokumen yang sudah diteruskan GPM dan sedang dalam pengerjaan oleh unit sasaran
         $unitRevisiDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'revisi_gpm'));
-        // 3. Dokumen hasil revisi dari unit yang siap ditelaah ulang oleh GPM
+        // 4. Dokumen hasil revisi dari unit yang siap ditelaah ulang oleh GPM
         $sudahDocs = array_values(array_filter($revisiDocs, fn($d) => ($d['status_review'] ?? '') === 'sudah_diperbaiki'));
-        // 4. Seluruh dokumen dalam cakupan perlu tindakan
-        $perluDocs = array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['revisi_lpm', 'revisi_gpm', 'perlu_perbaikan'])));
+        // 5. Seluruh dokumen dalam cakupan perlu tindakan
+        $perluDocs = array_values(array_filter($revisiDocs, fn($d) => in_array($d['status_review'] ?? '', ['menunggu_review_gpm', 'belum_direview', 'revisi_lpm', 'revisi_gpm', 'perlu_perbaikan'])));
 
         // Hitung statistik ringkas perbaikan
         $scopeWhere = "( (fakultas_id = {$this->fakultasId} AND level = 'fakultas') OR prodi_id IN ({$prodiIdPlaceholder}) )";
+        $totalMenungguGpm = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review IN ('menunggu_review_gpm', 'belum_direview') AND deleted_at IS NULL")->fetchColumn();
         $totalRevisiGpm = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review = 'revisi_gpm' AND deleted_at IS NULL")->fetchColumn();
         $totalRevisiLpm = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review IN ('revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
         $totalSudah     = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE {$scopeWhere} AND status_review = 'sudah_diperbaiki' AND deleted_at IS NULL")->fetchColumn();
@@ -827,21 +831,23 @@ class GpmController extends Controller {
         $prodiPerlu    = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE prodi_id IN ({$prodiIdPlaceholder}) AND level = 'prodi' AND status_review IN ('revisi_gpm', 'revisi_lpm', 'perlu_perbaikan') AND deleted_at IS NULL")->fetchColumn();
 
         $this->render('gpm/perbaikan', [
-            'pageTitle'      => 'Monitoring Dokumen Revisi | GPM ' . $this->fakultas['nama_fakultas'],
-            'fakultas'       => $this->fakultas,
-            'prodisList'     => $this->prodisList,
-            'revisiDocs'     => $revisiDocs,
-            'lpmRevisiDocs'  => $lpmRevisiDocs,
-            'unitRevisiDocs' => $unitRevisiDocs,
-            'sudahDocs'      => $sudahDocs,
-            'perluDocs'      => $perluDocs,
-            'unitFilter'     => $unitFilter,
-            'totalPerlu'     => $totalPerlu,
-            'totalRevisiGpm' => $totalRevisiGpm,
-            'totalRevisiLpm' => $totalRevisiLpm,
-            'totalSudah'     => $totalSudah,
-            'fakultasPerlu'  => $fakultasPerlu,
-            'prodiPerlu'     => $prodiPerlu
+            'pageTitle'         => 'Monitoring Dokumen Revisi | GPM ' . $this->fakultas['nama_fakultas'],
+            'fakultas'          => $this->fakultas,
+            'prodisList'        => $this->prodisList,
+            'revisiDocs'        => $revisiDocs,
+            'menungguGpmDocs'   => $menungguGpmDocs,
+            'lpmRevisiDocs'     => $lpmRevisiDocs,
+            'unitRevisiDocs'    => $unitRevisiDocs,
+            'sudahDocs'         => $sudahDocs,
+            'perluDocs'         => $perluDocs,
+            'unitFilter'        => $unitFilter,
+            'totalPerlu'        => $totalPerlu,
+            'totalMenungguGpm'  => $totalMenungguGpm,
+            'totalRevisiGpm'    => $totalRevisiGpm,
+            'totalRevisiLpm'    => $totalRevisiLpm,
+            'totalSudah'        => $totalSudah,
+            'fakultasPerlu'     => $fakultasPerlu,
+            'prodiPerlu'        => $prodiPerlu
         ]);
     }
 
