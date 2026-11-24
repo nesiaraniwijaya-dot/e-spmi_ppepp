@@ -627,10 +627,11 @@ class SuperAdminController extends Controller {
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $role = trim($_POST['role'] ?? 'kaprodi');
-        $allowedUserRoles = array_merge(Auth::LPM_ROLES, ['dekan', 'wadek', 'gpm', 'kaprodi', 'sekprodi']);
+        $allowedUserRoles = array_merge(Auth::LPM_ROLES, ['dekan', 'wadek', 'gpm', 'kaprodi', 'sekprodi', 'pengguna', 'testing']);
         if (!in_array($role, $allowedUserRoles, true)) {
             Auth::setFlash('danger', 'Role pengguna tidak valid.');
             redirect('admin/users');
+            return;
         }
         $isProdiRole = in_array($role, ['kaprodi', 'sekprodi']);
         $isFakultasRole = in_array($role, ['dekan', 'wadek', 'gpm']);
@@ -644,28 +645,72 @@ class SuperAdminController extends Controller {
         if (empty($name) || empty($email) || empty($role)) {
             Auth::setFlash('danger', 'Nama, Email, dan Role wajib diisi.');
             redirect('admin/users');
+            return;
         }
 
+        // Cek duplikasi email agar tidak terjadi crash / layar kosong karena constraint database
+        $checkSql = "SELECT id, name, role FROM users WHERE LOWER(email) = LOWER(?)";
+        $checkParams = [$email];
         if ($id) {
-            $stmtOld = $this->db->prepare("SELECT id, name, email, role, prodi_id, fakultas_id, is_active FROM users WHERE id = ?");
-            $stmtOld->execute([$id]);
-            $oldData = $stmtOld->fetch();
+            $checkSql .= " AND id != ?";
+            $checkParams[] = $id;
+        }
+        $checkSql .= " LIMIT 1";
+        $stmtCheck = $this->db->prepare($checkSql);
+        $stmtCheck->execute($checkParams);
+        $existingUser = $stmtCheck->fetch();
 
-            $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
-            $stmt->execute([$name, $email, $role, $prodiId, $fakultasId, $isActive, $id]);
+        if ($existingUser) {
+            $roleLabel = match($existingUser['role']) {
+                'super_admin', 'admin_lpm' => 'Admin (Super Admin)',
+                'kepala_lpm'                => 'Kepala LPM',
+                'sekretaris_lpm'            => 'Sekretaris LPM',
+                'ketua_pusat_spm'           => 'Ketua Pusat SPM',
+                'ketua_pusat_ami'           => 'Ketua Pusat AMI',
+                'ketua_pusat_pemeringkatan' => 'Ketua Pusat Pemeringkatan',
+                'tu_lpm'                    => 'TU LPM',
+                'dekan'                     => 'Dekan Fakultas',
+                'wadek'                     => 'Wakil Dekan',
+                'gpm'                       => 'GPM Fakultas',
+                'kaprodi'                   => 'Kaprodi',
+                'sekprodi'                  => 'Sekprodi',
+                'pengguna'                  => 'Pengguna Publik (Akses Penuh)',
+                'testing'                   => 'Akun Testing (Multi-Role)',
+                default                     => ucfirst($existingUser['role'])
+            };
+            Auth::setFlash('danger', "Peringatan: Alamat email '<strong>" . htmlspecialchars($email) . "</strong>' sudah terdaftar dalam sistem atas nama <strong>" . htmlspecialchars($existingUser['name']) . "</strong> ({$roleLabel}). Silakan gunakan alamat email yang lain.");
+            redirect('admin/users');
+            return;
+        }
 
-            AuditLogger::log('UPDATE', 'Manajemen User', (string)$id, $name, $oldData, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId, 'is_active' => $isActive]);
-            Auth::setFlash('success', "Akun pengguna '{$name}' berhasil diperbarui.");
-        } else {
-            $plainPwd = '-(Diatur via Google SSO)-';
-            $hashed = password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT);
+        try {
+            if ($id) {
+                $stmtOld = $this->db->prepare("SELECT id, name, email, role, prodi_id, fakultas_id, is_active FROM users WHERE id = ?");
+                $stmtOld->execute([$id]);
+                $oldData = $stmtOld->fetch();
 
-            $stmt = $this->db->prepare("INSERT INTO users (name, email, password, password_plain, role, prodi_id, fakultas_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $email, $hashed, $plainPwd, $role, $prodiId, $fakultasId, $isActive]);
-            $newId = $this->db->lastInsertId();
+                $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
+                $stmt->execute([$name, $email, $role, $prodiId, $fakultasId, $isActive, $id]);
 
-            AuditLogger::log('CREATE', 'Manajemen User', (string)$newId, $name, null, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId]);
-            Auth::setFlash('success', "Akun pengguna baru '{$name}' ({$email}) berhasil didaftarkan ke sistem.");
+                AuditLogger::log('UPDATE', 'Manajemen User', (string)$id, $name, $oldData, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId, 'is_active' => $isActive]);
+                Auth::setFlash('success', "Akun pengguna '{$name}' berhasil diperbarui.");
+            } else {
+                $plainPwd = '-(Diatur via Google SSO)-';
+                $hashed = password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT);
+
+                $stmt = $this->db->prepare("INSERT INTO users (name, email, password, password_plain, role, prodi_id, fakultas_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$name, $email, $hashed, $plainPwd, $role, $prodiId, $fakultasId, $isActive]);
+                $newId = $this->db->lastInsertId();
+
+                AuditLogger::log('CREATE', 'Manajemen User', (string)$newId, $name, null, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId]);
+                Auth::setFlash('success', "Akun pengguna baru '{$name}' ({$email}) berhasil didaftarkan ke sistem.");
+            }
+        } catch (\PDOException $e) {
+            if ($e->getCode() == 23000 || str_contains($e->getMessage(), 'Duplicate entry') || (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062)) {
+                Auth::setFlash('danger', "Peringatan: Alamat email '<strong>" . htmlspecialchars($email) . "</strong>' sudah terdaftar dalam sistem. Mohon gunakan alamat email lain.");
+            } else {
+                Auth::setFlash('danger', "Terjadi kesalahan database saat menyimpan data pengguna: " . htmlspecialchars($e->getMessage()));
+            }
         }
 
         redirect('admin/users');
