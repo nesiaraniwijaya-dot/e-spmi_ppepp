@@ -260,9 +260,19 @@ class Auth {
         return $_SESSION['user_id'] ?? null;
     }
 
+    public static function name(): string {
+        self::startSession();
+        return $_SESSION['user_name'] ?? (self::user()['name'] ?? 'User');
+    }
+
     public static function role(): ?string {
         self::startSession();
         return $_SESSION['user_role'] ?? null;
+    }
+
+    public static function roleName(): string {
+        $role = self::role() ?? '';
+        return self::getRoleLabel($role);
     }
 
     public static function userRole(): ?string {
