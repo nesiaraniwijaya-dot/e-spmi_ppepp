@@ -15,17 +15,6 @@ if (!defined('APP_NAME')) {
     define('LPM_NAME', 'Lembaga Penjaminan Mutu (LPM)');
     define('APP_VERSION', '1.0.0');
 
-    // Base URL Detection (Supports direct SSL, Reverse Proxy, & Cloudflare)
-    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
-        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
-        || (isset($_SERVER['HTTP_CF_VISITOR']) && str_contains($_SERVER['HTTP_CF_VISITOR'], 'https'));
-    $protocol = $isHttps ? "https://" : "http://";
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
-    $baseUrl = rtrim($protocol . $host . $scriptName, '/');
-    define('BASE_URL', $baseUrl);
-
     // Paths
     define('ROOT_PATH', dirname(__DIR__));
     define('UPLOAD_PATH', ROOT_PATH . '/uploads');
@@ -66,6 +55,33 @@ if (!defined('APP_NAME')) {
     // Load env variables if available
     $envConfig = file_exists(__DIR__ . '/env.php') ? (require __DIR__ . '/env.php') : [];
 
+    // Deteksi Host & Environment Lokal vs Production
+    $hostRaw = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost');
+    $hostClean = strtolower(preg_replace('/:\d+$/', '', $hostRaw));
+    $isLocalEnv = empty($hostClean)
+        || in_array($hostClean, ['localhost', '127.0.0.1', '::1'])
+        || str_ends_with($hostClean, '.test')
+        || str_ends_with($hostClean, '.local');
+
+    // Base URL Detection (Prioritaskan setting env, deteksi SSL, Reverse Proxy, Cloudflare, & Production Auto-HTTPS)
+    if (!empty($envConfig['BASE_URL'])) {
+        $baseUrl = rtrim($envConfig['BASE_URL'], '/');
+    } else {
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+            || (isset($_SERVER['REQUEST_SCHEME']) && strtolower($_SERVER['REQUEST_SCHEME']) === 'https')
+            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && str_contains(strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']), 'https'))
+            || (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on')
+            || (isset($_SERVER['HTTP_X_URL_SCHEME']) && strtolower($_SERVER['HTTP_X_URL_SCHEME']) === 'https')
+            || (isset($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) === 'on')
+            || (isset($_SERVER['HTTP_CF_VISITOR']) && str_contains($_SERVER['HTTP_CF_VISITOR'], 'https'))
+            || (!$isLocalEnv); // Di server online / domain resmi (seperti ppepp.unika.ac.id), wajib selalu HTTPS
+        $protocol = $isHttps ? "https://" : "http://";
+        $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        $baseUrl = rtrim($protocol . $hostRaw . $scriptName, '/');
+    }
+    define('BASE_URL', $baseUrl);
+
     // Google SSO (OAuth 2.0) Configuration
     if (!defined('GOOGLE_CLIENT_ID')) {
         define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: ($_ENV['GOOGLE_CLIENT_ID'] ?? ($_SERVER['GOOGLE_CLIENT_ID'] ?? ($envConfig['GOOGLE_CLIENT_ID'] ?? ''))));
@@ -74,10 +90,8 @@ if (!defined('APP_NAME')) {
         define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: ($_ENV['GOOGLE_CLIENT_SECRET'] ?? ($_SERVER['GOOGLE_CLIENT_SECRET'] ?? ($envConfig['GOOGLE_CLIENT_SECRET'] ?? ''))));
     }
 
-    // Otomatis upgrade ke HTTPS untuk redirect URI Google OAuth jika berada di hosting online
+    // Redirect URI Google OAuth
     $oauthRedirect = BASE_URL . '/auth/google/callback';
-    $hostClean = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? '');
-    $isLocalEnv = in_array($hostClean, ['localhost', '127.0.0.1', '::1']) || str_ends_with($hostClean, '.test') || str_ends_with($hostClean, '.local');
     if (!$isLocalEnv && !str_starts_with($oauthRedirect, 'https://')) {
         $oauthRedirect = preg_replace('/^http:\/\//i', 'https://', $oauthRedirect);
     }

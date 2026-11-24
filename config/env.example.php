@@ -14,7 +14,11 @@
  */
 
 return [
-    'DB_HOST'     => 'sqlxxx.byetcluster.com', // Ganti dengan MySQL Host dari ProFreeHost
+    // Opsional: Kunci Base URL (Contoh: 'https://ppepp.unika.ac.id')
+    // Jika dikosongkan, sistem otomatis mendeteksi HTTPS dan domain server
+    'BASE_URL'    => 'https://ppepp.unika.ac.id',
+
+    'DB_HOST'     => 'sqlxxx.byetcluster.com', // Ganti dengan MySQL Host dari ProFreeHost / cPanel
     'DB_PORT'     => '3306',
     'DB_DATABASE' => 'unaux_xxxxxxxx_spmi_ppepp', // Ganti dengan nama database di cPanel
     'DB_USERNAME' => 'unaux_xxxxxxxx',            // Ganti dengan username MySQL di cPanel

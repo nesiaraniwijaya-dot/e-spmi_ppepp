@@ -44,20 +44,24 @@ $router->get('admin/dashboard', ['SuperAdminController', 'dashboard']);
 // Master Fakultas
 $router->get('admin/fakultas', ['SuperAdminController', 'fakultas']);
 $router->post('admin/fakultas/save', ['SuperAdminController', 'saveFakultas']);
+$router->get('admin/fakultas/save', function() { redirect('admin/fakultas'); });
 $router->post('admin/fakultas/delete/{id}', ['SuperAdminController', 'deleteFakultas']);
 
 // Master Program Studi
 $router->get('admin/prodi', ['SuperAdminController', 'prodi']);
 $router->post('admin/prodi/save', ['SuperAdminController', 'saveProdi']);
+$router->get('admin/prodi/save', function() { redirect('admin/prodi'); });
 $router->post('admin/prodi/delete/{id}', ['SuperAdminController', 'deleteProdi']);
 
 // Master Bidang Standar Mutu (Customizable by Admin LPM)
 $router->get('admin/bidang', ['SuperAdminController', 'bidang']);
 $router->post('admin/bidang/save', ['SuperAdminController', 'saveBidang']);
+$router->get('admin/bidang/save', function() { redirect('admin/bidang'); });
 $router->post('admin/bidang/delete/{id}', ['SuperAdminController', 'deleteBidang']);
 
 // Master Sub-Bidang Standar Mutu (CRUD per Bidang)
 $router->post('admin/sub-bidang/save', ['SuperAdminController', 'saveSubBidang']);
+$router->get('admin/sub-bidang/save', function() { redirect('admin/bidang'); });
 $router->post('admin/sub-bidang/delete/{id}', ['SuperAdminController', 'deleteSubBidang']);
 
 // Pusat Review & Verifikasi Dokumen Mutu (Admin LPM / Super Admin)
@@ -80,6 +84,7 @@ $router->get('api/dokumen-revisi/{id:\d+}', ['SuperAdminController', 'getDocumen
 // Manajemen Buka / Tutup Jatah Upload per Tahun Akademik (LPM)
 $router->get('admin/tahun-akademik', ['SuperAdminController', 'tahunAkademik']);
 $router->post('admin/tahun-akademik/save', ['SuperAdminController', 'saveTahunAkademik']);
+$router->get('admin/tahun-akademik/save', function() { redirect('admin/tahun-akademik'); });
 $router->post('admin/tahun-akademik/toggle/{id:\d+}', ['SuperAdminController', 'toggleTahunAkademik']);
 
 // Manajemen Akses & Tenggat Waktu Unggah (LPM)
@@ -96,6 +101,9 @@ $router->post('admin/menu-permissions/reset', ['SuperAdminController', 'resetMen
 // Manajemen Pengguna & Hak Akses
 $router->get('admin/users', ['SuperAdminController', 'users']);
 $router->post('admin/users/save', ['SuperAdminController', 'saveUser']);
+$router->get('admin/users/save', function() {
+    redirect('admin/users');
+});
 $router->post('admin/users/delete/{id}', ['SuperAdminController', 'deleteUser']);
 
 // Manajemen Konten Beranda Publik & Footer (LPM)
