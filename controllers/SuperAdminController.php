@@ -608,6 +608,25 @@ class SuperAdminController extends Controller {
         ");
         $usersList = $stmt->fetchAll();
 
+        // Ambil riwayat penugasan resmi untuk setiap akun dari user_assignments
+        $allAssignments = $this->db->query("
+            SELECT ua.*, f.nama_fakultas, f.kode_fakultas, p.nama_prodi, p.jenjang 
+            FROM user_assignments ua
+            LEFT JOIN fakultas f ON ua.fakultas_id = f.id
+            LEFT JOIN prodis p ON ua.prodi_id = p.id
+            ORDER BY ua.id ASC
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        $assignmentsByUser = [];
+        foreach ($allAssignments as $a) {
+            $assignmentsByUser[$a['user_id']][] = $a;
+        }
+
+        foreach ($usersList as &$user) {
+            $user['assignments'] = $assignmentsByUser[$user['id']] ?? [];
+        }
+        unset($user);
+
         $this->render('super_admin/users', [
             'pageTitle' => 'Manajemen Pengguna & Hak Akses',
             'fakultasList' => $fakultasList,
@@ -626,26 +645,29 @@ class SuperAdminController extends Controller {
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
-        $role = trim($_POST['role'] ?? 'kaprodi');
-        $allowedUserRoles = array_merge(Auth::LPM_ROLES, ['dekan', 'wadek', 'gpm', 'kaprodi', 'sekprodi', 'pengguna', 'testing']);
-        if (!in_array($role, $allowedUserRoles, true)) {
-            Auth::setFlash('danger', 'Role pengguna tidak valid.');
-            redirect('admin/users');
-            return;
-        }
-        $isProdiRole = in_array($role, ['kaprodi', 'sekprodi']);
-        $isFakultasRole = in_array($role, ['dekan', 'wadek', 'gpm']);
-        $prodiId = ($isProdiRole && !empty($_POST['prodi_id'])) ? (int)$_POST['prodi_id'] : null;
-        $fakultasId = ($isFakultasRole && !empty($_POST['fakultas_id'])) ? (int)$_POST['fakultas_id'] : null;
-        if ($isProdiRole && $prodiId) {
-            $fakultasId = (int)$this->db->query("SELECT fakultas_id FROM prodis WHERE id = {$prodiId}")->fetchColumn() ?: null;
-        }
         $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $accountType = trim($_POST['account_type'] ?? 'fakultas_prodi');
 
-        if (empty($name) || empty($email) || empty($role)) {
-            Auth::setFlash('danger', 'Nama, Email, dan Role wajib diisi.');
+        if (empty($name) || empty($email)) {
+            Auth::setFlash('danger', 'Nama Lengkap dan Alamat Email wajib diisi.');
             redirect('admin/users');
             return;
+        }
+
+        // Cek apakah admin sedang mengedit akunnya sendiri
+        $isSelfEdit = ($id && $id === Auth::id());
+
+        // Ambil data lama jika mode edit
+        $oldData = null;
+        if ($id) {
+            $stmtOld = $this->db->prepare("SELECT id, name, email, role, prodi_id, fakultas_id, is_active FROM users WHERE id = ?");
+            $stmtOld->execute([$id]);
+            $oldData = $stmtOld->fetch();
+            if (!$oldData) {
+                Auth::setFlash('danger', 'Pengguna tidak ditemukan.');
+                redirect('admin/users');
+                return;
+            }
         }
 
         // Cek duplikasi email agar tidak terjadi crash / layar kosong karena constraint database
@@ -683,28 +705,160 @@ class SuperAdminController extends Controller {
             return;
         }
 
+        // ================= PENENTUAN PENUGASAN & ROLE =================
+        $assignmentsToSave = [];
+
+        // Proteksi: Admin yang sedang login tidak dapat mengubah perannya sendiri
+        if ($isSelfEdit && (Auth::isSuperAdmin() || Auth::isRootAdmin())) {
+            $primaryRole = $oldData['role'] ?? 'super_admin';
+            $primaryFakultasId = null;
+            $primaryProdiId = null;
+            $assignmentsToSave[] = [
+                'role' => $primaryRole,
+                'fakultas_id' => null,
+                'prodi_id' => null
+            ];
+        } elseif ($accountType === 'fakultas_prodi') {
+            $fakultasId = !empty($_POST['fakultas_id']) ? (int)$_POST['fakultas_id'] : null;
+            if (!$fakultasId) {
+                Auth::setFlash('danger', 'Silakan pilih Fakultas untuk penugasan tingkat Fakultas / Program Studi.');
+                redirect('admin/users');
+                return;
+            }
+
+            $dekanatRoles = $_POST['dekanat_roles'] ?? []; // ['dekan', 'wadek']
+            $prodiRoles   = $_POST['prodi_roles'] ?? [];   // ['kaprodi', 'sekprodi']
+            $prodiIds     = $_POST['prodi_ids'] ?? [];     // [1, 2]
+
+            // 1. Tambah penugasan Dekanat jika dipilih
+            foreach ($dekanatRoles as $dRole) {
+                if (in_array($dRole, ['dekan', 'wadek'], true)) {
+                    $assignmentsToSave[] = [
+                        'role' => $dRole,
+                        'fakultas_id' => $fakultasId,
+                        'prodi_id' => null
+                    ];
+                }
+            }
+
+            // 2. Tambah penugasan Prodi jika dipilih
+            foreach ($prodiRoles as $pRole) {
+                if (in_array($pRole, ['kaprodi', 'sekprodi'], true)) {
+                    foreach ($prodiIds as $prId) {
+                        $prId = (int)$prId;
+                        if ($prId > 0) {
+                            $assignmentsToSave[] = [
+                                'role' => $pRole,
+                                'fakultas_id' => $fakultasId,
+                                'prodi_id' => $prId
+                            ];
+                        }
+                    }
+                }
+            }
+
+            if (empty($assignmentsToSave)) {
+                Auth::setFlash('danger', 'Mohon pilih minimal satu penugasan (Tingkat Dekanat atau Program Studi yang dikelola).');
+                redirect('admin/users');
+                return;
+            }
+
+            // Tetapkan peran utama (primary role) untuk kompatibilitas tabel users
+            $primaryAssignment = $assignmentsToSave[0];
+            $primaryRole = $primaryAssignment['role'];
+            $primaryFakultasId = $primaryAssignment['fakultas_id'];
+            $primaryProdiId = $primaryAssignment['prodi_id'];
+
+        } elseif ($accountType === 'gpm') {
+            $fakultasId = !empty($_POST['gpm_fakultas_id']) ? (int)$_POST['gpm_fakultas_id'] : null;
+            if (!$fakultasId) {
+                Auth::setFlash('danger', 'Silakan pilih Fakultas untuk penugasan GPM.');
+                redirect('admin/users');
+                return;
+            }
+            $primaryRole = 'gpm';
+            $primaryFakultasId = $fakultasId;
+            $primaryProdiId = null;
+            $assignmentsToSave[] = [
+                'role' => 'gpm',
+                'fakultas_id' => $fakultasId,
+                'prodi_id' => null
+            ];
+
+        } elseif ($accountType === 'lpm') {
+            $lpmRole = trim($_POST['lpm_role'] ?? 'super_admin');
+            if (!in_array($lpmRole, Auth::LPM_ROLES, true)) {
+                $lpmRole = 'super_admin';
+            }
+            $primaryRole = $lpmRole;
+            $primaryFakultasId = null;
+            $primaryProdiId = null;
+            $assignmentsToSave[] = [
+                'role' => $primaryRole,
+                'fakultas_id' => null,
+                'prodi_id' => null
+            ];
+
+        } else {
+            // Pengguna Publik atau Testing
+            $otherRole = trim($_POST['other_role'] ?? 'pengguna');
+            if (!in_array($otherRole, ['pengguna', 'testing'], true)) {
+                $otherRole = 'pengguna';
+            }
+            $primaryRole = $otherRole;
+            $primaryFakultasId = null;
+            $primaryProdiId = null;
+            $assignmentsToSave[] = [
+                'role' => $primaryRole,
+                'fakultas_id' => null,
+                'prodi_id' => null
+            ];
+        }
+
         try {
             if ($id) {
-                $stmtOld = $this->db->prepare("SELECT id, name, email, role, prodi_id, fakultas_id, is_active FROM users WHERE id = ?");
-                $stmtOld->execute([$id]);
-                $oldData = $stmtOld->fetch();
-
                 $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, role = ?, prodi_id = ?, fakultas_id = ?, is_active = ? WHERE id = ?");
-                $stmt->execute([$name, $email, $role, $prodiId, $fakultasId, $isActive, $id]);
+                $stmt->execute([$name, $email, $primaryRole, $primaryProdiId, $primaryFakultasId, $isActive, $id]);
 
-                AuditLogger::log('UPDATE', 'Manajemen User', (string)$id, $name, $oldData, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId, 'is_active' => $isActive]);
-                Auth::setFlash('success', "Akun pengguna '{$name}' berhasil diperbarui.");
+                $targetUserId = $id;
+                AuditLogger::log('UPDATE', 'Manajemen User', (string)$id, $name, $oldData, [
+                    'name' => $name, 
+                    'email' => $email, 
+                    'primary_role' => $primaryRole, 
+                    'assignments_count' => count($assignmentsToSave),
+                    'is_active' => $isActive
+                ]);
+                Auth::setFlash('success', "Akun pengguna '{$name}' dan penugasan perannya berhasil diperbarui.");
             } else {
                 $plainPwd = '-(Diatur via Google SSO)-';
                 $hashed = password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT);
 
                 $stmt = $this->db->prepare("INSERT INTO users (name, email, password, password_plain, role, prodi_id, fakultas_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$name, $email, $hashed, $plainPwd, $role, $prodiId, $fakultasId, $isActive]);
-                $newId = $this->db->lastInsertId();
+                $stmt->execute([$name, $email, $hashed, $plainPwd, $primaryRole, $primaryProdiId, $primaryFakultasId, $isActive]);
+                $targetUserId = (int)$this->db->lastInsertId();
 
-                AuditLogger::log('CREATE', 'Manajemen User', (string)$newId, $name, null, ['name' => $name, 'email' => $email, 'role' => $role, 'prodi_id' => $prodiId, 'fakultas_id' => $fakultasId]);
+                AuditLogger::log('CREATE', 'Manajemen User', (string)$targetUserId, $name, null, [
+                    'name' => $name, 
+                    'email' => $email, 
+                    'primary_role' => $primaryRole, 
+                    'assignments_count' => count($assignmentsToSave)
+                ]);
                 Auth::setFlash('success', "Akun pengguna baru '{$name}' ({$email}) berhasil didaftarkan ke sistem.");
             }
+
+            // Sinkronkan ke tabel user_assignments
+            $this->db->prepare("DELETE FROM user_assignments WHERE user_id = ?")->execute([$targetUserId]);
+            $stmtInsAssign = $this->db->prepare("INSERT INTO user_assignments (user_id, role, fakultas_id, prodi_id) VALUES (?, ?, ?, ?)");
+            foreach ($assignmentsToSave as $asg) {
+                $stmtInsAssign->execute([$targetUserId, $asg['role'], $asg['fakultas_id'], $asg['prodi_id']]);
+            }
+
+            // Jika mengedit akun sendiri, segarkan sesi profil
+            if ($isSelfEdit) {
+                $_SESSION['user_name'] = $name;
+                $_SESSION['user_email'] = $email;
+            }
+
         } catch (\PDOException $e) {
             if ($e->getCode() == 23000 || str_contains($e->getMessage(), 'Duplicate entry') || (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062)) {
                 Auth::setFlash('danger', "Peringatan: Alamat email '<strong>" . htmlspecialchars($email) . "</strong>' sudah terdaftar dalam sistem. Mohon gunakan alamat email lain.");

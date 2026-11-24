@@ -1,273 +1,136 @@
 <?php
 /**
- * Role Selector View for Multi-Role Testing Account (nesiaraniwijaya@gmail.com)
- * MITRA - UNIKA Soegijapranata
+ * Role Selector View: Pilih Peran Sesi Akses
+ * SPMI PPEPP UNIKA Soegijapranata
  */
 $pageTitle = 'Pilih Peran Akses Sistem - MITRA';
 require_once ROOT_PATH . '/views/layouts/header.php';
 
-$fakultasList = $fakultasList ?? [];
-$prodiList    = $prodiList ?? [];
-$defaultFakultasId = (int)($defaultFakultasId ?? 2);
-$defaultProdiId    = (int)($defaultProdiId ?? 1);
-
-$defaultFakName = 'Fakultas Ilmu Komputer (FIKOM)';
-foreach ($fakultasList as $f) {
-    if ((int)$f['id'] === $defaultFakultasId) {
-        $defaultFakName = $f['nama_fakultas'] . (!empty($f['kode_fakultas']) ? ' (' . $f['kode_fakultas'] . ')' : '');
-        break;
-    }
-}
-
-$defaultProdiName = 'Teknik Informatika (S1)';
-foreach ($prodiList as $p) {
-    if ((int)$p['id'] === $defaultProdiId) {
-        $defaultProdiName = $p['nama_prodi'] . (!empty($p['jenjang']) ? ' (' . $p['jenjang'] . ')' : '');
-        break;
-    }
-}
-
-$rolesOptions = [
-    [
-        'role' => 'kepala_lpm',
-        'scope' => 'lpm',
-        'title' => 'Kepala Lembaga Penjaminan Mutu',
-        'subtitle' => 'lpm@unika.ac.id · Pimpinan LPM Universitas',
-        'desc' => 'Akses penuh pusat LPM: monitoring seluruh siklus PPEPP, review dokumen, kinerja GPM, dan audit trail.',
-        'badge' => 'Kepala LPM',
-        'badge_bg' => 'bg-primary',
-        'icon' => 'fas fa-user-tie',
-        'color' => '#2563EB'
-    ],
-    [
-        'role' => 'sekretaris_lpm',
-        'scope' => 'lpm',
-        'title' => 'Sekretaris Lembaga Penjaminan Mutu',
-        'subtitle' => 'lpm.sekretaris@unika.ac.id · Sekretariat LPM',
-        'desc' => 'Koordinasi administrasi penjaminan mutu, verifikasi dokumen, monitoring GPM, dan laporan universitas.',
-        'badge' => 'Sekretaris LPM',
-        'badge_bg' => 'bg-info text-dark',
-        'icon' => 'fas fa-user-check',
-        'color' => '#0284C7'
-    ],
-    [
-        'role' => 'ketua_pusat_spm',
-        'scope' => 'lpm',
-        'title' => 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu',
-        'subtitle' => 'lpm.spm@unika.ac.id · Pusat SPM LPM',
-        'desc' => 'Pengembangan standar mutu, evaluasi ketercapaian PPEPP, review dokumen, dan pengawasan mutu.',
-        'badge' => 'Ketua Pusat SPM',
-        'badge_bg' => 'bg-navy',
-        'icon' => 'fas fa-award',
-        'color' => '#4338CA'
-    ],
-    [
-        'role' => 'ketua_pusat_ami',
-        'scope' => 'lpm',
-        'title' => 'Ketua Pusat Audit Mutu Internal',
-        'subtitle' => 'lpm.ami@unika.ac.id · Pusat AMI LPM',
-        'desc' => 'Pengawasan audit mutu internal, telaah dokumen akreditasi/evaluasi, dan monitoring ketuntasan unit.',
-        'badge' => 'Ketua Pusat AMI',
-        'badge_bg' => 'bg-success',
-        'icon' => 'fas fa-clipboard-check',
-        'color' => '#0F766E'
-    ],
-    [
-        'role' => 'ketua_pusat_pemeringkatan',
-        'scope' => 'lpm',
-        'title' => 'Ketua Pusat Pemeringkatan',
-        'subtitle' => 'lpm.pemeringkatan@unika.ac.id · Pusat Pemeringkatan LPM',
-        'desc' => 'Monitoring data pendukung pemeringkatan institusi, keterisian instrumen mutu, dan kinerja unit.',
-        'badge' => 'Ketua Pemeringkatan',
-        'badge_bg' => 'bg-purple',
-        'icon' => 'fas fa-medal',
-        'color' => '#7C3AED'
-    ],
-    [
-        'role' => 'super_admin',
-        'scope' => 'lpm',
-        'title' => 'Admin (Super Admin LPM)',
-        'subtitle' => 'tu.lpm@unika.ac.id · Administrator Utama LPM',
-        'desc' => 'Akses penuh ke seluruh sistem: master data, review dokumen, manajemen pengguna, kelola beranda & footer, serta hak akses menu LPM.',
-        'badge' => 'Admin',
-        'badge_bg' => 'bg-danger',
-        'icon' => 'fas fa-user-shield',
-        'color' => '#DC2626'
-    ],
-    [
-        'role' => 'gpm',
-        'scope' => 'fakultas',
-        'title' => 'GPM Fakultas (Gugus Penjaminan Mutu)',
-        'subtitle' => $defaultFakName,
-        'desc' => 'Kelola & verifikasi dokumen mutu tingkat fakultas, review dokumen prodi, dan tindak lanjut perbaikan.',
-        'badge' => 'Tingkat Fakultas',
-        'badge_bg' => 'bg-success',
-        'icon' => 'fas fa-clipboard-check',
-        'color' => '#059669'
-    ],
-    [
-        'role' => 'dekan',
-        'scope' => 'fakultas',
-        'title' => 'Dekan Fakultas',
-        'subtitle' => 'Dekan ' . $defaultFakName,
-        'desc' => 'Review dan pengesahan dokumen PPEPP tingkat fakultas serta monitoring kinerja prodi.',
-        'badge' => 'Dekanat',
-        'badge_bg' => 'bg-warning text-dark',
-        'icon' => 'fas fa-university',
-        'color' => '#D97706'
-    ],
-    [
-        'role' => 'wadek',
-        'scope' => 'fakultas',
-        'title' => 'Wakil Dekan',
-        'subtitle' => 'Wakil Dekan ' . $defaultFakName,
-        'desc' => 'Peninjauan dokumen mutu akademik dan pendampingan implementasi standar fakultas.',
-        'badge' => 'Dekanat',
-        'badge_bg' => 'bg-warning text-dark',
-        'icon' => 'fas fa-user-graduate',
-        'color' => '#B45309'
-    ],
-    [
-        'role' => 'kaprodi',
-        'scope' => 'prodi',
-        'title' => 'Kaprodi (Ketua Program Studi)',
-        'subtitle' => $defaultProdiName,
-        'desc' => 'Unggah dokumen 5 siklus PPEPP prodi, ajukan draft perbaikan, dan kelola arsip prodi.',
-        'badge' => 'Tingkat Prodi',
-        'badge_bg' => 'bg-secondary',
-        'icon' => 'fas fa-book-reader',
-        'color' => '#4F46E5'
-    ],
-    [
-        'role' => 'sekprodi',
-        'scope' => 'prodi',
-        'title' => 'Sekprodi (Sekretaris Prodi)',
-        'subtitle' => $defaultProdiName,
-        'desc' => 'Membantu pengelolaan dokumen mutu prodi, perbaikan dokumen, dan persiapan audit AMI.',
-        'badge' => 'Tingkat Prodi',
-        'badge_bg' => 'bg-secondary',
-        'icon' => 'fas fa-user-edit',
-        'color' => '#7C3AED'
-    ],
-    [
-        'role' => 'pengguna',
-        'scope' => 'public',
-        'title' => 'Pengguna (Civitas Akademika)',
-        'subtitle' => 'Dosen / Mahasiswa / Civitas Terdaftar',
-        'desc' => 'Akses penuh ke seluruh dokumen publik institusi tanpa watermark atau pembatasan pratinjau.',
-        'badge' => 'Pengguna Publik',
-        'badge_bg' => 'bg-info text-dark',
-        'icon' => 'fas fa-user-check',
-        'color' => '#059669'
-    ]
-];
+$assignments = $assignments ?? Auth::getAssignments();
+$userName = $_SESSION['user_real_name'] ?? $_SESSION['user_name'] ?? 'Civitas UNIKA';
+$userEmail = $_SESSION['user_email'] ?? '';
 ?>
 
 <div class="container py-5 my-auto">
     <div class="row justify-content-center">
-        <div class="col-lg-10">
+        <div class="col-lg-9 col-xl-8">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
                 <!-- Header Banner -->
-                <div class="bg-scu-gradient text-white p-4 p-md-5 position-relative">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="rounded-circle bg-white bg-opacity-20 p-2 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
-                            <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA" style="width: 40px; height: 40px; object-fit: contain;">
-                        </div>
-                        <div>
-                            <span class="badge bg-warning text-dark fw-bold px-3 py-1 mb-1 rounded-pill"><i class="fas fa-shield-halved me-1"></i> Mode Pengujian Multi-Role Google SSO</span>
-                            <h3 class="fw-bold mb-0 text-white">Selamat Datang, <?= htmlspecialchars($_SESSION['user_real_name'] ?? $_SESSION['user_name'] ?? 'Pengguna Testing') ?>!</h3>
-                        </div>
+                <div class="bg-scu-gradient text-white p-4 p-md-5 text-center position-relative">
+                    <div class="rounded-circle bg-white bg-opacity-20 p-2 d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                        <img src="<?= base_url('assets/images/logo-unika.png') ?>" alt="Logo UNIKA" style="width: 46px; height: 46px; object-fit: contain;">
                     </div>
-                    <p class="text-light opacity-90 mb-0 small" style="max-width: 750px; line-height: 1.6;">
-                        Akun Google SSO Anda (<strong><?= htmlspecialchars($_SESSION['user_email'] ?? '') ?></strong>) memiliki wewenang khusus untuk melakukan simulasi dan pengujian di seluruh tingkatan peran sistem. Pilih <strong>Fakultas / Program Studi target</strong> di bawah, lalu klik peran yang ingin digunakan.
+                    <span class="badge bg-warning text-dark fw-bold px-3 py-1 mb-2 rounded-pill d-inline-block">
+                        <i class="fas fa-id-card-clip me-1"></i> Penugasan Multi-Peran
+                    </span>
+                    <h3 class="fw-bold mb-1 text-white">Selamat Datang, <?= htmlspecialchars($userName) ?>!</h3>
+                    <p class="text-light opacity-90 mb-0 small mx-auto" style="max-width: 580px; line-height: 1.6;">
+                        Akun Anda (<strong><?= htmlspecialchars($userEmail) ?></strong>) memiliki <strong><?= count($assignments) ?> penugasan resmi</strong> di sistem E-SPMI. Silakan pilih peran yang ingin Anda gunakan untuk sesi kerja ini:
                     </p>
                 </div>
 
-                <!-- Body Role Selector Grid -->
+                <!-- Body Cards: Daftar Penugasan Resmi Milik Akun Ini -->
                 <div class="card-body p-4 p-md-5 bg-light">
-                    <!-- Target Fakultas & Prodi Selector (untuk role GPM, Dekanat, Kaprodi/Sekprodi) -->
-                    <div class="card border-0 shadow-sm rounded-4 p-3.5 p-md-4 mb-4 bg-white" style="border-left: 4px solid #2563EB !important;">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
-                                <i class="fas fa-sliders me-1"></i> Target Unit Simulasi
-                            </span>
-                            <span class="small text-muted">Pilih Fakultas &amp; Program Studi tujuan sebelum menekan kartu GPM, Dekan/Wadek, atau Kaprodi/Sekprodi.</span>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="switchFakultasSelect" class="form-label small fw-bold text-dark-blue mb-1">
-                                    <i class="fas fa-building-columns text-primary me-1"></i> Pilih Fakultas (untuk GPM, Dekan, Wadek)
-                                </label>
-                                <select id="switchFakultasSelect" class="form-select rounded-3">
-                                    <?php foreach ($fakultasList as $f): ?>
-                                        <option value="<?= (int)$f['id'] ?>"
-                                                data-label="<?= htmlspecialchars($f['nama_fakultas'] . (!empty($f['kode_fakultas']) ? ' (' . $f['kode_fakultas'] . ')' : '')) ?>"
-                                                <?= (int)$f['id'] === $defaultFakultasId ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($f['nama_fakultas']) ?><?= !empty($f['kode_fakultas']) ? ' (' . htmlspecialchars($f['kode_fakultas']) . ')' : '' ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="switchProdiSelect" class="form-label small fw-bold text-dark-blue mb-1">
-                                    <i class="fas fa-graduation-cap text-indigo me-1" style="color:#4F46E5;"></i> Pilih Program Studi (untuk Kaprodi, Sekprodi)
-                                </label>
-                                <select id="switchProdiSelect" class="form-select rounded-3">
-                                    <?php foreach ($prodiList as $p): ?>
-                                        <option value="<?= (int)$p['id'] ?>"
-                                                data-fakultas-id="<?= (int)$p['fakultas_id'] ?>"
-                                                data-label="<?= htmlspecialchars($p['nama_prodi'] . (!empty($p['jenjang']) ? ' (' . $p['jenjang'] . ')' : '')) ?>"
-                                                <?= (int)$p['id'] === $defaultProdiId ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($p['nama_prodi']) ?><?= !empty($p['jenjang']) ? ' (' . htmlspecialchars($p['jenjang']) . ')' : '' ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="row g-3 justify-content-center">
+                        <?php foreach ($assignments as $asg): 
+                            $role = $asg['role'];
+                            $isDekanat = in_array($role, ['dekan', 'wadek']);
+                            $isProdi = in_array($role, ['kaprodi', 'sekprodi']);
+                            $isGpm = ($role === 'gpm');
+                            $isLpm = in_array($role, Auth::LPM_ROLES);
 
-                    <div class="row g-3">
-                        <?php foreach ($rolesOptions as $r): ?>
-                            <div class="col-md-6 col-xl-6">
-                                <form action="<?= base_url('auth/select-role') ?>" method="POST" class="h-100 role-switch-form">
-                                    <input type="hidden" name="role" value="<?= $r['role'] ?>">
-                                    <input type="hidden" name="fakultas_id" class="hidden-fak-id" value="<?= $defaultFakultasId ?>">
-                                    <input type="hidden" name="prodi_id" class="hidden-prodi-id" value="<?= $defaultProdiId ?>">
-                                    <button type="submit" class="w-100 h-100 text-start border-0 p-0 bg-transparent" style="cursor: pointer;">
-                                        <div class="card h-100 border-0 shadow-sm rounded-3 role-card hover-lift transition-all p-3 bg-white border-start border-4 overflow-hidden" style="border-left-color: <?= $r['color'] ?> !important;">
-                                            <div class="d-flex align-items-start gap-3">
-                                                <div class="rounded-3 d-flex align-items-center justify-content-center text-white flex-shrink-0" style="width: 48px; height: 48px; background-color: <?= $r['color'] ?>;">
-                                                    <i class="<?= $r['icon'] ?> fa-lg"></i>
-                                                </div>
-                                                <div class="flex-grow-1" style="min-width: 0;">
-                                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
-                                                        <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><?= $r['title'] ?></h6>
-                                                        <span class="badge <?= $r['badge_bg'] ?> text-capitalize px-2 py-1 flex-shrink-0" style="font-size: 0.68rem;"><?= $r['badge'] ?></span>
-                                                    </div>
-                                                    <div class="small fw-semibold text-primary mb-1 text-truncate role-dynamic-subtitle"
-                                                         data-scope="<?= $r['scope'] ?>"
-                                                         data-role="<?= $r['role'] ?>"
-                                                         style="font-size: 0.78rem;"><?= htmlspecialchars($r['subtitle']) ?></div>
-                                                    <p class="text-muted small mb-0 opacity-75" style="font-size: 0.75rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                                        <?= $r['desc'] ?>
-                                                    </p>
-                                                </div>
+                            $cardColor = match($role) {
+                                'dekan' => '#1E3E62',
+                                'wadek' => '#0284C7',
+                                'gpm' => '#8B5CF6',
+                                'kaprodi' => '#059669',
+                                'sekprodi' => '#0D9488',
+                                'super_admin', 'admin_lpm' => '#DC2626',
+                                'kepala_lpm' => '#D97706',
+                                default => '#2563EB'
+                            };
+
+                            $iconClass = match($role) {
+                                'dekan', 'wadek' => 'fas fa-landmark',
+                                'gpm' => 'fas fa-shield-halved',
+                                'kaprodi' => 'fas fa-graduation-cap',
+                                'sekprodi' => 'fas fa-signature',
+                                default => 'fas fa-user-tie'
+                            };
+
+                            $title = match($role) {
+                                'dekan' => 'Dekan Fakultas',
+                                'wadek' => 'Wakil Dekan Fakultas',
+                                'gpm' => 'GPM (Gugus Penjaminan Mutu)',
+                                'kaprodi' => 'Ketua Program Studi (Kaprodi)',
+                                'sekprodi' => 'Sekretaris Program Studi (Sekprodi)',
+                                default => Auth::getRoleLabel($role)
+                            };
+
+                            $unitName = !empty($asg['nama_prodi']) 
+                                ? $asg['nama_prodi'] . ' (' . ($asg['jenjang'] ?? 'S1') . ')'
+                                : ($asg['nama_fakultas'] ?? 'Tingkat Universitas');
+
+                            $subUnit = !empty($asg['nama_prodi']) ? ($asg['nama_fakultas'] ?? '') : '';
+
+                            $desc = match(true) {
+                                $isDekanat => 'Pengelolaan dan pengesahan siklus PPEPP tingkat fakultas, review dokumen, serta profil Dekanat.',
+                                $isProdi => 'Pengelolaan siklus PPEPP program studi, unggah dokumen mutu, revisi borang, dan arsip prodi.',
+                                $isGpm => 'Penjaminan mutu fakultas, audit internal, review kepatuhan dokumen, dan koordinasi LPM.',
+                                default => 'Akses pengelolaan dokumen dan sistem penjaminan mutu sesuai wewenang penugasan.'
+                            };
+                        ?>
+                            <div class="col-12 col-md-6">
+                                <form action="<?= base_url('auth/select-role') ?>" method="POST" class="h-100">
+                                    <input type="hidden" name="assignment_id" value="<?= $asg['id'] ?>">
+                                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 bg-white transition-all position-relative hover-lift" 
+                                         style="border-top: 5px solid <?= $cardColor ?> !important;">
+                                        <div class="d-flex align-items-center gap-3 mb-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0 shadow-sm" 
+                                                 style="width: 50px; height: 50px; background-color: <?= $cardColor ?>;">
+                                                <i class="<?= $iconClass ?> fa-lg"></i>
                                             </div>
-                                            <div class="mt-3 pt-2 border-top d-flex align-items-center justify-content-between text-primary small fw-bold">
-                                                <span class="text-truncate me-2">Masuk Sebagai <?= $r['title'] ?></span>
-                                                <i class="fas fa-arrow-right flex-shrink-0"></i>
+                                            <div class="min-w-0">
+                                                <span class="badge rounded-pill text-uppercase mb-1" 
+                                                      style="background: <?= $cardColor ?>15; color: <?= $cardColor ?>; font-size: 0.7rem; font-weight: 700;">
+                                                    <?= $isDekanat ? 'Dekanat Fakultas' : ($isProdi ? 'Program Studi' : ($isGpm ? 'GPM Fakultas' : 'LPM')) ?>
+                                                </span>
+                                                <h6 class="fw-bold mb-0 text-dark-blue text-truncate" style="font-size: 0.98rem;">
+                                                    <?= htmlspecialchars($title) ?>
+                                                </h6>
                                             </div>
                                         </div>
-                                    </button>
+
+                                        <div class="p-2.5 rounded-3 bg-light mb-3 border">
+                                            <div class="fw-bold text-dark small text-truncate">
+                                                <i class="fas fa-building text-primary me-1"></i> <?= htmlspecialchars($unitName) ?>
+                                            </div>
+                                            <?php if (!empty($subUnit)): ?>
+                                                <div class="text-muted small text-truncate" style="font-size: 0.74rem;">
+                                                    <?= htmlspecialchars($subUnit) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <p class="text-muted small mb-4" style="font-size: 0.8rem; line-height: 1.5; min-height: 48px;">
+                                            <?= htmlspecialchars($desc) ?>
+                                        </p>
+
+                                        <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+                                                style="background-color: <?= $cardColor ?>; border-color: <?= $cardColor ?>;">
+                                            <span>Masuk Sebagai <?= htmlspecialchars($title) ?></span>
+                                            <i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         <?php endforeach; ?>
                     </div>
 
                     <div class="text-center mt-4 pt-3 border-top">
-                        <a href="<?= base_url('logout') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-4">
-                            <i class="fas fa-sign-out-alt me-1"></i> Keluar / Batal
-                        </a>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i> Anda dapat berpindah peran kapan saja melalui menu <strong>Ganti Peran</strong> di pojok kanan atas setelah masuk ke dalam sistem.
+                        </small>
                     </div>
                 </div>
             </div>
@@ -276,79 +139,13 @@ $rolesOptions = [
 </div>
 
 <style>
-.role-card {
-    transition: all 0.25s ease-in-out;
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.role-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
 }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const fakSel = document.getElementById('switchFakultasSelect');
-    const prodiSel = document.getElementById('switchProdiSelect');
-    if (!fakSel || !prodiSel) return;
-
-    const allProdiOpts = Array.from(prodiSel.querySelectorAll('option')).map(o => ({
-        value: o.value,
-        fakId: o.getAttribute('data-fakultas-id') || '',
-        label: o.getAttribute('data-label') || o.textContent,
-        text: o.textContent
-    }));
-
-    function filterProdisByFakultas(preserveSelected) {
-        const selectedFakId = fakSel.value;
-        const prevProdiVal = prodiSel.value;
-        const matching = allProdiOpts.filter(o => !selectedFakId || o.fakId === selectedFakId);
-
-        prodiSel.innerHTML = '';
-        matching.forEach(o => {
-            const opt = new Option(o.text, o.value);
-            opt.setAttribute('data-fakultas-id', o.fakId);
-            opt.setAttribute('data-label', o.label);
-            prodiSel.add(opt);
-        });
-
-        if (preserveSelected && matching.some(o => o.value === prevProdiVal)) {
-            prodiSel.value = prevProdiVal;
-        }
-        syncRoleSwitchTargets();
-    }
-
-    function syncRoleSwitchTargets() {
-        const fakId = fakSel.value || '';
-        const prodiId = prodiSel.value || '';
-        const fakLabel = fakSel.selectedOptions[0]?.getAttribute('data-label') || 'Fakultas';
-        const prodiLabel = prodiSel.selectedOptions[0]?.getAttribute('data-label') || 'Program Studi';
-
-        document.querySelectorAll('.hidden-fak-id').forEach(el => el.value = fakId);
-        document.querySelectorAll('.hidden-prodi-id').forEach(el => el.value = prodiId);
-
-        document.querySelectorAll('.role-dynamic-subtitle').forEach(el => {
-            const scope = el.getAttribute('data-scope');
-            const role = el.getAttribute('data-role');
-            if (scope === 'fakultas') {
-                if (role === 'dekan') el.textContent = 'Dekan ' + fakLabel;
-                else if (role === 'wadek') el.textContent = 'Wakil Dekan ' + fakLabel;
-                else el.textContent = fakLabel;
-            } else if (scope === 'prodi') {
-                el.textContent = prodiLabel;
-            }
-        });
-    }
-
-    fakSel.addEventListener('change', () => filterProdisByFakultas(false));
-    prodiSel.addEventListener('change', syncRoleSwitchTargets);
-
-    // Pastikan sinkron saat awal halaman dibuka sesuai prodi/fakultas terpilih
-    const initOpt = allProdiOpts.find(o => o.value === '<?= $defaultProdiId ?>');
-    if (initOpt && initOpt.fakId && fakSel.value !== initOpt.fakId) {
-        // Jika session prodi terakhir berasal dari fakultas tertentu, jaga opsi tetap konsisten
-    }
-    filterProdisByFakultas(true);
-});
-</script>
 
 <?php require_once ROOT_PATH . '/views/layouts/footer.php'; ?>

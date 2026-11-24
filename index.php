@@ -35,6 +35,7 @@ $router->get('auth/google', ['AuthController', 'redirectToGoogle']);
 $router->get('auth/google/callback', ['AuthController', 'handleGoogleCallback']);
 $router->get('auth/select-role', ['AuthController', 'showSelectRole']);
 $router->post('auth/select-role', ['AuthController', 'processSelectRole']);
+$router->get('auth/switch-role/{id}', ['AuthController', 'switchRole']);
 
 // ==========================================
 // 3. SUPER ADMIN / ADMIN LPM ROUTES

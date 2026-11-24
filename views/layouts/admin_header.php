@@ -245,6 +245,54 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                 <span class="d-none d-sm-inline fw-semibold" style="font-size: 0.78rem;">Lihat Web Publik</span>
             </a>
 
+            <!-- Tombol Beralih Peran (Multi-Penugasan) -->
+            <?php if (Auth::hasMultipleAssignments()): 
+                $topbarAssignments = Auth::getAssignments();
+                $currentActiveId = Auth::activeAssignmentId();
+            ?>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-2xs fw-bold" 
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Beralih Peran Aktif">
+                        <i class="fas fa-arrows-rotate text-warning"></i>
+                        <span class="d-none d-md-inline" style="font-size: 0.78rem;">Ganti Peran</span>
+                        <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.65rem;"><?= count($topbarAssignments) ?></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-2 rounded-4" style="min-width: 290px;">
+                        <li class="px-2 py-1 text-muted small fw-bold text-uppercase border-bottom mb-1" style="font-size: 0.68rem;">
+                            <i class="fas fa-id-badge me-1"></i> Penugasan Resmi Anda
+                        </li>
+                        <?php foreach ($topbarAssignments as $asg): 
+                            $isActiveAsg = ($currentActiveId ? $currentActiveId == $asg['id'] : ($asg['role'] === Auth::role() && $asg['prodi_id'] == Auth::prodiId() && $asg['fakultas_id'] == Auth::fakultasId()));
+                            $asgTitle = match($asg['role']) {
+                                'dekan' => 'Dekan ' . ($asg['nama_fakultas'] ?? ''),
+                                'wadek' => 'Wakil Dekan ' . ($asg['nama_fakultas'] ?? ''),
+                                'kaprodi' => 'Kaprodi ' . ($asg['nama_prodi'] ?? ''),
+                                'sekprodi' => 'Sekprodi ' . ($asg['nama_prodi'] ?? ''),
+                                default => Auth::getRoleLabel($asg['role'])
+                            };
+                            $asgSub = !empty($asg['nama_prodi']) ? ($asg['nama_fakultas'] ?? '') : 'Tingkat Dekanat';
+                            $asgIcon = in_array($asg['role'], ['dekan', 'wadek']) ? 'fa-landmark text-primary' : 'fa-graduation-cap text-success';
+                        ?>
+                            <li>
+                                <a href="<?= base_url('auth/switch-role/' . $asg['id']) ?>" 
+                                   class="dropdown-item rounded-3 py-2 px-2.5 d-flex align-items-center justify-content-between mb-1 <?= $isActiveAsg ? 'bg-primary-subtle text-primary fw-bold' : 'hover-bg-light' ?>">
+                                    <div class="d-flex align-items-center gap-2 min-w-0">
+                                        <i class="fas <?= $asgIcon ?> flex-shrink-0"></i>
+                                        <div class="text-truncate">
+                                            <div class="small text-truncate"><?= htmlspecialchars($asgTitle) ?></div>
+                                            <div class="text-muted" style="font-size: 0.68rem;"><?= htmlspecialchars($asgSub) ?></div>
+                                        </div>
+                                    </div>
+                                    <?php if ($isActiveAsg): ?>
+                                        <span class="badge bg-primary text-white rounded-pill ms-2" style="font-size: 0.62rem;">Aktif</span>
+                                    <?php endif; ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
             <!-- Notification Bell Icon (Revisi & Perbaikan Dokumen) -->
             <?php if (Auth::isProdi() || Auth::isFakultas() || Auth::isGpm() || Auth::isLpm() || (isset($currentUser['role']) && $currentUser['role'] === 'gpm')): 
                 $perluActionCount = $headerUrgentCount ?? count(array_filter($notificationItems, fn($i) => in_array($i['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm'])));

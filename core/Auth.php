@@ -98,6 +98,22 @@ class Auth {
             $_SESSION['user_fakultas_name'] = $user['nama_fakultas'] ?? null;
             $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
 
+            // Ambil penugasan multi-peran pengguna
+            $assignments = self::getAssignments((int)$user['id']);
+            $_SESSION['available_assignments'] = $assignments;
+            $_SESSION['has_multiple_assignments'] = count($assignments) > 1;
+            if (!empty($assignments)) {
+                $_SESSION['active_assignment_id'] = $assignments[0]['id'];
+            }
+
+            // Ambil penugasan multi-peran pengguna
+            $assignments = self::getAssignments((int)$user['id']);
+            $_SESSION['available_assignments'] = $assignments;
+            $_SESSION['has_multiple_assignments'] = count($assignments) > 1;
+            if (!empty($assignments)) {
+                $_SESSION['active_assignment_id'] = $assignments[0]['id'];
+            }
+
             // Log login event
             AuditLogger::log(
                 aksi: 'LOGIN',
@@ -164,6 +180,14 @@ class Auth {
             $_SESSION['user_fakultas_id'] = $user['resolved_fakultas_id'] ?? $user['fakultas_id'] ?? null;
             $_SESSION['user_fakultas_name'] = $user['nama_fakultas'] ?? null;
             $_SESSION['logged_in_at'] = date('Y-m-d H:i:s');
+
+            // Ambil penugasan multi-peran pengguna
+            $assignments = self::getAssignments((int)$user['id']);
+            $_SESSION['available_assignments'] = $assignments;
+            $_SESSION['has_multiple_assignments'] = count($assignments) > 1;
+            if (!empty($assignments)) {
+                $_SESSION['active_assignment_id'] = $assignments[0]['id'];
+            }
 
             AuditLogger::log(
                 aksi: 'LOGIN',
@@ -540,5 +564,111 @@ class Auth {
             return $flash;
         }
         return null;
+    }
+
+    /**
+     * Mengambil daftar seluruh penugasan resmi pengguna dari tabel user_assignments
+     */
+    public static function getAssignments(?int $userId = null): array {
+        $uid = $userId ?? self::id();
+        if (!$uid) return [];
+
+        try {
+            $pdo = Database::getInstance()->getConnection();
+            $stmt = $pdo->prepare("
+                SELECT ua.*, f.nama_fakultas, f.kode_fakultas, p.nama_prodi, p.jenjang 
+                FROM user_assignments ua
+                LEFT JOIN fakultas f ON ua.fakultas_id = f.id
+                LEFT JOIN prodis p ON ua.prodi_id = p.id
+                WHERE ua.user_id = ?
+                ORDER BY 
+                    CASE 
+                        WHEN ua.role IN ('super_admin', 'admin_lpm') THEN 1
+                        WHEN ua.role = 'kepala_lpm' THEN 2
+                        WHEN ua.role = 'dekan' THEN 3
+                        WHEN ua.role = 'wadek' THEN 4
+                        WHEN ua.role = 'gpm' THEN 5
+                        WHEN ua.role = 'kaprodi' THEN 6
+                        WHEN ua.role = 'sekprodi' THEN 7
+                        ELSE 8
+                    END ASC,
+                    p.nama_prodi ASC
+            ");
+            $stmt->execute([$uid]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) {
+            error_log('[Auth::getAssignments] Error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Memeriksa apakah pengguna memiliki lebih dari 1 penugasan peran
+     */
+    public static function hasMultipleAssignments(): bool {
+        self::startSession();
+        if (isset($_SESSION['has_multiple_assignments'])) {
+            return (bool)$_SESSION['has_multiple_assignments'];
+        }
+        $assignments = self::getAssignments();
+        $_SESSION['has_multiple_assignments'] = count($assignments) > 1;
+        return $_SESSION['has_multiple_assignments'];
+    }
+
+    /**
+     * Mengambil ID penugasan aktif saat ini
+     */
+    public static function activeAssignmentId(): ?int {
+        self::startSession();
+        return $_SESSION['active_assignment_id'] ?? null;
+    }
+
+    /**
+     * Beralih ke penugasan spesifik yang dimiliki oleh pengguna
+     */
+    public static function switchAssignment(int $assignmentId): bool {
+        self::startSession();
+        $userId = self::id();
+        if (!$userId) return false;
+
+        $pdo = Database::getInstance()->getConnection();
+        $stmt = $pdo->prepare("
+            SELECT ua.*, f.nama_fakultas, f.kode_fakultas, p.nama_prodi, p.jenjang 
+            FROM user_assignments ua
+            LEFT JOIN fakultas f ON ua.fakultas_id = f.id
+            LEFT JOIN prodis p ON ua.prodi_id = p.id
+            WHERE ua.id = ? AND ua.user_id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$assignmentId, $userId]);
+        $assignment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$assignment) {
+            return false;
+        }
+
+        self::$cachedUser = null;
+        $_SESSION['user_role'] = $assignment['role'];
+        $_SESSION['user_fakultas_id'] = $assignment['fakultas_id'];
+        $_SESSION['user_fakultas_name'] = $assignment['nama_fakultas'] ?? null;
+        $_SESSION['user_prodi_id'] = $assignment['prodi_id'];
+        $_SESSION['user_prodi_name'] = $assignment['nama_prodi'] ?? null;
+        $_SESSION['active_assignment_id'] = (int)$assignment['id'];
+
+        // Audit log beralih peran
+        AuditLogger::log(
+            aksi: 'SWITCH_ROLE',
+            modul: 'Autentikasi (Beralih Penugasan)',
+            targetId: (string)$userId,
+            targetName: $_SESSION['user_name'] ?? 'User',
+            newValues: [
+                'assignment_id' => $assignmentId,
+                'role' => $assignment['role'],
+                'fakultas' => $assignment['nama_fakultas'] ?? null,
+                'prodi' => $assignment['nama_prodi'] ?? null
+            ]
+        );
+
+        return true;
     }
 }

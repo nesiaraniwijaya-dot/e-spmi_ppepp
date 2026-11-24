@@ -42,6 +42,12 @@ class AuthController extends Controller {
             Auth::setFlash('success', 'Selamat datang kembali, ' . htmlspecialchars($_SESSION['user_name']) . '!');
             unset($_SESSION['return_url']);
 
+            // Jika akun memiliki multi-penugasan (Opsi 1), tampilkan layar pemilihan peran
+            if (Auth::hasMultipleAssignments()) {
+                redirect('auth/select-role');
+                return;
+            }
+
             // Jika ada return_url yang aman (relative local path), arahkan langsung ke halaman dokumen tersebut
             if (!empty($returnUrl) && !preg_match('#^https?://#i', $returnUrl) && !str_starts_with($returnUrl, '//')) {
                 redirect(ltrim($returnUrl, '/'));
@@ -177,6 +183,13 @@ class AuthController extends Controller {
         // 3. Verifikasi & Login ke Sistem SPMI (Sinkronkan nama dan foto profil dari Google)
         if (Auth::attemptGoogleLogin($googleEmail, $googleName, $googlePicture)) {
             Auth::setFlash('success', 'Selamat datang kembali, ' . htmlspecialchars($_SESSION['user_name']) . '! (Login via Google SSO)');
+
+            // Jika akun memiliki multi-penugasan (Opsi 1), tampilkan layar pemilihan peran terlebih dahulu
+            if (Auth::hasMultipleAssignments()) {
+                redirect('auth/select-role');
+                return;
+            }
+
             $returnUrl = $_SESSION['return_url'] ?? '';
             if (!empty($returnUrl) && !preg_match('#^https?://#i', $returnUrl) && !str_starts_with($returnUrl, '//')) {
                 unset($_SESSION['return_url']);
@@ -212,12 +225,54 @@ class AuthController extends Controller {
     }
 
     public function showSelectRole(): void {
-        Auth::setFlash('info', 'Fitur ganti peran pengujian telah dinonaktifkan. Pengguna langsung mengakses sistem sesuai peran akun email masing-masing.');
-        redirect(Auth::getDashboardRoute());
+        if (!Auth::check()) {
+            redirect('login');
+            return;
+        }
+
+        $assignments = Auth::getAssignments();
+        if (empty($assignments) || count($assignments) <= 1) {
+            redirect(Auth::getDashboardRoute());
+            return;
+        }
+
+        $this->render('auth/select_role', [
+            'pageTitle' => 'Pilih Peran Akses Sistem - MITRA',
+            'assignments' => $assignments
+        ]);
     }
 
     public function processSelectRole(): void {
-        Auth::setFlash('info', 'Fitur ganti peran pengujian telah dinonaktifkan. Pengguna langsung mengakses sistem sesuai peran akun email masing-masing.');
+        if (!Auth::check()) {
+            redirect('login');
+            return;
+        }
+
+        $assignmentId = (int)($_POST['assignment_id'] ?? 0);
+        if ($assignmentId > 0 && Auth::switchAssignment($assignmentId)) {
+            Auth::setFlash('success', 'Sesi aktif diatur sebagai <strong>' . htmlspecialchars(Auth::roleName()) . '</strong>.');
+            redirect(Auth::getDashboardRoute());
+            return;
+        }
+
+        Auth::setFlash('danger', 'Penugasan yang Anda pilih tidak valid atau bukan wewenang akun Anda.');
+        redirect('auth/select-role');
+    }
+
+    public function switchRole(string $id): void {
+        if (!Auth::check()) {
+            redirect('login');
+            return;
+        }
+
+        $assignmentId = (int)$id;
+        if ($assignmentId > 0 && Auth::switchAssignment($assignmentId)) {
+            Auth::setFlash('success', 'Berhasil beralih ke peran <strong>' . htmlspecialchars(Auth::roleName()) . '</strong>.');
+            redirect(Auth::getDashboardRoute());
+            return;
+        }
+
+        Auth::setFlash('danger', 'Gagal beralih peran: Penugasan tidak ditemukan atau bukan milik akun Anda.');
         redirect(Auth::getDashboardRoute());
     }
 }
