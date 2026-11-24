@@ -24,6 +24,7 @@ $router->get('fakultas/{id:\d+}/ppepp', ['PublicController', 'fakultasPpepp']);
 $router->get('prodi/{id:\d+}', ['PublicController', 'ppepp']);
 $router->get('dokumen', ['PublicController', 'allDocuments']);
 $router->get('tentang', ['PublicController', 'about']);
+$router->get('api/public/document/{id:\d+}', ['PublicController', 'getDocumentJson']);
 
 // ==========================================
 // 2. AUTHENTICATION ROUTES

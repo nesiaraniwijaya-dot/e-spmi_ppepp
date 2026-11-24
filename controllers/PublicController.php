@@ -535,4 +535,64 @@ class PublicController extends Controller {
             'activeNav' => 'tentang'
         ]);
     }
+
+    /**
+     * 6. API Publik: Ambil metadata satu dokumen mutu untuk auto-preview deep-linking
+     */
+    public function getDocumentJson(string $id): void {
+        header('Content-Type: application/json; charset=utf-8');
+        $docId = (int)$id;
+        if ($docId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID dokumen tidak valid']);
+            exit;
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT d.*, b.nama_bidang, sb.nama_sub_bidang, sb.kode_sub_bidang,
+                   COALESCE(p.nama_prodi, 'Dekanat / Tingkat Fakultas') as nama_prodi,
+                   COALESCE(f_prodi.nama_fakultas, f_doc.nama_fakultas) as nama_fakultas
+            FROM ppepp_documents d
+            LEFT JOIN prodis p ON d.prodi_id = p.id
+            LEFT JOIN fakultas f_prodi ON p.fakultas_id = f_prodi.id
+            LEFT JOIN fakultas f_doc ON d.fakultas_id = f_doc.id
+            LEFT JOIN bidang_standar b ON d.bidang_id = b.id
+            LEFT JOIN sub_bidang_standar sb ON d.sub_bidang_id = sb.id
+            WHERE d.id = ? AND d.deleted_at IS NULL AND d.status_review = 'sesuai'
+            LIMIT 1
+        ");
+        $stmt->execute([$docId]);
+        $doc = $stmt->fetch();
+
+        if (!$doc) {
+            echo json_encode(['success' => false, 'message' => 'Dokumen tidak ditemukan atau belum disetujui.']);
+            exit;
+        }
+
+        $docsList = [$doc];
+        $this->attachFilesToDocs($docsList);
+        $doc = $docsList[0];
+
+        $isUnikaUser = is_unika_user_logged_in();
+        $files = $doc['files'] ?? [];
+        $firstFile = !empty($files) ? $files[0] : ['file_path' => $doc['file_path'], 'file_name' => $doc['nama_dokumen'], 'narasi' => ''];
+        $meta = get_portal_file_meta($firstFile['file_path'] ?? '', $firstFile['file_extension'] ?? '');
+
+        echo json_encode([
+            'success' => true,
+            'doc' => [
+                'id' => $doc['id'],
+                'nama_dokumen' => $doc['nama_dokumen'],
+                'tahun_akademik' => $doc['tahun_akademik'] ?? '',
+                'file_path' => base_url($firstFile['file_path']),
+                'file_name' => $firstFile['file_name'],
+                'narasi' => $firstFile['narasi'] ?? '',
+                'standar_html' => render_sub_standar_badges($firstFile['sub_bidang_ids'] ?? null),
+                'public_limit' => $isUnikaUser ? 0 : 1,
+                'can_download' => $isUnikaUser ? 1 : 0,
+                'file_type' => $meta['type'],
+                'files' => $files,
+            ]
+        ]);
+        exit;
+    }
 }

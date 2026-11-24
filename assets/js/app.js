@@ -335,6 +335,29 @@ document.addEventListener('DOMContentLoaded', function () {
             const reviewSourceSelector = button.getAttribute('data-review-source') || '';
             const allFilesJson = button.getAttribute('data-all-files') || '';
 
+            const docId = button.getAttribute('data-doc-id') || button.getAttribute('data-id') || '';
+            window._currentOpenDocId = docId;
+
+            // Contextual deep linking: perbarui URL browser sesuai tata lokasi halaman aktif + ?doc_id=...
+            if (docId) {
+                try {
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('doc_id', docId);
+                    window.history.pushState({ docId: docId }, '', currentUrl.toString());
+                } catch(e) {}
+            }
+
+            // Reset dan tampilkan tombol Salin Link jika elemen ada
+            const copyBtn = document.getElementById('pdfCopyLinkBtn');
+            const copyIcon = document.getElementById('pdfCopyLinkIcon');
+            const copyText = document.getElementById('pdfCopyLinkText');
+            if (copyBtn) {
+                copyBtn.style.display = 'inline-flex';
+                copyBtn.className = 'btn btn-sm btn-outline-light rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm';
+            }
+            if (copyIcon) copyIcon.className = 'fas fa-link';
+            if (copyText) copyText.textContent = 'Salin Link';
+
             window._currentPdfIsReviewMode = isReviewMode;
 
             const modalTitle = pdfModal.querySelector('.modal-title');
@@ -1317,6 +1340,27 @@ document.addEventListener('DOMContentLoaded', function () {
             currentPdfDoc = null;
             pdfModal.style.zIndex = '';
 
+            // Bersihkan parameter ?doc_id= atau ?id= pada URL saat modal ditutup (revert back cleanly)
+            window._currentOpenDocId = null;
+            try {
+                const currentUrl = new URL(window.location.href);
+                if (currentUrl.searchParams.has('doc_id') || currentUrl.searchParams.has('id')) {
+                    currentUrl.searchParams.delete('doc_id');
+                    currentUrl.searchParams.delete('id');
+                    window.history.replaceState({}, '', currentUrl.toString());
+                }
+            } catch(e) {}
+
+            // Reset tampilan tombol Salin Link
+            const copyBtn = document.getElementById('pdfCopyLinkBtn');
+            const copyIcon = document.getElementById('pdfCopyLinkIcon');
+            const copyText = document.getElementById('pdfCopyLinkText');
+            if (copyBtn) {
+                copyBtn.className = 'btn btn-sm btn-outline-light rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm';
+            }
+            if (copyIcon) copyIcon.className = 'fas fa-link';
+            if (copyText) copyText.textContent = 'Salin Link';
+
             // If another modal is still visible (stacked modal), restore scrolling on body
             if (document.querySelectorAll('.modal.show').length > 0) {
                 document.body.classList.add('modal-open');
@@ -1510,7 +1554,122 @@ document.addEventListener('DOMContentLoaded', function () {
         const totalPages = pdfDoc.numPages;
         renderAllAllowablePagesFast(pdfDoc, limit, totalPages, scale);
     }
+
+    // Expose loadPdfModalContent globally for auto-preview triggers
+    window.loadPdfModalContent = loadPdfModalContent;
+
+    // Deep Linking Auto-Detector on Page Load (?doc_id=XYZ atau ?id=XYZ)
+    (function checkUrlDeepLink() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoDocId = urlParams.get('doc_id') || urlParams.get('id');
+        if (!autoDocId) return;
+
+        function tryOpenFromDom() {
+            const trigger = document.querySelector(`[data-doc-id="${autoDocId}"], [data-id="${autoDocId}"]`);
+            if (trigger) {
+                try { trigger.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+                trigger.click();
+                return true;
+            }
+            return false;
+        }
+
+        setTimeout(() => {
+            if (tryOpenFromDom()) return;
+
+            // Fallback: Jika berkas tidak ada di halaman tabel saat ini (misal paginasi atau halaman lain), ambil via API
+            const baseUrl = window.BASE_URL || '';
+            fetch(`${baseUrl}/api/public/document/${encodeURIComponent(autoDocId)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || !data.success || !data.doc) return;
+                    const doc = data.doc;
+                    const dummyBtn = document.createElement('button');
+                    dummyBtn.setAttribute('data-doc-id', doc.id);
+                    dummyBtn.setAttribute('data-pdf-url', doc.file_path);
+                    dummyBtn.setAttribute('data-doc-title', doc.file_name || doc.nama_dokumen);
+                    dummyBtn.setAttribute('data-doc-ta', doc.tahun_akademik || '');
+                    dummyBtn.setAttribute('data-doc-narasi', doc.narasi || '');
+                    dummyBtn.setAttribute('data-doc-standar', doc.standar_html || '');
+                    dummyBtn.setAttribute('data-public-limit', doc.public_limit || 1);
+                    dummyBtn.setAttribute('data-can-download', doc.can_download || 0);
+                    dummyBtn.setAttribute('data-file-type', doc.file_type || 'pdf');
+                    if (doc.files && doc.files.length > 1) {
+                        dummyBtn.setAttribute('data-all-files', JSON.stringify(doc.files));
+                    }
+
+                    if (typeof loadPdfModalContent === 'function') {
+                        loadPdfModalContent(dummyBtn);
+                        if (pdfModal && window.bootstrap && bootstrap.Modal) {
+                            const modalInst = bootstrap.Modal.getOrCreateInstance(pdfModal);
+                            modalInst.show();
+                        }
+                    }
+                })
+                .catch(err => console.warn('Could not auto-load document deep link:', err));
+        }, 450);
+    })();
 });
+
+/**
+ * Salin Tautan Kontekstual Dokumen Mutu Langsung ke Clipboard
+ */
+window.copyDocumentDirectLink = function() {
+    let shareUrl = window.location.href;
+    if (window._currentOpenDocId) {
+        try {
+            const u = new URL(shareUrl);
+            u.searchParams.set('doc_id', window._currentOpenDocId);
+            shareUrl = u.toString();
+        } catch(e) {}
+    }
+
+    const copyBtn = document.getElementById('pdfCopyLinkBtn');
+    const copyIcon = document.getElementById('pdfCopyLinkIcon');
+    const copyText = document.getElementById('pdfCopyLinkText');
+
+    function showSuccess() {
+        if (copyBtn) {
+            copyBtn.classList.remove('btn-outline-light');
+            copyBtn.classList.add('btn-success', 'text-white');
+        }
+        if (copyIcon) copyIcon.className = 'fas fa-check';
+        if (copyText) copyText.textContent = 'Link Tersalin!';
+
+        setTimeout(() => {
+            if (copyBtn) {
+                copyBtn.classList.remove('btn-success', 'text-white');
+                copyBtn.classList.add('btn-outline-light');
+            }
+            if (copyIcon) copyIcon.className = 'fas fa-link';
+            if (copyText) copyText.textContent = 'Salin Link';
+        }, 2500);
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(shareUrl).then(showSuccess).catch(() => fallbackCopy(shareUrl));
+    } else {
+        fallbackCopy(shareUrl);
+    }
+
+    function fallbackCopy(text) {
+        try {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            textArea.remove();
+            showSuccess();
+        } catch (err) {
+            prompt('Salin tautan dokumen berikut:', text);
+        }
+    }
+};
 
 /**
  * Initialize Client-Side Fast Filtering, Search, and Pagination

@@ -2115,9 +2115,11 @@ class AdminProdiController extends Controller {
 
             // Kirim notifikasi email ke TU LPM
             if (class_exists('MailHelper')) {
+                $pemohonName = method_exists('Auth', 'name') ? Auth::name() : ($_SESSION['user_name'] ?? (Auth::user()['name'] ?? 'Kaprodi'));
+                $pemohonRole = method_exists('Auth', 'roleName') ? Auth::roleName() : ($_SESSION['user_role'] ?? 'Kaprodi');
                 MailHelper::sendUploadAccessRequestNotification([
-                    'pemohon_name'   => Auth::name() ?? 'Kaprodi',
-                    'pemohon_role'   => Auth::roleName() ?? 'Kaprodi',
+                    'pemohon_name'   => $pemohonName,
+                    'pemohon_role'   => $pemohonRole,
                     'pemohon_email'  => Auth::user()['email'] ?? '',
                     'unit_name'      => $this->prodi['nama_prodi'] ?? 'Program Studi',
                     'tahun_akademik' => $tahunAkademik,

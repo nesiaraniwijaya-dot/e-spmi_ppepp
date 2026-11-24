@@ -39,6 +39,10 @@
                     </div>
                     
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" id="pdfCopyLinkBtn" onclick="copyDocumentDirectLink()" title="Salin tautan langsung menuju dokumen ini" style="font-size: 0.8rem; transition: all 0.2s ease;">
+                            <i class="fas fa-link" id="pdfCopyLinkIcon"></i>
+                            <span id="pdfCopyLinkText">Salin Link</span>
+                        </button>
                         <div id="pdfDownloadBtnContainer">
                             <!-- Injected dynamically via JS -->
                         </div>

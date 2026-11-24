@@ -1880,9 +1880,11 @@ class AdminFakultasController extends Controller {
 
             // Kirim notifikasi email ke TU LPM
             if (class_exists('MailHelper')) {
+                $pemohonName = method_exists('Auth', 'name') ? Auth::name() : ($_SESSION['user_name'] ?? (Auth::user()['name'] ?? 'Dekan / Pimpinan Fakultas'));
+                $pemohonRole = method_exists('Auth', 'roleName') ? Auth::roleName() : ($_SESSION['user_role'] ?? 'Fakultas');
                 MailHelper::sendUploadAccessRequestNotification([
-                    'pemohon_name'   => Auth::name() ?? 'Dekan / Pimpinan Fakultas',
-                    'pemohon_role'   => Auth::roleName() ?? 'Fakultas',
+                    'pemohon_name'   => $pemohonName,
+                    'pemohon_role'   => $pemohonRole,
                     'pemohon_email'  => Auth::user()['email'] ?? '',
                     'unit_name'      => $this->fakultas['nama_fakultas'] ?? 'Fakultas',
                     'tahun_akademik' => $tahunAkademik,

@@ -1016,9 +1016,11 @@ class GpmController extends Controller {
                     $unitName = $fStmt->fetchColumn() ?: 'Fakultas';
                 }
 
+                $pemohonName = method_exists('Auth', 'name') ? Auth::name() : ($_SESSION['user_name'] ?? (Auth::user()['name'] ?? 'GPM Fakultas'));
+                $pemohonRole = method_exists('Auth', 'roleName') ? Auth::roleName() : ($_SESSION['user_role'] ?? 'GPM Fakultas');
                 MailHelper::sendUploadAccessRequestNotification([
-                    'pemohon_name'   => Auth::name() ?? 'GPM Fakultas',
-                    'pemohon_role'   => Auth::roleName() ?? 'GPM Fakultas',
+                    'pemohon_name'   => $pemohonName,
+                    'pemohon_role'   => $pemohonRole,
                     'pemohon_email'  => Auth::user()['email'] ?? '',
                     'unit_name'      => $unitName,
                     'tahun_akademik' => $tahunAkademik,
