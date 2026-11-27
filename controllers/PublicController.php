@@ -41,7 +41,7 @@ class PublicController extends Controller {
         ];
 
         $this->render('public/home', [
-            'pageTitle' => 'Portal MITRA',
+            'pageTitle' => 'Portal SISTA 2',
             'activeNav' => 'home',
             'fakultasList' => $fakultasList,
             'totalFakultas' => $totalFakultas,

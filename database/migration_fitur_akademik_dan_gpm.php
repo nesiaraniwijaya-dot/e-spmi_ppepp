@@ -6,7 +6,7 @@
  * 3. Membuat tabel `upload_access_requests` (Pengajuan & Persetujuan Izin Upload Dokumen Tahun Lampau)
  * 4. Inisialisasi data default
  * 
- * SPMI PPEPP (MITRA) UNIKA Soegijapranata
+ * SPMI PPEPP (SISTA 2) UNIKA Soegijapranata
  */
 
 require_once __DIR__ . '/../config/database.php';

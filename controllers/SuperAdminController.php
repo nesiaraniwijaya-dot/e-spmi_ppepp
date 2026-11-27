@@ -2499,9 +2499,9 @@ class SuperAdminController extends Controller {
             'direktori_section_title' => ['Fakultas & Program Studi', 'direktori'],
             'direktori_section_desc' => ['Pilih fakultas di bawah untuk meninjau profil kepemimpinan, sebaran dokumen mutu 5 siklus PPEPP, dan status kepatuhan standar mutu masing-masing prodi.', 'direktori'],
 
-            'footer_brand_title' => ['MITRA', 'footer'],
+            'footer_brand_title' => ['SISTA 2', 'footer'],
             'footer_brand_sub' => ['Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi', 'footer'],
-            'footer_desc' => ['MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.', 'footer'],
+            'footer_desc' => ['SISTA 2 = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. SISTA 2 adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.', 'footer'],
             'footer_address' => ['Ruang Lembaga Penjaminan Mutu, Gedung Thomas Aquinas Lantai 5, Kampus Universitas Katolik Soegijapranata, Jalan Pawiyatan Luhur IV/1 Bendan Duwur, Semarang 50234', 'footer'],
             'footer_akreditasi' => ['Terakreditasi UNGGUL • BAN-PT', 'footer'],
             'footer_siklus_heading' => ['5 Siklus PPEPP PETRA', 'footer'],

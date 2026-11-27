@@ -380,7 +380,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         $lockedMenus = [
                             [
                                 'title' => 'Kelola Beranda & Footer Publik',
-                                'desc'  => 'Konfigurasi konten beranda publik, branding MITRA, tautan eksternal, dan informasi kontak.',
+                                'desc'  => 'Konfigurasi konten beranda publik, branding SISTA 2, tautan eksternal, dan informasi kontak.',
                                 'path'  => 'admin/landing-settings',
                                 'icon'  => 'fas fa-sliders'
                             ],

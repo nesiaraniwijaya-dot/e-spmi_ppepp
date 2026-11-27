@@ -43,7 +43,7 @@ $currentUser = Auth::user();
                     <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" class="brand-logo-img">
                 </div>
                 <div class="brand-text-wrap">
-                    <div class="brand-title">MITRA</div>
+                    <div class="brand-title">SISTA 2</div>
                     <div class="brand-subtitle">Monitoring dan Implementasi Tahapan PPEPP &amp; Rencana Aksi</div>
                 </div>
             </a>

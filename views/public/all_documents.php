@@ -71,7 +71,7 @@ $currentMeta = $siklusMetaList[$initialSiklus] ?? $siklusMetaList[''];
                 </nav>
 
                 <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-20 text-info small fw-bold mb-3">
-                    <i class="fas fa-file-shield"></i> Repositori Mutu Institusional &bull; MITRA
+                    <i class="fas fa-file-shield"></i> Repositori Mutu Institusional &bull; SISTA 2
                 </div>
 
                 <h1 class="page-banner-title mb-2">Portal Dokumen Mutu Universitas</h1>

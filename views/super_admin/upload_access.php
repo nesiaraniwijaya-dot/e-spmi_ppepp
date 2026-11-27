@@ -1,7 +1,7 @@
 <?php
 /**
  * Halaman Terpadu Manajemen Tahun Akademik, Akses & Tenggat Waktu Unggah (LPM)
- * SPMI PPEPP (MITRA) Universitas Katolik Soegijapranata
+ * SPMI PPEPP (SISTA 2) Universitas Katolik Soegijapranata
  */
 require_once ROOT_PATH . '/views/layouts/admin_header.php';
 ?>

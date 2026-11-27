@@ -3,7 +3,7 @@
  * Image Optimizer & WebP Converter
  * SPMI PPEPP UNIKA Soegijapranata (SCU)
  *
- * Mengoptimalkan seluruh gambar yang diunggah ke sistem MITRA
+ * Mengoptimalkan seluruh gambar yang diunggah ke sistem SISTA 2
  * dengan mengonversinya secara otomatis ke format WebP terkompresi
  * guna mempercepat loading web dan menghemat bandwidth serta ruang server.
  */

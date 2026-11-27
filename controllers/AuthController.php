@@ -23,7 +23,7 @@ class AuthController extends Controller {
         }
 
         $this->render('auth/login', [
-            'pageTitle' => 'Masuk Portal MITRA',
+            'pageTitle' => 'Masuk Portal SISTA 2',
             'returnUrl' => $returnUrl
         ]);
     }
@@ -237,7 +237,7 @@ class AuthController extends Controller {
         }
 
         $this->render('auth/select_role', [
-            'pageTitle' => 'Pilih Peran Akses Sistem - MITRA',
+            'pageTitle' => 'Pilih Peran Akses Sistem - SISTA 2',
             'assignments' => $assignments
         ]);
     }

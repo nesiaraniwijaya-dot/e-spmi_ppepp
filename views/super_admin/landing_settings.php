@@ -647,12 +647,12 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                 <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;">
                                             </div>
                                             <div>
-                                                <div class="footer-brand-title" id="previewFooterBrand"><?= htmlspecialchars($settings['footer_brand_title'] ?? 'MITRA') ?></div>
+                                                <div class="footer-brand-title" id="previewFooterBrand"><?= htmlspecialchars($settings['footer_brand_title'] ?? 'SISTA 2') ?></div>
                                                 <div class="footer-brand-sub" id="previewFooterSub"><?= htmlspecialchars($settings['footer_brand_sub'] ?? 'Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi') ?></div>
                                             </div>
                                         </div>
                                         <p class="footer-desc" id="previewFooterDesc" style="font-size:0.875rem; color:#94A3B8; line-height:1.75; margin-top:0.75rem; max-width:480px;">
-                                            <?= htmlspecialchars($settings['footer_desc'] ?? 'MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.') ?>
+                                            <?= htmlspecialchars($settings['footer_desc'] ?? 'SISTA 2 = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. SISTA 2 adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.') ?>
                                         </p>
 
                                         <!-- Real Data Structured Address Box -->
@@ -852,7 +852,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 
                                     <div class="mb-3">
                                         <label class="form-label small fw-semibold text-secondary">Judul Brand Footer (Kolom 1)</label>
-                                        <input type="text" name="settings[footer_brand_title]" id="inputFooterBrand" class="form-control fw-bold" value="<?= htmlspecialchars($settings['footer_brand_title'] ?? '') ?>" placeholder="MITRA" required>
+                                        <input type="text" name="settings[footer_brand_title]" id="inputFooterBrand" class="form-control fw-bold" value="<?= htmlspecialchars($settings['footer_brand_title'] ?? '') ?>" placeholder="SISTA 2" required>
                                     </div>
 
                                     <div class="mb-3">
@@ -1181,7 +1181,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
 function confirmResetDefaults() {
     Swal.fire({
         title: 'Kembalikan ke Standar Awal?',
-        text: 'Seluruh teks beranda dan footer akan di-reset ke nilai default MITRA UNIKA Soegijapranata.',
+        text: 'Seluruh teks beranda dan footer akan di-reset ke nilai default SISTA 2 UNIKA Soegijapranata.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
@@ -1384,11 +1384,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    if (inputFootBrand && previewFootBrand) inputFootBrand.addEventListener('input', e => previewFootBrand.textContent = e.target.value || 'MITRA');
+    if (inputFootBrand && previewFootBrand) inputFootBrand.addEventListener('input', e => previewFootBrand.textContent = e.target.value || 'SISTA 2');
     if (inputFootSub && previewFootSub) inputFootSub.addEventListener('input', e => previewFootSub.textContent = e.target.value || 'Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi');
-    if (inputFootDesc && previewFootDesc) inputFootDesc.addEventListener('input', e => previewFootDesc.textContent = e.target.value || 'MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi.');
+    if (inputFootDesc && previewFootDesc) inputFootDesc.addEventListener('input', e => previewFootDesc.textContent = e.target.value || 'SISTA 2 = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi.');
     if (inputFootAkreditasi && previewFootAkreditasi) inputFootAkreditasi.addEventListener('input', e => previewFootAkreditasi.textContent = e.target.value || 'Terakreditasi UNGGUL • BAN-PT');
-    if (inputFootSiklus && previewFootSiklus) inputFootSiklus.addEventListener('input', e => previewFootSiklus.textContent = e.target.value || '5 Siklus PPEPP MITRA');
+    if (inputFootSiklus && previewFootSiklus) inputFootSiklus.addEventListener('input', e => previewFootSiklus.textContent = e.target.value || '5 Siklus PPEPP SISTA 2');
     if (inputFootContactTitle && previewFootContactTitle) inputFootContactTitle.addEventListener('input', e => previewFootContactTitle.textContent = e.target.value || 'Layanan Bantuan LPM');
     if (inputFootAddr) inputFootAddr.addEventListener('input', e => renderFooterAddressPreview(e.target.value));
     if (inputFootEmail && previewFootEmail) inputFootEmail.addEventListener('input', e => previewFootEmail.textContent = e.target.value || 'lpm@unika.ac.id');

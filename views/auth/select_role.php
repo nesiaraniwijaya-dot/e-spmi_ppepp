@@ -3,7 +3,7 @@
  * Role Selector View: Pilih Peran Sesi Akses
  * SPMI PPEPP UNIKA Soegijapranata
  */
-$pageTitle = 'Pilih Peran Akses Sistem - MITRA';
+$pageTitle = 'Pilih Peran Akses Sistem - SISTA 2';
 require_once ROOT_PATH . '/views/layouts/header.php';
 
 $assignments = $assignments ?? Auth::getAssignments();

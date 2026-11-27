@@ -1,7 +1,7 @@
 <?php
 /**
  * Import REAL Downloaded Documents from Google Drive
- * SPMI PPEPP (MITRA) - UNIKA Soegijapranata
+ * SPMI PPEPP (SISTA 2) - UNIKA Soegijapranata
  */
 
 require_once __DIR__ . '/../config/database.php';

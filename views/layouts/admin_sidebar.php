@@ -137,7 +137,7 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
             </div>
             <div class="text-truncate">
-                <div class="brand-title" style="font-family:var(--font-heading);font-weight:800;font-size:0.95rem;color:#fff;line-height:1.2;">MITRA</div>
+                <div class="brand-title" style="font-family:var(--font-heading);font-weight:800;font-size:0.95rem;color:#fff;line-height:1.2;">SISTA 2</div>
                 <div class="brand-subtitle text-truncate" style="font-size:0.65rem;color:rgba(255,255,255,0.72);letter-spacing:0.2px;line-height:1.25;">Monitoring &amp; Tahapan PPEPP</div>
             </div>
         </a>

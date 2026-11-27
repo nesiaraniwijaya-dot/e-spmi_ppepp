@@ -60,7 +60,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
 <body>
 <div class="wrapper">
     <div class="header">
-        <h2>MITRA &bull; SPMI PPEPP UNIKA</h2>
+        <h2>SISTA 2 &bull; SPMI PPEPP UNIKA</h2>
         <p>Lembaga Penjaminan Mutu &bull; Universitas Katolik Soegijapranata</p>
     </div>
     <div class="content">
@@ -91,7 +91,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helve
         </p>
     </div>
     <div class="footer">
-        Email ini dikirim secara otomatis oleh Sistem Penjaminan Mutu Internal (MITRA SPMI PPEPP) UNIKA Soegijapranata.<br>
+        Email ini dikirim secara otomatis oleh Sistem Penjaminan Mutu Internal (SISTA 2 SPMI PPEPP) UNIKA Soegijapranata.<br>
         Tindakan persetujuan dapat diproses melalui menu Akses &amp; Tenggat Upload pada panel admin.
     </div>
 </div>

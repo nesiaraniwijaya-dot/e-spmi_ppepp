@@ -8,7 +8,7 @@
 date_default_timezone_set('Asia/Jakarta');
 
 if (!defined('APP_NAME')) {
-    define('APP_NAME', 'MITRA');
+    define('APP_NAME', 'SISTA 2');
     define('APP_LONG_NAME', 'Sistem Informasi Penjaminan Mutu Internal (PPEPP)');
     define('INSTITUTION_NAME', 'Universitas Katolik Soegijapranata');
     define('INSTITUTION_SHORT', 'UNIKA Soegijapranata / SCU');

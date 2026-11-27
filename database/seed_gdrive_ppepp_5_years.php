@@ -1,7 +1,7 @@
 <?php
 /**
  * Seeder Dokumen SPMI PPEPP (5 Tahun Akademik) dari Google Drive Matrix
- * SPMI PPEPP (MITRA) - UNIKA Soegijapranata
+ * SPMI PPEPP (SISTA 2) - UNIKA Soegijapranata
  *
  * Mengimpor 234 butir dokumen mutu PPEPP untuk 5 tahun akademik:
  * - 2021/2022

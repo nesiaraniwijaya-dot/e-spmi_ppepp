@@ -1520,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         lockedBanner.style.display = 'block';
                         if (lockedMessage) {
                             lockedMessage.innerHTML = `
-                                Anda baru saja membaca pratinjau terbatas <strong>${limit} dari total ${totalPages} halaman</strong> dokumen mutu ini. Untuk mengakses seluruh lembar halaman secara lengkap dan mengunduh berkas resminya, silakan masuk ke sistem MITRA sebagai pengguna terdaftar.
+                                Anda baru saja membaca pratinjau terbatas <strong>${limit} dari total ${totalPages} halaman</strong> dokumen mutu ini. Untuk mengakses seluruh lembar halaman secara lengkap dan mengunduh berkas resminya, silakan masuk ke sistem SISTA 2 sebagai pengguna terdaftar.
                             `;
                         }
                         const loginBtnInBanner = lockedBanner.querySelector('a.btn-primary');

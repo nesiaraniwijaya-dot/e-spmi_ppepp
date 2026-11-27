@@ -243,12 +243,12 @@
                             <img src="<?= base_url('assets/images/logo-unika.png') ?>" loading="lazy" decoding="async" alt="Logo UNIKA Soegijapranata" style="width:100%;height:100%;object-fit:contain;">
                         </div>
                         <div>
-                            <div class="footer-brand-title"><?= htmlspecialchars(get_landing_setting('footer_brand_title', 'MITRA')) ?></div>
+                            <div class="footer-brand-title"><?= htmlspecialchars(get_landing_setting('footer_brand_title', 'SISTA 2')) ?></div>
                             <div class="footer-brand-sub"><?= htmlspecialchars(get_landing_setting('footer_brand_sub', 'Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi')) ?></div>
                         </div>
                     </div>
                     <p class="footer-desc">
-                        <?= htmlspecialchars(get_landing_setting('footer_desc', 'MITRA = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. MITRA adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.')) ?>
+                        <?= htmlspecialchars(get_landing_setting('footer_desc', 'SISTA 2 = Monitoring dan Implementasi Tahapan PPEPP & Rencana Aksi. SISTA 2 adalah Pengawal Mutu dalam Mewujudkan Perbaikan Berkelanjutan.')) ?>
                     </p>
 
                     <!-- Real Data Structured Address Box -->
@@ -294,7 +294,7 @@
 
                 <!-- Column 2: 5 Siklus PPEPP Pathway (Sleek Luminous Cards) -->
                 <div class="col-lg-4 col-md-6">
-                    <h5><?= htmlspecialchars(get_landing_setting('footer_siklus_heading', '5 Siklus PPEPP MITRA')) ?></h5>
+                    <h5><?= htmlspecialchars(get_landing_setting('footer_siklus_heading', '5 Siklus PPEPP SISTA 2')) ?></h5>
                     <ul class="footer-cycle-list">
                         <li>
                             <a href="<?= base_url('dokumen?siklus=penetapan') ?>" class="footer-cycle-item cycle-p1">
