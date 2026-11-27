@@ -351,7 +351,7 @@ function get_all_sub_bidang_map(): array {
             $rows = $db->query("
                 SELECT sb.id, sb.bidang_id, sb.kode_sub_bidang, sb.nama_sub_bidang, b.nama_bidang, b.kode_bidang
                 FROM sub_bidang_standar sb
-                JOIN bidang_standar b ON sb.bidang_id = b.id
+                LEFT JOIN bidang_standar b ON sb.bidang_id = b.id
                 WHERE sb.is_active = 1
                 ORDER BY b.id ASC, sb.id ASC
             ")->fetchAll(PDO::FETCH_ASSOC);

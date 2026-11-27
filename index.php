@@ -11,6 +11,7 @@ require_once __DIR__ . '/core/Router.php';
 require_once __DIR__ . '/core/Auth.php';
 require_once __DIR__ . '/core/AuditLogger.php';
 require_once __DIR__ . '/core/MailHelper.php';
+require_once __DIR__ . '/core/UnitPerformanceCalculator.php';
 
 // Instantiate Router
 $router = new Router();
@@ -76,6 +77,9 @@ $router->get('admin/monitoring-berkas', ['SuperAdminController', 'monitoringBerk
 $router->get('admin/monitoring-lalulintas', ['SuperAdminController', 'monitoringBerkas']);
 $router->get('admin/monitoring-gpm', ['SuperAdminController', 'monitoringGpm']);
 $router->get('admin/monitoring-gpm/history/{id:\d+}', ['SuperAdminController', 'gpmReviewHistory']);
+$router->get('admin/monitoring-kinerja-unit', ['SuperAdminController', 'monitoringKinerjaUnit']);
+$router->post('admin/monitoring-kinerja-unit/save', ['SuperAdminController', 'saveKinerjaLpmNote']);
+$router->get('admin/monitoring-kinerja-unit/cetak/{type}/{id:\d+}', ['SuperAdminController', 'cetakRaporKinerjaUnit']);
 $router->get('admin/review-prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
 $router->get('admin/review/prodi/{id:\d+}', ['SuperAdminController', 'reviewProdi']);
 $router->get('admin/review-fakultas/{id:\d+}', ['SuperAdminController', 'reviewFakultas']);
@@ -142,6 +146,10 @@ $router->post('prodi/dokumen/restore/{id:\d+}', ['AdminProdiController', 'restor
 $router->post('prodi/dokumen/force-delete/{id:\d+}', ['AdminProdiController', 'forceDeleteDocument']);
 $router->get('prodi/dokumen/arsip', ['AdminProdiController', 'arsip']);
 
+// Rapor Kinerja Mutu SPMI Program Studi
+$router->get('prodi/rapor-kinerja', ['AdminProdiController', 'raporKinerja']);
+$router->get('prodi/rapor-kinerja/cetak', ['AdminProdiController', 'cetakRaporKinerja']);
+
 // Profil Kaprodi
 $router->get('prodi/kaprodi', ['AdminProdiController', 'kaprodi']);
 $router->post('prodi/kaprodi/save', ['AdminProdiController', 'saveKaprodi']);
@@ -168,6 +176,10 @@ $router->post('fakultas/dokumen/delete/{id:\d+}', ['AdminFakultasController', 's
 $router->post('fakultas/dokumen/restore/{id:\d+}', ['AdminFakultasController', 'restoreDocument']);
 $router->post('fakultas/dokumen/force-delete/{id:\d+}', ['AdminFakultasController', 'forceDeleteDocument']);
 $router->get('fakultas/dokumen/arsip', ['AdminFakultasController', 'arsip']);
+
+// Rapor Kinerja Mutu SPMI Dekanat
+$router->get('fakultas/rapor-kinerja', ['AdminFakultasController', 'raporKinerja']);
+$router->get('fakultas/rapor-kinerja/cetak', ['AdminFakultasController', 'cetakRaporKinerja']);
 
 // Profil Dekanat
 $router->get('fakultas/dekanat', ['AdminFakultasController', 'dekanat']);
@@ -198,6 +210,18 @@ $router->get('gpm/dokumen/arsip', ['GpmController', 'arsip']);
 // GPM Review Submission
 $router->post('gpm/review/submit', ['GpmController', 'submitReview']);
 $router->post('gpm/review/forward-lpm', ['GpmController', 'forwardLpmRevision']);
+
+// GPM Master Standar Mutu (Fakultas & Prodi Binaan)
+$router->get('gpm/master-standar', ['GpmController', 'masterStandar']);
+$router->post('gpm/master-standar/bidang/save', ['GpmController', 'saveBidang']);
+$router->post('gpm/master-standar/bidang/delete/{id:\d+}', ['GpmController', 'deleteBidang']);
+$router->post('gpm/master-standar/sub-bidang/save', ['GpmController', 'saveSubBidang']);
+$router->post('gpm/master-standar/sub-bidang/delete/{id:\d+}', ['GpmController', 'deleteSubBidang']);
+
+// GPM Monitoring & Evaluasi Kinerja Dekanat & Prodi Binaan
+$router->get('gpm/monitoring-kinerja', ['GpmController', 'monitoringKinerja']);
+$router->post('gpm/monitoring-kinerja/save', ['GpmController', 'saveKinerjaEvaluation']);
+$router->get('gpm/monitoring-kinerja/cetak/{type}/{id:\d+}', ['GpmController', 'cetakRaporKinerja']);
 
 $router->get('api/document-review-history/{id:\d+}', ['ApiController', 'reviewHistoryJson']);
 $router->get('api/check-upload-access', ['ApiController', 'checkUploadAccess']);

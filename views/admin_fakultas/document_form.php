@@ -100,7 +100,7 @@ $siklusDefinitions = [
             <form action="<?= base_url('fakultas/dokumen/save') ?>" method="POST" id="documentUploadForm" novalidate>
                 <input type="hidden" name="id" value="<?= $doc['id'] ?>">
                 
-                <?php if (in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm'])):
+                <?php if (in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm', 'sudah_diperbaiki'])):
                     $isGpmFormRev = (($doc['status_review'] ?? '') === 'revisi_gpm') || !empty($doc['gpm_catatan']) || !empty($doc['gpm_reviewed_at']);
                     $formRevLabel = $isGpmFormRev ? 'Gugus Penjaminan Mutu (GPM) Fakultas' : 'Pusat Penjaminan Mutu LPM';
                     $formRevDate = $isGpmFormRev ? ($doc['gpm_reviewed_at'] ?? $doc['reviewed_at']) : ($doc['lpm_reviewed_at'] ?? $doc['reviewed_at'] ?? $doc['gpm_reviewed_at']);
@@ -698,7 +698,7 @@ $siklusDefinitions = [
                                         <i class="fas fa-floppy-disk me-1.5"></i> Simpan Sebagai Draf
                                     </button>
                                     <button type="submit" name="action_submit" value="publish" class="btn btn-warning px-4 py-2.5 fw-bold rounded-pill text-dark shadow-sm w-100 w-sm-auto order-1 order-sm-2" id="btnSubmitPublishSingle">
-                                        <i class="fas fa-paper-plane me-1.5"></i> <?= in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm']) ? 'Simpan &amp; Ajukan Ulang ke GPM' : 'Simpan &amp; Ajukan ke GPM' ?>
+                                        <i class="fas fa-paper-plane me-1.5"></i> <?= in_array($doc['status_review'] ?? '', ['perlu_perbaikan', 'revisi_gpm', 'revisi_lpm', 'sudah_diperbaiki']) ? 'Simpan &amp; Ajukan Ulang ke GPM' : 'Simpan &amp; Ajukan ke GPM' ?>
                                     </button>
                                 </div>
                             </div>

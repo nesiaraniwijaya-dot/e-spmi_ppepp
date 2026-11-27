@@ -183,6 +183,18 @@ if (!empty($documents)):
                                             </span>
                                         <?php endif; ?>
                                     </div>
+
+                                    <?php if (!empty($doc['catatan_perbaikan_unit'])): ?>
+                                        <div class="mt-2.5 p-2.5 rounded-3 border border-info border-opacity-25 shadow-2xs" style="background: #F0F9FF; font-size: 0.75rem;">
+                                            <div class="d-flex align-items-center gap-1.5 fw-bold text-primary mb-1">
+                                                <i class="fas fa-rotate-left"></i>
+                                                <span>TINDAK LANJUT REVISI UNIT:</span>
+                                            </div>
+                                            <div class="text-dark" style="line-height: 1.45; white-space: pre-wrap;">
+                                                <?= nl2br(htmlspecialchars($doc['catatan_perbaikan_unit'])) ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
 
                                 <!-- Siklus PPEPP -->

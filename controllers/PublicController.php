@@ -161,8 +161,14 @@ class PublicController extends Controller {
             redirect('');
         }
 
-        // Fetch All Active Bidang Standar for Filtering
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        // Fetch All Active Bidang Standar for Filtering (Scoped to University + This Faculty/Prodi)
+        $fakId = (int)($prodi['fakultas_id'] ?? 0);
+        $bidangList = $this->db->query("
+            SELECT * FROM bidang_standar 
+            WHERE is_active = 1 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$fakId}) OR (scope = 'prodi' AND prodi_id = {$prodiId}))
+            ORDER BY id ASC
+        ")->fetchAll();
 
         // Fetch All Active Documents for this prodi (Excluding soft deleted, only approved by LPM)
         $stmtDocs = $this->db->prepare("
@@ -258,8 +264,13 @@ class PublicController extends Controller {
         $stmtFakCount->execute([$fId]);
         $fakultas['total_dokumen'] = (int)$stmtFakCount->fetchColumn();
 
-        // Fetch All Active Bidang Standar for Filtering
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        // Fetch All Active Bidang Standar for Filtering (Scoped to University + This Faculty)
+        $bidangList = $this->db->query("
+            SELECT * FROM bidang_standar 
+            WHERE is_active = 1 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$fId}))
+            ORDER BY id ASC
+        ")->fetchAll();
 
         // Fetch All Active Faculty Documents (level = 'fakultas', only approved by LPM)
         $stmtDocs = $this->db->prepare("

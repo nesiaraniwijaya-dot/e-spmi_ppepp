@@ -187,6 +187,11 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <span>Monitoring Kinerja GPM</span>
                 </a>
                 <?php endif; ?>
+                <a href="<?= base_url('admin/monitoring-kinerja-unit') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'admin/monitoring-kinerja-unit') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-chart-line text-success"></i></span>
+                    <span>Monitoring Kinerja Unit</span>
+                </a>
             </div>
             <?php endif; ?>
 
@@ -332,6 +337,16 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 </a>
             </div>
 
+            <!-- Dekanat: Rapor Kinerja Mutu -->
+            <div class="admin-nav-group">
+                <div class="admin-nav-label">Kinerja Mutu</div>
+                <a href="<?= base_url('fakultas/rapor-kinerja') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'fakultas/rapor-kinerja') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-award text-warning"></i></span>
+                    <span>Rapor Kinerja Mutu</span>
+                </a>
+            </div>
+
         <?php elseif (Auth::isProdi()): ?>
 
             <!-- Pimpinan Prodi: Info Prodi -->
@@ -414,6 +429,16 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                 </a>
             </div>
 
+            <!-- Pimpinan Prodi: Rapor Kinerja Mutu -->
+            <div class="admin-nav-group">
+                <div class="admin-nav-label">Kinerja Mutu</div>
+                <a href="<?= base_url('prodi/rapor-kinerja') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'prodi/rapor-kinerja') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-award text-warning"></i></span>
+                    <span>Rapor Kinerja Mutu</span>
+                </a>
+            </div>
+
         <?php elseif ($role === 'gpm'): ?>
 
             <!-- GPM: Info Fakultas & Ruang Lingkup -->
@@ -450,6 +475,26 @@ function sidebarIsActive(string $currentUri, string|array $match): string {
                     <?php if (!empty($sidebarRevisiCount) && $sidebarRevisiCount > 0): ?>
                         <span class="ms-auto badge bg-danger rounded-pill px-2 py-0.5 text-white" style="font-size:0.65rem;"><?= $sidebarRevisiCount ?></span>
                     <?php endif; ?>
+                </a>
+            </div>
+
+            <!-- GPM: Master Mutu Fakultas -->
+            <div class="admin-nav-group">
+                <div class="admin-nav-label">Master Mutu Fakultas</div>
+                <a href="<?= base_url('gpm/master-standar') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/master-standar') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-layer-group text-info"></i></span>
+                    <span>Master Bidang &amp; Standar</span>
+                </a>
+            </div>
+
+            <!-- GPM: Evaluasi & Monitoring Kinerja -->
+            <div class="admin-nav-group">
+                <div class="admin-nav-label">Evaluasi &amp; Pemantauan</div>
+                <a href="<?= base_url('gpm/monitoring-kinerja') ?>"
+                   class="admin-nav-link <?= sidebarIsActive($currentUri, 'gpm/monitoring-kinerja') ?>">
+                    <span class="nav-icon-wrap"><i class="fas fa-chart-line text-success"></i></span>
+                    <span>Monitoring Kinerja Unit</span>
                 </a>
             </div>
 

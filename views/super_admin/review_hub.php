@@ -235,7 +235,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                             <select class="form-select form-select-sm filter-hub-select" id="bidangFilter" onchange="filterHubTable()">
                                 <option value="">Semua Bidang</option>
                                 <?php foreach ($bidangList as $b): ?>
-                                    <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?></option>
+                                    <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_bidang']) ?><?= (($b['scope'] ?? '') === 'fakultas' && !empty($b['kode_fakultas'])) ? ' (' . htmlspecialchars($b['kode_fakultas']) . ')' : '' ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

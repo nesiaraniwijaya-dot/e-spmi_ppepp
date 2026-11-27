@@ -56,7 +56,14 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="fw-bold text-dark-blue"><?= htmlspecialchars($b['nama_bidang']) ?></div>
+                                    <div class="fw-bold text-dark-blue">
+                                        <?= htmlspecialchars($b['nama_bidang']) ?>
+                                        <?php if (($b['scope'] ?? 'universitas') === 'fakultas'): ?>
+                                            <span class="badge bg-purple-subtle text-purple border border-purple-subtle ms-1" style="font-size: 0.65rem;">
+                                                <i class="fas fa-sparkles me-1"></i>Khusus Fakultas <?= htmlspecialchars($b['kode_fakultas'] ?? '') ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td>
                                     <button type="button" 
@@ -167,7 +174,18 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                                                         <?= htmlspecialchars($sub['kode_sub_bidang'] ?: '-') ?>
                                                                     </span>
                                                                 </td>
-                                                                <td class="fw-semibold text-dark small"><?= htmlspecialchars($sub['nama_sub_bidang']) ?></td>
+                                                                <td class="fw-semibold text-dark small">
+                                                                    <?= htmlspecialchars($sub['nama_sub_bidang']) ?>
+                                                                    <?php if (($sub['scope'] ?? 'universitas') === 'fakultas'): ?>
+                                                                        <span class="badge bg-purple-subtle text-purple border border-purple-subtle ms-1" style="font-size: 0.65rem;">
+                                                                            Fakultas <?= htmlspecialchars($sub['kode_fakultas'] ?? '') ?>
+                                                                        </span>
+                                                                    <?php elseif (($sub['scope'] ?? 'universitas') === 'prodi'): ?>
+                                                                        <span class="badge bg-info-subtle text-info border border-info-subtle ms-1" style="font-size: 0.65rem;">
+                                                                            Prodi <?= htmlspecialchars($sub['nama_prodi'] ?? '') ?>
+                                                                        </span>
+                                                                    <?php endif; ?>
+                                                                </td>
                                                                 <td class="small text-muted" style="max-width: 320px;">
                                                                     <?= htmlspecialchars($sub['deskripsi'] ?: '-') ?>
                                                                 </td>

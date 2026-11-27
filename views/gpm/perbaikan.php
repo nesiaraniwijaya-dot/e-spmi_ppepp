@@ -176,7 +176,7 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
         <div>
             <div class="d-flex align-items-center gap-2 mb-1.5">
                 <span class="badge rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.76rem;">
-                    <i class="fas fa-shield-halved"></i> GPM <?= htmlspecialchars($fakultas['singkatan'] ?? $fakultas['nama_fakultas'] ?? '') ?>
+                    <i class="fas fa-shield-halved"></i> GPM <?= htmlspecialchars($fakultas['kode_fakultas'] ?? $fakultas['singkatan'] ?? $fakultas['nama_fakultas'] ?? '') ?>
                 </span>
                 <span class="text-muted small">&bull;</span>
                 <span class="badge rounded-pill px-2.5 py-1 fw-semibold text-danger d-inline-flex align-items-center gap-1" style="background: #FEF2F2; border: 1px solid #FECACA; font-size: 0.75rem;">
@@ -487,6 +487,18 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                 <?php endif; ?>
                                                 <span>TA: <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></span>
                                             </div>
+
+                                            <?php if (!empty($doc['catatan_perbaikan_unit'])): ?>
+                                                <div class="mt-2.5 p-2 rounded-2 border border-info border-opacity-25 shadow-2xs" style="background: #F0F9FF; font-size: 0.74rem;">
+                                                    <div class="d-flex align-items-center gap-1 fw-bold text-primary mb-0.5">
+                                                        <i class="fas fa-rotate-left"></i>
+                                                        <span>Tindak Lanjut Unit:</span>
+                                                    </div>
+                                                    <div class="text-dark" style="line-height: 1.4; white-space: pre-wrap;">
+                                                        <?= nl2br(htmlspecialchars($doc['catatan_perbaikan_unit'])) ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
 
                                         <!-- Siklus PPEPP -->
@@ -532,6 +544,7 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                         data-reviewer="Pusat Penjaminan Mutu LPM (Internal GPM)"
                                                         data-tanggal="<?= htmlspecialchars($lpmDate, ENT_QUOTES) ?>"
                                                         data-catatan="<?= htmlspecialchars($lpmNoteClean ?: 'Tidak ada catatan tertulis.', ENT_QUOTES) ?>"
+                                                        data-catatan-unit="<?= htmlspecialchars($doc['catatan_perbaikan_unit'] ?? '', ENT_QUOTES) ?>"
                                                         data-gpm-note="<?= $hasFreshGpmRevisionNote ? htmlspecialchars($doc['gpm_catatan'], ENT_QUOTES) : '' ?>"
                                                         data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '', ENT_QUOTES) ?>"
                                                         data-status="revisi_lpm"
@@ -679,6 +692,18 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                 <?php endif; ?>
                                                 <span>TA: <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></span>
                                             </div>
+
+                                            <?php if (!empty($doc['catatan_perbaikan_unit'])): ?>
+                                                <div class="mt-2.5 p-2 rounded-2 border border-info border-opacity-25 shadow-2xs" style="background: #F0F9FF; font-size: 0.74rem;">
+                                                    <div class="d-flex align-items-center gap-1 fw-bold text-primary mb-0.5">
+                                                        <i class="fas fa-rotate-left"></i>
+                                                        <span>Tindak Lanjut Unit:</span>
+                                                    </div>
+                                                    <div class="text-dark" style="line-height: 1.4; white-space: pre-wrap;">
+                                                        <?= nl2br(htmlspecialchars($doc['catatan_perbaikan_unit'])) ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
 
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
@@ -721,6 +746,7 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                             data-reviewer="Gugus Penjaminan Mutu (GPM) Fakultas"
                                                             data-tanggal="<?= htmlspecialchars($gpmDate, ENT_QUOTES) ?>"
                                                             data-catatan="<?= htmlspecialchars($gpmNote, ENT_QUOTES) ?>"
+                                                            data-catatan-unit="<?= htmlspecialchars($doc['catatan_perbaikan_unit'] ?? '', ENT_QUOTES) ?>"
                                                             data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '', ENT_QUOTES) ?>"
                                                             data-status="revisi_gpm"
                                                             data-is-gpm="1"
@@ -738,6 +764,7 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                                 data-reviewer="Pusat Penjaminan Mutu LPM (Internal GPM)"
                                                                 data-tanggal="<?= htmlspecialchars($unitLpmTs, ENT_QUOTES) ?>"
                                                                 data-catatan="<?= htmlspecialchars($unitLpmNoteClean, ENT_QUOTES) ?>"
+                                                                data-catatan-unit="<?= htmlspecialchars($doc['catatan_perbaikan_unit'] ?? '', ENT_QUOTES) ?>"
                                                                 data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '', ENT_QUOTES) ?>"
                                                                 data-status="revisi_lpm"
                                                                 data-is-gpm="0"
@@ -867,6 +894,18 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                 <?php endif; ?>
                                                 <span>TA: <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></span>
                                             </div>
+
+                                            <?php if (!empty($doc['catatan_perbaikan_unit'])): ?>
+                                                <div class="mt-2.5 p-2 rounded-2 border border-info border-opacity-25 shadow-2xs" style="background: #F0F9FF; font-size: 0.74rem;">
+                                                    <div class="d-flex align-items-center gap-1 fw-bold text-primary mb-0.5">
+                                                        <i class="fas fa-rotate-left"></i>
+                                                        <span>Tindak Lanjut Unit:</span>
+                                                    </div>
+                                                    <div class="text-dark" style="line-height: 1.4; white-space: pre-wrap;">
+                                                        <?= nl2br(htmlspecialchars($doc['catatan_perbaikan_unit'])) ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
 
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
@@ -904,11 +943,13 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                     <button type="button" class="btn btn-xs gpm-note-btn-detail rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#modalCatatanEvaluator"
+                                                            data-doc-id="<?= $doc['id'] ?>"
                                                             data-nama="<?= htmlspecialchars($doc['nama_dokumen'], ENT_QUOTES) ?>"
                                                             data-unit="<?= htmlspecialchars($unitLabel, ENT_QUOTES) ?>"
                                                             data-reviewer="Gugus Penjaminan Mutu (GPM) Fakultas"
                                                             data-tanggal="<?= htmlspecialchars($sRevDate, ENT_QUOTES) ?>"
                                                             data-catatan="<?= htmlspecialchars($sNote, ENT_QUOTES) ?>"
+                                                            data-catatan-unit="<?= htmlspecialchars($doc['catatan_perbaikan_unit'] ?? '', ENT_QUOTES) ?>"
                                                             data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '', ENT_QUOTES) ?>"
                                                             data-status="sudah_diperbaiki"
                                                             data-is-gpm="1"
@@ -1059,6 +1100,18 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                 <?php endif; ?>
                                                 <span>TA: <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></span>
                                             </div>
+
+                                            <?php if (!empty($doc['catatan_perbaikan_unit'])): ?>
+                                                <div class="mt-2.5 p-2 rounded-2 border border-info border-opacity-25 shadow-2xs" style="background: #F0F9FF; font-size: 0.74rem;">
+                                                    <div class="d-flex align-items-center gap-1 fw-bold text-primary mb-0.5">
+                                                        <i class="fas fa-rotate-left"></i>
+                                                        <span>Tindak Lanjut Unit:</span>
+                                                    </div>
+                                                    <div class="text-dark" style="line-height: 1.4; white-space: pre-wrap;">
+                                                        <?= nl2br(htmlspecialchars($doc['catatan_perbaikan_unit'])) ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
 
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
@@ -1216,6 +1269,18 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                 <?php endif; ?>
                                                 <span>TA: <?= htmlspecialchars($doc['tahun_akademik'] ?? '-') ?></span>
                                             </div>
+
+                                            <?php if (!empty($doc['catatan_perbaikan_unit'])): ?>
+                                                <div class="mt-2.5 p-2 rounded-2 border border-info border-opacity-25 shadow-2xs" style="background: #F0F9FF; font-size: 0.74rem;">
+                                                    <div class="d-flex align-items-center gap-1 fw-bold text-primary mb-0.5">
+                                                        <i class="fas fa-rotate-left"></i>
+                                                        <span>Tindak Lanjut Unit:</span>
+                                                    </div>
+                                                    <div class="text-dark" style="line-height: 1.4; white-space: pre-wrap;">
+                                                        <?= nl2br(htmlspecialchars($doc['catatan_perbaikan_unit'])) ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
 
                                         <td class="py-3 px-3 text-center" style="border-end: 1px solid #F1F5F9;">
@@ -1251,6 +1316,7 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                                                             data-reviewer="<?= htmlspecialchars($allReviewer, ENT_QUOTES) ?>"
                                                             data-tanggal="<?= htmlspecialchars($allDate, ENT_QUOTES) ?>"
                                                             data-catatan="<?= htmlspecialchars($allNote, ENT_QUOTES) ?>"
+                                                            data-catatan-unit="<?= htmlspecialchars($doc['catatan_perbaikan_unit'] ?? '', ENT_QUOTES) ?>"
                                                             data-siklus="<?= htmlspecialchars($doc['siklus'] ?? '', ENT_QUOTES) ?>"
                                                             data-status="<?= htmlspecialchars($doc['status_review'] ?? '', ENT_QUOTES) ?>"
                                                             data-is-gpm="<?= $isLpmStage ? '0' : '1' ?>"
@@ -1469,6 +1535,20 @@ $renderPerbaikanReviewBtn = function($doc, $btnLabel = 'Review & Putuskan') {
                         <i class="fas fa-eye-slash"></i>
                         <span>Catatan ini khusus untuk di-review oleh GPM sebelum diteruskan resmi ke unit pengunggah.</span>
                     </div>
+                </div>
+
+                <!-- Catatan Tindak Lanjut Unit -->
+                <div id="evalModalCatatanUnitWrap" class="card border shadow-2xs rounded-4 p-3.5 mt-3" style="background: #F0F9FF; border-color: #BAE6FD !important; border-left: 4px solid #0284C7 !important; display:none;">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                        <span class="fw-bold small d-inline-flex align-items-center gap-1.5" style="color: #0369A1; font-size: 0.82rem;">
+                            <i class="fas fa-rotate-left"></i>
+                            <span>Catatan Tindak Lanjut Revisi oleh Unit Sasaran</span>
+                        </span>
+                        <span class="badge rounded-pill px-2.5 py-0.5 fw-bold" style="background: #E0F2FE; color: #0369A1; font-size: 0.68rem;">
+                            <i class="fas fa-paper-plane me-1"></i> Respon Unit
+                        </span>
+                    </div>
+                    <div class="p-3 rounded-3 bg-white border text-dark" id="evalModalCatatanUnit" style="border-color: #BAE6FD !important; font-size: 0.88rem; line-height: 1.6; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">-</div>
                 </div>
             </div>
             <div class="modal-footer border-top py-3 px-4 bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -1743,6 +1823,18 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('evalModalTanggal').textContent = tanggal;
             document.getElementById('evalModalCatatan').textContent = catatan;
             document.getElementById('evalModalEditBtn').href = editUrl;
+
+            const catatanUnit = btn.getAttribute('data-catatan-unit') || '';
+            const unitWrap = document.getElementById('evalModalCatatanUnitWrap');
+            const unitText = document.getElementById('evalModalCatatanUnit');
+            if (unitWrap && unitText) {
+                if (catatanUnit.trim()) {
+                    unitText.textContent = catatanUnit;
+                    unitWrap.style.display = 'block';
+                } else {
+                    unitWrap.style.display = 'none';
+                }
+            }
 
             const modalLabel = document.getElementById('evalModalLabel');
             const iconEl = document.getElementById('evalModalIcon');

@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../core/Controller.php';
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../core/AuditLogger.php';
+require_once __DIR__ . '/../core/UnitPerformanceCalculator.php';
 
 class AdminFakultasController extends Controller {
 
@@ -92,13 +93,23 @@ class AdminFakultasController extends Controller {
         $stmtProdis->execute([$this->fakultasId]);
         $prodiSummary = $stmtProdis->fetchAll();
 
+        // Cek apakah ada Rapor Kinerja Mutu yang telah diteruskan oleh GPM
+        $stmtRapor = $this->db->prepare("
+            SELECT * FROM unit_kinerja_evaluations 
+            WHERE target_type = 'fakultas' AND fakultas_id = ? AND is_forwarded = 1 
+            ORDER BY forwarded_at DESC LIMIT 1
+        ");
+        $stmtRapor->execute([$this->fakultasId]);
+        $latestRapor = $stmtRapor->fetch() ?: null;
+
         $this->render('admin_fakultas/dashboard', [
-            'pageTitle' => 'Dashboard ' . $this->fakultas['nama_fakultas'],
-            'fakultas' => $this->fakultas,
-            'cycleStats' => $cycleStats,
-            'recentDocs' => $recentDocs,
-            'revisiDocs' => $revisiDocs,
-            'prodiSummary' => $prodiSummary
+            'pageTitle'    => 'Dashboard ' . $this->fakultas['nama_fakultas'],
+            'fakultas'     => $this->fakultas,
+            'cycleStats'   => $cycleStats,
+            'recentDocs'   => $recentDocs,
+            'revisiDocs'   => $revisiDocs,
+            'prodiSummary' => $prodiSummary,
+            'latestRapor'  => $latestRapor
         ]);
     }
 
@@ -118,7 +129,7 @@ class AdminFakultasController extends Controller {
         $page = max(1, (int)($_GET['page'] ?? 1));
 
         // Fetch all bidang for filter
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active=1 ORDER BY id ASC")->fetchAll();
+        $bidangList = $this->getScopedBidangList();
 
         // Ambil daftar prodi di bawah fakultas ini untuk opsi filter unit
         $prodiUnderFakultas = $this->db->query("SELECT id, nama_prodi, jenjang FROM prodis WHERE fakultas_id = {$this->fakultasId} ORDER BY nama_prodi ASC, jenjang ASC")->fetchAll();
@@ -456,7 +467,7 @@ class AdminFakultasController extends Controller {
      */
     public function cycles(): void {
         $existingCyclesWithStages = $this->getExistingCyclesWithStages();
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        $bidangList = $this->getScopedBidangList();
 
         $this->render('admin_fakultas/cycles', [
             'pageTitle' => 'Judul yang Sudah Ada - Tahapan Siklus PPEPP Fakultas',
@@ -467,11 +478,35 @@ class AdminFakultasController extends Controller {
     }
 
     /**
+     * Dapatkan daftar bidang standar yang relevan untuk fakultas ini (universitas atau khusus fakultas ini)
+     */
+    private function getScopedBidangList(): array {
+        return $this->db->query("
+            SELECT * FROM bidang_standar 
+            WHERE is_active = 1 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$this->fakultasId}))
+            ORDER BY id ASC
+        ")->fetchAll();
+    }
+
+    /**
+     * Dapatkan daftar sub-bidang standar yang relevan untuk fakultas ini
+     */
+    private function getScopedSubBidangList(): array {
+        return $this->db->query("
+            SELECT * FROM sub_bidang_standar 
+            WHERE is_active = 1 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$this->fakultasId}))
+            ORDER BY bidang_id ASC, id ASC
+        ")->fetchAll();
+    }
+
+    /**
      * Form Unggah Dokumen Mutu Baru (Batch Mode up to 10)
      */
     public function createDocument(): void {
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active=1 ORDER BY id ASC")->fetchAll();
-        $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active=1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
+        $bidangList = $this->getScopedBidangList();
+        $subBidangList = $this->getScopedSubBidangList();
 
         $existingCyclesWithStages = $this->getExistingCyclesWithStages();
 
@@ -609,8 +644,8 @@ class AdminFakultasController extends Controller {
             ];
         }
 
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active=1 ORDER BY id ASC")->fetchAll();
-        $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active=1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
+        $bidangList = $this->getScopedBidangList();
+        $subBidangList = $this->getScopedSubBidangList();
 
         $doc['files'] = $docFiles;
 
@@ -1903,5 +1938,37 @@ class AdminFakultasController extends Controller {
             echo json_encode(['success' => false, 'message' => 'Gagal mengajukan permohonan: ' . $e->getMessage()]);
             exit;
         }
+    }
+
+    /**
+     * Tampilan Rapor Kinerja Mutu SPMI Dekanat (Diteruskan Resmi oleh GPM)
+     */
+    public function raporKinerja(): void {
+        $tahunAkademik = trim($_GET['tahun_akademik'] ?? 'Semua');
+        $academicYears = UnitPerformanceCalculator::getAcademicYears($this->db);
+
+        $perf = UnitPerformanceCalculator::calculateForUnit($this->db, 'fakultas', $this->fakultasId, $tahunAkademik);
+
+        $this->render('admin_fakultas/rapor_kinerja', [
+            'pageTitle'     => 'Rapor Kinerja Mutu SPMI - Dekanat ' . $this->fakultas['nama_fakultas'],
+            'fakultas'      => $this->fakultas,
+            'academicYears' => $academicYears,
+            'tahunAkademik' => $tahunAkademik,
+            'perf'          => $perf
+        ]);
+    }
+
+    /**
+     * Cetak / Unduh Softfile PDF Rapor Kinerja Mutu Dekanat
+     */
+    public function cetakRaporKinerja(): void {
+        $tahunAkademik = trim($_GET['tahun_akademik'] ?? 'Semua');
+        $perf = UnitPerformanceCalculator::calculateForUnit($this->db, 'fakultas', $this->fakultasId, $tahunAkademik);
+
+        $this->render('shared/rapor_kinerja_cetak', [
+            'pageTitle' => 'Rapor Kinerja Mutu SPMI - ' . $perf['unit_name'],
+            'perf'      => $perf,
+            'isPrint'   => true
+        ]);
     }
 }

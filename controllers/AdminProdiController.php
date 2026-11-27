@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../core/Controller.php';
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../core/AuditLogger.php';
+require_once __DIR__ . '/../core/UnitPerformanceCalculator.php';
 
 class AdminProdiController extends Controller {
 
@@ -86,12 +87,22 @@ class AdminProdiController extends Controller {
         $recentDocs = $stmtRecent->fetchAll();
         $this->attachFilesToDocs($recentDocs);
 
+        // Cek apakah ada Rapor Kinerja Mutu yang telah diteruskan oleh GPM
+        $stmtRapor = $this->db->prepare("
+            SELECT * FROM unit_kinerja_evaluations 
+            WHERE target_type = 'prodi' AND prodi_id = ? AND is_forwarded = 1 
+            ORDER BY forwarded_at DESC LIMIT 1
+        ");
+        $stmtRapor->execute([$this->prodiId]);
+        $latestRapor = $stmtRapor->fetch() ?: null;
+
         $this->render('admin_prodi/dashboard', [
-            'pageTitle' => 'Dashboard ' . $this->prodi['nama_prodi'],
-            'prodi' => $this->prodi,
-            'cycleStats' => $cycleStats,
-            'recentDocs' => $recentDocs,
-            'revisiDocs' => $revisiDocs
+            'pageTitle'   => 'Dashboard ' . $this->prodi['nama_prodi'],
+            'prodi'       => $this->prodi,
+            'cycleStats'  => $cycleStats,
+            'recentDocs'  => $recentDocs,
+            'revisiDocs'  => $revisiDocs,
+            'latestRapor' => $latestRapor
         ]);
     }
 
@@ -134,7 +145,7 @@ class AdminProdiController extends Controller {
      * Daftar Dokumen PPEPP Prodi (Active & Non-Draft)
      */
     public function documents(): void {
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        $bidangList = $this->getScopedBidangList();
 
         // Parameter filter & paginasi
         $siklusFilter  = strtolower(trim($_GET['siklus'] ?? ''));
@@ -499,7 +510,7 @@ class AdminProdiController extends Controller {
      */
     public function cycles(): void {
         $existingCyclesWithStages = $this->getExistingCyclesWithStages();
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        $bidangList = $this->getScopedBidangList();
 
         $this->render('admin_prodi/cycles', [
             'pageTitle' => 'Judul yang Sudah Ada - Tahapan Siklus PPEPP',
@@ -510,11 +521,37 @@ class AdminProdiController extends Controller {
     }
 
     /**
+     * Dapatkan daftar bidang standar yang relevan untuk prodi ini (universitas, fakultas prodi ini, atau khusus prodi ini)
+     */
+    private function getScopedBidangList(): array {
+        $fakId = (int)($this->prodi['fakultas_id'] ?? 0);
+        return $this->db->query("
+            SELECT * FROM bidang_standar 
+            WHERE is_active = 1 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$fakId}) OR (scope = 'prodi' AND prodi_id = {$this->prodiId}))
+            ORDER BY id ASC
+        ")->fetchAll();
+    }
+
+    /**
+     * Dapatkan daftar sub-bidang standar yang relevan untuk prodi ini
+     */
+    private function getScopedSubBidangList(): array {
+        $fakId = (int)($this->prodi['fakultas_id'] ?? 0);
+        return $this->db->query("
+            SELECT * FROM sub_bidang_standar 
+            WHERE is_active = 1 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$fakId}) OR (scope = 'prodi' AND prodi_id = {$this->prodiId}))
+            ORDER BY bidang_id ASC, id ASC
+        ")->fetchAll();
+    }
+
+    /**
      * Form Tambah Dokumen
      */
     public function createDocument(): void {
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
-        $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active = 1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
+        $bidangList = $this->getScopedBidangList();
+        $subBidangList = $this->getScopedSubBidangList();
 
         $existingCyclesWithStages = $this->getExistingCyclesWithStages();
 
@@ -648,8 +685,8 @@ class AdminProdiController extends Controller {
             ];
         }
 
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
-        $subBidangList = $this->db->query("SELECT * FROM sub_bidang_standar WHERE is_active = 1 ORDER BY bidang_id ASC, id ASC")->fetchAll();
+        $bidangList = $this->getScopedBidangList();
+        $subBidangList = $this->getScopedSubBidangList();
 
         $doc['files'] = $docFiles;
 
@@ -2138,5 +2175,37 @@ class AdminProdiController extends Controller {
             echo json_encode(['success' => false, 'message' => 'Gagal mengajukan permohonan: ' . $e->getMessage()]);
             exit;
         }
+    }
+
+    /**
+     * Tampilan Rapor Kinerja Mutu SPMI Program Studi (Diteruskan Resmi oleh GPM)
+     */
+    public function raporKinerja(): void {
+        $tahunAkademik = trim($_GET['tahun_akademik'] ?? 'Semua');
+        $academicYears = UnitPerformanceCalculator::getAcademicYears($this->db);
+
+        $perf = UnitPerformanceCalculator::calculateForUnit($this->db, 'prodi', $this->prodiId, $tahunAkademik);
+
+        $this->render('admin_prodi/rapor_kinerja', [
+            'pageTitle'     => 'Rapor Kinerja Mutu SPMI - ' . $this->prodi['nama_prodi'],
+            'prodi'         => $this->prodi,
+            'academicYears' => $academicYears,
+            'tahunAkademik' => $tahunAkademik,
+            'perf'          => $perf
+        ]);
+    }
+
+    /**
+     * Cetak / Unduh Softfile PDF Rapor Kinerja Mutu Program Studi
+     */
+    public function cetakRaporKinerja(): void {
+        $tahunAkademik = trim($_GET['tahun_akademik'] ?? 'Semua');
+        $perf = UnitPerformanceCalculator::calculateForUnit($this->db, 'prodi', $this->prodiId, $tahunAkademik);
+
+        $this->render('shared/rapor_kinerja_cetak', [
+            'pageTitle' => 'Rapor Kinerja Mutu SPMI - ' . $perf['unit_name'],
+            'perf'      => $perf,
+            'isPrint'   => true
+        ]);
     }
 }

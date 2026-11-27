@@ -431,6 +431,18 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                         </span>
                                     <?php endif; ?>
                                 </div>
+
+                                <?php if (!empty($item['catatan_perbaikan_unit'])): ?>
+                                    <div class="mt-2.5 p-2.5 rounded-3 border border-info border-opacity-25 shadow-2xs" style="background: #F0F9FF; font-size: 0.76rem;">
+                                        <div class="d-flex align-items-center gap-1.5 fw-bold text-primary mb-1">
+                                            <i class="fas fa-rotate-left"></i>
+                                            <span>TINDAK LANJUT REVISI UNIT:</span>
+                                        </div>
+                                        <div class="text-dark" style="line-height: 1.45; white-space: pre-wrap;">
+                                            <?= nl2br(htmlspecialchars($item['catatan_perbaikan_unit'])) ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
 
@@ -444,6 +456,7 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                                     data-reviewer="<?= htmlspecialchars($revLabel) ?>"
                                     data-tanggal="<?= $revDate ?>"
                                     data-catatan="<?= htmlspecialchars($noteExcerpt) ?>"
+                                    data-catatan-unit="<?= htmlspecialchars($item['catatan_perbaikan_unit'] ?? '', ENT_QUOTES) ?>"
                                     data-siklus="<?= htmlspecialchars($item['siklus'] ?? '') ?>"
                                     data-status="<?= $isPerlu ? 'perlu_perbaikan' : 'sudah_diperbaiki' ?>"
                                     data-is-gpm="<?= $isGpmRev ? '1' : '0' ?>"
@@ -643,6 +656,15 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
                         -
                     </div>
                 </div>
+
+                <!-- Catatan Tindak Lanjut Unit -->
+                <div id="evalModalCatatanUnitWrap" class="mt-3 p-3.5 rounded-3 border border-info border-opacity-50" style="background:#F0F9FF; display:none;">
+                    <label class="form-label fw-bold text-primary d-flex align-items-center gap-1.5 mb-1.5" style="font-size: 0.84rem;">
+                        <i class="fas fa-rotate-left"></i>
+                        <span>Catatan Tindak Lanjut Revisi oleh Unit Sasaran:</span>
+                    </label>
+                    <div class="p-3 rounded-3 bg-white border border-info border-opacity-25 text-dark" id="evalModalCatatanUnit" style="font-size: 0.86rem; line-height: 1.55; white-space: pre-wrap;">-</div>
+                </div>
             </div>
             <div class="modal-footer border-top py-2.5 px-4 bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold" data-bs-dismiss="modal">Tutup</button>
@@ -673,6 +695,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const revEl = document.getElementById('evalModalReviewer');
             const tglEl = document.getElementById('evalModalTanggal');
             const catEl = document.getElementById('evalModalCatatan');
+            const catatanUnit = btn.getAttribute('data-catatan-unit') || '';
+            const unitWrap = document.getElementById('evalModalCatatanUnitWrap');
+            const unitText = document.getElementById('evalModalCatatanUnit');
+            if (unitWrap && unitText) {
+                if (catatanUnit.trim()) {
+                    unitText.textContent = catatanUnit;
+                    unitWrap.style.display = 'block';
+                } else {
+                    unitWrap.style.display = 'none';
+                }
+            }
             const editBtn = document.getElementById('evalModalEditBtn');
             const iconEl = document.getElementById('evalModalIcon');
             const isGpm = btn.getAttribute('data-is-gpm') === '1';

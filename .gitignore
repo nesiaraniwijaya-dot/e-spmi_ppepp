@@ -36,6 +36,9 @@ Buku_Panduan_*.docx
 *.xlsx
 bukti_logbook_*/
 screenshots_panduan/
+screenshots_logbook/
+logbook_*.md
+
 
 
 

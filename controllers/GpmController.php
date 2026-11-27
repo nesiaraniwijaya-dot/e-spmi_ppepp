@@ -1040,4 +1040,439 @@ class GpmController extends Controller {
             exit;
         }
     }
+
+    /**
+     * Master Standar Mutu & Bidang (Khusus Fakultas & Prodi Binaan GPM)
+     */
+    public function masterStandar(): void {
+        $prodiIds = array_column($this->prodisList, 'id');
+        $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
+
+        // 1. Ambil semua Bidang yang berlaku untuk Fakultas & Prodi ini (Universitas + Fakultas + Prodi)
+        $bidangList = $this->db->query("
+            SELECT b.*, 
+                   f.nama_fakultas, p.nama_prodi, p.jenjang,
+                   COUNT(DISTINCT d.id) as total_dokumen
+            FROM bidang_standar b
+            LEFT JOIN fakultas f ON b.fakultas_id = f.id
+            LEFT JOIN prodis p ON b.prodi_id = p.id
+            LEFT JOIN ppepp_documents d ON b.id = d.bidang_id AND d.deleted_at IS NULL AND d.status_review != 'draft' 
+                 AND (d.fakultas_id = {$this->fakultasId} OR d.prodi_id IN ({$prodiIdPlaceholder}))
+            WHERE (
+                b.scope = 'universitas'
+                OR (b.scope = 'fakultas' AND b.fakultas_id = {$this->fakultasId})
+                OR (b.scope = 'prodi' AND b.prodi_id IN ({$prodiIdPlaceholder}))
+            )
+            GROUP BY b.id
+            ORDER BY 
+                CASE 
+                    WHEN b.scope = 'fakultas' THEN 1
+                    WHEN b.scope = 'prodi' THEN 2
+                    ELSE 3
+                END,
+                b.id ASC
+        ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        // 2. Ambil semua Sub Bidang Standar (Universitas + Fakultas + Prodi)
+        $subBidangList = $this->db->query("
+            SELECT sb.*, b.nama_bidang, b.kode_bidang,
+                   f.nama_fakultas, p.nama_prodi, p.jenjang,
+                   COUNT(DISTINCT d.id) as total_dokumen
+            FROM sub_bidang_standar sb
+            JOIN bidang_standar b ON sb.bidang_id = b.id
+            LEFT JOIN fakultas f ON sb.fakultas_id = f.id
+            LEFT JOIN prodis p ON sb.prodi_id = p.id
+            LEFT JOIN ppepp_documents d ON sb.id = d.sub_bidang_id AND d.deleted_at IS NULL AND d.status_review != 'draft'
+                 AND (d.fakultas_id = {$this->fakultasId} OR d.prodi_id IN ({$prodiIdPlaceholder}))
+            WHERE (
+                sb.scope = 'universitas'
+                OR (sb.scope = 'fakultas' AND sb.fakultas_id = {$this->fakultasId})
+                OR (sb.scope = 'prodi' AND sb.prodi_id IN ({$prodiIdPlaceholder}))
+            )
+            GROUP BY sb.id
+            ORDER BY 
+                CASE 
+                    WHEN sb.scope = 'fakultas' THEN 1
+                    WHEN sb.scope = 'prodi' THEN 2
+                    ELSE 3
+                END,
+                sb.bidang_id ASC, sb.kode_sub_bidang ASC, sb.id ASC
+        ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        // Hitung statistik & group sub bidang ke masing-masing bidang induk
+        $subByBidang = [];
+        $statBidangFakultas = 0;
+        $statStandarFakultas = 0;
+        $statStandarProdi = 0;
+
+        foreach ($subBidangList as $sb) {
+            $subByBidang[$sb['bidang_id']][] = $sb;
+            if (($sb['scope'] ?? '') === 'fakultas') $statStandarFakultas++;
+            elseif (($sb['scope'] ?? '') === 'prodi') $statStandarProdi++;
+        }
+
+        foreach ($bidangList as &$b) {
+            $b['sub_bidang'] = $subByBidang[$b['id']] ?? [];
+            $b['total_sub'] = count($b['sub_bidang']);
+            if (($b['scope'] ?? '') === 'fakultas') $statBidangFakultas++;
+        }
+        unset($b);
+
+        $this->render('gpm/master_standar', [
+            'pageTitle'           => 'Master Bidang & Standar Mutu | GPM ' . $this->fakultas['nama_fakultas'],
+            'fakultas'            => $this->fakultas,
+            'prodisList'          => $this->prodisList,
+            'bidangList'          => $bidangList,
+            'subBidangList'       => $subBidangList,
+            'statBidangFakultas'  => $statBidangFakultas,
+            'statStandarFakultas' => $statStandarFakultas,
+            'statStandarProdi'    => $statStandarProdi
+        ]);
+    }
+
+    /**
+     * Simpan Tambah / Edit Bidang Standar Khusus oleh GPM
+     */
+    public function saveBidang(): void {
+        $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+        $namaBidang = trim($_POST['nama_bidang'] ?? '');
+        $kodeBidang = strtoupper(trim($_POST['kode_bidang'] ?? ''));
+        $deskripsi = trim($_POST['deskripsi'] ?? '');
+        $scope = trim($_POST['scope'] ?? 'fakultas');
+        $prodiId = !empty($_POST['prodi_id']) ? (int)$_POST['prodi_id'] : null;
+        $isActive = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 1;
+
+        if ($namaBidang === '') {
+            Auth::setFlash('danger', 'Nama Bidang Standar wajib diisi.');
+            redirect('gpm/master-standar');
+            return;
+        }
+
+        if (!in_array($scope, ['fakultas', 'prodi'])) {
+            $scope = 'fakultas';
+        }
+
+        $prodiIds = array_column($this->prodisList, 'id');
+        if ($scope === 'prodi' && (!in_array($prodiId, $prodiIds))) {
+            Auth::setFlash('danger', 'Program Studi yang dipilih tidak valid atau berada di luar naungan fakultas Anda.');
+            redirect('gpm/master-standar');
+            return;
+        }
+
+        if ($scope === 'fakultas') {
+            $prodiId = null;
+        }
+
+        if ($kodeBidang === '') {
+            $prefix = $scope === 'fakultas' ? 'BF-' : 'BP-';
+            $kodeBidang = $prefix . strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $namaBidang), 0, 6)) . '-' . rand(10, 99);
+        }
+
+        if ($id) {
+            $stmtCheck = $this->db->prepare("SELECT * FROM bidang_standar WHERE id = ?");
+            $stmtCheck->execute([$id]);
+            $existing = $stmtCheck->fetch();
+
+            if (!$existing || $existing['scope'] === 'universitas' || (int)$existing['fakultas_id'] !== $this->fakultasId) {
+                Auth::setFlash('danger', 'Akses ditolak: Anda tidak memiliki izin mengubah Bidang Standar tingkat Universitas atau Fakultas lain.');
+                redirect('gpm/master-standar');
+                return;
+            }
+
+            $stmt = $this->db->prepare("
+                UPDATE bidang_standar 
+                SET nama_bidang = ?, kode_bidang = ?, deskripsi = ?, scope = ?, prodi_id = ?, is_active = ?, updated_at = NOW()
+                WHERE id = ? AND fakultas_id = ?
+            ");
+            $stmt->execute([$namaBidang, $kodeBidang, $deskripsi, $scope, $prodiId, $isActive, $id, $this->fakultasId]);
+            Auth::setFlash('success', "Bidang Standar \"{$namaBidang}\" berhasil diperbarui.");
+        } else {
+            $stmt = $this->db->prepare("
+                INSERT INTO bidang_standar (kode_bidang, nama_bidang, deskripsi, scope, fakultas_id, prodi_id, created_by_role, is_active, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'gpm', ?, NOW(), NOW())
+            ");
+            $stmt->execute([$kodeBidang, $namaBidang, $deskripsi, $scope, $this->fakultasId, $prodiId, $isActive]);
+            Auth::setFlash('success', "Bidang Standar baru \"{$namaBidang}\" berhasil ditambahkan.");
+        }
+
+        redirect('gpm/master-standar');
+    }
+
+    /**
+     * Hapus Bidang Khusus oleh GPM
+     */
+    public function deleteBidang(string $id): void {
+        $bidangId = (int)$id;
+        $stmtCheck = $this->db->prepare("SELECT * FROM bidang_standar WHERE id = ?");
+        $stmtCheck->execute([$bidangId]);
+        $existing = $stmtCheck->fetch();
+
+        if (!$existing || $existing['scope'] === 'universitas' || (int)$existing['fakultas_id'] !== $this->fakultasId) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak dapat menghapus Bidang Standar Universitas atau milik Fakultas lain.');
+            redirect('gpm/master-standar');
+            return;
+        }
+
+        $countDocs = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE bidang_id = {$bidangId} AND deleted_at IS NULL")->fetchColumn();
+
+        if ($countDocs > 0) {
+            $this->db->prepare("UPDATE bidang_standar SET is_active = 0 WHERE id = ?")->execute([$bidangId]);
+            Auth::setFlash('warning', "Bidang Standar \"{$existing['nama_bidang']}\" dinonaktifkan karena sudah terkait dengan {$countDocs} dokumen mutu aktif.");
+        } else {
+            $this->db->prepare("DELETE FROM sub_bidang_standar WHERE bidang_id = ? AND scope != 'universitas'")->execute([$bidangId]);
+            $this->db->prepare("DELETE FROM bidang_standar WHERE id = ?")->execute([$bidangId]);
+            Auth::setFlash('success', "Bidang Standar \"{$existing['nama_bidang']}\" berhasil dihapus.");
+        }
+
+        redirect('gpm/master-standar');
+    }
+
+    /**
+     * Simpan Tambah / Edit Standar Mutu (Sub-Bidang) Khusus oleh GPM
+     */
+    public function saveSubBidang(): void {
+        $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+        $bidangId = (int)($_POST['bidang_id'] ?? 0);
+        $namaSubBidang = trim($_POST['nama_sub_bidang'] ?? '');
+        $kodeSubBidang = strtoupper(trim($_POST['kode_sub_bidang'] ?? ''));
+        $deskripsi = trim($_POST['deskripsi'] ?? '');
+        $scope = trim($_POST['scope'] ?? 'fakultas');
+        $prodiId = !empty($_POST['prodi_id']) ? (int)$_POST['prodi_id'] : null;
+        $isActive = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 1;
+
+        if ($namaSubBidang === '' || $bidangId <= 0) {
+            Auth::setFlash('danger', 'Bidang Mutu dan Nama Standar Mutu wajib diisi.');
+            redirect('gpm/master-standar');
+            return;
+        }
+
+        if (!in_array($scope, ['fakultas', 'prodi'])) {
+            $scope = 'fakultas';
+        }
+
+        $prodiIds = array_column($this->prodisList, 'id');
+        if ($scope === 'prodi' && (!in_array($prodiId, $prodiIds))) {
+            Auth::setFlash('danger', 'Program Studi yang dipilih tidak valid.');
+            redirect('gpm/master-standar');
+            return;
+        }
+
+        if ($scope === 'fakultas') {
+            $prodiId = null;
+        }
+
+        $prodiIdPlaceholder = !empty($prodiIds) ? implode(',', array_map('intval', $prodiIds)) : '0';
+        $bCheck = $this->db->query("
+            SELECT * FROM bidang_standar 
+            WHERE id = {$bidangId} 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$this->fakultasId}) OR (scope = 'prodi' AND prodi_id IN ({$prodiIdPlaceholder})))
+        ")->fetch();
+
+        if (!$bCheck) {
+            Auth::setFlash('danger', 'Bidang Mutu yang dipilih tidak valid atau berada di luar wewenang Anda.');
+            redirect('gpm/master-standar');
+            return;
+        }
+
+        if ($kodeSubBidang === '') {
+            $prefix = $scope === 'fakultas' ? 'SF-' : 'SP-';
+            $kodeSubBidang = $prefix . strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $namaSubBidang), 0, 6)) . '-' . rand(10, 99);
+        }
+
+        if ($id) {
+            $stmtCheck = $this->db->prepare("SELECT * FROM sub_bidang_standar WHERE id = ?");
+            $stmtCheck->execute([$id]);
+            $existing = $stmtCheck->fetch();
+
+            if (!$existing || $existing['scope'] === 'universitas' || (int)$existing['fakultas_id'] !== $this->fakultasId) {
+                Auth::setFlash('danger', 'Akses ditolak: Anda tidak dapat mengubah Standar Mutu Universitas atau milik Fakultas lain.');
+                redirect('gpm/master-standar');
+                return;
+            }
+
+            $stmt = $this->db->prepare("
+                UPDATE sub_bidang_standar 
+                SET bidang_id = ?, nama_sub_bidang = ?, kode_sub_bidang = ?, deskripsi = ?, scope = ?, prodi_id = ?, is_active = ?, updated_at = NOW()
+                WHERE id = ? AND fakultas_id = ?
+            ");
+            $stmt->execute([$bidangId, $namaSubBidang, $kodeSubBidang, $deskripsi, $scope, $prodiId, $isActive, $id, $this->fakultasId]);
+            Auth::setFlash('success', "Standar Mutu \"{$namaSubBidang}\" berhasil diperbarui.");
+        } else {
+            $stmt = $this->db->prepare("
+                INSERT INTO sub_bidang_standar (bidang_id, kode_sub_bidang, nama_sub_bidang, deskripsi, scope, fakultas_id, prodi_id, created_by_role, is_active, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'gpm', ?, NOW(), NOW())
+            ");
+            $stmt->execute([$bidangId, $kodeSubBidang, $namaSubBidang, $deskripsi, $scope, $this->fakultasId, $prodiId, $isActive]);
+            Auth::setFlash('success', "Standar Mutu baru \"{$namaSubBidang}\" berhasil ditambahkan.");
+        }
+
+        redirect('gpm/master-standar');
+    }
+
+    /**
+     * Hapus Standar Mutu (Sub-Bidang) Khusus oleh GPM
+     */
+    public function deleteSubBidang(string $id): void {
+        $subId = (int)$id;
+        $stmtCheck = $this->db->prepare("SELECT * FROM sub_bidang_standar WHERE id = ?");
+        $stmtCheck->execute([$subId]);
+        $existing = $stmtCheck->fetch();
+
+        if (!$existing || $existing['scope'] === 'universitas' || (int)$existing['fakultas_id'] !== $this->fakultasId) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda tidak dapat menghapus Standar Mutu Universitas atau milik Fakultas lain.');
+            redirect('gpm/master-standar');
+            return;
+        }
+
+        $countDocs = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_documents WHERE sub_bidang_id = {$subId} AND deleted_at IS NULL")->fetchColumn();
+        $countFiles = (int)$this->db->query("SELECT COUNT(*) FROM ppepp_document_files WHERE sub_bidang_ids LIKE '%\"{$subId}\"%' OR sub_bidang_ids LIKE '%{$subId}%'")->fetchColumn();
+
+        if ($countDocs > 0 || $countFiles > 0) {
+            $this->db->prepare("UPDATE sub_bidang_standar SET is_active = 0 WHERE id = ?")->execute([$subId]);
+            Auth::setFlash('warning', "Standar Mutu \"{$existing['nama_sub_bidang']}\" dinonaktifkan karena telah tertaut dengan dokumen mutu aktif.");
+        } else {
+            $this->db->prepare("DELETE FROM sub_bidang_standar WHERE id = ?")->execute([$subId]);
+            Auth::setFlash('success', "Standar Mutu \"{$existing['nama_sub_bidang']}\" berhasil dihapus.");
+        }
+
+        redirect('gpm/master-standar');
+    }
+
+    /**
+     * Halaman Monitoring Kinerja Unit (Dekanat & Prodi di Bawah Fakultas Ini)
+     */
+    public function monitoringKinerja(): void {
+        $tahunAkademik = trim($_GET['tahun_akademik'] ?? 'Semua');
+        $academicYears = UnitPerformanceCalculator::getAcademicYears($this->db);
+
+        // 1. Hitung Kinerja Dekanat (Tingkat Fakultas)
+        $fakultasPerf = UnitPerformanceCalculator::calculateForUnit($this->db, 'fakultas', $this->fakultasId, $tahunAkademik);
+
+        // 2. Hitung Kinerja Tiap Program Studi di bawah Fakultas ini
+        $prodiPerfs = [];
+        foreach ($this->prodisList as $prd) {
+            $prodiPerfs[] = UnitPerformanceCalculator::calculateForUnit($this->db, 'prodi', (int)$prd['id'], $tahunAkademik);
+        }
+
+        // 3. Ringkasan KPI Kinerja Fakultas & Prodi
+        $allUnits = array_merge([$fakultasPerf], $prodiPerfs);
+        $totalUnits = count($allUnits);
+        $validScores = array_filter(array_column($allUnits, 'skor_total'), fn($s) => $s > 0);
+        $avgScore = !empty($validScores) ? round(array_sum($validScores) / count($validScores), 1) : 0.0;
+
+        $predikatCounts = [
+            'Sangat Baik' => count(array_filter($allUnits, fn($u) => $u['predikat'] === 'Sangat Baik')),
+            'Baik'        => count(array_filter($allUnits, fn($u) => $u['predikat'] === 'Baik')),
+            'Cukup'       => count(array_filter($allUnits, fn($u) => $u['predikat'] === 'Cukup')),
+            'Perlu Pembinaan' => count(array_filter($allUnits, fn($u) => $u['predikat'] === 'Perlu Pembinaan')),
+            'Belum Ada Dokumen' => count(array_filter($allUnits, fn($u) => $u['predikat'] === 'Belum Ada Dokumen'))
+        ];
+
+        $unitsWithEmptyCycles = count(array_filter($allUnits, fn($u) => !empty($u['siklus_kosong'])));
+        $totalForwarded = count(array_filter($allUnits, fn($u) => !empty($u['is_forwarded'])));
+
+        $this->render('gpm/monitoring_kinerja', [
+            'pageTitle'            => 'Monitoring Kinerja Prodi & Dekanat',
+            'fakultas'             => $this->fakultas,
+            'tahunAkademik'        => $tahunAkademik,
+            'academicYears'        => $academicYears,
+            'fakultasPerf'         => $fakultasPerf,
+            'prodiPerfs'           => $prodiPerfs,
+            'totalUnits'           => $totalUnits,
+            'avgScore'             => $avgScore,
+            'predikatCounts'       => $predikatCounts,
+            'unitsWithEmptyCycles' => $unitsWithEmptyCycles,
+            'totalForwarded'       => $totalForwarded
+        ]);
+    }
+
+    /**
+     * Simpan Catatan Pembinaan GPM & Teruskan Rapor Kinerja ke Unit
+     */
+    public function saveKinerjaEvaluation(): void {
+        $targetType = trim($_POST['target_type'] ?? '');
+        $targetId   = (int)($_POST['target_id'] ?? 0);
+        $ta         = trim($_POST['tahun_akademik'] ?? 'Semua');
+        $catatanGpm = trim($_POST['catatan_gpm'] ?? '');
+        $actionType = trim($_POST['action_type'] ?? 'save'); // 'save' | 'forward'
+
+        if (!in_array($targetType, ['fakultas', 'prodi']) || $targetId <= 0) {
+            Auth::setFlash('danger', 'Parameter unit sasaran tidak valid.');
+            redirect('gpm/monitoring-kinerja');
+            return;
+        }
+
+        // Validasi kepemilikan unit terhadap fakultas ini
+        if ($targetType === 'fakultas' && $targetId !== $this->fakultasId) {
+            Auth::setFlash('danger', 'Akses ditolak: Anda hanya dapat mengevaluasi Dekanat fakultas Anda.');
+            redirect('gpm/monitoring-kinerja');
+            return;
+        }
+        if ($targetType === 'prodi') {
+            $prodiIds = array_column($this->prodisList, 'id');
+            if (!in_array($targetId, $prodiIds)) {
+                Auth::setFlash('danger', 'Akses ditolak: Program studi tidak berada di bawah fakultas Anda.');
+                redirect('gpm/monitoring-kinerja');
+                return;
+            }
+        }
+
+        $perf = UnitPerformanceCalculator::calculateForUnit($this->db, $targetType, $targetId, $ta);
+        $isForward = ($actionType === 'forward');
+
+        $saveData = [
+            'target_type'         => $targetType,
+            'fakultas_id'         => $this->fakultasId,
+            'prodi_id'            => ($targetType === 'prodi') ? $targetId : null,
+            'tahun_akademik'      => $ta,
+            'skor_otomatis'       => $perf['skor_total'],
+            'predikat'            => $perf['predikat'],
+            'siklus_terpenuhi'    => $perf['siklus_terpenuhi'],
+            'siklus_kosong'       => $perf['siklus_kosong'],
+            'catatan_gpm'         => $catatanGpm,
+            'gpm_user_id'         => Auth::id(),
+            'gpm_user_name'       => Auth::name(),
+            'is_forwarded'        => $isForward ? 1 : ($perf['is_forwarded'] ? 1 : 0),
+            'forwarded_by_user_id'=> $isForward ? Auth::id() : ($perf['eval_record']['forwarded_by_user_id'] ?? null),
+            'forwarded_by_name'   => $isForward ? Auth::name() : ($perf['eval_record']['forwarded_by_name'] ?? null)
+        ];
+
+        UnitPerformanceCalculator::saveEvaluation($this->db, $saveData);
+
+        if ($isForward) {
+            Auth::setFlash('success', "Rapor Kinerja & Arahan Pembinaan berhasil resmi diteruskan ke {$perf['unit_name']}. Unit kini dapat melihat dan mengunduh softfile rapornya.");
+        } else {
+            Auth::setFlash('success', "Catatan Arahan Pembinaan untuk {$perf['unit_name']} berhasil disimpan.");
+        }
+
+        redirect('gpm/monitoring-kinerja?tahun_akademik=' . urlencode($ta));
+    }
+
+    /**
+     * Cetak / Pratinjau Softfile Rapor Kinerja Unit
+     */
+    public function cetakRaporKinerja(string $type, string $id): void {
+        $targetType = ($type === 'fakultas') ? 'fakultas' : 'prodi';
+        $targetId   = (int)$id;
+        $ta         = trim($_GET['tahun_akademik'] ?? 'Semua');
+
+        // Validasi hak akses GPM
+        if ($targetType === 'fakultas' && $targetId !== $this->fakultasId) {
+            die('Akses ditolak.');
+        }
+        if ($targetType === 'prodi') {
+            $prodiIds = array_column($this->prodisList, 'id');
+            if (!in_array($targetId, $prodiIds)) {
+                die('Akses ditolak.');
+            }
+        }
+
+        $perf = UnitPerformanceCalculator::calculateForUnit($this->db, $targetType, $targetId, $ta);
+
+        $this->render('shared/rapor_kinerja_cetak', [
+            'pageTitle' => 'Rapor Kinerja Mutu SPMI - ' . $perf['unit_name'],
+            'perf'      => $perf,
+            'isPrint'   => true
+        ]);
+    }
 }

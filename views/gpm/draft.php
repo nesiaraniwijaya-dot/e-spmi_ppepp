@@ -30,7 +30,7 @@ foreach ($draftDocs as $d) {
         <div>
             <div class="d-flex align-items-center gap-2 mb-1.5">
                 <span class="badge rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.76rem;">
-                    <i class="fas fa-shield-halved"></i> GPM <?= htmlspecialchars($fakultas['singkatan'] ?? $fakultas['nama_fakultas'] ?? '') ?>
+                    <i class="fas fa-shield-halved"></i> GPM <?= htmlspecialchars($fakultas['kode_fakultas'] ?? $fakultas['singkatan'] ?? $fakultas['nama_fakultas'] ?? '') ?>
                 </span>
                 <span class="text-muted small">&bull;</span>
                 <span class="badge rounded-pill px-2.5 py-1 fw-semibold text-secondary d-inline-flex align-items-center gap-1" style="background: #F1F5F9; border: 1px solid #E2E8F0; font-size: 0.75rem;">

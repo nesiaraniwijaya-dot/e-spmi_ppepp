@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../core/Controller.php';
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../core/AuditLogger.php';
+require_once __DIR__ . '/../core/UnitPerformanceCalculator.php';
 
 class SuperAdminController extends Controller {
 
@@ -394,8 +395,9 @@ class SuperAdminController extends Controller {
         }
 
         $stmt = $this->db->query("
-            SELECT b.*, COUNT(d.id) as total_dokumen
+            SELECT b.*, f.kode_fakultas, f.nama_fakultas, COUNT(d.id) as total_dokumen
             FROM bidang_standar b
+            LEFT JOIN fakultas f ON b.fakultas_id = f.id
             LEFT JOIN ppepp_documents d ON b.id = d.bidang_id AND d.deleted_at IS NULL AND d.status_review != 'draft'
             GROUP BY b.id
             ORDER BY b.id ASC
@@ -404,8 +406,10 @@ class SuperAdminController extends Controller {
 
         // Fetch sub-bidang standar with total associated documents
         $stmtSub = $this->db->query("
-            SELECT s.*, COUNT(d.id) as total_dokumen
+            SELECT s.*, f.kode_fakultas, p.nama_prodi, COUNT(d.id) as total_dokumen
             FROM sub_bidang_standar s
+            LEFT JOIN fakultas f ON s.fakultas_id = f.id
+            LEFT JOIN prodis p ON s.prodi_id = p.id
             LEFT JOIN ppepp_documents d ON s.id = d.sub_bidang_id AND d.deleted_at IS NULL AND d.status_review != 'draft'
             GROUP BY s.id
             ORDER BY s.bidang_id ASC, s.kode_sub_bidang ASC, s.id ASC
@@ -1248,7 +1252,13 @@ class SuperAdminController extends Controller {
         // Master lists untuk filter terpusat
         $fakultasList = $this->db->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas ORDER BY nama_fakultas ASC")->fetchAll();
         $prodiList = $this->db->query("SELECT id, fakultas_id, nama_prodi, kode_prodi, jenjang FROM prodis ORDER BY nama_prodi ASC")->fetchAll();
-        $bidangList = $this->db->query("SELECT id, nama_bidang, kode_bidang FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        $bidangList = $this->db->query("
+            SELECT b.id, b.nama_bidang, b.kode_bidang, b.scope, b.fakultas_id, f.kode_fakultas 
+            FROM bidang_standar b 
+            LEFT JOIN fakultas f ON b.fakultas_id = f.id 
+            WHERE b.is_active = 1 
+            ORDER BY b.id ASC
+        ")->fetchAll();
 
         // Data Ringkasan Kepatuhan per Unit (Prodi) untuk Tab 2
         $stmtProdiSummary = $this->db->query("
@@ -1759,7 +1769,13 @@ class SuperAdminController extends Controller {
             exit;
         }
 
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        $prodiFakId = (int)($prodi['fakultas_id'] ?? 0);
+        $bidangList = $this->db->query("
+            SELECT * FROM bidang_standar 
+            WHERE is_active = 1 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$prodiFakId}) OR (scope = 'prodi' AND prodi_id = {$id}))
+            ORDER BY id ASC
+        ")->fetchAll();
 
         $this->render('super_admin/review_prodi', [
             'pageTitle'      => 'Review Dokumen: ' . $prodi['nama_prodi'],
@@ -1963,7 +1979,12 @@ class SuperAdminController extends Controller {
             exit;
         }
 
-        $bidangList = $this->db->query("SELECT * FROM bidang_standar WHERE is_active = 1 ORDER BY id ASC")->fetchAll();
+        $bidangList = $this->db->query("
+            SELECT * FROM bidang_standar 
+            WHERE is_active = 1 
+              AND (scope = 'universitas' OR (scope = 'fakultas' AND fakultas_id = {$id}))
+            ORDER BY id ASC
+        ")->fetchAll();
 
         $this->render('super_admin/review_fakultas', [
             'pageTitle'      => 'Review Dokumen PPEPP ' . $fakultas['nama_fakultas'],
@@ -3968,5 +3989,202 @@ class SuperAdminController extends Controller {
         }
 
         redirect('admin/menu-permissions');
+    }
+
+    /**
+     * Monitoring Kinerja Unit (Dekanat & Program Studi) Seluruh Universitas
+     */
+    public function monitoringKinerjaUnit(): void {
+        $fakultasFilter = trim($_GET['fakultas_id'] ?? 'all');
+        $taFilter       = trim($_GET['tahun_akademik'] ?? 'Semua');
+        $targetType     = trim($_GET['target_type'] ?? 'all'); // 'all', 'fakultas', 'prodi'
+        $predikatFilter = trim($_GET['predikat'] ?? 'all');
+        $searchQuery    = trim($_GET['q'] ?? '');
+
+        // 1. Data referensi filter
+        $academicYears = UnitPerformanceCalculator::getAcademicYears($this->db);
+        $fakultasList = $this->db->query("SELECT id, nama_fakultas, kode_fakultas FROM fakultas ORDER BY nama_fakultas ASC")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $allResults = [];
+
+        // Hitung Kinerja Dekanat (Fakultas)
+        if ($targetType === 'all' || $targetType === 'fakultas') {
+            foreach ($fakultasList as $fak) {
+                if ($fakultasFilter !== 'all' && (int)$fak['id'] !== (int)$fakultasFilter) {
+                    continue;
+                }
+                $perf = UnitPerformanceCalculator::calculateForUnit($this->db, 'fakultas', (int)$fak['id'], $taFilter);
+                $allResults[] = $perf;
+            }
+        }
+
+        // Hitung Kinerja Program Studi
+        if ($targetType === 'all' || $targetType === 'prodi') {
+            $queryProdis = "SELECT id, fakultas_id, nama_prodi, jenjang FROM prodis";
+            $paramsP = [];
+            if ($fakultasFilter !== 'all' && is_numeric($fakultasFilter)) {
+                $queryProdis .= " WHERE fakultas_id = ?";
+                $paramsP[] = (int)$fakultasFilter;
+            }
+            $queryProdis .= " ORDER BY fakultas_id ASC, nama_prodi ASC";
+            $stmtProdis = $this->db->prepare($queryProdis);
+            $stmtProdis->execute($paramsP);
+            $prodis = $stmtProdis->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+            foreach ($prodis as $prd) {
+                $perf = UnitPerformanceCalculator::calculateForUnit($this->db, 'prodi', (int)$prd['id'], $taFilter);
+                $allResults[] = $perf;
+            }
+        }
+
+        // Filter Predikat & Search Query
+        $filteredResults = [];
+        $totalScoreSum = 0;
+        $predikatCounts = [
+            'Sangat Baik'     => 0,
+            'Baik'            => 0,
+            'Cukup'           => 0,
+            'Perlu Pembinaan' => 0
+        ];
+        $emptyCyclesCount = 0;
+        $forwardedCount = 0;
+
+        foreach ($allResults as $res) {
+            $score = $res['skor_total'];
+            $pred = $res['predikat'];
+
+            if (isset($predikatCounts[$pred])) {
+                $predikatCounts[$pred]++;
+            }
+            if (!empty($res['siklus_kosong'])) {
+                $emptyCyclesCount++;
+            }
+            if (!empty($res['is_forwarded'])) {
+                $forwardedCount++;
+            }
+            $totalScoreSum += $score;
+
+            // Apply Predikat Filter
+            if ($predikatFilter !== 'all' && $pred !== $predikatFilter) {
+                continue;
+            }
+
+            // Apply Search Query Filter
+            if ($searchQuery !== '') {
+                $matchUnit = stripos($res['unit_name'], $searchQuery) !== false;
+                $matchFak = stripos($res['fakultas_name'], $searchQuery) !== false;
+                $matchPimpinan = stripos($res['pimpinan_name'], $searchQuery) !== false;
+                if (!$matchUnit && !$matchFak && !$matchPimpinan) {
+                    continue;
+                }
+            }
+
+            $filteredResults[] = $res;
+        }
+
+        // Urutkan berdasarkan Skor Tertinggi (Leaderboard)
+        usort($filteredResults, function($a, $b) {
+            return $b['skor_total'] <=> $a['skor_total'];
+        });
+
+        $totalUnits = count($allResults);
+        $avgScore = $totalUnits > 0 ? round($totalScoreSum / $totalUnits, 1) : 0;
+
+        $this->render('super_admin/monitoring_kinerja_unit', [
+            'pageTitle'       => 'Monitoring Kinerja Unit (Dekanat & Program Studi)',
+            'academicYears'   => $academicYears,
+            'fakultasList'    => $fakultasList,
+            'currentFakultas' => $fakultasFilter,
+            'currentTa'       => $taFilter,
+            'currentType'     => $targetType,
+            'currentPredikat' => $predikatFilter,
+            'currentSearch'   => $searchQuery,
+            'results'         => $filteredResults,
+            'totalUnits'      => $totalUnits,
+            'avgScore'        => $avgScore,
+            'predikatCounts'  => $predikatCounts,
+            'emptyCyclesCount'=> $emptyCyclesCount,
+            'forwardedCount'  => $forwardedCount
+        ]);
+    }
+
+    /**
+     * Simpan Catatan / Masukan Evaluasi LPM
+     */
+    public function saveKinerjaLpmNote(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('admin/monitoring-kinerja-unit');
+            return;
+        }
+
+        $targetType = trim($_POST['target_type'] ?? '');
+        $targetId   = (int)($_POST['target_id'] ?? 0);
+        $ta         = trim($_POST['tahun_akademik'] ?? 'Semua');
+        $catatanLpm = trim($_POST['catatan_lpm'] ?? '');
+
+        if (!in_array($targetType, ['fakultas', 'prodi']) || $targetId <= 0) {
+            Auth::setFlash('danger', 'Parameter evaluasi unit tidak valid.');
+            redirect('admin/monitoring-kinerja-unit');
+            return;
+        }
+
+        $currentUser = Auth::user();
+
+        // Hitung ulang kalkulasi terbaru
+        $perf = UnitPerformanceCalculator::calculateForUnit($this->db, $targetType, $targetId, $ta);
+
+        $fakultasId = ($targetType === 'fakultas') ? $targetId : (int)($perf['fakultas_id'] ?? 0);
+        $prodiId    = ($targetType === 'prodi') ? $targetId : null;
+
+        $saveData = [
+            'target_type'       => $targetType,
+            'fakultas_id'       => $fakultasId,
+            'prodi_id'          => $prodiId,
+            'tahun_akademik'    => $ta,
+            'skor_otomatis'     => $perf['skor_total'],
+            'predikat'          => $perf['predikat'],
+            'siklus_terpenuhi'  => $perf['siklus_terpenuhi'],
+            'siklus_kosong'     => $perf['siklus_kosong'],
+            'catatan_lpm'       => $catatanLpm,
+            'lpm_user_id'       => $currentUser['id'] ?? null,
+            'lpm_user_name'     => $currentUser['name'] ?? 'LPM Universitas',
+            'lpm_evaluated_at'  => date('Y-m-d H:i:s')
+        ];
+
+        $saved = UnitPerformanceCalculator::saveEvaluation($this->db, $saveData);
+
+        if ($saved) {
+            AuditLogger::log('EVALUATION', 'Kinerja Mutu Unit', $targetType . ':' . $targetId, 'LPM memberikan catatan evaluasi untuk ' . $perf['unit_name'] . ' (TA: ' . $ta . ')');
+            Auth::setFlash('success', 'Catatan dan masukan pembinaan LPM untuk ' . htmlspecialchars($perf['unit_name']) . ' berhasil disimpan!');
+        } else {
+            Auth::setFlash('danger', 'Gagal menyimpan evaluasi LPM ke database.');
+        }
+
+        $redirectQuery = http_build_query([
+            'fakultas_id'    => $_POST['filter_fakultas'] ?? 'all',
+            'tahun_akademik' => $ta,
+            'target_type'    => $_POST['filter_type'] ?? 'all',
+            'predikat'       => $_POST['filter_predikat'] ?? 'all',
+            'q'              => $_POST['filter_q'] ?? ''
+        ]);
+
+        redirect('admin/monitoring-kinerja-unit?' . $redirectQuery);
+    }
+
+    /**
+     * Cetak Softfile Rapor Kinerja Unit dari LPM
+     */
+    public function cetakRaporKinerjaUnit(string $type, string $id): void {
+        $targetType = ($type === 'fakultas') ? 'fakultas' : 'prodi';
+        $targetId   = (int)$id;
+        $ta         = trim($_GET['tahun_akademik'] ?? 'Semua');
+
+        $perf = UnitPerformanceCalculator::calculateForUnit($this->db, $targetType, $targetId, $ta);
+
+        $this->render('shared/rapor_kinerja_cetak', [
+            'pageTitle' => 'Rapor Kinerja Mutu SPMI - ' . $perf['unit_name'],
+            'perf'      => $perf,
+            'isPrint'   => true
+        ]);
     }
 }

@@ -56,7 +56,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
                         </span>
                         <span class="text-white-50 small d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
                             <i class="fas fa-landmark text-primary-subtle opacity-75"></i>
-                            <span><?= htmlspecialchars($fakultas['singkatan'] ?? $fakultas['nama_fakultas']) ?></span>
+                            <span><?= htmlspecialchars($fakultas['kode_fakultas'] ?? $fakultas['singkatan'] ?? $fakultas['nama_fakultas']) ?></span>
                         </span>
                     </div>
 
@@ -220,7 +220,12 @@ require ROOT_PATH . '/views/public/components/ppepp_unit_nav.php';
 
                 <!-- Single Optimized Table Container -->
                 <div id="ppeppTableContainer">
-                    <?php renderDocTable($allDocuments, 'ppeppDocumentTable'); ?>
+                    <?php 
+                    $docs = $allDocuments; 
+                    $tableId = 'ppeppDocumentTable'; 
+                    $unitTypeLabel = 'Admin Fakultas'; 
+                    require ROOT_PATH . '/views/public/doc_table_partial.php'; 
+                    ?>
                 </div>
 
                 <!-- Footer Table Pagination Controls -->
@@ -251,7 +256,8 @@ function changeFakultasPpeppCycleTab(cycle, btn) {
 /**
  * Helper function to render table markup
  */
-function renderDocTable(array $docs, string $tableId = ''): void {
+if (!function_exists('renderFakultasDocTable')) {
+function renderFakultasDocTable(array $docs, string $tableId = ''): void {
     ?>
     <div class="table-responsive">
         <table class="table table-custom table-hover align-middle mb-0" <?= $tableId ? 'id="'.$tableId.'"' : '' ?>>
@@ -541,6 +547,7 @@ function renderDocTable(array $docs, string $tableId = ''): void {
         </table>
     </div>
     <?php
+}
 }
 ?>
 

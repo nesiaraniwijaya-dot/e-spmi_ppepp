@@ -37,6 +37,36 @@ require_once ROOT_PATH . '/views/layouts/admin_header.php';
         </div>
     </div>
 
+    <?php if (!empty($latestRapor)): ?>
+        <!-- Banner Notifikasi Rapor Kinerja Mutu Diteruskan GPM -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #fff;">
+            <div class="card-body p-3.5 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 48px; height: 48px;">
+                        <i class="fas fa-award fa-xl"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-warning text-dark fw-bold px-2 py-0.5" style="font-size: 0.7rem;">Rapor Mutu Resmi</span>
+                            <span class="badge bg-white text-primary fw-bold px-2 py-0.5" style="font-size: 0.7rem;">TA <?= htmlspecialchars($latestRapor['tahun_akademik']) ?></span>
+                            <span class="text-white-50 small">&bull; Diteruskan <?= date('d M Y', strtotime($latestRapor['forwarded_at'])) ?></span>
+                        </div>
+                        <h6 class="fw-bold mb-0 text-white">Rapor Kinerja Mutu SPMI Dekanat Telah Diterbitkan GPM</h6>
+                        <small class="text-white-75">Skor Mutu: <strong><?= number_format($latestRapor['skor_otomatis'], 1) ?>/100</strong> (Predikat: <strong><?= htmlspecialchars($latestRapor['predikat']) ?></strong>). Tinjau pemenuhan 5 siklus dan arahan pembinaan.</small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-shrink-0">
+                    <a href="<?= base_url('fakultas/rapor-kinerja?tahun_akademik=' . urlencode($latestRapor['tahun_akademik'])) ?>" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold shadow-sm text-dark">
+                        <i class="fas fa-eye me-1"></i> Lihat Rapor &amp; Arahan
+                    </a>
+                    <a href="<?= base_url('fakultas/rapor-kinerja/cetak?tahun_akademik=' . urlencode($latestRapor['tahun_akademik'])) ?>" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-3 shadow-sm">
+                        <i class="fas fa-file-pdf me-1"></i> Cetak Softfile
+                    </a>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- Dekanat Profile Card -->
     <div class="card bg-white border-0 shadow-sm rounded-4 p-3.5 mb-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
