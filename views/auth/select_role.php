@@ -98,6 +98,11 @@ $userEmail = $_SESSION['user_email'] ?? '';
                                                 <h6 class="fw-bold mb-0 text-dark-blue text-truncate" style="font-size: 0.98rem;">
                                                     <?= htmlspecialchars($title) ?>
                                                 </h6>
+                                                <?php if (!empty($asg['nama_lengkap_gelar'])): ?>
+                                                    <div class="small fw-semibold text-primary mt-1 text-truncate" title="<?= htmlspecialchars($asg['nama_lengkap_gelar']) ?>" style="font-size: 0.8rem;">
+                                                        <i class="fas fa-user-tag me-1"></i> <?= htmlspecialchars($asg['nama_lengkap_gelar']) ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
 

@@ -280,7 +280,12 @@ if ($currentUser && Auth::isProdi() && $headerProdiId > 0) {
                                         <i class="fas <?= $asgIcon ?> flex-shrink-0"></i>
                                         <div class="text-truncate">
                                             <div class="small text-truncate"><?= htmlspecialchars($asgTitle) ?></div>
-                                            <div class="text-muted" style="font-size: 0.68rem;"><?= htmlspecialchars($asgSub) ?></div>
+                                            <div class="text-muted" style="font-size: 0.68rem;">
+                                                <?= htmlspecialchars($asgSub) ?>
+                                                <?php if (!empty($asg['nama_lengkap_gelar'])): ?>
+                                                    &bull; <span class="text-primary fw-semibold"><?= htmlspecialchars($asg['nama_lengkap_gelar']) ?></span>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
                                     <?php if ($isActiveAsg): ?>

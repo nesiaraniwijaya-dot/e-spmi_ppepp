@@ -104,6 +104,10 @@ class Auth {
             $_SESSION['has_multiple_assignments'] = count($assignments) > 1;
             if (!empty($assignments)) {
                 $_SESSION['active_assignment_id'] = $assignments[0]['id'];
+                if (!empty($assignments[0]['nama_lengkap_gelar'])) {
+                    $_SESSION['user_name'] = $assignments[0]['nama_lengkap_gelar'];
+                    $_SESSION['assignment_nama_lengkap'] = $assignments[0]['nama_lengkap_gelar'];
+                }
             }
 
             // Ambil penugasan multi-peran pengguna
@@ -112,6 +116,10 @@ class Auth {
             $_SESSION['has_multiple_assignments'] = count($assignments) > 1;
             if (!empty($assignments)) {
                 $_SESSION['active_assignment_id'] = $assignments[0]['id'];
+                if (!empty($assignments[0]['nama_lengkap_gelar'])) {
+                    $_SESSION['user_name'] = $assignments[0]['nama_lengkap_gelar'];
+                    $_SESSION['assignment_nama_lengkap'] = $assignments[0]['nama_lengkap_gelar'];
+                }
             }
 
             // Log login event
@@ -187,6 +195,10 @@ class Auth {
             $_SESSION['has_multiple_assignments'] = count($assignments) > 1;
             if (!empty($assignments)) {
                 $_SESSION['active_assignment_id'] = $assignments[0]['id'];
+                if (!empty($assignments[0]['nama_lengkap_gelar'])) {
+                    $_SESSION['user_name'] = $assignments[0]['nama_lengkap_gelar'];
+                    $_SESSION['assignment_nama_lengkap'] = $assignments[0]['nama_lengkap_gelar'];
+                }
             }
 
             AuditLogger::log(
@@ -231,14 +243,22 @@ class Auth {
             $stmt->execute([$_SESSION['user_id']]);
             $dbUser = $stmt->fetch();
             if ($dbUser) {
-                $_SESSION['user_name'] = $dbUser['name'];
+                if (empty($_SESSION['active_assignment_id'])) {
+                    $_SESSION['user_name'] = $dbUser['name'];
+                    $_SESSION['user_role'] = $dbUser['role'];
+                    $_SESSION['user_prodi_id'] = $dbUser['prodi_id'];
+                    $_SESSION['user_fakultas_id'] = $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null;
+                    $_SESSION['user_fakultas_name'] = $dbUser['nama_fakultas'] ?? null;
+                } else {
+                    if (!empty($_SESSION['assignment_nama_lengkap'])) {
+                        $_SESSION['user_name'] = $_SESSION['assignment_nama_lengkap'];
+                    } else {
+                        $_SESSION['user_name'] = $dbUser['name'];
+                    }
+                }
+                $_SESSION['user_real_name'] = $dbUser['name'];
                 $_SESSION['user_email'] = $dbUser['email'];
-                $_SESSION['user_role'] = $dbUser['role'];
                 $_SESSION['user_avatar'] = $dbUser['avatar'] ?? null;
-                $_SESSION['user_prodi_id'] = $dbUser['prodi_id'];
-                $_SESSION['user_prodi_name'] = $dbUser['nama_prodi'] ?? null;
-                $_SESSION['user_fakultas_id'] = $dbUser['resolved_fakultas_id'] ?? $dbUser['fakultas_id'] ?? null;
-                $_SESSION['user_fakultas_name'] = $dbUser['nama_fakultas'] ?? null;
 
                 self::$cachedUser = [
                     'id' => $dbUser['id'],
@@ -654,6 +674,14 @@ class Auth {
         $_SESSION['user_prodi_id'] = $assignment['prodi_id'];
         $_SESSION['user_prodi_name'] = $assignment['nama_prodi'] ?? null;
         $_SESSION['active_assignment_id'] = (int)$assignment['id'];
+
+        if (!empty($assignment['nama_lengkap_gelar'])) {
+            $_SESSION['user_name'] = $assignment['nama_lengkap_gelar'];
+            $_SESSION['assignment_nama_lengkap'] = $assignment['nama_lengkap_gelar'];
+        } else {
+            $_SESSION['user_name'] = $_SESSION['user_real_name'] ?? $assignment['nama_lengkap_gelar'] ?? $_SESSION['user_name'];
+            unset($_SESSION['assignment_nama_lengkap']);
+        }
 
         // Audit log beralih peran
         AuditLogger::log(

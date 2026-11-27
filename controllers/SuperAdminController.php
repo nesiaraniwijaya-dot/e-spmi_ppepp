@@ -733,14 +733,18 @@ class SuperAdminController extends Controller {
             $dekanatRoles = $_POST['dekanat_roles'] ?? []; // ['dekan', 'wadek']
             $prodiRoles   = $_POST['prodi_roles'] ?? [];   // ['kaprodi', 'sekprodi']
             $prodiIds     = $_POST['prodi_ids'] ?? [];     // [1, 2]
+            $roleNamaGelar = $_POST['role_nama_gelar'] ?? [];
+            $prodiNamaGelar = $_POST['prodi_nama_gelar'] ?? [];
 
             // 1. Tambah penugasan Dekanat jika dipilih
             foreach ($dekanatRoles as $dRole) {
                 if (in_array($dRole, ['dekan', 'wadek'], true)) {
+                    $namaGelar = !empty($roleNamaGelar[$dRole]) ? trim($roleNamaGelar[$dRole]) : null;
                     $assignmentsToSave[] = [
                         'role' => $dRole,
                         'fakultas_id' => $fakultasId,
-                        'prodi_id' => null
+                        'prodi_id' => null,
+                        'nama_lengkap_gelar' => $namaGelar
                     ];
                 }
             }
@@ -751,10 +755,12 @@ class SuperAdminController extends Controller {
                     foreach ($prodiIds as $prId) {
                         $prId = (int)$prId;
                         if ($prId > 0) {
+                            $namaGelar = !empty($prodiNamaGelar[$prId]) ? trim($prodiNamaGelar[$prId]) : null;
                             $assignmentsToSave[] = [
                                 'role' => $pRole,
                                 'fakultas_id' => $fakultasId,
-                                'prodi_id' => $prId
+                                'prodi_id' => $prId,
+                                'nama_lengkap_gelar' => $namaGelar
                             ];
                         }
                     }
@@ -780,13 +786,17 @@ class SuperAdminController extends Controller {
                 redirect('admin/users');
                 return;
             }
+            $roleNamaGelar = $_POST['role_nama_gelar'] ?? [];
+            $namaGelar = !empty($roleNamaGelar['gpm']) ? trim($roleNamaGelar['gpm']) : null;
+
             $primaryRole = 'gpm';
             $primaryFakultasId = $fakultasId;
             $primaryProdiId = null;
             $assignmentsToSave[] = [
                 'role' => 'gpm',
                 'fakultas_id' => $fakultasId,
-                'prodi_id' => null
+                'prodi_id' => null,
+                'nama_lengkap_gelar' => $namaGelar
             ];
 
         } elseif ($accountType === 'lpm') {
@@ -794,13 +804,17 @@ class SuperAdminController extends Controller {
             if (!in_array($lpmRole, Auth::LPM_ROLES, true)) {
                 $lpmRole = 'super_admin';
             }
+            $roleNamaGelar = $_POST['role_nama_gelar'] ?? [];
+            $namaGelar = !empty($roleNamaGelar['lpm']) ? trim($roleNamaGelar['lpm']) : null;
+
             $primaryRole = $lpmRole;
             $primaryFakultasId = null;
             $primaryProdiId = null;
             $assignmentsToSave[] = [
                 'role' => $primaryRole,
                 'fakultas_id' => null,
-                'prodi_id' => null
+                'prodi_id' => null,
+                'nama_lengkap_gelar' => $namaGelar
             ];
 
         } else {
@@ -852,9 +866,9 @@ class SuperAdminController extends Controller {
 
             // Sinkronkan ke tabel user_assignments
             $this->db->prepare("DELETE FROM user_assignments WHERE user_id = ?")->execute([$targetUserId]);
-            $stmtInsAssign = $this->db->prepare("INSERT INTO user_assignments (user_id, role, fakultas_id, prodi_id) VALUES (?, ?, ?, ?)");
+            $stmtInsAssign = $this->db->prepare("INSERT INTO user_assignments (user_id, role, fakultas_id, prodi_id, nama_lengkap_gelar) VALUES (?, ?, ?, ?, ?)");
             foreach ($assignmentsToSave as $asg) {
-                $stmtInsAssign->execute([$targetUserId, $asg['role'], $asg['fakultas_id'], $asg['prodi_id']]);
+                $stmtInsAssign->execute([$targetUserId, $asg['role'], $asg['fakultas_id'], $asg['prodi_id'], $asg['nama_lengkap_gelar'] ?? null]);
             }
 
             // Jika mengedit akun sendiri, segarkan sesi profil

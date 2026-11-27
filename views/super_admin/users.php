@@ -192,9 +192,16 @@ $currentAdminId = Auth::id();
                                                 $badgeStyle = $isDek ? 'background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE;' : ($isPrd ? 'background:#ECFDF5; color:#047857; border:1px solid #A7F3D0;' : 'background:#F3F4F6; color:#374151; border:1px solid #E5E7EB;');
                                                 $targetUnit = !empty($asg['nama_prodi']) ? $asg['nama_prodi'] . ' (' . ($asg['jenjang'] ?? 'S1') . ')' : ($asg['nama_fakultas'] ?? '');
                                             ?>
-                                                <div class="d-inline-flex align-items-center gap-1.5 px-2 py-1 rounded-2" style="<?= $badgeStyle ?> font-size: 0.73rem;">
-                                                    <i class="fas <?= $isDek ? 'fa-landmark' : 'fa-graduation-cap' ?>"></i>
-                                                    <strong><?= htmlspecialchars($asgTitle) ?></strong> &bull; <?= htmlspecialchars($targetUnit) ?>
+                                                <div class="d-inline-flex flex-column px-2 py-1 rounded-2" style="<?= $badgeStyle ?> font-size: 0.73rem;">
+                                                    <div class="d-flex align-items-center gap-1.5">
+                                                        <i class="fas <?= $isDek ? 'fa-landmark' : 'fa-graduation-cap' ?>"></i>
+                                                        <strong><?= htmlspecialchars($asgTitle) ?></strong> &bull; <?= htmlspecialchars($targetUnit) ?>
+                                                    </div>
+                                                    <?php if (!empty($asg['nama_lengkap_gelar'])): ?>
+                                                        <div class="text-primary mt-0.5" style="font-size: 0.68rem; font-weight: 600;">
+                                                            <i class="fas fa-user-tag me-0.5"></i> <?= htmlspecialchars($asg['nama_lengkap_gelar']) ?>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 </div>
                                             <?php endforeach; ?>
                                         </div>
@@ -357,13 +364,19 @@ $currentAdminId = Auth::id();
                                             <i class="fas fa-landmark text-primary"></i> Penugasan Dekanat (Fakultas)
                                         </div>
                                         <div class="small text-muted mb-2.5" style="font-size: 0.72rem;">Centang peran jika akun bertugas di dekanat:</div>
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input dekanat-role-chk" type="checkbox" name="dekanat_roles[]" value="dekan" id="chk_dekan">
-                                            <label class="form-check-label small fw-semibold" for="chk_dekan">Dekan Fakultas</label>
+                                        <div class="mb-2.5">
+                                            <div class="form-check mb-1">
+                                                <input class="form-check-input dekanat-role-chk" type="checkbox" name="dekanat_roles[]" value="dekan" id="chk_dekan">
+                                                <label class="form-check-label small fw-semibold" for="chk_dekan">Dekan Fakultas</label>
+                                            </div>
+                                            <input type="text" class="form-control form-control-sm" name="role_nama_gelar[dekan]" id="nama_gelar_dekan" placeholder="Nama Lengkap &amp; Gelar Dekan (Opsional)" style="font-size: 0.78rem;">
                                         </div>
-                                        <div class="form-check mb-0">
-                                            <input class="form-check-input dekanat-role-chk" type="checkbox" name="dekanat_roles[]" value="wadek" id="chk_wadek">
-                                            <label class="form-check-label small fw-semibold" for="chk_wadek">Wakil Dekan Fakultas</label>
+                                        <div>
+                                            <div class="form-check mb-1">
+                                                <input class="form-check-input dekanat-role-chk" type="checkbox" name="dekanat_roles[]" value="wadek" id="chk_wadek">
+                                                <label class="form-check-label small fw-semibold" for="chk_wadek">Wakil Dekan Fakultas</label>
+                                            </div>
+                                            <input type="text" class="form-control form-control-sm" name="role_nama_gelar[wadek]" id="nama_gelar_wadek" placeholder="Nama Lengkap &amp; Gelar Wakil Dekan (Opsional)" style="font-size: 0.78rem;">
                                         </div>
                                     </div>
                                 </div>
@@ -422,6 +435,10 @@ $currentAdminId = Auth::id();
                                     <option value="ketua_pusat_pemeringkatan">Ketua Pusat Pemeringkatan</option>
                                     <option value="tu_lpm">TU Lembaga Penjaminan Mutu</option>
                                 </select>
+                                <div class="mt-2.5">
+                                    <label for="nama_gelar_lpm" class="form-label small fw-semibold text-secondary mb-1">Nama Lengkap &amp; Gelar Pejabat LPM (Opsional)</label>
+                                    <input type="text" class="form-control form-control-sm" name="role_nama_gelar[lpm]" id="nama_gelar_lpm" placeholder="Contoh: Prof. Dr. Ir. ..., M.Sc. (Opsional)" style="font-size: 0.8rem;">
+                                </div>
                             </div>
                         </div>
 
@@ -437,7 +454,11 @@ $currentAdminId = Auth::id();
                                         <option value="<?= $fk['id'] ?>"><?= htmlspecialchars($fk['nama_fakultas']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                                <div class="form-text text-muted small" style="font-size: 0.72rem;">GPM bertindak sebagai auditor/penjamin mutu independen tingkat fakultas.</div>
+                                <div class="mt-2.5">
+                                    <label for="nama_gelar_gpm" class="form-label small fw-semibold text-secondary mb-1">Nama Lengkap &amp; Gelar Pejabat GPM (Opsional)</label>
+                                    <input type="text" class="form-control form-control-sm" name="role_nama_gelar[gpm]" id="nama_gelar_gpm" placeholder="Contoh: Dr. Ir. ..., M.Kom. (Opsional)" style="font-size: 0.8rem;">
+                                </div>
+                                <div class="form-text text-muted small mt-1" style="font-size: 0.72rem;">GPM bertindak sebagai auditor/penjamin mutu independen tingkat fakultas.</div>
                             </div>
                         </div>
 
@@ -498,11 +519,11 @@ function handleAccountTypeChange(type) {
     }
 }
 
-function handleFakultasSelectionChange(fakultasId, selectedProdiIds = []) {
-    renderProdiCheckboxes(fakultasId, selectedProdiIds);
+function handleFakultasSelectionChange(fakultasId, selectedProdiIds = [], prodiNameMap = {}) {
+    renderProdiCheckboxes(fakultasId, selectedProdiIds, prodiNameMap);
 }
 
-function renderProdiCheckboxes(fakultasId, selectedProdiIds = []) {
+function renderProdiCheckboxes(fakultasId, selectedProdiIds = [], prodiNameMap = {}) {
     const container = document.getElementById('prodiCheckboxesList');
     if (!fakultasId) {
         container.innerHTML = '<div class="text-muted small fst-italic p-2">Silakan pilih Fakultas terlebih dahulu untuk memuat daftar program studi.</div>';
@@ -519,13 +540,17 @@ function renderProdiCheckboxes(fakultasId, selectedProdiIds = []) {
     let html = '<div class="row g-2">';
     filteredProdis.forEach(p => {
         const isChecked = selectedProdiIds.includes(parseInt(p.id));
+        const customName = prodiNameMap[p.id] || '';
         html += `
             <div class="col-md-6">
-                <div class="form-check p-2 rounded-2 bg-white border">
-                    <input class="form-check-input prodi-id-chk ms-0 me-2" type="checkbox" name="prodi_ids[]" value="${p.id}" id="prd_${p.id}" ${isChecked ? 'checked' : ''}>
-                    <label class="form-check-label small fw-semibold text-dark text-truncate d-block" for="prd_${p.id}" title="${p.nama_prodi} (${p.jenjang})">
-                        ${p.nama_prodi} <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.65rem;">${p.jenjang}</span>
-                    </label>
+                <div class="p-2 rounded-2 bg-white border">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input prodi-id-chk ms-0 me-2" type="checkbox" name="prodi_ids[]" value="${p.id}" id="prd_${p.id}" ${isChecked ? 'checked' : ''}>
+                        <label class="form-check-label small fw-semibold text-dark text-truncate d-block" for="prd_${p.id}" title="${p.nama_prodi} (${p.jenjang})">
+                            ${p.nama_prodi} <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.65rem;">${p.jenjang}</span>
+                        </label>
+                    </div>
+                    <input type="text" class="form-control form-control-sm mt-1" name="prodi_nama_gelar[${p.id}]" id="nama_gelar_prd_${p.id}" placeholder="Nama & Gelar Pejabat Prodi (Opsional)" value="${escapeHtml(customName)}" style="font-size:0.75rem;">
                 </div>
             </div>
         `;
@@ -569,6 +594,12 @@ function resetUserForm() {
     document.getElementById('chk_wadek').checked = false;
     document.getElementById('chk_kaprodi').checked = true;
     document.getElementById('chk_sekprodi').checked = false;
+    
+    document.getElementById('nama_gelar_dekan').value = '';
+    document.getElementById('nama_gelar_wadek').value = '';
+    document.getElementById('nama_gelar_gpm').value = '';
+    document.getElementById('nama_gelar_lpm').value = '';
+
     renderProdiCheckboxes('');
 
     hideDuplicateEmailWarning();
@@ -582,6 +613,12 @@ function editUser(data) {
     document.getElementById('user_is_active').checked = (data.is_active == 1);
 
     hideDuplicateEmailWarning();
+
+    // Reset nama gelar fields
+    document.getElementById('nama_gelar_dekan').value = '';
+    document.getElementById('nama_gelar_wadek').value = '';
+    document.getElementById('nama_gelar_gpm').value = '';
+    document.getElementById('nama_gelar_lpm').value = '';
 
     const isSelfAdmin = (parseInt(data.id) === loggedInAdminId);
     if (isSelfAdmin) {
@@ -600,10 +637,18 @@ function editUser(data) {
         document.getElementById('user_account_type').value = 'lpm';
         handleAccountTypeChange('lpm');
         document.getElementById('user_lpm_role').value = (role === 'admin_lpm') ? 'super_admin' : role;
+        const lpmAsg = assignments.find(a => lpmRoles.includes(a.role));
+        if (lpmAsg && lpmAsg.nama_lengkap_gelar) {
+            document.getElementById('nama_gelar_lpm').value = lpmAsg.nama_lengkap_gelar;
+        }
     } else if (role === 'gpm') {
         document.getElementById('user_account_type').value = 'gpm';
         handleAccountTypeChange('gpm');
         document.getElementById('user_gpm_fakultas_id').value = data.fakultas_id || data.resolved_fakultas_id || '';
+        const gpmAsg = assignments.find(a => a.role === 'gpm');
+        if (gpmAsg && gpmAsg.nama_lengkap_gelar) {
+            document.getElementById('nama_gelar_gpm').value = gpmAsg.nama_lengkap_gelar;
+        }
     } else if (role === 'pengguna' || role === 'testing') {
         document.getElementById('user_account_type').value = role;
         handleAccountTypeChange(role);
@@ -616,11 +661,17 @@ function editUser(data) {
         const fakId = data.resolved_fakultas_id || data.fakultas_id || (assignments.length > 0 ? (assignments[0].fakultas_id || '') : '');
         document.getElementById('user_fp_fakultas_id').value = fakId;
 
-        // Cek peran dekanat
-        const hasDekan = assignments.some(a => a.role === 'dekan') || role === 'dekan';
-        const hasWadek = assignments.some(a => a.role === 'wadek') || role === 'wadek';
-        document.getElementById('chk_dekan').checked = hasDekan;
-        document.getElementById('chk_wadek').checked = hasWadek;
+        // Cek peran dekanat & populate nama gelar
+        const dekanAsg = assignments.find(a => a.role === 'dekan');
+        const wadekAsg = assignments.find(a => a.role === 'wadek');
+        document.getElementById('chk_dekan').checked = !!dekanAsg || role === 'dekan';
+        document.getElementById('chk_wadek').checked = !!wadekAsg || role === 'wadek';
+        if (dekanAsg && dekanAsg.nama_lengkap_gelar) {
+            document.getElementById('nama_gelar_dekan').value = dekanAsg.nama_lengkap_gelar;
+        }
+        if (wadekAsg && wadekAsg.nama_lengkap_gelar) {
+            document.getElementById('nama_gelar_wadek').value = wadekAsg.nama_lengkap_gelar;
+        }
 
         // Cek peran prodi
         const hasKaprodi = assignments.some(a => a.role === 'kaprodi') || role === 'kaprodi';
@@ -628,18 +679,25 @@ function editUser(data) {
         document.getElementById('chk_kaprodi').checked = hasKaprodi;
         document.getElementById('chk_sekprodi').checked = hasSekprodi;
 
-        // Kumpulkan ID prodi terpilih
+        // Kumpulkan ID prodi terpilih dan petakan nama custom
         const selectedProdis = [];
+        const prodiNameMap = {};
         assignments.forEach(a => {
-            if (a.prodi_id && !selectedProdis.includes(parseInt(a.prodi_id))) {
-                selectedProdis.push(parseInt(a.prodi_id));
+            if (a.prodi_id) {
+                const prId = parseInt(a.prodi_id);
+                if (!selectedProdis.includes(prId)) {
+                    selectedProdis.push(prId);
+                }
+                if (a.nama_lengkap_gelar) {
+                    prodiNameMap[prId] = a.nama_lengkap_gelar;
+                }
             }
         });
         if (data.prodi_id && !selectedProdis.includes(parseInt(data.prodi_id))) {
             selectedProdis.push(parseInt(data.prodi_id));
         }
 
-        renderProdiCheckboxes(fakId, selectedProdis);
+        renderProdiCheckboxes(fakId, selectedProdis, prodiNameMap);
     }
 }
 
